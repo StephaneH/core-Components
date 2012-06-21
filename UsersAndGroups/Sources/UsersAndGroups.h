@@ -120,6 +120,9 @@ class CUAGDirectory : public XBOX::CComponent
 		virtual XBOX::VError SetLoginListener(const XBOX::VString& listenerRef, const XBOX::VString& promoteRef) = 0;
 		virtual XBOX::VError GetLoginListener(XBOX::VString& outListenerRef) = 0;
 
+		virtual bool NoAdmin() = 0;
+		virtual void ComputeNoAdmin() = 0;
+
 };
 
 
@@ -203,9 +206,9 @@ class CUAGSession : public XBOX::CComponent
 	public:
 		enum {Component_Type = 'ugse'};
 
-		virtual bool BelongsTo(const XBOX::VUUID& inGroupID) = 0;
+		virtual bool BelongsTo(const XBOX::VUUID& inGroupID, bool checkNoAdmin = true) = 0;
 
-		virtual bool BelongsTo(CUAGGroup* inGroup) = 0;
+		virtual bool BelongsTo(CUAGGroup* inGroup, bool checkNoAdmin = true) = 0;
 
 		virtual bool Matches(const XBOX::VUUID& inUserID) = 0;
 

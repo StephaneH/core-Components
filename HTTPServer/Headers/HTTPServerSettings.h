@@ -64,7 +64,7 @@ namespace RIASettingsKeys
 		EXTERN_BAGKEY_WITH_DEFAULT_SCALAR (maximumRequestsByConnection, XBOX::VLong, sLONG);
 		EXTERN_BAGKEY_WITH_DEFAULT_SCALAR (maximumTimeout, XBOX::VLong, sLONG);
 		EXTERN_BAGKEY_WITH_DEFAULT (logFormat, XBOX::VString);
-		EXTERN_BAGKEY_WITH_DEFAULT (logFolderPath, XBOX::VString);
+		EXTERN_BAGKEY_WITH_DEFAULT (logPath, XBOX::VString);
 		EXTERN_BAGKEY_WITH_DEFAULT (logFileName, XBOX::VString);
 		EXTERN_BAGKEY_WITH_DEFAULT_SCALAR (logMaxSize, XBOX::VLong, sLONG);
 

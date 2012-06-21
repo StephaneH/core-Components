@@ -957,8 +957,13 @@ XBOX::VError VCacheManagerHTTPRequestHandler::HandleRequest (IHTTPResponse *ioRe
 	if ((NULL == ioResponse) || (NULL == dynamic_cast<VHTTPResponse *>(ioResponse)))
 		return VHTTPServer::ThrowError (VE_HTTP_PROTOCOL_INTERNAL_SERVER_ERROR, STRING_ERROR_INVALID_PARAMETER);
 
-	VHTTPResponse *	response = dynamic_cast<VHTTPResponse *>(ioResponse);
-	VVirtualHost *	virtualHost = (NULL != response) ? dynamic_cast<VVirtualHost *>(response->GetVirtualHost()) : NULL;
+	VHTTPResponse *				response = dynamic_cast<VHTTPResponse *>(ioResponse);
+	VVirtualHost *				virtualHost = (NULL != response) ? dynamic_cast<VVirtualHost *>(response->GetVirtualHost()) : NULL;
+	VAuthenticationManager *	authenticationManager = (NULL != virtualHost) ? dynamic_cast<VAuthenticationManager *>(virtualHost->GetProject()->GetAuthenticationManager()) : NULL;
+
+	if (NULL != authenticationManager && (authenticationManager->CheckAdminAccessGranted (ioResponse) != XBOX::VE_OK))
+		return VE_HTTP_PROTOCOL_UNAUTHORIZED;
+
 #if HTTP_SERVER_GLOBAL_CACHE
 	VCacheManager *	cacheManager = (NULL != virtualHost) ? virtualHost->GetProject()->GetHTTPServer()->GetCacheManager() : NULL;
 #else

@@ -424,7 +424,7 @@ VError UAGSession::BuildDependences(CUAGGroupVector& groups)
 
 
 
-bool UAGSession::BelongsTo(const XBOX::VUUID& inGroupID)
+bool UAGSession::BelongsTo(const XBOX::VUUID& inGroupID, bool checkNoAdmin)
 {
 	bool result = false;
 
@@ -432,15 +432,22 @@ bool UAGSession::BelongsTo(const XBOX::VUUID& inGroupID)
 		result = true;
 	else if (fPromotedTo.find(inGroupID) != fPromotedTo.end())
 		result = true;
+	else if (fDirectory->NoAdmin() && checkNoAdmin)
+	{
+		if (inGroupID.GetBuffer() == fDirectory->GetAdminID())
+			result = true;
+		else if (inGroupID.GetBuffer() == fDirectory->GetDebugID())
+			result = true;
+	}
 
 	return result;
 }
 
-bool UAGSession::BelongsTo(CUAGGroup* inGroup)
+bool UAGSession::BelongsTo(CUAGGroup* inGroup, bool checkNoAdmin)
 {
 	VUUID id;
 	inGroup->GetID(id);
-	return BelongsTo(id);
+	return BelongsTo(id, checkNoAdmin);
 }
 
 bool UAGSession::Matches(const XBOX::VUUID& inUserID)
@@ -483,7 +490,7 @@ void UAGSession::BuildSubPromotions(CUAGGroupVector& groups, IDSet* outGroupsAdd
 		{
 			VUUID groupid;
 			group->GetID(groupid);
-			if (!BelongsTo(groupid))
+			if (!BelongsTo(groupid, false))
 			{
 				outGroupsAdded->insert(groupid);
 				fPromotedTo.insert(groupid);
@@ -503,7 +510,7 @@ sLONG UAGSession::PromoteIntoGroup(CUAGGroup* inGroup)
 	VUUID groupid;
 	inGroup->GetID(groupid);
 
-	if (!BelongsTo(groupid))
+	if (!BelongsTo(groupid, false))
 	{
 		resultToken = GetNextToken();
 		groupsAdded = &(fPromotions[resultToken]);

@@ -68,6 +68,7 @@ public:
 
 	IP4								GetEndPointIPv4() const { return fEndPointIPv4; }
 	PortNumber						GetEndPointPort() const { return fEndPointPort; }
+	bool							IsSSL() const { return fIsSSL; }
 
 private:
 	HTTPRequestMethod				fRequestMethod;
@@ -84,6 +85,7 @@ private:
 	mutable VHTMLForm *				fHTMLForm;
 	IP4								fEndPointIPv4;
 	PortNumber						fEndPointPort;
+	bool							fIsSSL;
 	
 	static XBOX::VSize				fMaxIncomingDataSize;
 

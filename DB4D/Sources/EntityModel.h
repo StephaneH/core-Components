@@ -616,6 +616,8 @@ class AttributeType : public IRefCountable
 				return fScalarType;
 		}
 
+		bool NeedValidation() const;
+
 
 
 	protected:
@@ -1053,8 +1055,8 @@ class EntityAttribute : public VComponentImp<CDB4DEntityAttribute>
 		VError ScriptToBag(VValueBag& outBag, const VValueBag::StKey& inWhatScript, const VString& inStatement, const VString& inFrom, bool userDefined) const;
 		VError ToBag(VValueBag& outBag, bool forDax, bool forSave, bool forJSON, bool isTableDef) const;
 
-		VError ResolveRelatedEntities(EntityModelCatalog* catalog, bool devMode);
-		VError ResolveQueryStatements(EntityModelCatalog* catalog, bool devMode);
+		VError ResolveRelatedEntities(EntityModelCatalog* catalog, bool devMode, BaseTaskInfo* context);
+		VError ResolveQueryStatements(EntityModelCatalog* catalog, bool devMode, BaseTaskInfo* context);
 
 		EntityAttribute* Clone(EntityModel* inModel) const;
 
@@ -1346,6 +1348,7 @@ class EntityAttribute : public VComponentImp<CDB4DEntityAttribute>
 			return fRelPath;
 		}
 
+		bool NeedValidation() const;
 
 	protected:
 		VString fName;
@@ -1801,8 +1804,8 @@ class EntityModel : public VComponentImp<CDB4DEntityModel>
 
 		sLONG AddRelationPath(EntityRelation* relpath);
 
-		VError ResolveRelatedEntities(EntityModelCatalog* catalog, bool devMode);
-		VError ResolveQueryStatements(EntityModelCatalog* catalog, bool devMode);
+		VError ResolveRelatedEntities(EntityModelCatalog* catalog, bool devMode, BaseTaskInfo* context);
+		VError ResolveQueryStatements(EntityModelCatalog* catalog, bool devMode, BaseTaskInfo* context);
 		//VError ResolveRelatedPath(EntityModelCatalog* catalog);
 
 		sLONG FindAttribute(const VString& AttributeName) const;
@@ -2165,6 +2168,11 @@ class EntityAttributeValue : public VComponentImp<CDB4DEntityAttributeValue>
 {
 	public:
 		
+#if debuglr
+		virtual CComponent*	Retain (const char* DebugInfo = 0);
+		virtual void		Release (const char* DebugInfo = 0);
+#endif
+
 		EntityAttributeValue(EntityRecord* owner, const EntityAttribute* attribute, EntityAttributeValueKind kind, VValueSingle* inVal, bool isowned = false);
 
 		EntityAttributeValue(EntityRecord* owner, const EntityAttribute* attribute, EntityAttributeValueKind kind, EntityRecord* erec, EntityModel* inSubModel);
@@ -2342,6 +2350,10 @@ class EntityRecord : public VComponentImp<CDB4DEntityRecord>
 {
 	public:
 		
+#if debuglr
+		virtual CComponent*	Retain (const char* DebugInfo = 0);
+		virtual void		Release (const char* DebugInfo = 0);
+#endif
 
 		EntityRecord(EntityModel* inModel, FicheInMem* inMainRec, CDB4DBaseContext* inContext, DB4D_Way_of_Locking HowToLock);
 

@@ -539,6 +539,27 @@ VError AttributeType::SaveToBag(VValueBag& CatalogBag, bool forJSON) const
 }
 
 
+bool AttributeType::NeedValidation() const
+{
+	bool needvalidate = false;
+
+	if (fMin != nil)
+		needvalidate = true;
+	if (fMax != nil)
+		needvalidate = true;
+	if (!fPattern.IsEmpty())
+		needvalidate = true;
+	if (fFixedLength > 0)
+		needvalidate = true;
+	if (fMinLength > 0)
+		needvalidate = true;
+	if (fMaxLength > 0)
+		needvalidate = true;
+	return needvalidate;
+}
+
+
+
 
 
 // ----------------------------------------------------------------------------------------
@@ -2348,7 +2369,7 @@ VError EntityAttribute::FromBag(const VValueBag* bag, EntityModelCatalog* catalo
 	return err;
 }
 
-VError EntityAttribute::ResolveRelatedEntities(EntityModelCatalog* catalog, bool devMode)
+VError EntityAttribute::ResolveRelatedEntities(EntityModelCatalog* catalog, bool devMode, BaseTaskInfo* context)
 {
 	VError err = VE_OK;
 
@@ -2356,7 +2377,7 @@ VError EntityAttribute::ResolveRelatedEntities(EntityModelCatalog* catalog, bool
 	{
 		if (fFrom != nil)
 		{
-			((EntityAttribute*)fFrom)->ResolveRelatedEntities(catalog, devMode);
+			((EntityAttribute*)fFrom)->ResolveRelatedEntities(catalog, devMode, context);
 			fRelation = RetainRefCountable(fFrom->fRelation);
 			if (fSubEntity == nil)
 				fSubEntity = RetainRefCountable(fFrom->fSubEntity);
@@ -2700,7 +2721,7 @@ VError EntityAttribute::ResolveRelatedEntities(EntityModelCatalog* catalog, bool
 }
 
 
-VError EntityAttribute::ResolveQueryStatements(EntityModelCatalog* catalog, bool devMode)
+VError EntityAttribute::ResolveQueryStatements(EntityModelCatalog* catalog, bool devMode, BaseTaskInfo* context)
 {
 	VError err = VE_OK;
 	VString ss;
@@ -2715,13 +2736,13 @@ VError EntityAttribute::ResolveQueryStatements(EntityModelCatalog* catalog, bool
 				if (devMode)
 				{
 					StErrorContextInstaller errs(false);
-					err = fScriptDB4D->BuildFromString(fScriptStatement[script_attr_get], ss, nil, fOwner, true);
+					err = fScriptDB4D->BuildFromString(fScriptStatement[script_attr_get], ss, context, fOwner, true);
 					if (err != VE_OK)
 						catalog->AddError();
 					err = VE_OK;
 				}
 				else
-					err = fScriptDB4D->BuildFromString(fScriptStatement[script_attr_get], ss, nil, fOwner, true);
+					err = fScriptDB4D->BuildFromString(fScriptStatement[script_attr_get], ss, context, fOwner, true);
 			}
 
 			if (fScriptQuery == nil && err == VE_OK)
@@ -2732,9 +2753,9 @@ VError EntityAttribute::ResolveQueryStatements(EntityModelCatalog* catalog, bool
 				{
 					StErrorContextInstaller errs(false);
 					if (fScriptStatement[script_attr_query].IsEmpty())
-						err = fScriptQuery->BuildFromString(fScriptStatement[script_attr_get], ss, nil, fOwner, false);
+						err = fScriptQuery->BuildFromString(fScriptStatement[script_attr_get], ss, context, fOwner, false);
 					else
-						err = fScriptQuery->BuildFromString(fScriptStatement[script_attr_query], ss, nil, fOwner, false);
+						err = fScriptQuery->BuildFromString(fScriptStatement[script_attr_query], ss, context, fOwner, false);
 					if (err != VE_OK)
 						catalog->AddError();
 					err = VE_OK;
@@ -2742,9 +2763,9 @@ VError EntityAttribute::ResolveQueryStatements(EntityModelCatalog* catalog, bool
 				else
 				{
 					if (fScriptStatement[script_attr_query].IsEmpty())
-						err = fScriptQuery->BuildFromString(fScriptStatement[script_attr_get], ss, nil, fOwner, false);
+						err = fScriptQuery->BuildFromString(fScriptStatement[script_attr_get], ss, context, fOwner, false);
 					else
-						err = fScriptQuery->BuildFromString(fScriptStatement[script_attr_query], ss, nil, fOwner, false);
+						err = fScriptQuery->BuildFromString(fScriptStatement[script_attr_query], ss, context, fOwner, false);
 				}
 			}
 		}
@@ -2871,6 +2892,28 @@ bool EntityAttribute::IsSummable() const
 		res = true;
 	return res;
 }
+
+
+
+bool EntityAttribute::NeedValidation() const
+{
+	bool needvalidate = false;
+	if (fType != nil)
+	{
+		needvalidate = needvalidate || fType->NeedValidation();
+	}
+
+	if (fLocalType != nil)
+	{
+		needvalidate = needvalidate || fLocalType->NeedValidation();
+	}
+
+	if (fEvents[dbev_validate].IsValid())
+		needvalidate = true;
+
+	return needvalidate;
+}
+
 
 
 
@@ -3945,7 +3988,7 @@ Selection* EntityModel::projectSelection(Selection* sel, EntityAttribute* att, V
 			err = xquery.AnalyseSearch(&query, context);
 			if (err == VE_OK)
 			{
-				if (okperm(context, att->GetSubEntityModel(), DB4D_EM_Read_Perm))
+				if (okperm(context, att->GetSubEntityModel(), DB4D_EM_Read_Perm) || okperm(context, att->GetSubEntityModel(), DB4D_EM_Update_Perm) || okperm(context, att->GetSubEntityModel(), DB4D_EM_Delete_Perm))
 				{
 					result = xquery.Perform((Bittab*)nil, nil, context, err, DB4D_Do_Not_Lock);
 				}
@@ -4047,7 +4090,7 @@ VError EntityModel::ActivatePath(EntityRecord* erec, sLONG inPathID, SubEntityCa
 					err = xquery.AnalyseSearch(&query, context);
 					if (err == VE_OK)
 					{
-						if (okperm(context, subEntityModel, DB4D_EM_Read_Perm))
+						if (okperm(context, subEntityModel, DB4D_EM_Read_Perm) || okperm(context, subEntityModel, DB4D_EM_Update_Perm) || okperm(context, subEntityModel, DB4D_EM_Delete_Perm))
 						{
 							Selection* sel = xquery.Perform((Bittab*)nil, nil, context, err, DB4D_Do_Not_Lock);
 							if (sel != nil)
@@ -4102,7 +4145,7 @@ VError EntityModel::BuildRelPath(EntityModelCatalog* catalog, const VectorOfVStr
 		{
 			if (what != eattr_relation_Nto1)
 				outAllNto1 = false;
-			err = att->ResolveRelatedEntities(catalog, devMode);
+			err = att->ResolveRelatedEntities(catalog, devMode, nil);
 			if (err == VE_OK)
 			{
 				EntityRelation* rel = att->GetRelPath();
@@ -5307,13 +5350,13 @@ sLONG EntityModel::AddRelationPath(EntityRelation* relpath)
 }
 
 
-VError EntityModel::ResolveRelatedEntities(EntityModelCatalog* catalog, bool devMode)
+VError EntityModel::ResolveRelatedEntities(EntityModelCatalog* catalog, bool devMode, BaseTaskInfo* context)
 {
 	VError err = VE_OK;
 
 	for (EntityAttributeCollection::iterator cur = fAttributes.begin(), end = fAttributes.end(); cur != end && err == VE_OK; cur++)
 	{
-		err = (*cur)->ResolveRelatedEntities(catalog, devMode);
+		err = (*cur)->ResolveRelatedEntities(catalog, devMode, context);
 	}
 
 	for (EntityMethodMap::iterator cur = fMethodsByName.begin(), end = fMethodsByName.end(); cur != end && err == VE_OK; cur++)
@@ -5339,7 +5382,7 @@ VError EntityModel::ResolveRelatedPath(EntityModelCatalog* catalog)
 }
 */
 
-VError EntityModel::ResolveQueryStatements(EntityModelCatalog* catalog, bool devMode)
+VError EntityModel::ResolveQueryStatements(EntityModelCatalog* catalog, bool devMode, BaseTaskInfo* context)
 {
 	VError err = VE_OK;
 
@@ -5350,7 +5393,7 @@ VError EntityModel::ResolveQueryStatements(EntityModelCatalog* catalog, bool dev
 
 		if (fBaseEm != nil)
 		{
-			err = fBaseEm->ResolveQueryStatements(catalog, devMode);
+			err = fBaseEm->ResolveQueryStatements(catalog, devMode, context);
 			if (fBaseEm->fRestrictingQuery != nil && err == VE_OK)
 			{
 				fRestrictingQuery = new SearchTab(fMainTable);
@@ -5366,7 +5409,7 @@ VError EntityModel::ResolveQueryStatements(EntityModelCatalog* catalog, bool dev
 				fRestrictingQuery = new SearchTab(fMainTable);
 				fRestrictingQuery->AllowJSCode(true);
 				StErrorContextInstaller errs(!devMode);
-				err = fRestrictingQuery->BuildFromString(fRestrictingQueryString, orderbystring, nil, fQueryApplyToEM ? this : nil);
+				err = fRestrictingQuery->BuildFromString(fRestrictingQueryString, orderbystring, context, fQueryApplyToEM ? this : nil);
 				if (err != VE_OK)
 					catalog->AddError();
 				if (devMode)
@@ -5377,7 +5420,7 @@ VError EntityModel::ResolveQueryStatements(EntityModelCatalog* catalog, bool dev
 				StErrorContextInstaller errs(!devMode);
 				SearchTab newquery(fMainTable);
 				newquery.AllowJSCode(true);
-				err = newquery.BuildFromString(fRestrictingQueryString, orderbystring, nil, fQueryApplyToEM ? this : nil);
+				err = newquery.BuildFromString(fRestrictingQueryString, orderbystring, context, fQueryApplyToEM ? this : nil);
 				if (err == VE_OK)
 					err = fRestrictingQuery->Add(newquery);
 				if (err != VE_OK)
@@ -5402,7 +5445,7 @@ VError EntityModel::ResolveQueryStatements(EntityModelCatalog* catalog, bool dev
 
 		for (EntityAttributeCollection::iterator cur = fAttributes.begin(), end = fAttributes.end(); cur != end && err == VE_OK; cur++)
 		{
-			err = (*cur)->ResolveQueryStatements(catalog, devMode);
+			err = (*cur)->ResolveQueryStatements(catalog, devMode, context);
 		}
 	}
 
@@ -5412,7 +5455,7 @@ VError EntityModel::ResolveQueryStatements(EntityModelCatalog* catalog, bool dev
 
 EntityRecord* EntityModel::LoadEntityRecord(sLONG n, VError& err, DB4D_Way_of_Locking HowToLock, BaseTaskInfo* context, bool autoexpand)
 {
-	if (okperm(context, fPerms[DB4D_EM_Read_Perm]))
+	if (okperm(context, fPerms[DB4D_EM_Read_Perm]) || okperm(context, fPerms[DB4D_EM_Update_Perm]) || okperm(context, fPerms[DB4D_EM_Delete_Perm]))
 	{
 		FicheInMem* rec = fMainTable->GetDF()->LoadRecord(n, err, HowToLock, context);
 		if (rec == nil)
@@ -5436,7 +5479,7 @@ EntityRecord* EntityModel::LoadEntityRecord(sLONG n, VError& err, DB4D_Way_of_Lo
 
 CDB4DEntityRecord* EntityModel::LoadEntity(sLONG n, VError& err, DB4D_Way_of_Locking HowToLock, CDB4DBaseContext* context, bool autoexpand)
 {
-	if (okperm(context, fPerms[DB4D_EM_Read_Perm]))
+	if (okperm(context, fPerms[DB4D_EM_Read_Perm]) || okperm(context, fPerms[DB4D_EM_Update_Perm]) || okperm(context, fPerms[DB4D_EM_Delete_Perm]))
 	{
 		BaseTaskInfo* xcontext = ConvertContext(context);
 		FicheInMem* rec = fMainTable->GetDF()->LoadRecord(n, err, HowToLock, xcontext);
@@ -5462,7 +5505,7 @@ CDB4DEntityRecord* EntityModel::LoadEntity(sLONG n, VError& err, DB4D_Way_of_Loc
 sLONG EntityModel::CountEntities(CDB4DBaseContext* inContext)
 {
 	sLONG result = 0;
-	if (okperm(inContext, fPerms[DB4D_EM_Read_Perm]))
+	if (okperm(inContext, fPerms[DB4D_EM_Read_Perm]) || okperm(inContext, fPerms[DB4D_EM_Update_Perm]) || okperm(inContext, fPerms[DB4D_EM_Delete_Perm]))
 	{
 		if (WithRestriction())
 		{
@@ -6021,7 +6064,7 @@ Selection* EntityModel::SelectAllEntities(BaseTaskInfo* context, VErrorDB4D* out
 {
 	VError err = VE_OK;
 	Selection* sel = nil;
-	if (okperm(context, fPerms[DB4D_EM_Read_Perm]))
+	if (okperm(context, fPerms[DB4D_EM_Read_Perm]) || okperm(context, fPerms[DB4D_EM_Update_Perm]) || okperm(context, fPerms[DB4D_EM_Delete_Perm]))
 	{
 		if (WithRestrictingQuery())
 		{
@@ -6115,7 +6158,7 @@ CDB4DQuery* EntityModel::NewQuery()
 Selection* EntityModel::query( const VString& inQuery, BaseTaskInfo* context, VErrorDB4D& err, const VValueSingle* param1, const VValueSingle* param2, const VValueSingle* param3)
 {
 	Selection* sel = nil;
-	if (okperm(context, fPerms[DB4D_EM_Read_Perm]))
+	if (okperm(context, fPerms[DB4D_EM_Read_Perm]) || okperm(context, fPerms[DB4D_EM_Update_Perm]) || okperm(context, fPerms[DB4D_EM_Delete_Perm]))
 	{
 		SearchTab laquery(fMainTable);
 		
@@ -6248,7 +6291,7 @@ Selection* EntityModel::ExecuteQuery( SearchTab* querysearch, BaseTaskInfo* cont
 {
 	VError err = VE_OK;
 	Selection *sel = nil;
-	if (okperm(context, fPerms[DB4D_EM_Read_Perm]))
+	if (okperm(context, fPerms[DB4D_EM_Read_Perm]) || okperm(context, fPerms[DB4D_EM_Update_Perm]) || okperm(context, fPerms[DB4D_EM_Delete_Perm]))
 	{
 		Base4D *db;
 		DataTable *DF;
@@ -6746,7 +6789,7 @@ VError EntityModel::compute(EntityAttributeSortedSelection& atts, Selection* sel
 	vector<computeResult> results;
 	results.resize(atts.size());
 	VError err = VE_OK;
-	if (okperm(context, fPerms[DB4D_EM_Read_Perm]))
+	if (okperm(context, fPerms[DB4D_EM_Read_Perm]) || okperm(context, fPerms[DB4D_EM_Update_Perm]) || okperm(context, fPerms[DB4D_EM_Delete_Perm]))
 	{
 		if (sel == nil)
 			sel = SelectAllEntities(context, &err);
@@ -6902,7 +6945,7 @@ void EntityModel::ResolvePermissionsInheritance(EntityModelCatalog* catalog)
 		if ((fPerms[perm].IsNull() || forced) && !xid.IsNull())
 		{
 			fPerms[perm] = xid;
-			fForced[perm] = true;
+			fForced[perm] = forced;
 		}
 	}
 
@@ -6941,6 +6984,19 @@ EntityRecord* SubEntityCache::GetErec()
 
 
 // ----------------------------------------------------------------------------------------------------
+
+
+#if debuglr
+CComponent* EntityAttributeValue::Retain(const char* DebugInfo)
+{
+	return VComponentImp<CDB4DEntityAttributeValue>::Retain(DebugInfo);
+}
+
+void EntityAttributeValue::Release(const char* DebugInfo)
+{
+	VComponentImp<CDB4DEntityAttributeValue>::Release(DebugInfo);
+}
+#endif
 
 
 EntityAttributeValue::EntityAttributeValue(EntityRecord* owner, const EntityAttribute* attribute, EntityAttributeValueKind kind, VValueSingle* inVal, bool isowned ):fJSObject(nil)
@@ -7529,6 +7585,18 @@ VError EntityAttributeValue::SetRelatedEntity(EntityRecord* relatedEntity, BaseT
 // -----------------------------------------------
 
 
+#if debuglr
+CComponent* EntityRecord::Retain(const char* DebugInfo)
+{
+	return VComponentImp<CDB4DEntityRecord>::Retain(DebugInfo);
+}
+
+void EntityRecord::Release(const char* DebugInfo)
+{
+	VComponentImp<CDB4DEntityRecord>::Release(DebugInfo);
+}
+#endif
+
 
 
 EntityRecord::~EntityRecord()
@@ -7661,13 +7729,20 @@ EntityAttributeValue* EntityRecord::getAttributeValue(const EntityAttribute* inA
 				{
 					if (kind == eattr_alias && !inAttribute->isFlattenedFromField())
 					{
+						result = new EntityAttributeValue(this, inAttribute, eav_vvalue, nil, true);
 						SubEntityCache* cache = GetSubEntityCache(inAttribute->GetPathID(), err, true, inAttribute->GetSubEntityModel(), context);
 						if (cache != nil)
 						{
 							EntityRecord* erec = cache->GetErec();
 							if (erec != nil)
 							{
-								result = erec->getAttributeValue(inAttribute->getFlattenAttributeName(), err, context, restrictValue);
+								EntityAttributeValue* result2 = erec->getAttributeValue(inAttribute->getFlattenAttributeName(), err, context, restrictValue);
+								if (result2 != nil)
+								{
+									VValueSingle* cv2 = result2->getVValue();
+									if (cv2 != nil)
+										result->setVValue(cv2->Clone());
+								}
 							}
 						}
 					}
@@ -8310,6 +8385,22 @@ VError EntityRecord::Validate(BaseTaskInfo* context)
 	VError err = VE_OK;
 	bool validFail = false;
 
+	for (EntityAttributeCollection::const_iterator cur = fModel->getAllAttributes().begin(), end = fModel->getAllAttributes().end(); cur != end; ++cur)
+	{
+		const EntityAttribute* att = *cur;
+		if (att->NeedValidation())
+		{
+			EntityAttributeValue* val = getAttributeValue(att, err, context, false);
+			if (err == VE_OK)
+			{
+				err = val->Validate(context);
+			}
+			if (err != VE_OK)
+				validFail = true;
+		}
+	}
+
+	/*
 	for (EntityAttributeValueCollection::iterator cur = fValues.begin(), end = fValues.end(); cur != end && err == VE_OK; cur++)
 	{
 		EntityAttributeValue* val = *cur;
@@ -8320,6 +8411,7 @@ VError EntityRecord::Validate(BaseTaskInfo* context)
 				validFail = true;
 		}
 	}
+	*/
 
 	if (!validFail)
 	{
@@ -9665,7 +9757,7 @@ VError EntityModelCatalog::LoadEntityModels(const VValueBag& bagEntities, bool d
 
 		for (EntityModelMap::iterator cur = fEntityModels.begin(), end = fEntityModels.end(); cur != end && err == VE_OK; cur++)
 		{
-			err =cur->second->ResolveRelatedEntities(this, devMode);
+			err =cur->second->ResolveRelatedEntities(this, devMode, context);
 		}
 
 		/*
@@ -9677,7 +9769,7 @@ VError EntityModelCatalog::LoadEntityModels(const VValueBag& bagEntities, bool d
 
 		for (EntityModelMap::iterator cur = fEntityModels.begin(), end = fEntityModels.end(); cur != end && err == VE_OK; cur++)
 		{
-			err =cur->second->ResolveQueryStatements(this, devMode);
+			err =cur->second->ResolveQueryStatements(this, devMode, context);
 		}
 	}
 

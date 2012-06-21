@@ -428,6 +428,7 @@ public:
 	static void _Valid(XBOX::VJSParms_callStaticFunction& ioParms, EntitySelectionIterator* inSelIter);  // bool : Valid()
 	static void _Loaded(XBOX::VJSParms_callStaticFunction& ioParms, EntitySelectionIterator* inSelIter);  // bool : Loaded()
 	static void _Save(XBOX::VJSParms_callStaticFunction& ioParms, EntitySelectionIterator* inSelIter);  // bool ok : Save(bool : silent)
+	static void _validate(XBOX::VJSParms_callStaticFunction& ioParms, EntitySelectionIterator* inSelIter);  // bool ok : validate()
 	static void _Reload(XBOX::VJSParms_callStaticFunction& ioParms, EntitySelectionIterator* inSelIter);  // Reload(bool | string : "ReadOnly")
 	static void _IsModified(XBOX::VJSParms_callStaticFunction& ioParms, EntitySelectionIterator* inSelIter);  // bool : IsModified()
 	static void _IsNew(XBOX::VJSParms_callStaticFunction& ioParms, EntitySelectionIterator* inSelIter);  // bool : IsNew()

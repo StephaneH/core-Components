@@ -3408,6 +3408,7 @@ bool VJSEntitySelectionIterator::SetProperty( VJSParms_setProperty& ioParms, Ent
 void VJSEntitySelectionIterator::_Save(VJSParms_callStaticFunction& ioParms, EntitySelectionIterator* inSelIter)
 {
 	VError err = VE_OK;
+	bool saved = false;
 	CDB4DEntityRecord* inRecord = inSelIter->GetCurRec(GetDB4DBaseContextFromJSContext(ioParms, inSelIter->GetModel()));
 	if (inRecord != nil)
 	{
@@ -3415,7 +3416,23 @@ void VJSEntitySelectionIterator::_Save(VJSParms_callStaticFunction& ioParms, Ent
 		if (stamp == 0)
 			stamp = 1;
 		err = inRecord->Save(stamp);
+		saved = err == VE_OK;
 	}
+	ioParms.ReturnBool(saved);
+}
+
+
+void VJSEntitySelectionIterator::_validate(VJSParms_callStaticFunction& ioParms, EntitySelectionIterator* inSelIter)
+{
+	VError err = VE_OK;
+	bool validated = false;
+	CDB4DEntityRecord* inRecord = inSelIter->GetCurRec(GetDB4DBaseContextFromJSContext(ioParms, inSelIter->GetModel()));
+	if (inRecord != nil)
+	{
+		err = inRecord->Validate();
+		validated = err == VE_OK;
+	}
+	ioParms.ReturnBool(validated);
 }
 
 
@@ -3699,6 +3716,7 @@ void VJSEntitySelectionIterator::GetDefinition( ClassDefinition& outDefinition)
 	//	{ "valid", js_callStaticFunction<_Valid>, JS4D::PropertyAttributeReadOnly | JS4D::PropertyAttributeDontEnum | JS4D::PropertyAttributeDontDelete },
 		{ "isLoaded", js_callStaticFunction<_Loaded>, JS4D::PropertyAttributeReadOnly | JS4D::PropertyAttributeDontEnum | JS4D::PropertyAttributeDontDelete },
 		{ "save", js_callStaticFunction<_Save>, JS4D::PropertyAttributeReadOnly | JS4D::PropertyAttributeDontEnum | JS4D::PropertyAttributeDontDelete },
+		{ "validate", js_callStaticFunction<_validate>, JS4D::PropertyAttributeReadOnly | JS4D::PropertyAttributeDontEnum | JS4D::PropertyAttributeDontDelete },
 		{ "getID", js_callStaticFunction<_GetID>, JS4D::PropertyAttributeReadOnly | JS4D::PropertyAttributeDontEnum | JS4D::PropertyAttributeDontDelete },
 		{ "refresh", js_callStaticFunction<_Reload>, JS4D::PropertyAttributeReadOnly | JS4D::PropertyAttributeDontEnum | JS4D::PropertyAttributeDontDelete },
 		{ "isModified", js_callStaticFunction<_IsModified>, JS4D::PropertyAttributeReadOnly | JS4D::PropertyAttributeDontEnum | JS4D::PropertyAttributeDontDelete },

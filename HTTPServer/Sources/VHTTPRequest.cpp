@@ -39,6 +39,7 @@ VHTTPRequest::VHTTPRequest()
 , fHTMLForm (NULL)
 , fEndPointIPv4 (0)
 , fEndPointPort (0)
+, fIsSSL (false)
 {
 }
 
@@ -92,8 +93,6 @@ XBOX::VError VHTTPRequest::ReadFromEndPoint (XBOX::VEndPoint& inEndPoint, uLONG 
 {
 	// Read Request-Line and extract Method, URL and HTTP version
 #define	MAX_BUFFER_LENGTH					8192
-#define CHECK_REQUEST_LINE_VALIDITY			0
-#define USE_NEW_REQUESTLINE_PARSING_METHOD	0
 
 	sLONG			bufferSize = MAX_BUFFER_LENGTH;
 	char *			buffer = (char *)XBOX::vMalloc (bufferSize + 1, 0);
@@ -131,7 +130,9 @@ XBOX::VError VHTTPRequest::ReadFromEndPoint (XBOX::VEndPoint& inEndPoint, uLONG 
 #elif DEPRECATED_IPV4_API_SHOULD_NOT_COMPILE
 	#error NEED AN IP V6 UPDATE
 #endif
-	
+
+	fIsSSL = dynamic_cast<VTCPEndPoint &>(inEndPoint).IsSSL();
+
 	XBOX::StErrorContextInstaller errorContext (VE_SRVR_TOO_MANY_SOCKETS_FOR_SELECT_IO,
 												VE_SRVR_READ_FAILED,
 												VE_SRVR_CONNECTION_FAILED,
@@ -274,82 +275,16 @@ XBOX::VError VHTTPRequest::ReadFromEndPoint (XBOX::VEndPoint& inEndPoint, uLONG 
 						}
 						else
 						{
-#if CHECK_REQUEST_LINE_VALIDITY
-							if (HTTPProtocol::IsValidRequestLine (fRequestLine))
-#endif
-							{
-								const UniChar *	lineBuffer = fRequestLine.GetCPointer();
-								const sLONG		lineLength = fRequestLine.GetLength();
-
-#if USE_NEW_REQUESTLINE_PARSING_METHOD
-								fParsingError = HTTPProtocol::ReadRequestLine (lineBuffer, lineLength, fRequestMethod, fRawURL, fHTTPVersion);
-								if (XBOX::VE_OK != fParsingError)
-									break;
-
-								fURL.FromString (fRawURL);
-								XBOX::VURL::Decode (fURL);
-
-								XBOX::VURL url;
-								url.FromString (fURL, false);
-								url.GetPath (fURLPath, eURL_POSIX_STYLE, false);
-								url.GetQuery (fURLQuery, false);
-
-								fParsingState = PS_ReadingHeaders;
-#else
-								fRequestMethod = HTTPProtocol::GetMethodFromRequestLine (lineBuffer, lineLength);
-								if (fRequestMethod != HTTP_UNKNOWN)
-								{
-									if (HTTPProtocol::GetRequestURIFromRequestLine (lineBuffer, lineLength, fRawURL, false))
-									{
-										fURL.FromString (fRawURL);
-										XBOX::VURL::Decode (fURL);
-										fHTTPVersion = HTTPProtocol::GetVersionFromRequestLine (lineBuffer, lineLength);
-										if (fHTTPVersion == VERSION_UNSUPPORTED)
-										{
-											fParsingError = VE_HTTP_PROTOCOL_HTTP_VERSION_NOT_SUPPORTED;
-											break;
-										}
-
-										XBOX::VURL url;
-										url.FromString (fURL, false);
-										url.GetPath (fURLPath, eURL_POSIX_STYLE, false);
-										url.GetQuery (fURLQuery, false);
-
-										fParsingState = PS_ReadingHeaders;
-									}
-									else
-									{
-										XBOX::VString errorString (CVSTR ("Cannot extract URI from Request Line !!:<br />"));
-										errorString.AppendString (fRequestLine);
-										fParsingError = VHTTPServer::ThrowError (VE_HTTP_PROTOCOL_BAD_REQUEST, errorString);
-										break;
-									}
-								}
-								else
-								{
-									/*
-									YT 02-May-2011 - RFC2616 compliance
-									Reference: RFC2616 chapter: 5.1.1 Method
-									[...]
-									An origin server SHOULD return the status code 405 (Method Not Allowed)
-									if the method is known by the origin server but not allowed for the
-									requested resource, and 501 (Not Implemented) if the method is
-									unrecognized or not implemented by the origin server.
-									*/
-									fParsingError = VE_HTTP_PROTOCOL_NOT_IMPLEMENTED;
-									break;
-								}
-#endif
-							}
-#if CHECK_REQUEST_LINE_VALIDITY
-							else
-							{
-								XBOX::VString errorString (CVSTR ("Request Line validation failed !!:<br />"));
-								errorString.AppendString (fRequestLine);
-								fParsingError = VHTTPServer::ThrowError (VE_HTTP_PROTOCOL_BAD_REQUEST, errorString);
+							fParsingError = HTTPProtocol::ReadRequestLine (fRequestLine, fRequestMethod, fRawURL, fHTTPVersion, true /*verifyRequestLineValidity*/);
+							if (XBOX::VE_OK != fParsingError)
 								break;
-							}
-#endif
+
+							HTTPProtocol::ParseURL (fRawURL, fURL, fURLPath, fURLQuery);
+
+							fParsingState = PS_ReadingHeaders;
+
+							if ((NULL != endHeaderPtr) && (endLinePtr == endHeaderPtr))
+								stopReadingSocket = true;
 						}
 					}
 					else
@@ -458,7 +393,7 @@ XBOX::VError VHTTPRequest::ReadFromEndPoint (XBOX::VEndPoint& inEndPoint, uLONG 
 							bodyContentSize += unreadBytes;
 							bufferOffset = unreadBytes = 0;
 
-							if (contentLength > 0 && bodyContentSize == contentLength)
+							if ((contentLength > 0) && (bodyContentSize >= contentLength))
 								stopReadingSocket = true;
 						}
 					}
@@ -636,8 +571,6 @@ XBOX::VError VHTTPRequest::ReadFromEndPoint (XBOX::VEndPoint& inEndPoint, uLONG 
 	return endPointError;
 
 #undef MAX_BUFFER_LENGTH
-#undef CHECK_REQUEST_LINE_VALIDITY
-#undef USE_NEW_REQUESTLINE_PARSING_METHOD
 }
 
 

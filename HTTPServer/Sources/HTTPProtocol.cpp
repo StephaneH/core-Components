@@ -26,7 +26,7 @@
 //--------------------------------------------------------------------------------------------------
 
 
-const XBOX::VString STRING_REQUEST_VALIDATION_PATTERN	= CVSTR ("^([A-Z]{3,7}) .* HTTP/[0-9]{1,}.[0-9]{1,}$");
+const XBOX::VString STRING_REQUEST_VALIDATION_PATTERN	= CVSTR ("^([A-Za-z]{1,}) .* HTTP/[0-9]{1,}.[0-9]{1,}$");
 
 
 typedef std::vector <std::pair<XBOX::VString, Real> > VectorOfHeadersWithQFactors;
@@ -604,10 +604,17 @@ bool HTTPProtocol::GetRequestURIFromRequestLine (const UniChar *inBuffer, sLONG 
 }
 
 
-XBOX::VError HTTPProtocol::ReadRequestLine (const XBOX::VString& inRequestLine, HTTPRequestMethod& outMethod, XBOX::VString& outURI, HTTPVersion& outVersion)
+XBOX::VError HTTPProtocol::ReadRequestLine (const XBOX::VString& inRequestLine, HTTPRequestMethod& outMethod, XBOX::VString& outURI, HTTPVersion& outVersion, bool inCheckValidity)
 {
 	if (inRequestLine.IsEmpty())
-		return VHTTPServer::ThrowError (VE_HTTP_PROTOCOL_BAD_REQUEST, STRING_EMPTY);
+		return VHTTPServer::ThrowError (VE_HTTP_PROTOCOL_BAD_REQUEST, CVSTR ("Request Line is empty !!:<br />"));
+
+	if (inCheckValidity && !HTTPProtocol::IsValidRequestLine (inRequestLine))
+	{
+		XBOX::VString errorString (CVSTR ("Request Line validation failed !!:<br />"));
+		errorString.AppendString (inRequestLine);
+		return VHTTPServer::ThrowError (VE_HTTP_PROTOCOL_BAD_REQUEST, errorString);
+	}
 
 	const UniChar *	bufferPtr = inRequestLine.GetCPointer();
 	XBOX::VString	methodString;
@@ -633,6 +640,25 @@ XBOX::VError HTTPProtocol::ReadRequestLine (const XBOX::VString& inRequestLine, 
 		return VE_HTTP_PROTOCOL_HTTP_VERSION_NOT_SUPPORTED; // VHTTPServer::ThrowError (VE_HTTP_PROTOCOL_HTTP_VERSION_NOT_SUPPORTED, STRING_EMPTY);
 
 	return XBOX::VE_OK;
+}
+
+
+void HTTPProtocol::ParseURL (const XBOX::VString& inRawURL, XBOX::VString& outDecodedURL, XBOX::VString& outURLPath, XBOX::VString& outURLQuery)
+{
+	outDecodedURL.FromString (inRawURL);
+	XBOX::VURL::Decode (outDecodedURL);
+
+	sLONG questionMarkPos = outDecodedURL.FindUniChar (CHAR_QUESTION_MARK);
+	if (questionMarkPos > 0)
+	{
+		outDecodedURL.GetSubString (1, questionMarkPos - 1, outURLPath);
+		outDecodedURL.GetSubString (questionMarkPos + 1, outDecodedURL.GetLength() - questionMarkPos, outURLQuery);
+	}
+	else
+	{
+		outURLPath.FromString (outDecodedURL);
+		outURLQuery.Clear();
+	}
 }
 
 

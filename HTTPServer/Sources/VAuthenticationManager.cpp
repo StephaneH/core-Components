@@ -504,6 +504,47 @@ XBOX::VError VAuthenticationManager::CheckAndValidateAuthentication (IHTTPRespon
 }
 
 
+XBOX::VError VAuthenticationManager::CheckAdminAccessGranted (IHTTPResponse *ioResponse)
+{
+	XBOX::VError				error = XBOX::VE_OK;
+	VAuthenticationInfos *		authInfos = dynamic_cast<VAuthenticationInfos *>(ioResponse->GetRequest().GetAuthenticationInfos());
+	HTTPAuthenticationMethod	foundAuthMethod = authInfos->GetAuthenticationMethod();
+	HTTPAuthenticationMethod	wantedAuthMethod = AUTH_NONE;
+	XBOX::VString				wantedAuthRealm;
+
+	if (NULL != fSecurityManager)
+	{
+		VHTTPResponse *		response = dynamic_cast<VHTTPResponse *>(ioResponse);
+		CUAGDirectory *		uagDirectory = fSecurityManager->GetUserDirectory();
+		CUAGGroup *			adminGroup = (uagDirectory) ? uagDirectory->RetainSpecialGroup (CUAGDirectory::AdminGroup) : NULL;
+		CUAGSession *		uagSession = (NULL != response) ? ioResponse->GetRequest().GetAuthenticationInfos()->GetUAGSession() : NULL;
+
+		if ((NULL != uagDirectory) && (NULL != adminGroup) && ((NULL == uagSession) || !uagSession->BelongsTo (adminGroup)))
+		{
+			VVirtualHost *	virtualHost = dynamic_cast<VVirtualHost *>(ioResponse->GetVirtualHost());
+
+			wantedAuthMethod = virtualHost->GetProject()->GetSettings()->GetDefaultAuthType();
+			wantedAuthRealm.FromString (virtualHost->GetProject()->GetSettings()->GetDefaultRealm());
+
+			if (wantedAuthMethod == AUTH_NONE)
+				wantedAuthMethod = AUTH_BASIC;
+
+			if (wantedAuthRealm.IsEmpty())
+				wantedAuthRealm.FromCString ("Wakanda");
+
+			ioResponse->SetWantedAuthMethod (wantedAuthMethod);
+			ioResponse->SetWantedAuthRealm (wantedAuthRealm);
+
+			error = VE_HTTP_PROTOCOL_UNAUTHORIZED;
+		}
+
+		XBOX::ReleaseRefCountable (&adminGroup);
+	}
+
+	return error;
+}
+
+
 XBOX::VError VAuthenticationManager::SetAuthorizationHeader (IHTTPResponse *ioResponse)
 {
 	VHTTPResponse *	response = dynamic_cast<VHTTPResponse *>(ioResponse);

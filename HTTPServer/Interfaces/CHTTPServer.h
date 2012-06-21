@@ -183,6 +183,8 @@ public:
 	virtual const XBOX::VError				GetParsingError() const = 0 ;
 	virtual bool							IsParsingComplete() const = 0;
 	virtual const IHTMLForm *				GetHTMLForm() const = 0;
+	virtual bool							IsSSL() const = 0;
+
 };
 
 

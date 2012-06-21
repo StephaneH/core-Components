@@ -127,7 +127,7 @@ namespace RIASettingsKeys
 		CREATE_BAGKEY_WITH_DEFAULT_SCALAR (maximumRequestsByConnection, XBOX::VLong, sLONG, DEFAULT_KEEP_ALIVE_MAX_CONNECTIONS);
 		CREATE_BAGKEY_WITH_DEFAULT_SCALAR (maximumTimeout, XBOX::VLong, sLONG, DEFAULT_KEEP_ALIVE_TIMEOUT);
 		CREATE_BAGKEY_WITH_DEFAULT (logFormat, XBOX::VString, L"No Log File");
-		CREATE_BAGKEY_WITH_DEFAULT (logFolderPath, XBOX::VString, HTTP_SERVER_LOG_FILE_PATH);
+		CREATE_BAGKEY_WITH_DEFAULT (logPath, XBOX::VString, HTTP_SERVER_LOG_FILE_PATH);
 		CREATE_BAGKEY_WITH_DEFAULT (logFileName, XBOX::VString, HTTP_SERVER_LOG_FILE_NAME);
 		CREATE_BAGKEY_WITH_DEFAULT_SCALAR (logMaxSize, XBOX::VLong, sLONG, DEFAULT_LOG_FILE_MAX_SIZE);
 
@@ -218,7 +218,11 @@ void BuildFolderPath (const XBOX::VFilePath& inBaseFolder, const XBOX::VString& 
 	{
 		XBOX::VString	pathString (inPath);
 		
-		if (pathString[0] == CHAR_SOLIDUS) // POSIX Path ?
+		if ((pathString[0] == CHAR_SOLIDUS) // POSIX Path ?
+#if VERSIONWIN
+			|| ((pathString.GetLength() > 2) && (pathString[1] == CHAR_COLON) && (pathString[2] == CHAR_SOLIDUS)) // POSIX path like c:/blahblah/
+#endif
+		)
 		{
 			if (!pathString.IsEmpty() && (pathString[pathString.GetLength()-1] != CHAR_SOLIDUS))
 				pathString.AppendUniChar (CHAR_SOLIDUS);
@@ -854,7 +858,7 @@ XBOX::VError VHTTPServerProjectSettings::LoadFromBag (const XBOX::VValueBag *inB
 		fLogFormat = HTTPServerTools::GetLogFormatFromName (RIASettingsKeys::HTTP::logFormat.Get (httpSettings));
 		SetLogRotationMode (LRC_ROTATE_ON_FILE_SIZE);
 		SetLogMaxSize (RIASettingsKeys::HTTP::logMaxSize.Get (httpSettings));
-		XBOX::VString logFolderPathString = RIASettingsKeys::HTTP::logFolderPath.Get (httpSettings);
+		XBOX::VString logFolderPathString = RIASettingsKeys::HTTP::logPath.Get (httpSettings);
 		BuildFolderPath (fProjectFolderPath, logFolderPathString, fLogFolderPath);
 		fLogFileName = RIASettingsKeys::HTTP::logFileName.Get (httpSettings);
 
@@ -988,7 +992,7 @@ XBOX::VError VHTTPServerProjectSettings::SaveToBag (XBOX::VValueBag *outBag)
 		posixPath.Clear();
 		fLogFolderPath.GetPosixPath (posixPath);
 		httpSettings->SetString (RIASettingsKeys::HTTP::logFormat, logFormatName);
-		httpSettings->SetString (RIASettingsKeys::HTTP::logFolderPath, posixPath);
+		httpSettings->SetString (RIASettingsKeys::HTTP::logPath, posixPath);
 		httpSettings->SetString (RIASettingsKeys::HTTP::logFileName, fLogFileName);
 		httpSettings->SetLong (RIASettingsKeys::HTTP::logMaxSize, GetLogMaxSize());
 

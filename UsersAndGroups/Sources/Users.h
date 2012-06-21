@@ -83,9 +83,9 @@ class UAGSession : public VComponentImp<CUAGSession>
 		VError BuildDependences();
 		VError BuildDependences(CUAGGroupVector& groups);
 
-		virtual bool BelongsTo(const XBOX::VUUID& inGroupID);
+		virtual bool BelongsTo(const XBOX::VUUID& inGroupID, bool checkNoAdmin = true);
 
-		virtual bool BelongsTo(CUAGGroup* inGroup);
+		virtual bool BelongsTo(CUAGGroup* inGroup, bool checkNoAdmin = true);
 
 		virtual bool Matches(const XBOX::VUUID& inUserID);
 

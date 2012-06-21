@@ -130,6 +130,9 @@ public:
 	void							SetSecurityManager (CSecurityManager *inSecurityManager);
 	const CSecurityManager *		GetSecurityManager() const { return fSecurityManager; }
 
+	/* Used to check user below to AdminGroup to grant access to specail URLs /debugInfos, /cache */
+	XBOX::VError					CheckAdminAccessGranted (IHTTPResponse *ioResponse);
+
 private:
 	bool							_ValidateAuthentication (IAuthenticationInfos *ioAuthenticationInfos);
 

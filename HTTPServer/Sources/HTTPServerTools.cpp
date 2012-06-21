@@ -912,9 +912,9 @@ EHTTPServerLogToken GetLogTokenFromName (const XBOX::VString& inTokenName)
 		return LOG_TOKEN_METHOD;
 	else if (HTTPServerTools::EqualASCIICString (inTokenName, "cs-uri"))
 		return LOG_TOKEN_ELF_URI;
-	else if (HTTPServerTools::EqualASCIICString (inTokenName, "bytes_sent"))
+	else if (HTTPServerTools::EqualASCIICString (inTokenName, "bytes_sent") || HTTPServerTools::EqualASCIICString (inTokenName, "bytes-sent"))
 		return LOG_TOKEN_BYTES_SENT;
-	else if (HTTPServerTools::EqualASCIICString (inTokenName, "time-taken"))
+	else if (HTTPServerTools::EqualASCIICString (inTokenName, "time-taken") || HTTPServerTools::EqualASCIICString (inTokenName, "transfert_time"))
 		return LOG_TOKEN_TRANSFER_TIME;
 	else if (HTTPServerTools::EqualASCIICString (inTokenName, "agent"))
 		return LOG_TOKEN_AGENT;
@@ -924,11 +924,11 @@ EHTTPServerLogToken GetLogTokenFromName (const XBOX::VString& inTokenName)
 		return LOG_TOKEN_REFERER;
 	else if (HTTPServerTools::EqualASCIICString (inTokenName, "connection_id"))
 		return LOG_TOKEN_CONNECTION_ID;
-	else if (HTTPServerTools::EqualASCIICString (inTokenName, "sc-status"))
+	else if (HTTPServerTools::EqualASCIICString (inTokenName, "sc-status") || HTTPServerTools::EqualASCIICString (inTokenName, "status"))
 		return LOG_TOKEN_STATUS;
 	else if (HTTPServerTools::EqualASCIICString (inTokenName, "c-ip"))
 		return LOG_TOKEN_ELF_C_IP;
-	else if (HTTPServerTools::EqualASCIICString (inTokenName, "cs-cdns"))
+	else if (HTTPServerTools::EqualASCIICString (inTokenName, "cs-cdns") || HTTPServerTools::EqualASCIICString (inTokenName, "c-dns"))
 		return LOG_TOKEN_ELF_C_DNS;
 	else if (HTTPServerTools::EqualASCIICString (inTokenName, "cs-uri-stem"))
 		return LOG_TOKEN_ELF_CS_URI_STEM;

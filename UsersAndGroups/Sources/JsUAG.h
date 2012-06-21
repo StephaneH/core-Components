@@ -37,6 +37,7 @@ public:
 	static void _setLoginListener(XBOX::VJSParms_callStaticFunction& ioParms, CUAGDirectory* inDirectory); // bool : setLoginListener( string listenerRef)
 	static void _getLoginListener(XBOX::VJSParms_callStaticFunction& ioParms, CUAGDirectory* inDirectory); // string : getLoginListener()
 	static void _computeHA1(XBOX::VJSParms_callStaticFunction& ioParms, CUAGDirectory* inDirectory); // string : computeHA1(userName, password, domainName || "Wakanda")
+	static void _hasAdministrator(XBOX::VJSParms_callStaticFunction& ioParms, CUAGDirectory* inDirectory); // bool : hasAdministrator()
 	
 	static void _getInternalStore( XBOX::VJSParms_getProperty& ioParms, CUAGDirectory* inDirectory);
 };

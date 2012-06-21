@@ -259,6 +259,10 @@ void VJSDirectory::_computeHA1(VJSParms_callStaticFunction& ioParms, CUAGDirecto
 }
 
 
+void VJSDirectory::_hasAdministrator(VJSParms_callStaticFunction& ioParms, CUAGDirectory* inDirectory)
+{
+	ioParms.ReturnBool(! inDirectory->NoAdmin());
+}
 
 
 void VJSDirectory::_getInternalStore( XBOX::VJSParms_getProperty& ioParms, CUAGDirectory* inDirectory)
@@ -287,6 +291,7 @@ void VJSDirectory::GetDefinition( ClassDefinition& outDefinition)
 		{ "setLoginListener", js_callStaticFunction<_setLoginListener>, JS4D::PropertyAttributeReadOnly | JS4D::PropertyAttributeDontEnum | JS4D::PropertyAttributeDontDelete },
 		{ "getLoginListener", js_callStaticFunction<_getLoginListener>, JS4D::PropertyAttributeReadOnly | JS4D::PropertyAttributeDontEnum | JS4D::PropertyAttributeDontDelete },
 		{ "computeHA1", js_callStaticFunction<_computeHA1>, JS4D::PropertyAttributeReadOnly | JS4D::PropertyAttributeDontEnum | JS4D::PropertyAttributeDontDelete },
+		{ "hasAdministrator", js_callStaticFunction<_hasAdministrator>, JS4D::PropertyAttributeReadOnly | JS4D::PropertyAttributeDontEnum | JS4D::PropertyAttributeDontDelete },
 		{ 0, 0, 0}
 	};
 

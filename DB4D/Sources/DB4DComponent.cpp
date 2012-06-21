@@ -6661,7 +6661,7 @@ CDB4DEntityRecord* VDB4DSelection::LoadEntity( RecIDType inEntityIndex, DB4D_Way
 		if (fModel != nil)
 		{
 			EntityModel* xmodel = VImpCreator<EntityModel>::GetImpObject(fModel);
-			if (okperm(context, xmodel, DB4D_EM_Read_Perm))
+			if (okperm(context, xmodel, DB4D_EM_Read_Perm) || okperm(context, xmodel, DB4D_EM_Update_Perm) || okperm(context, xmodel, DB4D_EM_Delete_Perm))
 			{
 				FicheInMem *fiche = LoadFicheInMem( recordID, HowToLock, context, false, outLockWasKeptInTrans);
 				if (fiche != nil)
