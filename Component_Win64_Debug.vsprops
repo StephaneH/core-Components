@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="Windows-1252"?>
+<VisualStudioPropertySheet
+	ProjectType="Visual C++"
+	Version="8.00"
+	Name="Component Win64 Debug"
+	OutputDirectory="$(ProjectDir)..\..\..\Components\$(PlatformName)\"
+	IntermediateDirectory="$(ProjectDir)..\..\..\Components_Obj\$(PlatformName)\$(ConfigurationName)\$(TargetName)"
+	InheritedPropertySheets=".\Component_Base.vsprops"
+	>
+	<Tool
+		Name="VCCLCompilerTool"
+		AdditionalOptions="/MP"
+		Optimization="0"
+		OmitFramePointers="false"
+		PreprocessorDefinitions="_WIN64;WIN64;_DEBUG"
+		MinimalRebuild="false"
+		ExceptionHandling="2"
+		BasicRuntimeChecks="3"
+		RuntimeLibrary="3"
+		TreatWChar_tAsBuiltInType="false"
+		UsePrecompiledHeader="2"
+		PrecompiledHeaderThrough="$(ProjectDir)Compenent.h"
+		WarningLevel="3"
+		DebugInformationFormat="3"
+		CallingConvention="2"
+	/>
+	<Tool
+		Name="VCLinkerTool"
+		OutputFile="$(OutDir)$(ParentName)$(ConfigurationName).bundle\$(InputName)$(ConfigurationName).dll"
+		LinkIncremental="1"
+		GenerateDebugInformation="true"
+		GenerateMapFile="true"
+		MapFileName="$(TargetDir)$(TargetName).map"
+		SubSystem="2"
+		LargeAddressAware="2"
+		ImportLibrary="$(IntDir)/$(TargetName).lib"
+		TargetMachine="17"
+	/>
+	<Tool
+		Name="VCPreBuildEventTool"
+		ExcludedFromBuild="true"
+	/>
+	<Tool
+		Name="VCPreLinkEventTool"
+		ExcludedFromBuild="true"
+	/>
+</VisualStudioPropertySheet>

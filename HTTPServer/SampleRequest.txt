@@ -1,0 +1,24 @@
+POST /getHTMLFormSize HTTP/1.1
+Host: 127.0.0.1:8085
+User-Agent: Mozilla/5.0 (Windows; U; Windows NT 6.1; fr; rv:1.9.2.13) Gecko/20101203 Firefox/3.6.13
+Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8,application/json
+Accept-Language: fr,fr-fr;q=0.8,en-us;q=0.5,en;q=0.3
+Accept-Encoding: gzip,deflate
+Accept-Charset: ISO-8859-1,utf-8;q=0.7,*;q=0.7
+Keep-Alive: 115
+Connection: keep-alive
+Referer: http://127.0.0.1:8085/app1/putfile.html
+Content-Type: multipart/form-data; boundary=---------------------------41184676334
+Content-Length: 358
+
+-----------------------------41184676334
+Content-Disposition: form-data; name="fileBlob1"; filename="fileTxt.txt"
+Content-Type: text/plain
+
+Sample Text
+-----------------------------41184676334
+Content-Disposition: form-data; name="fileBlob2"; filename="fileTxt.html"
+Content-Type: text/html
+
+Sample Text
+-----------------------------41184676334--

@@ -1,0 +1,74 @@
+How to compile lex files
+
+1/ System Property -> environment variables
+Add in the "path" variable a path to the Bison folder
+
+2/ Visual Studio
+Select any project
+Right clic -> Custom Build Rule Files
+
+Clic on "Find Existing" button
+Select the "GNU Tools rules.rules" file near the project
+
+Validate the dialog
+
+3/ Check out the xxx.lexer.c files to allow flex to modify them
+
+4/ Select the "processing lex files" project and build it.
+.c files should have been generated beside the .lex files
+
+5/ Open System property windows, add new system variables
+   such as
+   C:\Program Files\GnuWin32\bin\bison.hairy
+   C:\Program Files\GnuWin32\bin\bison.simple
+
+
+
+
+
+The changements of the c files that lex gernerated
+1/  delete the following code
+ 
+   #ifndef YY_ALWAYS_INTERACTIVE
+   #ifndef YY_NEVER_INTERACTIVE
+    extern int isatty YY_PROTO(( int )); 
+   #endif
+   #endif
+   
+2/ replace 
+   #include <unistd.h>  
+   with 
+   #include <io.h>
+  
+  
+   
+3/ replace 
+
+   #include <stdio.h>
+   
+   with the following code. For js,php,xml...generated c files, the "CSS" should be replaced with js,php,xml.......
+   
+	#define yylex  CSSyylex
+	#define yyrestart   CSSyyrestart 
+	#define yy_switch_to_buffer  CSSyy_switch_to_buffer
+	#define yy_load_buffer_state  CSSyy_load_buffer_state
+	#define yy_create_buffer  CSSyy_create_buffer
+	#define yy_delete_buffer  CSSyy_delete_buffe
+	#define yy_init_buffer  CSSyy_init_buffer
+	#define yy_flush_buffer CSSyy_flush_buffer
+	#define yy_scan_buffer CSSyy_scan_buffer
+	#define yy_scan_string CSSyy_scan_string
+	#define yy_scan_bytes CSSyy_scan_bytes
+	#define yywrap  CSSyywrap
+	#define yyin   CSSyyin 
+	#define yyout    CSSyyout 
+	#define cformer CSScformer
+
+
+	#include <stdio.h>
+	#include <stdlib.h>
+
+
+	#ifndef __GNUC__
+	#include <io.h>
+	#endif

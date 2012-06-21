@@ -1,0 +1,51 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+  Translation file for 4D products.
+  Copyright (C) 2008-2012 4D SAS.
+  This file is distributed under the same license as the 4D product package.
+-->
+
+<!DOCTYPE xliff PUBLIC "-//XLIFF//DTD XLIFF//EN" "http://www.oasis-open.org/committees/xliff/documents/xliff.dtd">
+
+<xliff version="1.0">
+  <file datatype="x-STR#" original="undefined" source-language="en-US" target-language="pt-BR" product-version="v13">
+    <header>
+      <note>The character &quot;%&quot; (out of a numerical context) is a meta-character that will be replaced (often by a numeric value) before the string is displayed</note>
+      <note>Text between less than (&lt;) and greater than (&gt;) symbols is a variable&apos;s name and must not be localised</note>
+      <note>\r, \t and \n are meta-characters.</note>
+    </header>
+    <body>
+      
+      <group resname="Code_Editor_Messages">
+        <trans-unit id="1" resname="SaveMessage">
+          <source>No column to import in table {TableName}</source>
+          <target>Não há colunas a importar na tabela {TableName}</target>
+        </trans-unit>
+        <trans-unit id="2" resname="SyntaxError">
+          <source>Syntax error</source>
+          <target>Erro de sintaxe</target>
+        </trans-unit>
+        <trans-unit id="3" resname="Browse">
+          <source>&lt;Browse...&gt;</source>
+          <target>&lt;Procurar...&gt;</target>
+        </trans-unit>        
+      </group>
+      
+      <group resname="JavaScript_Error_Messages">
+        <trans-unit id="4" resname="ExpectedIdentifier">
+          <source>Syntax error: expected identifier</source>
+          <target>Erro de sintaxe: se espera identificador</target>
+        </trans-unit>      	
+        <trans-unit id="5" resname="ExpectedLiteral">
+          <source>Syntax error: expected literal</source>
+          <target>Erro de sintaxe: se espera literal</target>
+        </trans-unit>      	
+        <trans-unit id="6" resname="IllegalLHS">
+          <source>Syntax error: illegal left-hand side</source>
+          <target>Erro de sintaxe: lado esquerdo ilegal</target>
+        </trans-unit>      	
+      </group>
+    </body>
+  </file>
+</xliff>

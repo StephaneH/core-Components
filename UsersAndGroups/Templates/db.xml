@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<UAG>
+	<user name="henri.martin" fullName="Henri Martin" password="111"/>
+	<user name="pascal.duval" fullName="Pascal Duval" password="222"/>
+	<user name="isabelle.dubois" fullName="Isabelle Dubois" password="333"/>
+	<user name="admin" fullName="Administrateur" password="xxx">
+		<group name="compta"/>
+		<group name="finances"/>
+	</user>
+	
+	<group name="compta">
+		<user name="henri.martin"/>
+		<user name="pascal.duval"/>
+		<group name="finances"/>
+	</group>
+	
+	<group name="finances">
+		<user name="isabelle.dubois"/>
+	</group>
+	
+</UAG>
