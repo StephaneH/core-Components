@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="Windows-1252"?>
+<VisualStudioPropertySheet
+	ProjectType="Visual C++"
+	Version="8.00"
+	Name="Component Base"
+	>
+	<Tool
+		Name="VCCLCompilerTool"
+		AdditionalIncludeDirectories="&quot;$(ProjectDir)\..\..\Headers&quot;;&quot;$(ProjectDir)\..\..\Sources&quot;;..\..;..\..\..\;..\..\..\..\..\XToolbox\WAK2"
+		PreprocessorDefinitions="_CRT_SECURE_NO_DEPRECATE;_HAS_ITERATOR_DEBUGGING=0;_BIND_TO_CURRENT_CRT_VERSION=1"
+	/>
+</VisualStudioPropertySheet>
