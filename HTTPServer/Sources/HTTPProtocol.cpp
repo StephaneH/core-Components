@@ -26,7 +26,7 @@
 //--------------------------------------------------------------------------------------------------
 
 
-const XBOX::VString STRING_REQUEST_VALIDATION_PATTERN	= CVSTR ("^([A-Z]{3,7}) .* HTTP/[0-9]{1}.[0-9]{1}");
+const XBOX::VString STRING_REQUEST_VALIDATION_PATTERN	= CVSTR ("^([A-Z]{3,7}) .* HTTP/[0-9]{1,}.[0-9]{1,}$");
 
 
 typedef std::vector <std::pair<XBOX::VString, Real> > VectorOfHeadersWithQFactors;
@@ -604,12 +604,12 @@ bool HTTPProtocol::GetRequestURIFromRequestLine (const UniChar *inBuffer, sLONG 
 }
 
 
-XBOX::VError HTTPProtocol::ReadRequestLine (const UniChar *inBuffer, sLONG inBufferSize, HTTPRequestMethod& outMethod, XBOX::VString& outURI, HTTPVersion& outVersion)
+XBOX::VError HTTPProtocol::ReadRequestLine (const XBOX::VString& inRequestLine, HTTPRequestMethod& outMethod, XBOX::VString& outURI, HTTPVersion& outVersion)
 {
-	if ((NULL == inBuffer) || (inBufferSize < 3))
+	if (inRequestLine.IsEmpty())
 		return VHTTPServer::ThrowError (VE_HTTP_PROTOCOL_BAD_REQUEST, STRING_EMPTY);
 
-	const UniChar *	bufferPtr = inBuffer;
+	const UniChar *	bufferPtr = inRequestLine.GetCPointer();
 	XBOX::VString	methodString;
 	XBOX::VString	versionString;
 
@@ -621,16 +621,37 @@ XBOX::VError HTTPProtocol::ReadRequestLine (const UniChar *inBuffer, sLONG inBuf
 	while ((NULL != *bufferPtr) && !std::isspace (*bufferPtr)) { methodString.AppendUniChar (*bufferPtr); ++bufferPtr; }
 	outMethod = GetMethodFromRequestLine (methodString.GetCPointer(), methodString.GetLength());
 	if (outMethod == HTTP_UNKNOWN)
-		return VE_HTTP_PROTOCOL_NOT_IMPLEMENTED; //VHTTPServer::ThrowError (VE_HTTP_PROTOCOL_NOT_IMPLEMENTED, STRING_EMPTY);
+		return VE_HTTP_PROTOCOL_NOT_IMPLEMENTED; // VHTTPServer::ThrowError (VE_HTTP_PROTOCOL_NOT_IMPLEMENTED, STRING_EMPTY);
 	while ((NULL != *bufferPtr) && std::isspace (*bufferPtr)) { ++bufferPtr; }
 	while ((NULL != *bufferPtr) && !std::isspace (*bufferPtr)) { outURI.AppendUniChar (*bufferPtr); ++bufferPtr; }
 	if (outURI.IsEmpty())
-		return VHTTPServer::ThrowError (VE_HTTP_PROTOCOL_BAD_REQUEST, STRING_EMPTY);
+		return VE_HTTP_PROTOCOL_BAD_REQUEST;	// VHTTPServer::ThrowError (VE_HTTP_PROTOCOL_BAD_REQUEST, STRING_EMPTY);
 	while ((NULL != *bufferPtr) && std::isspace (*bufferPtr)) { ++bufferPtr; }
 	while ((NULL != *bufferPtr) && !std::isspace (*bufferPtr)) { versionString.AppendUniChar (*bufferPtr); ++bufferPtr; }
 	outVersion = GetVersionFromRequestLine (versionString.GetCPointer(), versionString.GetLength());
 	if (outVersion == VERSION_UNSUPPORTED)
-		return VE_HTTP_PROTOCOL_HTTP_VERSION_NOT_SUPPORTED; //VHTTPServer::ThrowError (VE_HTTP_PROTOCOL_HTTP_VERSION_NOT_SUPPORTED, STRING_EMPTY);
+		return VE_HTTP_PROTOCOL_HTTP_VERSION_NOT_SUPPORTED; // VHTTPServer::ThrowError (VE_HTTP_PROTOCOL_HTTP_VERSION_NOT_SUPPORTED, STRING_EMPTY);
+
+	return XBOX::VE_OK;
+}
+
+
+/* static */
+XBOX::VError HTTPProtocol::ReadHeaderLine (const XBOX::VString& inLineString, XBOX::VString& outHeaderName, XBOX::VString& outHeaderValue)
+{
+	if (inLineString.IsEmpty())
+		return XBOX::VE_OK;
+
+	const UniChar *	bufferPtr = inLineString.GetCPointer();
+	const UniChar *	startPtr = bufferPtr;
+
+	while ((NULL != *bufferPtr) && std::isspace (*bufferPtr)) { ++startPtr; ++bufferPtr; }
+	while ((NULL != *bufferPtr) && !std::isspace (*bufferPtr) && (*bufferPtr != ':')) { ++bufferPtr; }
+	outHeaderName.FromBlock (startPtr, (bufferPtr - startPtr) * sizeof(UniChar), VTC_UTF_16);
+
+	startPtr = bufferPtr;
+	while ((NULL != *bufferPtr) && (std::isspace (*bufferPtr) || (*bufferPtr == ':'))) { ++startPtr; ++bufferPtr; }
+	outHeaderValue.FromUniCString (startPtr);
 
 	return XBOX::VE_OK;
 }

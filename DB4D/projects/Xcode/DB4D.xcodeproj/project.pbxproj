@@ -224,63 +224,63 @@
 			isa = PBXContainerItemProxy;
 			containerPortal = F412FB3015625264000BE0C0 /* JavaScriptCore.xcodeproj */;
 			proxyType = 2;
-			remoteGlobalIDString = 932F5BD90822A1C700736975 /* JavaScriptCore.framework */;
+			remoteGlobalIDString = 932F5BD90822A1C700736975;
 			remoteInfo = JavaScriptCore;
 		};
 		F412FB3F15625264000BE0C0 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = F412FB3015625264000BE0C0 /* JavaScriptCore.xcodeproj */;
 			proxyType = 2;
-			remoteGlobalIDString = F4E88D4215345D8700EABD46 /* JavaScriptCore.framework */;
+			remoteGlobalIDString = F4E88D4215345D8700EABD46;
 			remoteInfo = "JavaScriptCore x86_64";
 		};
 		F412FB4115625264000BE0C0 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = F412FB3015625264000BE0C0 /* JavaScriptCore.xcodeproj */;
 			proxyType = 2;
-			remoteGlobalIDString = 141211200A48793C00480255 /* minidom */;
+			remoteGlobalIDString = 141211200A48793C00480255;
 			remoteInfo = minidom;
 		};
 		F412FB4315625264000BE0C0 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = F412FB3015625264000BE0C0 /* JavaScriptCore.xcodeproj */;
 			proxyType = 2;
-			remoteGlobalIDString = 14BD59BF0A3E8F9000BAF59C /* testapi */;
+			remoteGlobalIDString = 14BD59BF0A3E8F9000BAF59C;
 			remoteInfo = testapi;
 		};
 		F412FB4515625264000BE0C0 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = F412FB3015625264000BE0C0 /* JavaScriptCore.xcodeproj */;
 			proxyType = 2;
-			remoteGlobalIDString = 932F5BE10822A1C700736975 /* jsc */;
+			remoteGlobalIDString = 932F5BE10822A1C700736975;
 			remoteInfo = jsc;
 		};
 		F412FB4715625264000BE0C0 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = F412FB3015625264000BE0C0 /* JavaScriptCore.xcodeproj */;
 			proxyType = 2;
-			remoteGlobalIDString = F435DA5615343B64000CEE94 /* 4DJavaScriptCore.framework */;
+			remoteGlobalIDString = F435DA5615343B64000CEE94;
 			remoteInfo = 4DJavaScriptCore;
 		};
 		F412FB4915625264000BE0C0 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = F412FB3015625264000BE0C0 /* JavaScriptCore.xcodeproj */;
 			proxyType = 2;
-			remoteGlobalIDString = F435DA6C15343BFD000CEE94 /* 4DJavaScriptCore.framework */;
+			remoteGlobalIDString = F435DA6C15343BFD000CEE94;
 			remoteInfo = "4DJavaScriptCore x86_64";
 		};
 		F412FB4B1562526D000BE0C0 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = F412FB3015625264000BE0C0 /* JavaScriptCore.xcodeproj */;
 			proxyType = 1;
-			remoteGlobalIDString = F435D81215343B64000CEE94 /* 4DJavaScriptCore */;
+			remoteGlobalIDString = F435D81215343B64000CEE94;
 			remoteInfo = 4DJavaScriptCore;
 		};
 		F412FB4D15625274000BE0C0 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = F412FB3015625264000BE0C0 /* JavaScriptCore.xcodeproj */;
 			proxyType = 1;
-			remoteGlobalIDString = F435DA6315343BFD000CEE94 /* 4DJavaScriptCore x86_64 */;
+			remoteGlobalIDString = F435DA6315343BFD000CEE94;
 			remoteInfo = "4DJavaScriptCore x86_64";
 		};
 		F4451FBA116482A1005984A9 /* PBXContainerItemProxy */ = {
@@ -1343,6 +1343,7 @@
 				GCC_PREFIX_HEADER = DB4D_Prefix.pch;
 				GCC_THREADSAFE_STATICS = NO;
 				HEADER_SEARCH_PATHS = (
+					"$(HEADER_SEARCH_PATHS_JSC)",
 					"$(HEADER_SEARCH_PATHS_XERCES)",
 					"$(HEADER_SEARCH_PATHS)",
 				);
@@ -1382,6 +1383,7 @@
 				GCC_THREADSAFE_STATICS = NO;
 				GCC_UNROLL_LOOPS = YES;
 				HEADER_SEARCH_PATHS = (
+					"$(HEADER_SEARCH_PATHS_JSC)",
 					"$(HEADER_SEARCH_PATHS_XERCES)",
 					"$(HEADER_SEARCH_PATHS)",
 				);
@@ -1415,6 +1417,7 @@
 				GCC_THREADSAFE_STATICS = NO;
 				GCC_UNROLL_LOOPS = YES;
 				HEADER_SEARCH_PATHS = (
+					"$(HEADER_SEARCH_PATHS_JSC)",
 					"$(HEADER_SEARCH_PATHS_XERCES)",
 					"$(HEADER_SEARCH_PATHS)",
 				);
@@ -1454,6 +1457,7 @@
 				GCC_PREFIX_HEADER = DB4D_Prefix.pch;
 				GCC_THREADSAFE_STATICS = NO;
 				HEADER_SEARCH_PATHS = (
+					"$(HEADER_SEARCH_PATHS_JSC)",
 					"$(HEADER_SEARCH_PATHS_XERCES)",
 					"$(HEADER_SEARCH_PATHS)",
 				);
@@ -1482,6 +1486,7 @@
 				GCC_THREADSAFE_STATICS = NO;
 				GCC_UNROLL_LOOPS = YES;
 				HEADER_SEARCH_PATHS = (
+					"$(HEADER_SEARCH_PATHS_JSC)",
 					"$(HEADER_SEARCH_PATHS_XERCES)",
 					"$(HEADER_SEARCH_PATHS)",
 				);

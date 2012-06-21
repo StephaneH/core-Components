@@ -153,7 +153,7 @@ public:
 	virtual Boolean IsSelectionEmpty() const = 0;
 	virtual bool FindString( const XBOX::VString& inToFind, bool inUp, bool inCaseSensitive, bool inWholeWord, sLONG inStartLineIndex, sLONG inStartOffset, bool inFindProtectedOnly, bool inWrap, bool inDoSelect = true ) = 0;
 	virtual void ReplaceAllText( const XBOX::VString& inToFind, const XBOX::VString& inToReplace ) = 0;
-	virtual void InsertText( const XBOX::VString& inString, bool inWithTokenization = false ) = 0;
+	virtual bool InsertText( const XBOX::VString& inString, bool inWithTokenization = false ) = 0;
 	virtual void SetLineText( sLONG inLineIndex, const XBOX::VString& inText ) = 0;
 	virtual void GetSelectedText( XBOX::VString& outString, bool inGetWholeWord = false ) = 0;
 	virtual void GetCodeText( XBOX::VString& outText, bool inForSave = true ) = 0;
