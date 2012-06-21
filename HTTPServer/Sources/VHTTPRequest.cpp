@@ -96,7 +96,7 @@ XBOX::VError VHTTPRequest::ReadFromEndPoint (XBOX::VEndPoint& inEndPoint, uLONG 
 #define USE_NEW_REQUESTLINE_PARSING_METHOD	0
 
 	sLONG			bufferSize = MAX_BUFFER_LENGTH;
-	char *			buffer = (char *)XBOX::vMalloc (bufferSize, 0);
+	char *			buffer = (char *)XBOX::vMalloc (bufferSize + 1, 0);
 
 	if (NULL == buffer)
 		return XBOX::VE_MEMORY_FULL;
@@ -169,6 +169,9 @@ XBOX::VError VHTTPRequest::ReadFromEndPoint (XBOX::VEndPoint& inEndPoint, uLONG 
 		VDebugTimer readTimer;
 #endif
 		endPointError = inEndPoint.Read (buffer + bufferOffset, (uLONG *)&bufferSize);
+		
+		if (fParsingState <= PS_ReadingHeaders)
+			buffer[bufferOffset + bufferSize] = '\0'; //  YT 29-May-2012 - ACI0076811
 
 		//jmo - tentatives de fix pour ne plus lire en boucle une socket sur laquelle le client a fait un shutdown...
 		if(VE_OK==endPointError && 0==bufferSize)
