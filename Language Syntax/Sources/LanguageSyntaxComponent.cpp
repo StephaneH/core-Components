@@ -1046,6 +1046,14 @@ void VLanguageSyntaxComponent::SetBreakPointManager( ISyntaxInterface* inSyntax,
 	}
 }
 
+void VLanguageSyntaxComponent::SetSQLTokenizer ( SQLTokenizeFuncPtr inPtr, const std::vector< XBOX::VString * >& vctrSQLKeywords, const std::vector< XBOX::VString * >& vctrSQLFunctions )
+{
+	if ( testAssert ( fSQLSyntax != NULL ) )
+	{
+		fSQLSyntax-> SetSQLTokenizer ( inPtr, vctrSQLKeywords, vctrSQLFunctions );
+	}
+}
+
 IDocumentParserManager *VLanguageSyntaxComponent::CreateDocumentParserManager()
 {
 	return new VDocumentParserManager();

@@ -90,9 +90,6 @@ private:
 protected:
 	bool							_ExtractAuthenticationInfos ();
 	bool							_AcceptIncomingDataSize (XBOX::VSize inSize);
-
-private:
-	VHTTPRequest&					operator = (const VHTTPRequest& inHTTPRequest);
 };
 
 

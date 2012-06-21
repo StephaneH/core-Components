@@ -18489,6 +18489,10 @@ VError DataTableChecker::CheckObjWithAddr(DataAddr4D ou, sLONG len, sLONG numobj
 						{
 							dftarget = target->CreateDataTable(nil, err, 0, &dfd, -1);
 						}
+						else
+						{
+							dftarget->SetSeqID(dfd.SeqNum_ID);
+						}
 						if (dftarget != nil)
 							dftarget->Release();
 					}

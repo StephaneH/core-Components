@@ -10465,6 +10465,17 @@ bool DataTableRegular::FreeMem(sLONG allocationBlockNumber, VSize combien, VSize
 
 }
 
+VError DataTableRegular::SetSeqID(const VUUIDBuffer& inID)
+{
+	if (fSeq != nil && fSeq != (AutoSeqNumber*)-1)
+	{
+		fSeq->Release();
+		fSeq = nil;
+	}
+	DFD.SeqNum_ID = inID;
+	setmodif(true, db, nil);
+	return VE_OK;
+}
 
 Blob4D* DataTableRegular::LoadBlobFromOutsideCache(const void* from, CreBlob_Code Code, VError& err, BaseTaskInfo* context)
 {

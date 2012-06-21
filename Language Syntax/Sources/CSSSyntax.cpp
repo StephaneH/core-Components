@@ -14,6 +14,7 @@
 * other than those specified in the applicable license is granted.
 */
 #include "LanguageSyntaxHeaders.h"
+#include "XML/VXML.h"
 #include "XML/Sources/VCSSParser.h"
 #include "CSSSyntax.h"
 //Ne sert pas et empeche la compil x64 #include "GUI/VGUI.h"

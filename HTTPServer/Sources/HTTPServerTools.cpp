@@ -437,7 +437,6 @@ void CopyUniString (UniChar* const target, const UniChar* const src)
 }
 
 
-inline
 void GetSubString (const XBOX::VString& inString, sLONG inFirst, sLONG inLast, XBOX::VString& outString)
 {
 	if (testAssert ((inFirst >= 0) && (inLast < inString.GetLength())))

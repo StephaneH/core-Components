@@ -1073,15 +1073,16 @@ bool EntityMethod::permissionMatch(DB4D_EM_Perm inPerm, CUAGSession* inSession) 
 void EntityMethod::ResolvePermissionsInheritance()
 {
 	VUUID xid;
-	fOwner->GetPermission(DB4D_EM_Execute_Perm, xid);
-	if (fExecutePerm.IsNull() && !xid.IsNull())
+	bool forced = false;
+	fOwner->GetPermission(DB4D_EM_Execute_Perm, xid, forced);
+	if ((fExecutePerm.IsNull() || forced) && !xid.IsNull())
 	{
 		fExecutePerm = xid;
 	}
 
 	VUUID pid;
-	fOwner->GetPermission(DB4D_EM_Promote_Perm, pid);
-	if (fPromotePerm.IsNull() && !pid.IsNull())
+	fOwner->GetPermission(DB4D_EM_Promote_Perm, pid, forced);
+	if ((fPromotePerm.IsNull() || forced) && !pid.IsNull())
 	{
 		fPromotePerm = pid;
 	}
@@ -3694,6 +3695,7 @@ EntityModel::EntityModel(Base4D* inOwner, Table* inMainTable)
 	fPublishAsGlobal = false;
 	fPublishAsGlobalDefined = false;
 	fAllowOverrideStamp = false;
+	fill(&fForced[DB4D_EM_None_Perm], &fForced[DB4D_EM_Promote_Perm+1], 0);
 }
 
 
@@ -6566,12 +6568,13 @@ void EntityModel::ClearCacheTableEM()
 
 
 
-VError EntityModel::SetPermission(DB4D_EM_Perm inPerm, const VUUID& inGroupID)
+VError EntityModel::SetPermission(DB4D_EM_Perm inPerm, const VUUID& inGroupID, bool forced)
 {
 	VError err = VE_OK;
 	if (inPerm >= DB4D_EM_Read_Perm && inPerm <= DB4D_EM_Promote_Perm)
 	{
 		fPerms[inPerm] = inGroupID;
+		fForced[inPerm] = forced ? 1 : 0;
 	}
 	else
 		err = ThrowError(VE_DB4D_WRONG_PERM_REF);
@@ -6579,12 +6582,13 @@ VError EntityModel::SetPermission(DB4D_EM_Perm inPerm, const VUUID& inGroupID)
 	return err;
 }
 
-VError EntityModel::GetPermission(DB4D_EM_Perm inPerm, VUUID& outGroupID) const
+VError EntityModel::GetPermission(DB4D_EM_Perm inPerm, VUUID& outGroupID, bool& forced) const
 {
 	VError err = VE_OK;
 	if (inPerm >= DB4D_EM_Read_Perm && inPerm <= DB4D_EM_Promote_Perm)
 	{
 		outGroupID = fPerms[inPerm];
+		forced = fForced[inPerm] == 1 ? true : false;
 	}
 	else
 		err = ThrowError(VE_DB4D_WRONG_PERM_REF);
@@ -6893,10 +6897,12 @@ void EntityModel::ResolvePermissionsInheritance(EntityModelCatalog* catalog)
 	for (DB4D_EM_Perm perm = DB4D_EM_Read_Perm; perm <= DB4D_EM_Promote_Perm; perm = (DB4D_EM_Perm)(perm+1))
 	{
 		VUUID xid;
-		catalog->GetPermission(perm, xid);
-		if (fPerms[perm].IsNull() && !xid.IsNull())
+		bool forced = false;
+		catalog->GetPermission(perm, xid, forced);
+		if ((fPerms[perm].IsNull() || forced) && !xid.IsNull())
 		{
 			fPerms[perm] = xid;
+			fForced[perm] = true;
 		}
 	}
 
@@ -8338,14 +8344,15 @@ VError EntityRecord::Save(Transaction* *trans, BaseTaskInfo* context, uLONG stam
 {
 	VError err = VE_OK;
 	VUUID xGroupID;
+	bool forced;
 	bool isnew = false;
 	if (fMainRec == nil || fMainRec->IsNew())
 	{
-		fModel->GetPermission(DB4D_EM_Create_Perm, xGroupID);
+		fModel->GetPermission(DB4D_EM_Create_Perm, xGroupID, forced);
 		isnew = true;
 	}
 	else
-		fModel->GetPermission(DB4D_EM_Update_Perm, xGroupID);
+		fModel->GetPermission(DB4D_EM_Update_Perm, xGroupID, forced);
 
 	if (okperm(context, xGroupID))
 	{
@@ -9920,7 +9927,7 @@ VError EntityModelCatalog::xSetEntityPerm(CUAGDirectory* uagdir, const VValueBag
 		}
 
 		if (err == VE_OK)
-			err = em->SetPermission(perm, gid);
+			err = em->SetPermission(perm, gid, false);
 
 	}
 	return err;
@@ -9948,11 +9955,13 @@ VError EntityModelCatalog::LoadEntityPermissions(const VValueBag& bagEntities, C
 				if (OnePerm != nil)
 				{
 					VString sAction, sGroup, sType, sResource, sGroupID;
+					bool forced = false;
 					OnePerm->GetString(d4::action, sAction);
 					OnePerm->GetString(d4::group, sGroup);
 					OnePerm->GetString(d4::groupID, sGroupID);
 					OnePerm->GetString(d4::type, sType);
 					OnePerm->GetString(d4::resource, sResource);
+					OnePerm->GetBool(d4::temporaryForcePermissions, forced);
 					PermResourceType rType = (PermResourceType)EPermResourceType[sType];
 					DB4D_EM_Perm action = (DB4D_EM_Perm)EPermAction[sAction];
 
@@ -9975,7 +9984,7 @@ VError EntityModelCatalog::LoadEntityPermissions(const VValueBag& bagEntities, C
 						switch (rType)
 						{
 							case perm_model:
-								SetPermission(action, groupID);
+								SetPermission(action, groupID, forced);
 								break;
 							case perm_dataClass:
 								{
@@ -9986,7 +9995,7 @@ VError EntityModelCatalog::LoadEntityPermissions(const VValueBag& bagEntities, C
 										EntityModel* em = RetainEntity(parts[1]);
 										if (em != nil)
 										{
-											err = em->SetPermission(action, groupID);
+											err = em->SetPermission(action, groupID, forced);
 											QuickReleaseRefCountable(em);
 										}
 									}
@@ -10202,12 +10211,13 @@ void EntityModelCatalog::ReversePath(const EntityRelationCollection& relpath, En
 
 
 
-VError EntityModelCatalog::SetPermission(DB4D_EM_Perm inPerm, const VUUID& inGroupID)
+VError EntityModelCatalog::SetPermission(DB4D_EM_Perm inPerm, const VUUID& inGroupID, bool forced)
 {
 	VError err = VE_OK;
 	if (inPerm >= DB4D_EM_Read_Perm && inPerm <= DB4D_EM_Promote_Perm)
 	{
 		fPerms[inPerm] = inGroupID;
+		fForced[inPerm] = forced ? 1 : 0;
 	}
 	else
 		err = ThrowBaseError(VE_DB4D_WRONG_PERM_REF);
@@ -10215,12 +10225,13 @@ VError EntityModelCatalog::SetPermission(DB4D_EM_Perm inPerm, const VUUID& inGro
 	return err;
 }
 
-VError EntityModelCatalog::GetPermission(DB4D_EM_Perm inPerm, VUUID& outGroupID) const
+VError EntityModelCatalog::GetPermission(DB4D_EM_Perm inPerm, VUUID& outGroupID, bool& forced) const
 {
 	VError err = VE_OK;
 	if (inPerm >= DB4D_EM_Read_Perm && inPerm <= DB4D_EM_Promote_Perm)
 	{
 		outGroupID = fPerms[inPerm];
+		forced = fForced[inPerm] == 1 ? true : false;
 	}
 	else
 		err = ThrowBaseError(VE_DB4D_WRONG_PERM_REF);

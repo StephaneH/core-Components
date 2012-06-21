@@ -1666,7 +1666,8 @@ void RestTools::RetrieveOrDeleteEntitySel()
 						recToDel->Release();
 					}
 				}
-				sel->RemoveSelectedRange(posToRemove, posToRemove, fContext);
+				if (err == VE_OK)
+					sel->RemoveSelectedRange(posToRemove, posToRemove, fContext);
 			}
 		}
 

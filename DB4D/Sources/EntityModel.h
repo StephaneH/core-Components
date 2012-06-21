@@ -1991,8 +1991,8 @@ class EntityModel : public VComponentImp<CDB4DEntityModel>
 		virtual CDB4DSelection* Query( const VString& inQuery, CDB4DBaseContext* inContext, VErrorDB4D& err, const VValueSingle* param1 = nil, const VValueSingle* param2 = nil, const VValueSingle* param3 = nil);
 		virtual CDB4DEntityRecord* Find(const VString& inQuery, CDB4DBaseContext* inContext, VErrorDB4D& err, const VValueSingle* param1 = nil, const VValueSingle* param2 = nil, const VValueSingle* param3 = nil);
 
-		virtual VError SetPermission(DB4D_EM_Perm inPerm, const VUUID& inGroupID);
-		virtual VError GetPermission(DB4D_EM_Perm inPerm, VUUID& outGroupID) const;
+		virtual VError SetPermission(DB4D_EM_Perm inPerm, const VUUID& inGroupID, bool forced);
+		virtual VError GetPermission(DB4D_EM_Perm inPerm, VUUID& outGroupID, bool& forced) const;
 		virtual bool PermissionMatch(DB4D_EM_Perm inPerm, CUAGSession* inSession) const;
 		bool permissionMatch(DB4D_EM_Perm inPerm, CUAGSession* inSession) const;
 
@@ -2061,6 +2061,7 @@ class EntityModel : public VComponentImp<CDB4DEntityModel>
 		SearchTab* fRestrictingQuery;
 		const VValueBag* fExtraProperties;
 		VUUID fPerms[DB4D_EM_Promote_Perm+1];
+		uBYTE fForced[DB4D_EM_Promote_Perm+1];
 		DBEvent fEvents[dbev_lastEvent+1];
 		sLONG fQueryLimit;
 		sLONG fDefaultTopSize;
@@ -2615,6 +2616,7 @@ class EntityModelCatalog : public IRefCountable
 			fParseFileError = nil;
 			fPublishDataClassesAsGlobals = false;
 			fPublishDataClassesAsGlobalsDefined = false;
+			fill(&fForced[DB4D_EM_None_Perm], &fForced[DB4D_EM_Promote_Perm+1], 0);
 		}
 
 		Base4D* GetOwner()
@@ -2737,8 +2739,8 @@ class EntityModelCatalog : public IRefCountable
 			return (fParseFileError != nil);
 		}
 
-		VError SetPermission(DB4D_EM_Perm inPerm, const VUUID& inGroupID);
-		VError GetPermission(DB4D_EM_Perm inPerm, VUUID& outGroupID) const;
+		VError SetPermission(DB4D_EM_Perm inPerm, const VUUID& inGroupID, bool forced);
+		VError GetPermission(DB4D_EM_Perm inPerm, VUUID& outGroupID, bool& forced) const;
 
 		bool publishDataClassesAsGlobals() const
 		{
@@ -2776,6 +2778,7 @@ class EntityModelCatalog : public IRefCountable
 		VString fParseMessageError;
 		VFile* fParseFileError;
 		VUUID fPerms[DB4D_EM_Promote_Perm+1];
+		uBYTE fForced[DB4D_EM_Promote_Perm+1];
 
 };
 

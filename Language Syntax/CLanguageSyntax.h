@@ -20,7 +20,6 @@
 
 #include "Kernel/VKernel.h"
 #include "DB4D/Headers/DB4D.h"
-#include "XML/Sources/VLocalizationManager.h"
 
 #if _WIN32
 	#pragma pack( push, 8 )
@@ -68,6 +67,13 @@ enum
 };
 
 typedef sLONG ESymbolFileExecContext;
+
+namespace xbox
+{
+	class ILexerToken;
+	class VLocalizationManager;
+};
+typedef XBOX::VError ( *SQLTokenizeFuncPtr ) ( XBOX::VString& inSQLStatement, std::vector<XBOX::ILexerToken*>& outTokens, bool inContinuationOfComment );
 
 
 class ISyntaxInterface;
@@ -204,6 +210,8 @@ public:
 	virtual XBOX::VJSObject CreateJavaScriptTestObject( XBOX::VJSContext inJSContext ) = 0;
 
 	virtual void SetBreakPointManager( ISyntaxInterface* inSyntax, IBreakPointManager* inBreakPointManager ) = 0;
+
+	virtual void SetSQLTokenizer ( SQLTokenizeFuncPtr inPtr, const std::vector< XBOX::VString * >& vctrSQLKeywords, const std::vector< XBOX::VString * >& vctrSQLFunctions ) = 0;
 
 	virtual void Stop() = 0;
 };

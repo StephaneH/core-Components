@@ -19,7 +19,6 @@
 
 #include "javascript_db4d.h"
 
-#include "SQL/Interfaces/CSQLServer.h"
 
 
 USING_TOOLBOX_NAMESPACE
@@ -1540,20 +1539,6 @@ void VJSDatabase::_ExportAsSQL(VJSParms_callStaticFunction& ioParms, CDB4DBase* 
 }
 
 
-void VJSDatabase::_CreateSQLStatement(XBOX::VJSParms_callStaticFunction& ioParms, CDB4DBase* inDatabase)
-{
-	CSQLServer*				sqlServer = ( CSQLServer* ) VComponentManager::RetainComponent ( ( CType ) CSQLServer::Component_Type );
-	xbox_assert ( sqlServer != 0 );
-
-	if ( sqlServer != 0 )
-	{
-		ioParms.ReturnValue ( sqlServer-> JS_CreateSQLStatement ( inDatabase, ( void* ) ioParms.GetContextRef ( ) ) );
-		sqlServer-> Release ( );
-		sqlServer = 0;
-	}
-}
-
-
 void VJSDatabase::_clearErrs(VJSParms_callStaticFunction& ioParms, CDB4DBase* inDatabase)
 {
 	XBOX::VTask::GetCurrent()->FlushErrors();
@@ -1938,7 +1923,6 @@ void VJSDatabase::GetDefinition( ClassDefinition& outDefinition)
 		{ "exportAsSQL", js_callStaticFunction<_ExportAsSQL>, JS4D::PropertyAttributeReadOnly | JS4D::PropertyAttributeDontEnum | JS4D::PropertyAttributeDontDelete },
 		{ "clearErrs", js_callStaticFunction<_clearErrs>, JS4D::PropertyAttributeReadOnly | JS4D::PropertyAttributeDontEnum | JS4D::PropertyAttributeDontDelete },
 		{ "getSyncInfo", js_callStaticFunction<_GetSyncInfo>, JS4D::PropertyAttributeReadOnly | JS4D::PropertyAttributeDontEnum | JS4D::PropertyAttributeDontDelete },
-		{ "createSQLStatement", js_callStaticFunction<_CreateSQLStatement>, JS4D::PropertyAttributeReadOnly | JS4D::PropertyAttributeDontEnum | JS4D::PropertyAttributeDontDelete },
 		{ "loadModelDefinition", js_callStaticFunction<_loadModelsDefinition>, JS4D::PropertyAttributeReadOnly | JS4D::PropertyAttributeDontEnum | JS4D::PropertyAttributeDontDelete },
 		{ "setCacheSize", js_callStaticFunction<_setCacheSize>, JS4D::PropertyAttributeReadOnly | JS4D::PropertyAttributeDontEnum | JS4D::PropertyAttributeDontDelete },
 		{ "getCacheSize", js_callStaticFunction<_getCacheSize>, JS4D::PropertyAttributeReadOnly | JS4D::PropertyAttributeDontEnum | JS4D::PropertyAttributeDontDelete },

@@ -295,7 +295,6 @@ void VHTTPServerSettings::ResetToFactorySettings()
 }
 
 
-inline
 void VHTTPServerSettings::SetMaxIncomingDataSize (XBOX::VSize inValue)
 {
 	fMaxIncomingDataSize = inValue;
@@ -558,7 +557,6 @@ void VHTTPServerProjectSettings::SetListeningAddress (const XBOX::VString& inIPA
 }
 
 
-inline
 void VHTTPServerProjectSettings::SetMaxIncomingDataSize (XBOX::VSize inValue)
 {
 	fMaxIncomingDataSize = inValue;
@@ -568,7 +566,6 @@ void VHTTPServerProjectSettings::SetMaxIncomingDataSize (XBOX::VSize inValue)
 }
 
 
-inline
 void VHTTPServerProjectSettings::SetDefaultAuthType (const XBOX::VString& inAuthenticationMethodName)
 {
 	fAuthType = HTTPServerTools::GetAuthenticationMethodFromName (inAuthenticationMethodName);
@@ -601,7 +598,6 @@ void VHTTPServerProjectSettings::SetLogFormat (sLONG inValue, VectorOfLogToken *
 }
 
 
-inline
 void VHTTPServerProjectSettings::SetLogFormat (const XBOX::VString& inLogFormatName, VectorOfLogToken *inLogTokens)
 {
 	SetLogFormat (HTTPServerTools::GetLogFormatFromName (inLogFormatName), inLogTokens);
@@ -623,49 +619,42 @@ void VHTTPServerProjectSettings::SetLogFormat (const XBOX::VString& inLogFormatN
 }
 
 
-inline
 bool VHTTPServerProjectSettings::RotateOnSchedule() const
 {
 	return fLogBackupSettings.RotateOnSchedule();
 }
 
 
-inline
 ELogRotationMode VHTTPServerProjectSettings::GetLogRotationMode() const
 {
 	return fLogBackupSettings.GetLogRotationMode();
 }
 
 
-inline
 sLONG VHTTPServerProjectSettings::GetLogMaxSize () const
 {
 	return fLogBackupSettings.GetLogMaxSize();
 }
 
 
-inline
 sLONG VHTTPServerProjectSettings::GetFrequency() const
 {
 	return fLogBackupSettings.GetFrequency();
 }
 
 
-inline
 sLONG VHTTPServerProjectSettings::GetStartingTime() const
 {
 	return fLogBackupSettings.GetStartingTime();
 }
 
 
-inline
 const std::map<sLONG, sLONG>& VHTTPServerProjectSettings::GetDaysHoursMap() const
 {
 	return fLogBackupSettings.GetDaysHoursMap();
 }
 
 
-inline
 void VHTTPServerProjectSettings::SetLogRotationMode (ELogRotationMode inValue)
 {
 	fLogBackupSettings.SetLogRotationMode (inValue);
@@ -674,7 +663,6 @@ void VHTTPServerProjectSettings::SetLogRotationMode (ELogRotationMode inValue)
 }
 
 
-inline
 void VHTTPServerProjectSettings::SetLogMaxSize (sLONG inValue)
 {
 	fLogBackupSettings.SetLogMaxSize (inValue);
@@ -683,7 +671,6 @@ void VHTTPServerProjectSettings::SetLogMaxSize (sLONG inValue)
 }
 
 
-inline
 void VHTTPServerProjectSettings::SetFrequency (sLONG inValue)
 {
 	fLogBackupSettings.SetFrequency (inValue);
@@ -692,7 +679,6 @@ void VHTTPServerProjectSettings::SetFrequency (sLONG inValue)
 }
 
 
-inline
 void VHTTPServerProjectSettings::SetStartingTime (sLONG inValue)
 {
 	fLogBackupSettings.SetStartingTime (inValue);
@@ -701,7 +687,6 @@ void VHTTPServerProjectSettings::SetStartingTime (sLONG inValue)
 }
 
 
-inline
 void VHTTPServerProjectSettings::SetDaysHoursMap (const std::map<sLONG, sLONG>& inValue)
 {
 	return fLogBackupSettings.SetDaysHoursMap (inValue);
@@ -1084,7 +1069,6 @@ XBOX::VError VHTTPServerProjectSettings::SaveToBag (XBOX::VValueBag *outBag)
 }
 
 
-inline
 void VHTTPServerProjectSettings::SetSSLCertificatesFolderPath (const XBOX::VFilePath& inValue)
 {
 	BuildFolderPath (fProjectFolderPath, inValue.GetPath(), fSSLCertificatesFolderPath);
@@ -1093,7 +1077,6 @@ void VHTTPServerProjectSettings::SetSSLCertificatesFolderPath (const XBOX::VFile
 }
 
 
-inline
 void VHTTPServerProjectSettings::SetSSLCertificatesFolderPath (const XBOX::VString& inValue)
 {
 	BuildFolderPath (fProjectFolderPath, inValue, fSSLCertificatesFolderPath);
@@ -1102,7 +1085,6 @@ void VHTTPServerProjectSettings::SetSSLCertificatesFolderPath (const XBOX::VStri
 }
 
 
-inline
 void VHTTPServerProjectSettings::SetWebFolderPath (const XBOX::VFilePath& inValue)
 {
 	BuildFolderPath (fProjectFolderPath, inValue.GetPath(), fWebFolderPath);
@@ -1111,7 +1093,6 @@ void VHTTPServerProjectSettings::SetWebFolderPath (const XBOX::VFilePath& inValu
 }
 
 
-inline
 void VHTTPServerProjectSettings::SetWebFolderPath (const XBOX::VString& inValue)
 {
 	BuildFolderPath (fProjectFolderPath, inValue, fWebFolderPath);
@@ -1126,7 +1107,6 @@ VSignalSettingsChanged *VHTTPServerProjectSettings::GetSignal_SettingsChanged()
 }
 
 
-inline
 void VHTTPServerProjectSettings::Tell_SettingsChanged()
 {
 	fSignal_SettingsChanged (this);

@@ -120,25 +120,69 @@ VError UAGUser::RetainOwners(CUAGGroupVector& outgroups, bool oneLevelDeep)
 {
 	outgroups.clear();
 	VError err = VE_OK;
-	CDB4DEntityAttributeValue* xval = fUserRec->GetAttributeValue(L"groups", err);
-	if (xval != nil)
+	if (oneLevelDeep)
 	{
-		CDB4DBaseContext* context = fUserRec->GetContext();
-		CDB4DSelection* sel = xval->GetRelatedSelection();
-		if (sel != nil)
+		CDB4DEntityAttributeValue* xval = fUserRec->GetAttributeValue(L"groups", err);
+		if (xval != nil)
 		{
-			sLONG nb = sel->CountRecordsInSelection(context);
-			outgroups.resize(nb, nil);
-			for (sLONG i = 0; i < nb && err == VE_OK; i++)
+			CDB4DBaseContext* context = fUserRec->GetContext();
+			CDB4DSelection* sel = xval->GetRelatedSelection();
+			if (sel != nil)
 			{
-				CDB4DEntityRecord* gowner = fDirectory->GetGroupModel()->LoadEntity(sel->GetSelectedRecordID(i+1, context), err, DB4D_Do_Not_Lock, context, false);
-				if (gowner != nil)
+				sLONG nb = sel->CountRecordsInSelection(context);
+				outgroups.resize(nb, nil);
+				for (sLONG i = 0; i < nb && err == VE_OK; i++)
 				{
-					CUAGGroup* group = new UAGGroup(fDirectory, gowner);
-					outgroups[i].Adopt(group);
-					gowner->Release();
+					CDB4DEntityRecord* gowner = fDirectory->GetGroupModel()->LoadEntity(sel->GetSelectedRecordID(i+1, context), err, DB4D_Do_Not_Lock, context, false);
+					if (gowner != nil)
+					{
+						CUAGGroup* group = new UAGGroup(fDirectory, gowner);
+						outgroups[i].Adopt(group);
+						gowner->Release();
+					}
 				}
 			}
+		}
+	}
+	else
+	{
+		VString root = "parents";
+		set<VUUIDBuffer> alreadyGroup;
+		CUAGGroupVector firstLevelGroups;
+		//err = RetainSubGroups(firstLevelGroups, true);
+		err = RetainOwners(firstLevelGroups, true);
+		if (err == VE_OK)
+		{
+			for (CUAGGroupVector::iterator curg = firstLevelGroups.begin(), endg = firstLevelGroups.end(); curg != endg && err == VE_OK; ++curg)
+			{
+				VUUID xid;
+				CUAGGroup* fgroup = *curg;
+				UAGGroup* xfgroup = VImpCreator<UAGGroup>::GetImpObject(fgroup);
+				fgroup->GetID(xid);
+				if (alreadyGroup.find(xid.GetBuffer()) == alreadyGroup.end())
+				{
+					outgroups.push_back(fgroup);
+					alreadyGroup.insert(xid.GetBuffer());
+					CUAGGroupVector otherGroups;
+					//err = fgroup->RetainSubGroups(otherGroups, false);
+					err = xfgroup->RetainOtherGroups(otherGroups, true, root);
+					if (err == VE_OK)
+					{
+						for (CUAGGroupVector::iterator cur = otherGroups.begin(), end = otherGroups.end(); cur != end; ++cur)
+						{
+							CUAGGroup* otherGroup = *cur;
+							VUUID xid2;
+							otherGroup->GetID(xid2);
+							if (alreadyGroup.find(xid2.GetBuffer()) == alreadyGroup.end())
+							{
+								outgroups.push_back(otherGroup);
+								alreadyGroup.insert(xid2.GetBuffer());						
+							}
+						}
+					}
+
+				}
+			}		
 		}
 	}
 

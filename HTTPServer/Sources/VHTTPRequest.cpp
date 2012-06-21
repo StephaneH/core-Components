@@ -88,32 +88,12 @@ void VHTTPRequest::Reset()
 }
 
 
-/* private */
-VHTTPRequest& VHTTPRequest::operator = (const VHTTPRequest& inHTTPRequest)
-{
-	if (&inHTTPRequest != this)
-	{
-		fRequestMethod = inHTTPRequest.fRequestMethod;
-		fRequestLine.FromString (inHTTPRequest.fRequestLine);
-		fURL.FromString (inHTTPRequest.fURL);
-		fRawURL.FromString (inHTTPRequest.fRawURL);
-		fURLPath.FromString (inHTTPRequest.fURLPath);
-		fURLQuery.FromString (inHTTPRequest.fURLQuery);
-		fHost.FromString (inHTTPRequest.fHost);
-		fHTTPVersion = inHTTPRequest.fHTTPVersion;
-		fAuthenticationInfos = new VAuthenticationInfos (*inHTTPRequest.fAuthenticationInfos);
-		fParsingState = inHTTPRequest.fParsingState;
-		fParsingError = inHTTPRequest.fParsingError;
-	}
-
-	return *this;
-}
-
-
 XBOX::VError VHTTPRequest::ReadFromEndPoint (XBOX::VEndPoint& inEndPoint, uLONG inTimeout)
 {
 	// Read Request-Line and extract Method, URL and HTTP version
-#define	MAX_BUFFER_LENGTH	8192
+#define	MAX_BUFFER_LENGTH					8192
+#define CHECK_REQUEST_LINE_VALIDITY			0
+#define USE_NEW_REQUESTLINE_PARSING_METHOD	0
 
 	sLONG			bufferSize = MAX_BUFFER_LENGTH;
 	char *			buffer = (char *)XBOX::vMalloc (bufferSize, 0);
@@ -176,7 +156,7 @@ XBOX::VError VHTTPRequest::ReadFromEndPoint (XBOX::VEndPoint& inEndPoint, uLONG 
 
 	while ((XBOX::VE_OK == endPointError) && !stopReadingSocket)
 	{
-		if (0 == unreadBytes)
+		if ((0 == unreadBytes) || (bufferOffset >= MAX_BUFFER_LENGTH))
 			bufferOffset = 0;
 
 		bufferSize = MAX_BUFFER_LENGTH - bufferOffset;
@@ -196,11 +176,19 @@ XBOX::VError VHTTPRequest::ReadFromEndPoint (XBOX::VEndPoint& inEndPoint, uLONG 
 			//jmo - on ne devrait plus passer par là.
 			xbox_assert(false);
 			stopReadingSocket=true;
+#if VERSIONWIN && VERSIONDEBUG
+			::OutputDebugStringW (L"VEndPoint.Read() returned Zero Bytes !!");
+#endif
 		}
 		
 		//jmo - erreur qu'on recupere sur un shutdown cote client
 		if(VE_SRVR_NOTHING_TO_READ==endPointError)
+		{
 			stopReadingSocket=true;
+#if VERSIONWIN && VERSIONDEBUG
+			::OutputDebugStringW (L"VEndPoint.Read() returned VE_SRVR_NOTHING_TO_READ !!");
+#endif
+		}
 		
 #if LOG_IN_CONSOLE
 		readTimer.DebugMsg ("\tVTCPEndPoint::Read()");
@@ -283,13 +271,28 @@ XBOX::VError VHTTPRequest::ReadFromEndPoint (XBOX::VEndPoint& inEndPoint, uLONG 
 						}
 						else
 						{
-#if CHECK_REQUEST_LINE_VALIDITY // disabled, cause pattern used causes crashes..
+#if CHECK_REQUEST_LINE_VALIDITY
 							if (HTTPProtocol::IsValidRequestLine (fRequestLine))
 #endif
 							{
 								const UniChar *	lineBuffer = fRequestLine.GetCPointer();
 								const sLONG		lineLength = fRequestLine.GetLength();
 
+#if USE_NEW_REQUESTLINE_PARSING_METHOD
+								fParsingError = HTTPProtocol::ReadRequestLine (lineBuffer, lineLength, fRequestMethod, fRawURL, fHTTPVersion);
+								if (XBOX::VE_OK != fParsingError)
+									break;
+
+								fURL.FromString (fRawURL);
+								XBOX::VURL::Decode (fURL);
+
+								XBOX::VURL url;
+								url.FromString (fURL, false);
+								url.GetPath (fURLPath, eURL_POSIX_STYLE, false);
+								url.GetQuery (fURLQuery, false);
+
+								fParsingState = PS_ReadingHeaders;
+#else
 								fRequestMethod = HTTPProtocol::GetMethodFromRequestLine (lineBuffer, lineLength);
 								if (fRequestMethod != HTTP_UNKNOWN)
 								{
@@ -313,7 +316,9 @@ XBOX::VError VHTTPRequest::ReadFromEndPoint (XBOX::VEndPoint& inEndPoint, uLONG 
 									}
 									else
 									{
-										fParsingError = VHTTPServer::ThrowError (VE_HTTP_PROTOCOL_BAD_REQUEST, CVSTR ("Request Line parsing failed !!"));
+										XBOX::VString errorString (CVSTR ("Cannot extract URI from Request Line !!:<br />"));
+										errorString.AppendString (fRequestLine);
+										fParsingError = VHTTPServer::ThrowError (VE_HTTP_PROTOCOL_BAD_REQUEST, errorString);
 										break;
 									}
 								}
@@ -331,11 +336,14 @@ XBOX::VError VHTTPRequest::ReadFromEndPoint (XBOX::VEndPoint& inEndPoint, uLONG 
 									fParsingError = VE_HTTP_PROTOCOL_NOT_IMPLEMENTED;
 									break;
 								}
+#endif
 							}
-#if CHECK_REQUEST_LINE_VALIDITY // disabled, cause pattern used causes crashes..
+#if CHECK_REQUEST_LINE_VALIDITY
 							else
 							{
-								fParsingError = VHTTPServer::ThrowError (VE_HTTP_PROTOCOL_BAD_REQUEST, CVSTR ("Request Line validation failed !!"));
+								XBOX::VString errorString (CVSTR ("Request Line validation failed !!:<br />"));
+								errorString.AppendString (fRequestLine);
+								fParsingError = VHTTPServer::ThrowError (VE_HTTP_PROTOCOL_BAD_REQUEST, errorString);
 								break;
 							}
 #endif
@@ -625,6 +633,8 @@ XBOX::VError VHTTPRequest::ReadFromEndPoint (XBOX::VEndPoint& inEndPoint, uLONG 
 	return endPointError;
 
 #undef MAX_BUFFER_LENGTH
+#undef CHECK_REQUEST_LINE_VALIDITY
+#undef USE_NEW_REQUESTLINE_PARSING_METHOD
 }
 
 

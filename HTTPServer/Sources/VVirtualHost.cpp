@@ -246,7 +246,6 @@ VVirtualHost::~VVirtualHost()
 }
 
 
-inline
 VHTTPServerProjectSettings *VVirtualHost::GetSettings() const
 {
 	return dynamic_cast<VHTTPServerProjectSettings *>(fProject->GetSettings());

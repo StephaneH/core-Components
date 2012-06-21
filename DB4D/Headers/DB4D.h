@@ -3204,8 +3204,8 @@ class CDB4DEntityModel : public XBOX::CComponent
 		virtual CDB4DSelection* Query( const XBOX::VString& inQuery, CDB4DBaseContext* inContext, VErrorDB4D& err, const XBOX::VValueSingle* param1 = nil, const XBOX::VValueSingle* param2 = nil, const XBOX::VValueSingle* param3 = nil) = 0;
 		virtual CDB4DEntityRecord* Find(const XBOX::VString& inQuery, CDB4DBaseContext* inContext, VErrorDB4D& err, const XBOX::VValueSingle* param1 = nil, const XBOX::VValueSingle* param2 = nil, const XBOX::VValueSingle* param3 = nil) = 0;
 
-		virtual VErrorDB4D SetPermission(DB4D_EM_Perm inPerm, const XBOX::VUUID& inGroupID) = 0;
-		virtual VErrorDB4D GetPermission(DB4D_EM_Perm inPerm, XBOX::VUUID& outGroupID) const = 0 ;
+		virtual VErrorDB4D SetPermission(DB4D_EM_Perm inPerm, const XBOX::VUUID& inGroupID, bool forced) = 0;
+		virtual VErrorDB4D GetPermission(DB4D_EM_Perm inPerm, XBOX::VUUID& outGroupID, bool& forced) const = 0 ;
 
 		virtual bool PermissionMatch(DB4D_EM_Perm inPerm, CUAGSession* inSession) const = 0;
 
@@ -4141,6 +4141,7 @@ namespace d4
 	EXTERN_BAGKEY(group);
 	EXTERN_BAGKEY(groupID);
 	EXTERN_BAGKEY(resource);
+	EXTERN_BAGKEY(temporaryForcePermissions);
 	EXTERN_BAGKEY(entityModelPerm);
 	EXTERN_BAGKEY(read);
 	EXTERN_BAGKEY(update);

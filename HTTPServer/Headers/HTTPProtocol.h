@@ -24,6 +24,7 @@ public:
 	static HTTPRequestMethod					GetMethodFromName (const XBOX::VString& inName);
 	static HTTPVersion							GetVersionFromRequestLine (const UniChar *inBuffer, sLONG inBufferLen);
 	static bool									GetRequestURIFromRequestLine (const UniChar *inBuffer, sLONG inBufferLen, XBOX::VString& outURI, bool decodeURI = true);
+	static XBOX::VError							ReadRequestLine (const UniChar *inBuffer, sLONG inBufferSize, HTTPRequestMethod& outMethod, XBOX::VString& outURI, HTTPVersion& outVersion);
 	static void									GetStatusCodeExplanation (sLONG inStatusCode, XBOX::VString& outExplanation, bool clearStringFirst = false);
 	static bool									IsValidStatusCode (sLONG inStatusCode);
 
@@ -50,6 +51,7 @@ public:
 
 private:
 	static XBOX::VRefPtr<XBOX::VRegexMatcher>	fRequestRegexMatcher;
+	static XBOX::VCriticalSection				fRequestRegexMatcherMutex;
 };
 
 

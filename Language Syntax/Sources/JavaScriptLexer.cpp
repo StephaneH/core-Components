@@ -1323,7 +1323,7 @@ bool JavaScriptLexer::GetNextRegularExpressionLiteral( VString *ioRegExBody, VSt
 		uChar = fLexerInput->MoveToNextChar();
 
 		// If we got a new line, we've failed to parse a legal regular expression
-		if (U_GET_GC_MASK( uChar ) & U_GC_ZL_MASK)	return false;
+		if ( (U_GET_GC_MASK( uChar ) & U_GC_ZL_MASK) || (CHAR_CONTROL_000D == uChar) )	return false;
 		
 		// If we get a /, then we're on to the start of the flags
 		if (CHAR_SOLIDUS == uChar)

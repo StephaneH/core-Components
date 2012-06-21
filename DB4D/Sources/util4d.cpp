@@ -7488,7 +7488,8 @@ bool okperm(BaseTaskInfo* context, const EntityModel* model, DB4D_EM_Perm perm)
 	VUUID groupID;
 	if (model != nil)
 	{
-		model->GetPermission(perm, groupID);
+		bool forced;
+		model->GetPermission(perm, groupID, forced);
 		return okperm(context, groupID);
 	}
 	else

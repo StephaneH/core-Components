@@ -237,7 +237,6 @@ public:
 	static void _ExportAsSQL(XBOX::VJSParms_callStaticFunction& ioParms, CDB4DBase* inDatabase);  // _ExportAsSQL(Folder | StringURL, number : nbBlobsPerLevel, number : maxExportFileSize)
 	static void _clearErrs(XBOX::VJSParms_callStaticFunction& ioParms, CDB4DBase* inDatabase);  // clearErrs() // temporaire
 	static void _GetSyncInfo(XBOX::VJSParms_callStaticFunction& ioParms, CDB4DBase* inDatabase);  		
-	static void _CreateSQLStatement(XBOX::VJSParms_callStaticFunction& ioParms, CDB4DBase* inDatabase);  
 	static void _loadModelsDefinition(XBOX::VJSParms_callStaticFunction& ioParms, CDB4DBase* inDatabase);  // loadModelsDefinition(File : XMLDefinitionFile)
 	static void _setCacheSize(XBOX::VJSParms_callStaticFunction& ioParms, CDB4DBase* inDatabase);  // setCacheSize(number : newCacheSize, {bool inPhysicalMemOnly})
 	static void _getCacheSize(XBOX::VJSParms_callStaticFunction& ioParms, CDB4DBase* inDatabase);  // number : getCacheSize()
