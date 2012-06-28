@@ -101,24 +101,18 @@ VHTMLForm::~VHTMLForm()
 
 void VHTMLForm::Clear()
 {
-	for (PartVector::iterator it = fParts.begin(); it != fParts.end(); ++it)
-	{
-		(*it)->Release();
-	}
-
-	fParts.clear();
+	fFormPartVector.clear();
 }
 
 
-void VHTMLForm::GetFormPartsList (std::vector<IHTMLFormPart *> &outFormPartsList) const
+void VHTMLForm::GetFormPartsList (VHTMLFormPartVector& outFormPartsList) const
 {
 	outFormPartsList.clear();
-//	std::copy (fParts.begin(), fParts.end(), outFormPartsList.begin());
+//	std::copy (fFormPartVector.begin(), fFormPartVector.end(), outFormPartsList.begin());
 
-	for (PartVector::const_iterator it = fParts.begin(); it != fParts.end(); ++it)
+	for (VHTMLFormPartVector::const_iterator it = fFormPartVector.begin(); it != fFormPartVector.end(); ++it)
 	{
-		IHTMLFormPart *source = XBOX::RetainRefCountable ((*it));
-		outFormPartsList.push_back (source);
+		outFormPartsList.push_back ((*it));
 	}
 }
 
@@ -135,7 +129,8 @@ void VHTMLForm::_AddFilePart (const XBOX::VString& inName, const XBOX::VString& 
 			partSource->SetData (inStream.GetDataPtr(), inStream.GetDataSize());
 		inStream.CloseReading();
 
-		fParts.push_back (partSource);
+		fFormPartVector.push_back (partSource);
+		partSource->Release();
 	}
 }
 
@@ -149,7 +144,8 @@ void VHTMLForm::_AddValuePair (const XBOX::VString& inName, const XBOX::VString&
 		partSource->SetMediaType (inContentType);
 		partSource->PutData (inData, inDataSize);
 
-		fParts.push_back (partSource);
+		fFormPartVector.push_back (partSource);
+		partSource->Release();
 	}
 }
 

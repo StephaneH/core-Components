@@ -27,7 +27,6 @@ class VHTMLFormPart : public XBOX::VObject, public IHTMLFormPart
 {
 public:
 									VHTMLFormPart();
-	virtual							~VHTMLFormPart();
 
 	virtual const XBOX::VString&	GetName() const { return fName; }
 	virtual	const XBOX::VString&	GetFileName() const { return fFileName; }
@@ -50,6 +49,8 @@ private:
 	MimeTypeKind					fMediaTypeKind;
 	XBOX::CharSet					fMediaTypeCharSet;
 	XBOX::VPtrStream				fStream;
+
+	virtual							~VHTMLFormPart();
 };
 
 
@@ -64,7 +65,7 @@ public:
 
 	const XBOX::VString&			GetEncoding() const { return fEncoding; }
 	const XBOX::VString&			GetBoundary() const { return fBoundary; }
-	void							GetFormPartsList (std::vector<IHTMLFormPart *> &outFormPartsList) const;
+	void							GetFormPartsList (VHTMLFormPartVector& outFormPartsList) const;
 
 	void							Load (const IHTTPRequest& inRequest);
 	void							Clear();
@@ -77,11 +78,9 @@ protected:
 	void							_AddValuePair (const XBOX::VString& inName, const XBOX::VString& inContentType, void *inData, const XBOX::VSize inDataSize);
 
 private:
-	typedef std::vector<VHTMLFormPart *>	PartVector;
-	
 	XBOX::VString					fEncoding;
 	XBOX::VString					fBoundary;
-	PartVector						fParts;
+	VHTMLFormPartVector				fFormPartVector;
 };
 
 

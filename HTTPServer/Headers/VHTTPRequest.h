@@ -38,7 +38,7 @@ public:
 
 	void							Reset();
 
-	XBOX::VError					ReadFromEndPoint (XBOX::VEndPoint& inEndPoint, uLONG inTimeout = 0);
+	XBOX::VError					ReadFromEndPoint (XBOX::VTCPEndPoint& inEndPoint, uLONG inTimeout = 0);
 	XBOX::VError					ReadFromStream (XBOX::VStream& inStream);
 
 	HTTPRequestMethod				GetRequestMethod() const { return fRequestMethod; }

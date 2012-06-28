@@ -65,6 +65,7 @@ public:
 	virtual const XBOX::VSize				GetSize() const = 0;
 	virtual	const XBOX::VPtrStream&			GetData() const = 0;
 };
+typedef std::vector<XBOX::VRefPtr<IHTMLFormPart> >	VHTMLFormPartVector;
 
 
 class IHTMLForm
@@ -72,7 +73,7 @@ class IHTMLForm
 public:
 	virtual const XBOX::VString&			GetEncoding() const = 0;
 	virtual const XBOX::VString&			GetBoundary() const = 0;
-	virtual void							GetFormPartsList (std::vector<IHTMLFormPart *> &outFormPartsList) const = 0;
+	virtual void							GetFormPartsList (VHTMLFormPartVector& outFormPartsList) const = 0;
 };
 
 

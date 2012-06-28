@@ -89,7 +89,7 @@ void VHTTPRequest::Reset()
 }
 
 
-XBOX::VError VHTTPRequest::ReadFromEndPoint (XBOX::VEndPoint& inEndPoint, uLONG inTimeout)
+XBOX::VError VHTTPRequest::ReadFromEndPoint (XBOX::VTCPEndPoint& inEndPoint, uLONG inTimeout)
 {
 	// Read Request-Line and extract Method, URL and HTTP version
 #define	MAX_BUFFER_LENGTH					8192
@@ -169,7 +169,8 @@ XBOX::VError VHTTPRequest::ReadFromEndPoint (XBOX::VEndPoint& inEndPoint, uLONG 
 #if LOG_IN_CONSOLE
 		VDebugTimer readTimer;
 #endif
-		endPointError = inEndPoint.Read (buffer + bufferOffset, (uLONG *)&bufferSize);
+		
+		endPointError = inEndPoint.ReadWithTimeout (buffer + bufferOffset, (uLONG *)&bufferSize, 30000 /*timeout ms*/);
 		
 		if (fParsingState <= PS_ReadingHeaders)
 			buffer[bufferOffset + bufferSize] = '\0'; //  YT 29-May-2012 - ACI0076811

@@ -26,7 +26,7 @@
 //--------------------------------------------------------------------------------------------------
 
 
-const XBOX::VString STRING_REQUEST_VALIDATION_PATTERN	= CVSTR ("^([A-Za-z]{1,}) .* HTTP/[0-9]{1,}.[0-9]{1,}$");
+const XBOX::VString STRING_REQUEST_VALIDATION_PATTERN	= CVSTR ("^([A-Za-z]{1,})( |\t).*( |\t)HTTP/[0-9]{1,}.[0-9]{1,}$");
 
 
 typedef std::vector <std::pair<XBOX::VString, Real> > VectorOfHeadersWithQFactors;
