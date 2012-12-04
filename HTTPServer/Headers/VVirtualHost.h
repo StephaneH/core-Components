@@ -34,6 +34,11 @@ public:
 								VVirtualHost (const VHTTPServerProject *inProject);
 	virtual						~VVirtualHost();
 
+	/* Make VirtualHost available/unavailable (Client will receive a 503 sttus code when unavailable) */
+	void						MakeAvailable();
+	void						MakeUnavailable();
+	bool						IsAvailable() const;
+
 	/* Support of external files */
 	XBOX::VError				AddVirtualFolder (const VVirtualFolder *inVirtualFolder, bool inOverwrite = false);
 	VVirtualFolder *			RetainVirtualFolder (const XBOX::VString& inLocationPath, const XBOX::VString& inIndexPage, const XBOX::VString& inKeyword);
@@ -47,12 +52,11 @@ public:
 
 	virtual XBOX::VError		GetFilePathFromURL (const XBOX::VString& inURL, XBOX::VString& outLocationPath);
 	virtual XBOX::VError		GetFileContentFromURL (const XBOX::VString& inURL, IHTTPResponse *ioResponse, bool inUseFullPath = false);
+	virtual bool				GetMatchingVirtualFolderInfos (const XBOX::VString& inURL, XBOX::VFilePath& outVirtualFolderPath, XBOX::VString& outDefaultIndexName, XBOX::VString& outVirtualFolderName);
+	virtual bool				ResolveURLForAlternatePlatformPage (const XBOX::VString& inURL, const XBOX::VString& inPlatform, XBOX::VString& outResolvedURL);
 
 	void						SaveToBag (XBOX::VValueBag& inValueBag);
 
-#if !HTTP_SERVER_GLOBAL_CACHE
-	VCacheManager *				GetCacheManager() const { return fCacheManager; }
-#endif
 	VHTTPServerLog *			GetServerLog() const { return fServerLog; }
 	VHTTPServerProjectSettings *GetSettings() const;
 	VHTTPServerProject *		GetProject() const { return fProject; }
@@ -61,8 +65,13 @@ public:
 
 	bool						MatchHostPattern (const XBOX::VString& inHostString) const;
 	bool						AcceptConnectionsOnPort (const PortNumber inPort) const;
-	bool						AcceptConnectionsOnAddress (const IP4 inIPv4Address) const;
 
+#if WITH_DEPRECATED_IPV4_API
+	bool						AcceptConnectionsOnAddress (const IP4 /*done*/ inIPv4Address) const;
+#else
+	bool						AcceptConnectionsOnAddress (const XBOX::VString& inIPAddress) const;
+#endif
+	
 	void						SettingsChanged_Message (VHTTPServerProjectSettings *inSettings);
 
 protected:
@@ -80,16 +89,13 @@ private:
 #endif
 
 	XBOX::VRegexMatcher *		fHostRegexMatcher;
-
-#if !HTTP_SERVER_GLOBAL_CACHE
-	VCacheManager *				fCacheManager;
-#endif
 	VVirtualFolderMap			fVirtualFolderMap;
 	XBOX::VCriticalSection		fVirtualFolderMapLock;
 	VVirtualFolder *			fDefaultVirtualFolder;
 	VHTTPServerLog *			fServerLog;
 	VHTTPServerProject *		fProject;
 	XBOX::VString				fUUIDString;
+	sLONG						fUnavailableCount;
 };
 
 

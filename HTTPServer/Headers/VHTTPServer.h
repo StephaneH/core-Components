@@ -46,14 +46,7 @@ public:
 	virtual XBOX::VError					AppendHTTPServerProject (IHTTPServerProject *inHTTPServerProject);
 	virtual void							SetRequestLogger (IRequestLogger * inRequestLogger) { fRequestLogger = inRequestLogger; }
 	virtual IHTTPWebsocketHandler *			NewHTTPWebsocketHandler();
-
-#if HTTP_SERVER_GLOBAL_CACHE
 	virtual VCacheManager *					GetCacheManager() const { return fCacheManager; }
-#endif
-
-#if HTTP_SERVER_GLOBAL_SETTINGS
-	virtual IHTTPServerSettings *			GetSettings() const; 
-#endif
 
 	IConnectionListener *					FindConnectionListener (const VHTTPServerProjectSettings *inSettings);
 	IConnectionListener *					CreateConnectionListener (const VHTTPServerProjectSettings *inSettings);
@@ -103,6 +96,9 @@ public:
 	virtual bool							IsMimeTypeParsable (const XBOX::VString& inContentType);
 	virtual MimeTypeKind					GetMimeTypeKind (const XBOX::VString& inContentType);
 
+	/* Check that project uses distinct ports, SSLPorts or hostnames settings from other projects */
+	bool									CheckProjectSanity (const VHTTPServerProjectSettings *inSettings);
+
 	typedef std::vector<XBOX::VRefPtr<IHTTPServerProject> >		VectorOfHTTPServerProjects;
 	typedef std::vector<VHTTPConnectionListener *>				VectorOfHTTPConnectionListener;
 
@@ -114,14 +110,7 @@ private:
 	VVirtualHostManager *					fVirtualHostManager;
 	VectorOfHTTPServerProjects				fHTTPServerProjects;
 	VCriticalSection						fHTTPServerProjectsLock;
-
-#if HTTP_SERVER_GLOBAL_CACHE
 	VCacheManager *							fCacheManager;
-#endif
-
-#if HTTP_SERVER_GLOBAL_SETTINGS
-	VHTTPServerSettings *					fSettings; 
-#endif
 
 	static CZipComponent *					fZipComponent;
 	static bool								fZipComponentInited;
@@ -136,7 +125,7 @@ private:
 	XBOX::VFolder *							_RetainApplicationPackageFolder() const;
 	XBOX::VFolder *							_RetainApplicationPackageContentFolder() const;
 
-	void									_BuildCertificatesFilePathes (const XBOX::VFilePath& inPath, XBOX::VString& outCertFilePath, XBOX::VString& outKeyFilePath);
+	void									_BuildCertificatesFilePathes (const XBOX::VFilePath& inPath, XBOX::VFilePath& outCertFilePath, XBOX::VFilePath& outKeyFilePath);
 };
 
 

@@ -1489,6 +1489,22 @@
           <source>Attribute "{Param1}" is from another datastore class</source>
           <target>Attribute "{Param1}" is from another datastore class</target>
         </trans-unit>
+        <trans-unit resname="ERR_dbmg_1590" id="590">
+          <source>"{Param1}" is recursively used to build a relation path for datastore class "{EntityModelName}"</source>
+          <target>"{Param1}" is recursively used to build a relation path for datastore class "{EntityModelName}"</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1591" id="591">
+          <source>String length cannot be less than {Param1}</source>
+          <target>String length cannot be less than {Param1}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1592" id="592">
+          <source>String length cannot be greater than {Param1}</source>
+          <target>String length cannot be greater than {Param1}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1593" id="593">
+          <source>String length must be {Param1}</source>
+          <target>String length must be {Param1}</target>
+        </trans-unit>
         <trans-unit resname="ERR_dbmg_1800" id="800">
           <source>datastore class "{Param1}" cannot be found</source>
           <target>datastore class "{Param1}" cannot be found</target>

@@ -194,7 +194,12 @@ void VMimeTypeManager::Deinit()
 /* static */
 VMimeTypeSP VMimeTypeManager::FindMimeTypeByExtension (const XBOX::VString& inExtension)
 {
-	VMimeTypeMap::const_iterator found = std::find_if (fExtensionsTypeMap.begin(), fExtensionsTypeMap.end(), EqualFirstVStringFunctor<VMimeTypeSP> (inExtension));
+	XBOX::VString string (inExtension);
+
+	if (string.FindUniChar (CHAR_FULL_STOP) == 1)
+		string.Remove (1, 1);
+
+	VMimeTypeMap::const_iterator found = std::find_if (fExtensionsTypeMap.begin(), fExtensionsTypeMap.end(), EqualFirstVStringFunctor<VMimeTypeSP> (string));
 
 	if (found != fExtensionsTypeMap.end())
 		return (*found).second.Get();

@@ -806,11 +806,7 @@ XBOX::VError VCacheManager::AddRetainResource (const XBOX::VString& inPattern, V
 		}
 		else
 		{
-#if HTTP_SERVER_GLOBAL_CACHE
 			cacheRule->second->Retain();
-#else
-			error = VE_CACHE_RULE_ALREADY_EXISTS;
-#endif
 		}
 	}
 
@@ -870,40 +866,31 @@ XBOX::VError VCacheManager::LoadRulesFromBag (const XBOX::VValueBag *inValueBag)
 	const XBOX::VBagArray *resourcesSettings = RetainMultipleSettings (inValueBag, RIASettingsKeys::Resources::kXmlElement);
 	if (NULL != resourcesSettings)
 	{
-#if !HTTP_SERVER_GLOBAL_CACHE
-		if (fCacheRulesMapLock.Lock())
-#endif
+		XBOX::VString	patternString;
+
+		for (XBOX::VIndex i = 1; i <= resourcesSettings->GetCount(); ++i)
 		{
-			XBOX::VString	patternString;
-
-#if !HTTP_SERVER_GLOBAL_CACHE
-			fCacheRulesMap.clear();
-			fCacheRulesMapLock.Unlock();
-#endif
-			for (XBOX::VIndex i = 1; i <= resourcesSettings->GetCount(); ++i)
+			const XBOX::VValueBag *bag = resourcesSettings->GetNth (i);
+			if (NULL != bag)
 			{
-				const XBOX::VValueBag *bag = resourcesSettings->GetNth (i);
-				if (NULL != bag)
+				VHTTPResource *resource = new VHTTPResource();
+				if (NULL != resource)
 				{
-					VHTTPResource *resource = new VHTTPResource();
-					if (NULL != resource)
+					resource->LoadFromBag (*bag);
+
+					if (!resource->GetURLMatch().IsEmpty())
+						patternString.FromString (resource->GetURLMatch());
+					else
+						patternString.FromString (resource->GetURL());
+
+					if (!patternString.IsEmpty() && (resource->GetLifeTime() > 0))
 					{
-						resource->LoadFromBag (*bag);
-
-						if (!resource->GetURLMatch().IsEmpty())
-							patternString.FromString (resource->GetURLMatch());
-						else
-							patternString.FromString (resource->GetURL());
-
-						if (!patternString.IsEmpty() && (resource->GetLifeTime() > 0))
-						{
-							error = AddRetainResource (patternString, resource);
-							if ((XBOX::VE_OK != error) && (VE_CACHE_RULE_ALREADY_EXISTS != error))
-								break;
-						}
-
-						resource->Release();
+						error = AddRetainResource (patternString, resource);
+						if ((XBOX::VE_OK != error) && (VE_CACHE_RULE_ALREADY_EXISTS != error))
+							break;
 					}
+
+					resource->Release();
 				}
 			}
 		}
@@ -957,13 +944,14 @@ XBOX::VError VCacheManagerHTTPRequestHandler::HandleRequest (IHTTPResponse *ioRe
 	if ((NULL == ioResponse) || (NULL == dynamic_cast<VHTTPResponse *>(ioResponse)))
 		return VHTTPServer::ThrowError (VE_HTTP_PROTOCOL_INTERNAL_SERVER_ERROR, STRING_ERROR_INVALID_PARAMETER);
 
-	VHTTPResponse *	response = dynamic_cast<VHTTPResponse *>(ioResponse);
-	VVirtualHost *	virtualHost = (NULL != response) ? dynamic_cast<VVirtualHost *>(response->GetVirtualHost()) : NULL;
-#if HTTP_SERVER_GLOBAL_CACHE
+	VHTTPResponse *				response = dynamic_cast<VHTTPResponse *>(ioResponse);
+	VVirtualHost *				virtualHost = (NULL != response) ? dynamic_cast<VVirtualHost *>(response->GetVirtualHost()) : NULL;
+	VAuthenticationManager *	authenticationManager = (NULL != virtualHost) ? dynamic_cast<VAuthenticationManager *>(virtualHost->GetProject()->GetAuthenticationManager()) : NULL;
+
+	if (NULL != authenticationManager && (authenticationManager->CheckAdminAccessGranted (ioResponse) != XBOX::VE_OK))
+		return VE_HTTP_PROTOCOL_UNAUTHORIZED;
+
 	VCacheManager *	cacheManager = (NULL != virtualHost) ? virtualHost->GetProject()->GetHTTPServer()->GetCacheManager() : NULL;
-#else
-	VCacheManager *	cacheManager = (NULL != virtualHost) ? virtualHost->GetCacheManager() : NULL;
-#endif
 
 	if (NULL != cacheManager)
 	{

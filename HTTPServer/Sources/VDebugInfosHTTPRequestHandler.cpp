@@ -36,6 +36,13 @@ XBOX::VError VDebugInfosHTTPRequestHandler::HandleRequest (IHTTPResponse *ioResp
 	if (NULL == ioResponse)
 		return VHTTPServer::ThrowError (VE_HTTP_PROTOCOL_INTERNAL_SERVER_ERROR, STRING_ERROR_INVALID_PARAMETER);
 
+	VHTTPResponse *				response = dynamic_cast<VHTTPResponse *>(ioResponse);
+	VVirtualHost *				virtualHost = (NULL != response) ? dynamic_cast<VVirtualHost *>(response->GetVirtualHost()) : NULL;
+	VAuthenticationManager *	authenticationManager = (NULL != virtualHost) ? dynamic_cast<VAuthenticationManager *>(virtualHost->GetProject()->GetAuthenticationManager()) : NULL;
+
+	if (NULL != authenticationManager && (authenticationManager->CheckAdminAccessGranted (ioResponse) != XBOX::VE_OK))
+		return VE_HTTP_PROTOCOL_UNAUTHORIZED;
+
 	VHTTPServer * httpServer = dynamic_cast<VHTTPResponse *>(ioResponse)->GetHTTPServer();
 
 	if (NULL != httpServer)

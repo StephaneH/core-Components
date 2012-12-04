@@ -38,18 +38,30 @@ private:
 
 struct VVirtualHostAcceptAddressFunctor
 {
-	VVirtualHostAcceptAddressFunctor (const IP4 inIPv4Address)
-		: fIPv4Address (inIPv4Address)
+#if WITH_DEPRECATED_IPV4_API
+	VVirtualHostAcceptAddressFunctor (const IP4 /*done*/ inIPAddress)
+	: fIPAddress (inIPAddress)
 	{
 	}
-
+#else
+	VVirtualHostAcceptAddressFunctor (const XBOX::VString& inIPAddress)
+	: fIPAddress (inIPAddress)
+	{
+	}
+#endif
+	
 	bool operator() (const std::pair<XBOX::VRegexMatcher *, VVirtualHost *>& inValueType) const
 	{
-		return inValueType.second->AcceptConnectionsOnAddress (fIPv4Address);
+		return inValueType.second->AcceptConnectionsOnAddress (fIPAddress);
 	}
 
 private:
-	const IP4				fIPv4Address;
+
+#if WITH_DEPRECATED_IPV4_API
+	const IP4 /*done*/		fIPAddress;
+#else
+	XBOX::VString			fIPAddress;
+#endif	
 };
 
 
@@ -108,20 +120,12 @@ VVirtualHost *VVirtualHostManager::RetainMatchingVirtualHost (const VHTTPRequest
 		}
 		else
 		{
-#if 0 //VERSIONDEBUG
-			/*
-				TODO: See with Julien & Sergiy if there's a way to retrieve the Server's IP/Port used for this endPoint
-							and, then try to find a VirtualHost matching ipv4address and/or port
-			*/
-			XBOX::VString	ipv4AddrString;
-			IP4			ipv4Addr = inRequest.GetEndPointIPv4(); // Peer Address (i need the Server address)
-			PortNumber	port = inRequest.GetEndPointPort();		// Server Port
-
-			HTTPServerTools::MakeIPv4String (ipv4Addr, ipv4AddrString);
-#endif
 			// Try to find a Virtual Host matching the port (no matter what address the request match)
-			virtualHost = _FindMatchingVirtualHost (fHostPatternsMap, 0, inRequest.GetEndPointPort());
-
+#if WITH_DEPRECATED_IPV4_API			
+			virtualHost = _FindMatchingVirtualHost (fHostPatternsMap, 0, inRequest.GetLocalPort());
+#else
+			virtualHost = _FindMatchingVirtualHost (fHostPatternsMap, STRING_EMPTY, inRequest.GetLocalPort());
+#endif
 			// Other else try to find a VirtualHost matching the Host
 			if (NULL == virtualHost)
 				virtualHost = _FindMatchingVirtualHost (fHostPatternsMap, inRequest.GetHost());
@@ -256,8 +260,11 @@ VVirtualHost *VVirtualHostManager::_FindMatchingVirtualHost (const VVirtualHostM
 	return matchingHost;
 }
 
-
-VVirtualHost *VVirtualHostManager::_FindMatchingVirtualHost (const VVirtualHostMap& inMap, IP4 inIPv4Address, PortNumber inPort)
+#if WITH_DEPRECATED_IPV4_API
+VVirtualHost *VVirtualHostManager::_FindMatchingVirtualHost (const VVirtualHostMap& inMap, IP4 /*done*/ inIPAddress, PortNumber inPort)
+#else
+VVirtualHost *VVirtualHostManager::_FindMatchingVirtualHost (const VVirtualHostMap& inMap, const XBOX::VString& inIPAddress, PortNumber inPort)
+#endif
 {
 	if (inMap.empty())
 		return NULL;
@@ -271,9 +278,14 @@ VVirtualHost *VVirtualHostManager::_FindMatchingVirtualHost (const VVirtualHostM
 		if (it != inMap.end())
 			matchingHost = it->second;
 	}
-	else if ((inIPv4Address != 0) && (std::count_if (inMap.begin(), inMap.end(), VVirtualHostAcceptAddressFunctor (inPort)) == 1))
+#if WITH_DEPRECATED_IPV4_API
+	else if ((inIPAddress != 0) && (std::count_if (inMap.begin(), inMap.end(), VVirtualHostAcceptAddressFunctor (inPort)) == 1))
+#else
+	else if (!HTTPServerTools::EqualASCIIVString (inIPAddress, VNetAddress::GetAnyIP()) &&
+			(std::count_if (inMap.begin(), inMap.end(), VVirtualHostAcceptAddressFunctor (inIPAddress)) == 1))
+#endif		
 	{
-		VVirtualHostMap::const_iterator it = std::find_if (inMap.begin(), inMap.end(), VVirtualHostAcceptAddressFunctor (inIPv4Address));
+		VVirtualHostMap::const_iterator it = std::find_if (inMap.begin(), inMap.end(), VVirtualHostAcceptAddressFunctor (inIPAddress));
 		if (it != inMap.end())
 			matchingHost = it->second;
 	}

@@ -16,12 +16,14 @@
 #ifndef __HTTP_HEADER_INCLUDED__
 #define __HTTP_HEADER_INCLUDED__
 
+#if 0 // TODO: Cleanup
 
-class NameValueCollection;
+#include "ServerNet/Sources/VNameValueCollection.h"
 
-typedef NameValueCollection							VHeaderList;
-typedef NameValueCollection::ConstIterator			VHeaderListConstIterator;
-typedef NameValueCollection::Iterator				VHeaderListIterator;
+
+typedef XBOX::VNameValueCollection					VHeaderList;
+typedef XBOX::VNameValueCollection::ConstIterator	VHeaderListConstIterator;
+typedef XBOX::VNameValueCollection::Iterator		VHeaderListIterator;
 
 
 class VHTTPHeader : public XBOX::VObject, public IHTTPHeader
@@ -96,8 +98,8 @@ public:
 	 *	and the parameter
 	 *		boundary -> MIME_boundary_01234567
 	 */
-	static void					SplitParameters (const XBOX::VString& inString, XBOX::VString& outValue, NameValueCollection& outParameters, bool withReverseSolidus = false);
-	static void					SplitParameters (const UniChar *begin, const UniChar *end, NameValueCollection& outParameters, bool withReverseSolidus = false);
+	static void					SplitParameters (const XBOX::VString& inString, XBOX::VString& outValue, XBOX::VNameValueCollection& outParameters, bool withReverseSolidus = false);
+	static void					SplitParameters (const UniChar *begin, const UniChar *end, XBOX::VNameValueCollection& outParameters, bool withReverseSolidus = false);
 
 	/**
 	 *	@function Quote
@@ -109,6 +111,6 @@ public:
 private:
 	VHeaderList					fHeaderList;
 };
-
+#endif
 
 #endif // __HTTP_HEADER_INCLUDED__

@@ -19,7 +19,7 @@
 
 #include "javascript_db4d.h"
 
-#include "SQL/Interfaces/CSQLServer.h"
+#include "Backup.h"
 
 
 USING_TOOLBOX_NAMESPACE
@@ -874,6 +874,193 @@ void VJSTable::GetDefinition( ClassDefinition& outDefinition)
 
 
 
+//======================================================
+
+VJSObject VJSBackupSettings::CreateInstance( JS4D::ContextRef inContext, IBackupSettings *inRetainedBackupSettings)
+{
+	return VJSObject( inContext, inherited::CreateInstance( inContext, inRetainedBackupSettings));
+}
+
+void VJSBackupSettings::Initialize( const XBOX::VJSParms_initialize& inParms, IBackupSettings* inSettings)
+{
+	if (inSettings)
+		inSettings->Retain();
+}
+
+void VJSBackupSettings::Finalize( const XBOX::VJSParms_finalize& inParms, IBackupSettings* inSettings)
+{
+	if (inSettings)
+		inSettings->Release();
+}
+
+void VJSBackupSettings::GetDefinition( ClassDefinition& outDefinition)
+{
+	static inherited::StaticFunction functions[] = 
+	{
+		{ "setDestination", js_callStaticFunction<_setDestination>, JS4D::PropertyAttributeReadOnly | JS4D::PropertyAttributeDontEnum | JS4D::PropertyAttributeDontDelete },
+		{ "isValid", js_callStaticFunction<_isValid>, JS4D::PropertyAttributeReadOnly | JS4D::PropertyAttributeDontEnum | JS4D::PropertyAttributeDontDelete },
+		{ 0, 0, 0}
+	};
+
+	static inherited::StaticValue values[] =
+	{
+		{ "destination", js_getProperty<_getDestination>, NULL,JS4D::PropertyAttributeReadOnly | JS4D::PropertyAttributeDontDelete },
+		{ 0, 0, 0, 0}
+	};
+
+	outDefinition.className = "BackupSettings";
+	outDefinition.callAsConstructor = js_callAsConstructor<CallAsConstructor>;
+	outDefinition.initialize = js_initialize<Initialize>;
+	outDefinition.finalize = js_finalize<Finalize>;
+	outDefinition.staticFunctions = functions;
+	outDefinition.staticValues = values;
+}
+
+void	VJSBackupSettings::CallAsConstructor(VJSParms_callAsConstructor& ioParms)
+{
+	bool constructed = false;
+	VDBMgr *mgr = VDBMgr::GetManager();
+	if(mgr)
+	{
+		IBackupSettings* settings = mgr->CreateBackupSettings();
+		if(settings)
+		{
+			ioParms.ReturnConstructedObject(VJSBackupSettings::CreateInstance(ioParms.GetContext(),settings));
+			constructed = true;
+		}
+		ReleaseRefCountable(&settings);
+	}
+	if(!constructed)
+		ioParms.ReturnUndefined();
+}
+
+void	VJSBackupSettings::_getDestination(XBOX::VJSParms_getProperty& ioParms, IBackupSettings* inBackupSettings)
+{
+	VFilePath path;
+	bool valid = false;
+	valid = inBackupSettings->GetDestination(path);
+	if (valid)
+	{
+		VString pathStr;
+		path.GetPosixPath(pathStr);
+		path.FromFullPath(pathStr,FPS_POSIX);
+		ioParms.ReturnFilePathAsFileOrFolder(path);
+	}
+	else
+	{
+		ioParms.ReturnNullValue();
+	}
+}
+
+void	VJSBackupSettings::_setDestination(XBOX::VJSParms_callStaticFunction& ioParms, IBackupSettings* inBackupSettings)
+{
+	//TODO: inspect parameter and check if it is:
+	// - a string
+	// - a javascript object e.g. Folder
+	// - something else
+	// - if none of these apply then throw
+
+	VFilePath path;
+	VString pathString;
+	if (ioParms.CountParams() == 0)
+	{
+		vThrowError(VE_INVALID_PARAMETER);
+		ioParms.ReturnNullValue();
+	}
+	else if (ioParms.IsStringParam(1))
+	{
+		ioParms.GetStringParam(1,pathString);
+		if (!pathString.BeginsWith( CVSTR( "./")) && !pathString.BeginsWith( CVSTR( "../")))
+		{
+			path.FromFullPath(pathString,FPS_POSIX);
+			if (path.IsEmpty() || !path.IsValid())
+			{
+				VString part;
+				VURL url(pathString,true);
+
+				path.Clear();
+				url.GetScheme(part);
+				part.ToLowerCase();
+				//Ensure we're dealing with a file:// URL
+				if(part == CVSTR("file"))
+				{
+					//Ensure we're dealing with a localhost/127.0.0.1 or empty host address
+					url.GetHostName(part,false);
+					part.ToLowerCase();
+					if (part.GetLength() == 0 || part == CVSTR("127.0.0.1") || part == CVSTR("localhost"))
+					{
+						//Ensure we clear the network location part so that VUrl retrieves
+						//the filepath with no host part
+						url.SetNetWorkLocation(CVSTR(""),false);
+						if (!url.GetFilePath(path))
+						{
+							path.Clear();
+						}
+					}
+				}
+			}
+		}
+	}
+	else //Assume object so a Folder or a URI
+	{
+		VFolder *folder = NULL;
+		VJSValue value = ioParms.GetParamValue(1);
+		folder = value.GetFolder();
+		if (folder)
+		{
+			folder->GetPath(path);
+			folder = NULL;//obtained from GetFolder() so no need to release
+		}
+		else
+		{
+			value.GetString( pathString);
+			if (!pathString.BeginsWith( CVSTR( "./")) && !pathString.BeginsWith( CVSTR( "../")))
+			{
+				VURL url;
+				VString part;
+				url.GetScheme(part);
+				part.ToLowerCase();
+				if(part == CVSTR("file"))
+				{
+					//accept only localhost or 127.0.0.1
+					url.GetHostName(part,false);
+					part.ToLowerCase();
+					if (part.GetLength() == 0 || part == CVSTR("127.0.0.1") || part == CVSTR("localhost"))
+					{
+						//Ensure we clear the network location part so that VUrl retrieves
+						//the filepath with no host part
+						url.SetNetWorkLocation(CVSTR(""),false);
+						if (value.GetURL( url))
+						{
+							if (!url.GetFilePath(path))
+							{
+								path.Clear();
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+
+	if (path.IsEmpty() || !path.IsFolder() || !path.IsValid())
+	{
+		vThrowError(VE_INVALID_PARAMETER);
+	}
+	else
+	{
+		inBackupSettings->SetDestination(path);
+	}
+	ioParms.ReturnNullValue();
+}
+
+void	VJSBackupSettings::_isValid(XBOX::VJSParms_callStaticFunction& ioParms, IBackupSettings* inBackupSettings)
+{
+	VError err = VE_OK;
+	if (inBackupSettings)
+		err = inBackupSettings->CheckValidity();
+	ioParms.ReturnBool(err == VE_OK);
+}
 
 //======================================================
 
@@ -1540,20 +1727,6 @@ void VJSDatabase::_ExportAsSQL(VJSParms_callStaticFunction& ioParms, CDB4DBase* 
 }
 
 
-void VJSDatabase::_CreateSQLStatement(XBOX::VJSParms_callStaticFunction& ioParms, CDB4DBase* inDatabase)
-{
-	CSQLServer*				sqlServer = ( CSQLServer* ) VComponentManager::RetainComponent ( ( CType ) CSQLServer::Component_Type );
-	xbox_assert ( sqlServer != 0 );
-
-	if ( sqlServer != 0 )
-	{
-		ioParms.ReturnValue ( sqlServer-> JS_CreateSQLStatement ( inDatabase, ( void* ) ioParms.GetContextRef ( ) ) );
-		sqlServer-> Release ( );
-		sqlServer = 0;
-	}
-}
-
-
 void VJSDatabase::_clearErrs(VJSParms_callStaticFunction& ioParms, CDB4DBase* inDatabase)
 {
 	XBOX::VTask::GetCurrent()->FlushErrors();
@@ -1865,13 +2038,358 @@ class JSTOOLSIntf : public IDB4D_DataToolsIntf
 };
 
 
-
 IDB4D_DataToolsIntf* VJSDatabase::CreateJSDataToolsIntf(VJSContext& jscontext, VJSObject& paramObj)
 {
 	return new JSTOOLSIntf(jscontext, paramObj);
 }
 
 
+void	VJSDatabase::_GetJournalFile(XBOX::VJSParms_callStaticFunction& ioParms, CDB4DBase* inDatabase)
+{
+	CDB4DBaseContext* context = NULL;
+	Base4D* base = NULL;
+	VError error = VE_OK;
+	XBOX::VFile* journalFile = NULL;
+
+	context = GetDB4DBaseContextFromJSContext(ioParms, inDatabase);
+	
+	journalFile = inDatabase->RetainJournalFile(context);
+
+	if (journalFile)
+	{
+		ioParms.ReturnFile(journalFile);
+	}
+	else
+	{
+		ioParms.ReturnNullValue();
+	}
+	XBOX::ReleaseRefCountable(&journalFile);
+}
+
+void	VJSDatabase::_IsJournalEnabled(XBOX::VJSParms_callStaticFunction& ioParms, CDB4DBase* inDatabase)
+{
+	CDB4DBaseContext* context = NULL;
+	Base4D* base = NULL;
+	bool journalEnabled = false;
+	XBOX::VFile* journalFile = NULL;
+
+	context = GetDB4DBaseContextFromJSContext(ioParms, inDatabase);
+	
+	journalFile = inDatabase->RetainJournalFile(context);
+	journalEnabled = (journalFile != NULL);
+	XBOX::ReleaseRefCountable(&journalFile);
+
+	ioParms.ReturnBool(journalEnabled);
+}
+
+void	VJSDatabase::_DisableJournal(XBOX::VJSParms_callStaticFunction& ioParms, CDB4DBase* inDatabase)
+{
+	CDB4DBaseContext* context = NULL;
+	Base4D* base = NULL;
+	VError error = VE_OK;
+
+	context = GetDB4DBaseContextFromJSContext(ioParms, inDatabase);
+	base = VImpCreator<VDB4DBase>::GetImpObject(inDatabase)->GetBase();
+
+	error = JournalUtils::DisableJournal(base,context);
+	ioParms.ReturnBool(error == VE_OK);
+}
+
+void	VJSDatabase::_GetBackupSettings(XBOX::VJSParms_callStaticFunction& ioParms, CDB4DBase* inDatabase)
+{
+	StErrorContextInstaller errorContext;
+	CDB4DBaseContext* context = NULL;
+	bool done =false;
+
+	context = GetDB4DBaseContextFromJSContext(ioParms, inDatabase);
+
+	if (inDatabase)
+	{
+		const IBackupSettings* settings =  inDatabase->RetainBackupSettings();
+		if(settings)
+		{
+			VJSObject settingsObj(ioParms.GetContextRef());
+			settingsObj.MakeEmpty();
+			settings->ToJSObject(settingsObj);
+			ioParms.ReturnValue(settingsObj);
+			done = true;
+		}
+	}
+	if(!done)
+		ioParms.ReturnNullValue();
+}
+
+/**
+ * Command syntax:
+ * ds.backupAndChangeJournal(newJournalFile: object [,options: object])
+ * examples:
+ * <code>
+ * var newJournal = new File(xxx); 
+ * ds.backupAndChangeJournal(newJournal);                 // specifies a new journal and no progress option
+ * ds.backupAndChangeJournal(null,{some options});		  // fails you have to specify a journal 
+ * ds.backupAndChangeJournal('some path',{some options}); // fails you have to specify a journal as a File object
+ */
+void	VJSDatabase::_BackupAndChangeJournal(XBOX::VJSParms_callStaticFunction& ioParms, CDB4DBase* inDatabase)
+{
+	StErrorContextInstaller errorContext;
+	CDB4DBaseContext* context = NULL;
+	Base4D* base = NULL;
+	XBOX::VFilePath manifestPath;
+	XBOX::VError error = VE_OK;
+	context = GetDB4DBaseContextFromJSContext(ioParms, inDatabase);
+	base = VImpCreator<VDB4DBase>::GetImpObject(inDatabase)->GetBase();
+
+	
+	
+	//Retrieve progress callbacks from options if applicable
+	VJSObject jsBackupProgressObs(ioParms.GetContextRef());
+	XBOX::VFilePath journalPath;
+	if (ioParms.IsObjectParam(2))
+	{
+		ioParms.GetParamObject(2,jsBackupProgressObs);
+	}
+	else
+	{
+		jsBackupProgressObs.MakeEmpty();
+	}
+	JSTOOLSIntf backupToolInterface(ioParms.GetContextRef(), jsBackupProgressObs);
+
+	//Ensure a valid journal file is specified
+	if (!ioParms.IsNullParam(1) && ioParms.IsObjectParam(1))
+	{
+		VFile*	journalFile = NULL;
+		journalFile = ioParms.RetainFileParam(1);
+		if (journalFile )
+		{
+			journalFile->GetPath(journalPath);
+		}
+		XBOX::ReleaseRefCountable(&journalFile);
+	}
+
+	bool backupSucceeded = false;
+	if (!journalPath.IsFile() || !journalPath.IsValid() || journalPath.IsEmpty() )
+	{
+		backupSucceeded = false;
+		error = VE_INVALID_PARAMETER;
+		vThrowError(error,CVSTR("Invalid journal file path"));
+	}
+	else
+	{
+		IBackupTool* backupTool = NULL;
+		const IBackupSettings* backupSettings = NULL;
+		backupSettings = inDatabase->RetainBackupSettings();
+		backupTool = VDBMgr::CreateBackupTool();
+
+		if (journalPath.IsFile() && journalPath.IsValid() && !journalPath.IsEmpty() )
+		{
+			backupSucceeded = backupTool->BackupDatabaseAndChangeJournal(inDatabase,context,*backupSettings,&journalPath,&manifestPath,&backupToolInterface);
+		}
+	
+		delete backupTool;backupTool = NULL;
+		XBOX::ReleaseRefCountable(&backupSettings);
+	}
+	
+	if (!backupSucceeded)
+	{
+		error =	errorContext.GetLastError();
+	}
+	
+	if (error != VE_OK || !backupSucceeded)
+	{
+		VValueBag errorBag;
+		VErrorBase* errorBase = NULL;
+		errorBase = errorContext.GetContext()->GetLast();
+		errorBag.SetLong(L"ErrorLevel",2);//normal error
+		if(errorBase)
+		{
+			VString errorString,temp;
+			errorBase->GetErrorString(errorString);
+			temp.Clear();
+			errorBase->GetLocation(temp);
+			if(temp.GetLength() > 0)
+			{
+				errorString.AppendCString(", ");
+				errorString.AppendString(temp);
+			}
+			temp.Clear();
+			errorBase->GetErrorDescription(temp);
+			if(temp.GetLength() > 0)
+			{
+				errorString.AppendCString(", ");
+				errorString.AppendString(temp);
+			}
+			temp.Clear();
+			errorBase->GetActionDescription(temp);
+			if(temp.GetLength() > 0)
+			{
+				errorString.AppendCString(", ");
+				errorString.AppendString(temp);
+			}
+			errorBag.SetString(L"ErrorText",errorString);
+		}
+		else
+		{
+			errorBag.SetString(L"ErrorText",CVSTR("Backup failed"));
+			errorBag.SetLong(L"ErrorNumber",ERRCODE_FROM_VERROR(error));
+		}
+		backupToolInterface.AddProblem(errorBag);
+		ioParms.ReturnNullValue();
+	}
+	else
+	{
+		ioParms.ReturnFilePathAsFileOrFolder(manifestPath);
+	}
+	
+}
+
+/**
+ * \brief Backs up an active/opened database
+ * \details
+ * Command syntax:
+ * ds.backup([config: object] [,options: object])
+ * examples:
+ * <code>
+ * ds.backup(null,{some progress object});                         -> uses default backup config from database and a progress indicator
+ * ds.backup({destination:Folder(SomePath),useUniqueNames:true});  -> uses custom config and no progress options
+ * ds.backup();                                                    -> uses default backup config from database and no progress options
+ * </code>
+ */
+
+void	VJSDatabase::_Backup(XBOX::VJSParms_callStaticFunction& ioParms, CDB4DBase* inDatabase)
+{
+	StErrorContextInstaller errorContext;
+
+	CDB4DBaseContext* context = NULL;
+	Base4D* base = NULL;
+	VError error = VE_OK;
+	VJSObject jsBackupProgressObs(ioParms.GetContextRef());
+	IBackupSettings* workingBackupSettings = NULL;
+
+	context = GetDB4DBaseContextFromJSContext(ioParms, inDatabase);
+	base = VImpCreator<VDB4DBase>::GetImpObject(inDatabase)->GetBase();
+
+	
+	//Command syntax:
+	//ds.backup([config: object] [,options: object])
+	//examples:
+	//ds.backup(null,{some progress object});                         -> uses default backup config from database and a progress indicator
+	//ds.backup({destination:Folder(SomePath),useUniqueNames:true});  -> uses custom config and no progress options
+	//ds.backup();                                                    -> uses default backup config from database and no progress options
+
+	//Obtain backup progress callbacks from options parameter if applicable
+	if (!ioParms.IsNullParam(2) && ioParms.IsObjectParam(2))
+	{
+		ioParms.GetParamObject(2,jsBackupProgressObs);
+	}
+	else
+	{
+		jsBackupProgressObs.MakeEmpty();
+	}
+	JSTOOLSIntf backupToolInterface(ioParms.GetContextRef(), jsBackupProgressObs);
+
+	//Check if param 1 is there because it can be null if param 2 is defined
+	if (!ioParms.IsNullParam(1) && ioParms.IsObjectParam(1))
+	{
+		//First parameter is specified as JS object, parse it as backup settings
+		const IBackupSettings* parentSettings = inDatabase->RetainBackupSettings();
+
+		VJSObject altBackupConfig(ioParms.GetContextRef());
+		ioParms.GetParamObject(1,altBackupConfig);
+
+		//Create working settings and chain them to database settings
+		//We need to do this before initializing workingBackupSettings because
+		//for max flexibility, altBackupConfig may contain a subset of backup parameters (e.g. destination folder only)
+		//so for those undefined parameters we must refer to the parent config
+		workingBackupSettings = VDBMgr::CreateBackupSettings();
+		workingBackupSettings->SetRetainedParent(parentSettings);
+
+		bool configIsValid = workingBackupSettings->FromJSObject(altBackupConfig);
+
+		if(!configIsValid)
+		{
+			//The new configuration is not valid so clear it we'll use a default one
+			XBOX::ReleaseRefCountable(&workingBackupSettings);
+			error = VE_INVALID_PARAMETER;
+			vThrowError(error,CVSTR("backup configuration is not valid"));
+		}
+		XBOX::ReleaseRefCountable(&parentSettings);
+	}
+
+	bool backupSucceeded = false;
+	VFilePath manifestPath;
+	
+	if (errorContext.GetLastError() == VE_OK)
+	{
+		//If no settings were specified then use default ones
+		if (workingBackupSettings == NULL)
+		{
+			workingBackupSettings = const_cast<IBackupSettings*>(inDatabase->RetainBackupSettings());
+		}
+
+		//Now backup takes place
+		IBackupTool* backupTool = NULL;
+		backupTool = VDBMgr::CreateBackupTool();
+		backupSucceeded = backupTool->BackupDatabase(inDatabase,context,*workingBackupSettings,&manifestPath,&backupToolInterface);
+		delete backupTool;
+		backupTool = NULL;
+	}
+	XBOX::ReleaseRefCountable(&workingBackupSettings);
+	
+
+
+	//Backup error processing
+	if (!backupSucceeded || errorContext.GetLastError() != VE_OK)
+	{
+		VValueBag errorBag;
+		VErrorBase* errorBase = NULL;
+		error =	errorContext.GetLastError();
+		errorBase = errorContext.GetContext()->GetLast();
+		errorBag.SetLong(L"ErrorLevel",2);//normal error
+		if(errorBase)
+		{
+			VString errorString,temp;
+			errorBase->GetErrorString(errorString);
+			temp.Clear();
+			errorBase->GetLocation(temp);
+			if(temp.GetLength() > 0)
+			{
+				errorString.AppendCString(", ");
+				errorString.AppendString(temp);
+			}
+			temp.Clear();
+			errorBase->GetErrorDescription(temp);
+			if(temp.GetLength() > 0)
+			{
+				errorString.AppendCString(", ");
+				errorString.AppendString(temp);
+			}
+			temp.Clear();
+			errorBase->GetActionDescription(temp);
+			if(temp.GetLength() > 0)
+			{
+				errorString.AppendCString(", ");
+				errorString.AppendString(temp);
+			}
+			errorBag.SetString(L"ErrorText",errorString);
+		}
+		else
+		{
+			errorBag.SetString(L"ErrorText",CVSTR("Backup failed"));
+			errorBag.SetLong(L"ErrorNumber",ERRCODE_FROM_VERROR(error));
+		}
+		backupToolInterface.AddProblem(errorBag);
+	}
+
+	if (error == VE_OK)
+	{
+		xbox_assert(!manifestPath.IsEmpty() && manifestPath.IsValid() && manifestPath.IsFile());
+		ioParms.ReturnFilePathAsFileOrFolder(manifestPath);
+	}
+	else
+	{
+		ioParms.ReturnNullValue();
+	}
+}
 
 void VJSDatabase::_verify( XBOX::VJSParms_callStaticFunction& ioParms, CDB4DBase* inDatabase)
 {
@@ -1897,10 +2415,8 @@ void VJSDatabase::_verify( XBOX::VJSParms_callStaticFunction& ioParms, CDB4DBase
 		ok = err == VE_OK;
 		dataDB->Release();
 	}
-
 	ioParms.ReturnBool(ok);
 }
-
 
 
 void VJSDatabase::_queryOptions( XBOX::VJSParms_callStaticFunction& ioParms, CDB4DBase* inDatabase)
@@ -1938,7 +2454,6 @@ void VJSDatabase::GetDefinition( ClassDefinition& outDefinition)
 		{ "exportAsSQL", js_callStaticFunction<_ExportAsSQL>, JS4D::PropertyAttributeReadOnly | JS4D::PropertyAttributeDontEnum | JS4D::PropertyAttributeDontDelete },
 		{ "clearErrs", js_callStaticFunction<_clearErrs>, JS4D::PropertyAttributeReadOnly | JS4D::PropertyAttributeDontEnum | JS4D::PropertyAttributeDontDelete },
 		{ "getSyncInfo", js_callStaticFunction<_GetSyncInfo>, JS4D::PropertyAttributeReadOnly | JS4D::PropertyAttributeDontEnum | JS4D::PropertyAttributeDontDelete },
-		{ "createSQLStatement", js_callStaticFunction<_CreateSQLStatement>, JS4D::PropertyAttributeReadOnly | JS4D::PropertyAttributeDontEnum | JS4D::PropertyAttributeDontDelete },
 		{ "loadModelDefinition", js_callStaticFunction<_loadModelsDefinition>, JS4D::PropertyAttributeReadOnly | JS4D::PropertyAttributeDontEnum | JS4D::PropertyAttributeDontDelete },
 		{ "setCacheSize", js_callStaticFunction<_setCacheSize>, JS4D::PropertyAttributeReadOnly | JS4D::PropertyAttributeDontEnum | JS4D::PropertyAttributeDontDelete },
 		{ "getCacheSize", js_callStaticFunction<_getCacheSize>, JS4D::PropertyAttributeReadOnly | JS4D::PropertyAttributeDontEnum | JS4D::PropertyAttributeDontDelete },
@@ -1953,6 +2468,12 @@ void VJSDatabase::GetDefinition( ClassDefinition& outDefinition)
 		{ "queryOptions", js_callStaticFunction<_queryOptions>, JS4D::PropertyAttributeReadOnly | JS4D::PropertyAttributeDontEnum | JS4D::PropertyAttributeDontDelete },
 		{ "setSortMaxMem", js_callStaticFunction<_setSortMaxMem>, JS4D::PropertyAttributeReadOnly | JS4D::PropertyAttributeDontEnum | JS4D::PropertyAttributeDontDelete },
 		{ "close", js_callStaticFunction<_close>, JS4D::PropertyAttributeReadOnly | JS4D::PropertyAttributeDontEnum | JS4D::PropertyAttributeDontDelete },
+		{ "backup", js_callStaticFunction<_Backup>, JS4D::PropertyAttributeReadOnly | JS4D::PropertyAttributeDontEnum | JS4D::PropertyAttributeDontDelete },
+		{ "getJournalFile", js_callStaticFunction<_GetJournalFile>, JS4D::PropertyAttributeReadOnly | JS4D::PropertyAttributeDontEnum | JS4D::PropertyAttributeDontDelete },
+		{ "isJournalEnabled", js_callStaticFunction<_IsJournalEnabled>, JS4D::PropertyAttributeReadOnly | JS4D::PropertyAttributeDontEnum | JS4D::PropertyAttributeDontDelete },
+		{ "disableJournal", js_callStaticFunction<_DisableJournal>, JS4D::PropertyAttributeReadOnly | JS4D::PropertyAttributeDontEnum | JS4D::PropertyAttributeDontDelete },
+		{ "backupAndChangeJournal", js_callStaticFunction<_BackupAndChangeJournal>, JS4D::PropertyAttributeReadOnly | JS4D::PropertyAttributeDontEnum | JS4D::PropertyAttributeDontDelete },
+		
 		{ 0, 0, 0}
 	};
  
@@ -2903,6 +3424,28 @@ void VJSEntityModel::_setAutoSequenceNumber(VJSParms_callStaticFunction& ioParms
 }
 
 
+void VJSEntityModel::_getFragmentation(VJSParms_callStaticFunction& ioParms, CDB4DEntityModel* inModel)
+{
+	VError err = VE_OK;
+	bool okresult = false;
+	CDB4DBaseContext* context = GetDB4DBaseContextFromJSContext(ioParms, inModel);
+
+	CDB4DTable* tt = inModel->RetainTable();
+	if (tt != nil)
+	{
+		Real result = 0.0;
+		sLONG8 total = 0, frags = 0;
+		err = tt->GetFragmentation(total, frags, context);
+		if (total > 0)
+			result = (Real)frags / (Real)total;
+		ioParms.ReturnNumber(result);
+	}
+	QuickReleaseRefCountable(tt);
+
+}
+
+
+
 void VJSEntityModel::_getAttributes( XBOX::VJSParms_getProperty& ioParms, CDB4DEntityModel* inModel)
 {
 	ioParms.ReturnValue(VJSEntityAttributeEnumerator::CreateInstance(ioParms.GetContextRef(), inModel));
@@ -2944,6 +3487,7 @@ void VJSEntityModel::GetDefinition( ClassDefinition& outDefinition)
 		{ "toArray", js_callStaticFunction<_toArray>, JS4D::PropertyAttributeReadOnly | JS4D::PropertyAttributeDontEnum | JS4D::PropertyAttributeDontDelete },
 		{ "fromArray", js_callStaticFunction<_fromArray>, JS4D::PropertyAttributeReadOnly | JS4D::PropertyAttributeDontEnum | JS4D::PropertyAttributeDontDelete },
 		{ "setAutoSequenceNumber", js_callStaticFunction<_setAutoSequenceNumber>, JS4D::PropertyAttributeReadOnly | JS4D::PropertyAttributeDontEnum | JS4D::PropertyAttributeDontDelete },
+		{ "getFragmentation", js_callStaticFunction<_getFragmentation>, JS4D::PropertyAttributeReadOnly | JS4D::PropertyAttributeDontEnum | JS4D::PropertyAttributeDontDelete },
 
 		{ "sum", js_callStaticFunction<_sum>, JS4D::PropertyAttributeReadOnly | JS4D::PropertyAttributeDontEnum | JS4D::PropertyAttributeDontDelete },
 		{ "min", js_callStaticFunction<_min>, JS4D::PropertyAttributeReadOnly | JS4D::PropertyAttributeDontEnum | JS4D::PropertyAttributeDontDelete },
@@ -3424,6 +3968,7 @@ bool VJSEntitySelectionIterator::SetProperty( VJSParms_setProperty& ioParms, Ent
 void VJSEntitySelectionIterator::_Save(VJSParms_callStaticFunction& ioParms, EntitySelectionIterator* inSelIter)
 {
 	VError err = VE_OK;
+	bool saved = false;
 	CDB4DEntityRecord* inRecord = inSelIter->GetCurRec(GetDB4DBaseContextFromJSContext(ioParms, inSelIter->GetModel()));
 	if (inRecord != nil)
 	{
@@ -3431,7 +3976,23 @@ void VJSEntitySelectionIterator::_Save(VJSParms_callStaticFunction& ioParms, Ent
 		if (stamp == 0)
 			stamp = 1;
 		err = inRecord->Save(stamp);
+		saved = err == VE_OK;
 	}
+	ioParms.ReturnBool(saved);
+}
+
+
+void VJSEntitySelectionIterator::_validate(VJSParms_callStaticFunction& ioParms, EntitySelectionIterator* inSelIter)
+{
+	VError err = VE_OK;
+	bool validated = false;
+	CDB4DEntityRecord* inRecord = inSelIter->GetCurRec(GetDB4DBaseContextFromJSContext(ioParms, inSelIter->GetModel()));
+	if (inRecord != nil)
+	{
+		err = inRecord->Validate();
+		validated = err == VE_OK;
+	}
+	ioParms.ReturnBool(validated);
 }
 
 
@@ -3715,6 +4276,7 @@ void VJSEntitySelectionIterator::GetDefinition( ClassDefinition& outDefinition)
 	//	{ "valid", js_callStaticFunction<_Valid>, JS4D::PropertyAttributeReadOnly | JS4D::PropertyAttributeDontEnum | JS4D::PropertyAttributeDontDelete },
 		{ "isLoaded", js_callStaticFunction<_Loaded>, JS4D::PropertyAttributeReadOnly | JS4D::PropertyAttributeDontEnum | JS4D::PropertyAttributeDontDelete },
 		{ "save", js_callStaticFunction<_Save>, JS4D::PropertyAttributeReadOnly | JS4D::PropertyAttributeDontEnum | JS4D::PropertyAttributeDontDelete },
+		{ "validate", js_callStaticFunction<_validate>, JS4D::PropertyAttributeReadOnly | JS4D::PropertyAttributeDontEnum | JS4D::PropertyAttributeDontDelete },
 		{ "getID", js_callStaticFunction<_GetID>, JS4D::PropertyAttributeReadOnly | JS4D::PropertyAttributeDontEnum | JS4D::PropertyAttributeDontDelete },
 		{ "refresh", js_callStaticFunction<_Reload>, JS4D::PropertyAttributeReadOnly | JS4D::PropertyAttributeDontEnum | JS4D::PropertyAttributeDontDelete },
 		{ "isModified", js_callStaticFunction<_IsModified>, JS4D::PropertyAttributeReadOnly | JS4D::PropertyAttributeDontEnum | JS4D::PropertyAttributeDontDelete },
@@ -4016,157 +4578,190 @@ void VJSEntitySelection::_compute(XBOX::VJSParms_callStaticFunction& ioParms, CD
 	{
 		EntityModel* em = VImpCreator<EntityModel>::GetImpObject(model);
 		EntityAttributeSortedSelection attlist(em);
+		EntityAttributeSortedSelection groupByList(em);
 		sLONG curparam = GetAttributeListParams(ioParms, 1, attlist);
-		bool withdistinct = ioParms.GetBoolParam(curparam, L"distinct", L"");
-		DB4D_ColumnFormulae lastaction = DB4D_Count;
-		if (withdistinct)
-			lastaction = DB4D_Sum_distinct;
-
-		bool allAttributesAreDirect = true;
-
-		if (!attlist.empty())
+		bool withdistinct = false;
+		VString s;
+		if (ioParms.GetStringParam(curparam, s) && (s == "distinct"))
+			withdistinct = ioParms.GetBoolParam(curparam, L"distinct", L"");
+		else
 		{
-			Selection* sel = VImpCreator<VDB4DSelection>::GetImpObject(inSelection)->GetSel();
-			Selection* selsorted = nil;
-			if (withdistinct)
-			{
-				EntityAttributeSortedSelection sortingAtt(em);
-				sortingAtt.AddAttribute(attlist[0].fAttribute, nil);
-				VError err = VE_OK;
-				selsorted = sel->SortSel(err, em, &sortingAtt, ConvertContext(context));
-				if (selsorted != nil)
-					sel = selsorted;
-			}
+			curparam = GetAttributeListParams(ioParms, curparam, groupByList);
+			withdistinct = ioParms.GetBoolParam(curparam, L"distinct", L"");
+		}
 
-			ColumnFormulas formules(em->GetMainTable());
-			for (EntityAttributeSortedSelection::const_iterator cur = attlist.begin(), end = attlist.end(); cur != end && err == VE_OK; cur++)
+		if (groupByList.empty())
+		{
+			DB4D_ColumnFormulae lastaction = DB4D_Count;
+			if (withdistinct)
+				lastaction = DB4D_Sum_distinct;
+
+			bool allAttributesAreDirect = true;
+
+			if (!attlist.empty())
 			{
-				const EntityAttribute* att = cur->fAttribute;
-				if (!att->IsStatable())
+				Selection* sel = VImpCreator<VDB4DSelection>::GetImpObject(inSelection)->GetSel();
+				Selection* selsorted = nil;
+				if (withdistinct)
 				{
-					err = att->ThrowError(VE_DB4D_WRONG_ATTRIBUTE_KIND);
+					EntityAttributeSortedSelection sortingAtt(em);
+					sortingAtt.AddAttribute(attlist[0].fAttribute, nil);
+					VError err = VE_OK;
+					selsorted = sel->SortSel(err, em, &sortingAtt, ConvertContext(context));
+					if (selsorted != nil)
+						sel = selsorted;
 				}
-				else if (att->GetOwner() != em)
+
+				ColumnFormulas formules(em->GetMainTable());
+				for (EntityAttributeSortedSelection::const_iterator cur = attlist.begin(), end = attlist.end(); cur != end && err == VE_OK; cur++)
 				{
-					VString s = att->GetOwner()->GetName()+"."+att->GetAttibuteName();
-					err = ThrowBaseError(VE_DB4D_ENTITY_ATTRIBUTE_IS_FROM_ANOTHER_DATACLASS, s);
-				}
-				else
-				{
-					if (/*att->GetKind() != eattr_field &&*/ att->GetKind() != eattr_storage)
+					const EntityAttribute* att = cur->fAttribute;
+					if (!att->IsStatable())
 					{
-						allAttributesAreDirect = false;
+						err = att->ThrowError(VE_DB4D_WRONG_ATTRIBUTE_KIND);
+					}
+					else if (att->GetOwner() != em)
+					{
+						VString s = att->GetOwner()->GetName()+"."+att->GetAttibuteName();
+						err = ThrowBaseError(VE_DB4D_ENTITY_ATTRIBUTE_IS_FROM_ANOTHER_DATACLASS, s);
 					}
 					else
 					{
-						Field* cri = att->RetainDirectField();
-						if (cri != nil)
+						if (/*att->GetKind() != eattr_field &&*/ att->GetKind() != eattr_storage)
 						{
-							for (DB4D_ColumnFormulae action = DB4D_Sum; action <= lastaction; action = (DB4D_ColumnFormulae)((sLONG)action+1))
-								formules.AddAction(action, cri);
-							cri->Release();
+							allAttributesAreDirect = false;
+						}
+						else
+						{
+							Field* cri = att->RetainDirectField();
+							if (cri != nil)
+							{
+								for (DB4D_ColumnFormulae action = DB4D_Sum; action <= lastaction; action = (DB4D_ColumnFormulae)((sLONG)action+1))
+									formules.AddAction(action, cri);
+								cri->Release();
+							}
 						}
 					}
 				}
-			}
 
-			if (err == VE_OK)
-			{
-				if (allAttributesAreDirect)
+				if (err == VE_OK)
 				{
-					err = formules.Execute(sel, ConvertContext(context), nil, nil, sel == selsorted);
-					if (err == VE_OK)
+					if (allAttributesAreDirect)
 					{
-						VJSObject result(ioParms.GetContextRef());
-						result.MakeEmpty();
-
-						sLONG curcol = 0;
-						for (EntityAttributeSortedSelection::const_iterator cur = attlist.begin(), end = attlist.end(); cur != end; cur++)
+						err = formules.Execute(sel, ConvertContext(context), nil, nil, sel == selsorted);
+						if (err == VE_OK)
 						{
-							const EntityAttribute* att = cur->fAttribute;
-							if (/*att->GetKind() != eattr_field &&*/ att->GetKind() != eattr_storage)
-							{
-								allAttributesAreDirect = false;
-							}
-							else
-							{
-								Field* cri = att->RetainDirectField();
-								if (cri != nil)
-								{
-									VJSObject oneatt(ioParms.GetContextRef());
-									oneatt.MakeEmpty();
+							VJSObject result(ioParms.GetContextRef());
+							result.MakeEmpty();
 
-									for (DB4D_ColumnFormulae action = DB4D_Sum; action <= lastaction; action = (DB4D_ColumnFormulae)((sLONG)action+1), curcol++)
+							sLONG curcol = 0;
+							for (EntityAttributeSortedSelection::const_iterator cur = attlist.begin(), end = attlist.end(); cur != end; cur++)
+							{
+								const EntityAttribute* att = cur->fAttribute;
+								if (/*att->GetKind() != eattr_field &&*/ att->GetKind() != eattr_storage)
+								{
+									allAttributesAreDirect = false;
+								}
+								else
+								{
+									Field* cri = att->RetainDirectField();
+									if (cri != nil)
 									{
-										if ( (action == DB4D_Sum || action == DB4D_Average || action == DB4D_Average_distinct || action == DB4D_Sum_distinct) && !att->IsSummable())
+										VJSObject oneatt(ioParms.GetContextRef());
+										oneatt.MakeEmpty();
+
+										for (DB4D_ColumnFormulae action = DB4D_Sum; action <= lastaction; action = (DB4D_ColumnFormulae)((sLONG)action+1), curcol++)
 										{
-											// nothing to do here
-										}
-										else
-										{
-											VValueSingle* cv = formules.GetResult(curcol);
-											if (cv != nil)
+											if ( (action == DB4D_Sum || action == DB4D_Average || action == DB4D_Average_distinct || action == DB4D_Sum_distinct) && !att->IsSummable())
 											{
-												VJSValue jsval(ioParms.GetContextRef());
-												jsval.SetVValue(*cv);
-												VString actionstring;
-												switch (action)
+												// nothing to do here
+											}
+											else
+											{
+												VValueSingle* cv = formules.GetResult(curcol);
+												if (cv != nil)
 												{
-													case DB4D_Sum:
-														actionstring = L"sum";
-														break;
-													case DB4D_Average:
-														actionstring = L"average";
-														break;
-													case DB4D_Min:
-														actionstring = L"min";
-														break;
-													case DB4D_Max:
-														actionstring = L"max";
-														break;
-													case DB4D_Count:
-														actionstring = L"count";
-														break;
-													case DB4D_Count_distinct:
-														actionstring = L"count_distinct";
-														break;
-													case DB4D_Average_distinct:
-														actionstring = L"average_distinct";
-														break;
-													case DB4D_Sum_distinct:
-														actionstring = L"sum_distinct";
-														break;
+													VJSValue jsval(ioParms.GetContextRef());
+													jsval.SetVValue(*cv);
+													VString actionstring;
+													switch (action)
+													{
+														case DB4D_Sum:
+															actionstring = L"sum";
+															break;
+														case DB4D_Average:
+															actionstring = L"average";
+															break;
+														case DB4D_Min:
+															actionstring = L"min";
+															break;
+														case DB4D_Max:
+															actionstring = L"max";
+															break;
+														case DB4D_Count:
+															actionstring = L"count";
+															break;
+														case DB4D_Count_distinct:
+															actionstring = L"count_distinct";
+															break;
+														case DB4D_Average_distinct:
+															actionstring = L"average_distinct";
+															break;
+														case DB4D_Sum_distinct:
+															actionstring = L"sum_distinct";
+															break;
+													}
+													oneatt.SetProperty(actionstring, jsval, JS4D::PropertyAttributeNone);
 												}
-												oneatt.SetProperty(actionstring, jsval, JS4D::PropertyAttributeNone);
 											}
 										}
-									}
-									cri->Release();
+										cri->Release();
 
-									result.SetProperty(att->GetName(), oneatt, JS4D::PropertyAttributeNone);
+										result.SetProperty(att->GetName(), oneatt, JS4D::PropertyAttributeNone);
+									}
 								}
 							}
+
+							ioParms.ReturnValue(result);
+							okresult = true;
 						}
 
-						ioParms.ReturnValue(result);
-						okresult = true;
 					}
-
-				}
-				else
-				{
-					VJSObject result(ioParms.GetContextRef());
-					err  = em->compute(attlist, sel, result, ConvertContext(context), ioParms.GetContextRef());
-					if (err == VE_OK)
+					else
 					{
-						ioParms.ReturnValue(result);
-						okresult = true;
+						VJSObject result(ioParms.GetContextRef());
+						err  = em->compute(attlist, sel, result, ConvertContext(context), ioParms.GetContextRef());
+						if (err == VE_OK)
+						{
+							ioParms.ReturnValue(result);
+							okresult = true;
+						}
 					}
 				}
+				QuickReleaseRefCountable(selsorted);
 			}
-			QuickReleaseRefCountable(selsorted);
 		}
+		else
+		{
+			VString attlistString, groupbyString;
+			attlist.ToString(attlistString);
+			groupByList.ToString(groupbyString);
+			VJSFunction func("ReportingDB4D.report", ioParms.GetContextRef());
+			func.AddParam(VJSEntitySelection::CreateInstance(ioParms.GetContextRef(), inSelection));
+			func.AddParam(attlistString);
+			func.AddParam(groupbyString);
+			if (func.Call())
+			{
+				okresult = true;
+				ioParms.ReturnValue(func.GetResult());
+			}
+			else
+			{
+				ioParms.SetException(func.GetException());
+			}
+		}	
 	}
+	
 
 	if (!okresult)
 	{
@@ -5268,6 +5863,11 @@ void CreateGlobalDB4DClasses()
 
 	VJSGlobalClass::AddStaticFunction( "getCacheManager", VJSGlobalClass::js_callStaticFunction<do_GetCacheManager>, JS4D::PropertyAttributeNone);
 }
+
+
+//======================================================
+
+
 
 
 

@@ -17,7 +17,7 @@
 #define __AUTHENTICATION_MANAGER_INCLUDED__
 
 
-class VHTTPHeader;
+class XBOX::VHTTPHeader;
 class CSecurityManager;
 class VAuthenticationManager;
 
@@ -121,7 +121,7 @@ public:
 									VAuthenticationManager (const XBOX::VValueBag *inSettings);
 	virtual							~VAuthenticationManager();
 
-	static VAuthenticationInfos *	CreateAuthenticationInfosFromHeader (const VHTTPHeader& inHeader, const HTTPRequestMethod inMethod);
+	static VAuthenticationInfos *	CreateAuthenticationInfosFromHeader (const XBOX::VHTTPHeader& inHeader, const HTTPRequestMethod inMethod);
 
 	virtual XBOX::VError			CheckAndValidateAuthentication (IHTTPResponse *ioResponse);
 	virtual XBOX::VError			SetAuthorizationHeader (IHTTPResponse *ioResponse);
@@ -129,6 +129,11 @@ public:
 
 	void							SetSecurityManager (CSecurityManager *inSecurityManager);
 	const CSecurityManager *		GetSecurityManager() const { return fSecurityManager; }
+
+	void							SetAuthenticationDelegate( IAuthenticationDelegate *inAuthenticationDelegate);
+
+	/* Used to check user below to AdminGroup to grant access to specail URLs /debugInfos, /cache */
+	XBOX::VError					CheckAdminAccessGranted (IHTTPResponse *ioResponse);
 
 private:
 	bool							_ValidateAuthentication (IAuthenticationInfos *ioAuthenticationInfos);
@@ -140,6 +145,7 @@ private:
 private:
 	CSecurityManager *				fSecurityManager;
 	VAuthenticationReferee *		fAuthenticationReferee;
+	IAuthenticationDelegate*		fAuthenticationDelegate;
 };
 
 

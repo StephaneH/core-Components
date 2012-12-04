@@ -31,7 +31,6 @@
 		GenerateDebugInformation="true"
 		GenerateMapFile="true"
 		MapFileName="$(TargetDir)$(TargetName).map"
-		SubSystem="2"
 		LargeAddressAware="2"
 		ImportLibrary="$(IntDir)/$(TargetName).lib"
 		TargetMachine="17"

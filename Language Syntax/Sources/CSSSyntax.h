@@ -65,7 +65,9 @@ public:
 
 	virtual bool TokenizeOnKeyEnter() { return false; }
 
-	virtual void SetAutoInsertParameters( bool inTabs, bool inClosingChar, bool inBlock ) { fAutoInsertTabs = inTabs; fAutoInsertClosingChar = inClosingChar; fAutoInsertBlock = inBlock; }
+	virtual void SetAutoInsertParameters( bool inTabs, bool inClosingChar, bool inBlock, bool inInsertSpaces ) { fAutoInsertTabs = inTabs; fAutoInsertClosingChar = inClosingChar; fAutoInsertBlock = inBlock; fInsertSpaces = inInsertSpaces; }
+	virtual void GetAutoInsertParameters( bool& outTabs, bool& outClosingChar, bool& outBlock, bool& outInsertSpaces ) { outTabs = fAutoInsertTabs; outClosingChar = fAutoInsertClosingChar; outBlock = fAutoInsertBlock; outInsertSpaces = fInsertSpaces; }
+	virtual bool UseInsertSpacesForTabs() { return fInsertSpaces; }		// insert tab or spaces when user hits tab key or when auto inserting tabs
 	virtual void SetTabWidth( sLONG inTabWidth ) {fTabWidth = inTabWidth;}
 	virtual sLONG GetTabWidth() const {return fTabWidth;}
 
@@ -77,6 +79,7 @@ private:
 	bool fAutoInsertTabs;
 	bool fAutoInsertClosingChar;
 	bool fAutoInsertBlock;
+	bool fInsertSpaces;
 	sLONG fTabWidth;
 };
 

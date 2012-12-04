@@ -42,6 +42,7 @@ VHTTPConnectionListener::VHTTPConnectionListener (VHTTPServer *inServer, IReques
 , fUsageCounter (1)
 , fSocketDescriptor (-1)
 , fSSLSocketDescriptor (-1)
+, fAbortTask (false)
 {
 	fHTTPServer = XBOX::RetainRefCountable (inServer);
 
@@ -155,12 +156,10 @@ XBOX::VError VHTTPConnectionListener::AddSelectIOPool (XBOX::VTCPSelectIOPool *i
 }
 
 
-void VHTTPConnectionListener::SetSSLCertificatePaths (const XBOX::VString& inCertificatePath, const XBOX::VString& inKeyPath)
+void VHTTPConnectionListener::SetSSLCertificatePaths (const XBOX::VFilePath& inCertificatePath, const XBOX::VFilePath& inKeyPath)
 {
-	fCertificatePath.Clear();
-	fCertificatePath.FromString (inCertificatePath);
-	fKeyPath.Clear();
-	fKeyPath.FromString (inKeyPath);
+	fCertificatePath=inCertificatePath;
+	fKeyPath=inKeyPath;
 }
 
 
@@ -171,24 +170,9 @@ XBOX::VError VHTTPConnectionListener::StartListening()
 	if (NULL == fServerListener)
 	{
 		fServerListener = new VSockListener  (fRequestLogger);
-		if ((fCertificatePath.GetLength() > 0) && (fKeyPath.GetLength() > 0))
-		{
-			sLONG	certPathLen = fCertificatePath.GetLength() + 1;
-			char *	certPath = new char [certPathLen];
-			fCertificatePath.ToCString (certPath, certPathLen);
+		if ((!fCertificatePath.IsEmpty()) && (!fKeyPath.IsEmpty()))
+			fServerListener->SetCertificatePaths (fCertificatePath, fKeyPath);
 
-			sLONG	keyPathLen = fKeyPath.GetLength() + 1;
-			char *	keyPath = new char [keyPathLen];
-			fKeyPath.ToCString (keyPath, keyPathLen);
-
-			fServerListener->SetCertificatePaths (certPath, keyPath);
-
-			delete [] certPath;
-			delete [] keyPath;
-		}
-
-#if WITH_DEPRECATED_IPV4_API
-		
 		/* We just here need to add 2 listeners (one on for http and another one for https)*/
 		bool isOK = true;
 		
@@ -197,10 +181,6 @@ XBOX::VError VHTTPConnectionListener::StartListening()
 
 		if (isOK && fSSLEnabled)
 			fServerListener->AddListeningPort (fListeningIP, fSSLPort, true, fSSLSocketDescriptor);
-
-#elif DEPRECATED_IPV4_API_SHOULD_NOT_COMPILE
-	#error NEED AN IP V6 UPDATE
-#endif
 		
 		/* Add a VConnectionHandlerFactory for HTTP requests */
 		fConnectionHandlerFactory = new VHTTPConnectionHandlerFactory (fHTTPServer);
@@ -209,6 +189,8 @@ XBOX::VError VHTTPConnectionListener::StartListening()
 
 		if (XBOX::VE_OK == error)
 		{
+			fAbortTask = false;
+
 			if (fServerListener->StartListening())
 				Run();
 			else
@@ -226,12 +208,14 @@ XBOX::VError VHTTPConnectionListener::StartListening()
 inline
 bool VHTTPConnectionListener::IsListening()
 {
-	return ((GetState() != XBOX::TS_DYING) && (GetState() != XBOX::TS_DEAD) && (NULL != fServerListener));
+	return ((GetState() != XBOX::TS_DYING) && (GetState() != XBOX::TS_DEAD) && (NULL != fServerListener) && (!fAbortTask));
 }
 
 
 XBOX::VError VHTTPConnectionListener::StopListening()
 {
+	fAbortTask = true;
+
 	Kill();
 	
 	//jmo - tmp fix : wait for listening socket to be closed.

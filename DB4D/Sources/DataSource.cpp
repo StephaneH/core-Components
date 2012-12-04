@@ -962,7 +962,7 @@ VError AutoSeqNumberNoHole::loadobj(DataAddr4D addr, DataBaseObjectHeader& tag)
 	if (err == VE_OK)
 		err = tag.ValidateCheckSum(&ASNHOD, sizeof(ASNHOD));
 
-	if (err = VE_OK)
+	if (err == VE_OK)
 	{
 		if (tag.NeedSwap())
 			ASNHOD.SwapBytes();

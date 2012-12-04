@@ -1081,7 +1081,11 @@ class RechNodeExistingSelection : public RechNode
 class RechNodeOperator : public RechNode
 {
 	public:
-		inline RechNodeOperator(void) { TypNode = NoeudOper; recalcIndex = true; recalcAllIndex = true; recalcAllJoin = true; };
+		inline RechNodeOperator(void) {
+			TypNode = NoeudOper; recalcIndex = true; recalcAllIndex = true; recalcAllJoin = true;
+			left=nil; right=nil; // these changes are needed for valgrind
+			isindexe = false; isallindexe = false; isalljoin = false; // not detected by valgrind
+		};
 
 		virtual VError Perform(OptimizedQuery *query, Bittab **super, Bittab* filtre, VDB4DProgressIndicator* InProgress,  VValueBag* curdesc,
 			BaseTaskInfo* context, DB4D_Way_of_Locking HowToLock, Bittab *exceptions, sLONG limit, Bittab &Nulls, RechNode* &transformation);

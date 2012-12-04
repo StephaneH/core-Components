@@ -748,6 +748,26 @@ void FicheInMem::ClearSeqNumToken(BaseTaskInfo* context)
 	}
 }
 
+
+void FicheInMem::TransferSeqNumToken( BaseTaskInfo* context, FicheInMem *inDestination)
+{
+	if (testAssert( inDestination != nil && inDestination != this))
+	{
+		inDestination->ClearSeqNumToken( context);
+
+		inDestination->fToken = fToken;
+		inDestination->fAlreadyAskedSeqNum = fAlreadyAskedSeqNum;
+		inDestination->fTokenIsValidated = fTokenIsValidated;
+		inDestination->fRemoteSeqNum = fRemoteSeqNum;
+
+		fToken = 0;
+		fAlreadyAskedSeqNum = -2;
+		fTokenIsValidated = false;
+		fRemoteSeqNum = -1;
+	}
+}
+
+
 VError FicheInMem::Detach(BaseTaskInfo* Context, Boolean BlobFieldsCanBeEmptied)
 {
 	VError err;
@@ -2700,7 +2720,7 @@ VError FicheInMem::stockcrit(BaseTaskInfo* context)
 
 		sLONG startofprimkey = 0;
 		asscrit->CopyPrimaryKey(deps2);
-		if (deps2.GetCount() > 0 && MustCheckIntegrity())
+		if (deps2.GetCount() > 0 && asscrit->GetOwner()->CheckNot_NullEnabled() && MustCheckIntegrity())
 		{
 			nb = deps2.GetCount();
 			//if (!asscrit->IsIndexed(deps2))
@@ -4957,7 +4977,7 @@ tPtr FicheOnDisk::GetDataPtr(sLONG n, sLONG* WhatType)
 
 	if (result == nil)
 	{
-		if (WhatType = nil)
+		if (WhatType != nil)
 			*WhatType = -1;
 	}
 

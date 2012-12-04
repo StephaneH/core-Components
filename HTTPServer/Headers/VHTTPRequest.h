@@ -17,14 +17,12 @@
 #define __HTTP_REQUEST_INCLUDED__
 
 #include "VTCPServer.h"
-#include "VHTTPHeader.h"
 #include "VHTTPMessage.h"
 #include "VAuthenticationManager.h"
 
 
 class VHTTPServer;
 class VAuthenticationInfos;
-class VHTMLForm;
 
 
 class VHTTPRequest : public VHTTPMessage, public IHTTPRequest
@@ -38,7 +36,7 @@ public:
 
 	void							Reset();
 
-	XBOX::VError					ReadFromEndPoint (XBOX::VEndPoint& inEndPoint, uLONG inTimeout = 0);
+	XBOX::VError					ReadFromEndPoint (XBOX::VTCPEndPoint& inEndPoint, uLONG inTimeout = 0);
 	XBOX::VError					ReadFromStream (XBOX::VStream& inStream);
 
 	HTTPRequestMethod				GetRequestMethod() const { return fRequestMethod; }
@@ -50,24 +48,28 @@ public:
 	const XBOX::VString&			GetHost() const { return fHost; }
 	HTTPVersion						GetHTTPVersion() const { return fHTTPVersion; }
 	void							GetRequestHTTPVersionString (XBOX::VString& outVersionString) const;
-	const VHTTPHeader&				GetHTTPHeaders() const { return GetHeaders(); }
+	const XBOX::VHTTPHeader&		GetHTTPHeaders() const { return GetHeaders(); }
 	const XBOX::VPtrStream&			GetRequestBody() const { return GetBody(); }
 	IAuthenticationInfos *			GetAuthenticationInfos();
 	IAuthenticationInfos *			GetAuthenticationInfos() const;
 	const XBOX::VString&			GetRequestLine() const { return fRequestLine; }
 	void							GetContentTypeHeader (XBOX::VString& outContentType, XBOX::CharSet *outCharSet = NULL) const;
 	MimeTypeKind					GetContentTypeKind() const;
-	bool							GetCookies (std::vector<IHTTPCookie *>& outCookies) const;
+	bool							GetCookies (XBOX::VectorOfCookie& outCookies) const;
 	bool							GetCookie (const XBOX::VString& inName, XBOX::VString& outValue) const;
 	const XBOX::VError				GetParsingError() const { return fParsingError; }
 	bool							IsParsingComplete() const { return (PS_ParsingFinished == fParsingState); }
-	const IHTMLForm *				GetHTMLForm() const;
+	const XBOX::VMIMEMessage *		GetHTMLForm() const;
 
 	static XBOX::VSize				GetMaxIncomingDataSize() { return fMaxIncomingDataSize; }
 	static void						SetMaxIncomingDataSize (XBOX::VSize inValue) { fMaxIncomingDataSize = inValue; }
 
-	IP4								GetEndPointIPv4() const { return fEndPointIPv4; }
-	PortNumber						GetEndPointPort() const { return fEndPointPort; }
+	XBOX::VString					GetLocalIP() const { return fLocalAddress.GetIP(); }
+	PortNumber						GetLocalPort() const { return fLocalAddress.GetPort(); }
+	bool							IsSSL() const { return fIsSSL; }
+
+	XBOX::VString					GetPeerIP() const { return fPeerAddress.GetIP(); }
+	PortNumber						GetPeerPort() const { return fPeerAddress.GetPort(); }
 
 private:
 	HTTPRequestMethod				fRequestMethod;
@@ -81,18 +83,17 @@ private:
 	mutable VAuthenticationInfos *	fAuthenticationInfos;
 	HTTPParsingState				fParsingState;
 	XBOX::VError					fParsingError;
-	mutable VHTMLForm *				fHTMLForm;
-	IP4								fEndPointIPv4;
-	PortNumber						fEndPointPort;
+	mutable XBOX::VMIMEMessage *	fHTMLForm;
+
+	XBOX::XNetAddr					fLocalAddress;
+	XBOX::XNetAddr					fPeerAddress;
+	bool							fIsSSL;
 	
 	static XBOX::VSize				fMaxIncomingDataSize;
 
 protected:
 	bool							_ExtractAuthenticationInfos ();
 	bool							_AcceptIncomingDataSize (XBOX::VSize inSize);
-
-private:
-	VHTTPRequest&					operator = (const VHTTPRequest& inHTTPRequest);
 };
 
 

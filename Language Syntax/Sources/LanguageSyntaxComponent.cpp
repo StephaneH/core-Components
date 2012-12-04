@@ -568,6 +568,9 @@ void WorkerThread::ParseDocument( VDocumentParserManager::WorkItem *inWorkItem )
 {
 	xbox_assert( inWorkItem );
 
+	if ( inWorkItem->fFilePath.IsFolder() )
+		return;
+
 	// First, open up the file and gather all of its contents.  If we can't open the document, then there
 	// is little point to trying to figure out what parser to use.
 	VTime modTime;
@@ -1043,6 +1046,14 @@ void VLanguageSyntaxComponent::SetBreakPointManager( ISyntaxInterface* inSyntax,
 	if ( NULL != syntax )
 	{
 		syntax->SetBreakPointManager( inBreakPointManager );
+	}
+}
+
+void VLanguageSyntaxComponent::SetSQLTokenizer ( SQLTokenizeFuncPtr inPtr, const std::vector< XBOX::VString * >& vctrSQLKeywords, const std::vector< XBOX::VString * >& vctrSQLFunctions )
+{
+	if ( testAssert ( fSQLSyntax != NULL ) )
+	{
+		fSQLSyntax-> SetSQLTokenizer ( inPtr, vctrSQLKeywords, vctrSQLFunctions );
 	}
 }
 

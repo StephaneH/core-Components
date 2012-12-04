@@ -1647,7 +1647,10 @@ VError Bittab::Or(Bittab *autre, Boolean cangrow)
 										if ( ((uLONG)(1<<k)) & *p2 )
 											*p3 = *p3 | (1<<k);
 									}
-									std::fill(p3+1, endp, 0);
+									if (endp > (p3 + 1))
+									{
+										std::fill(p3+1, endp, 0);
+									}
 								}
 								else
 								{

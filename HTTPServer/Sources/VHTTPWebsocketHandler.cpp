@@ -46,7 +46,7 @@ VHTTPWebsocketHandler::WsState_t VHTTPWebsocketHandler::GetState() const
 }
 
 
-XBOX::VError VHTTPWebsocketHandler::ValidateHeader(const IHTTPHeader& hdr,XBOX::VString & outKey) 
+XBOX::VError VHTTPWebsocketHandler::ValidateHeader(const XBOX::VHTTPHeader& hdr,XBOX::VString & outKey) 
 {
 	XBOX::VError		l_err;
 	XBOX::VString		l_hdrstr;
@@ -55,19 +55,19 @@ XBOX::VError VHTTPWebsocketHandler::ValidateHeader(const IHTTPHeader& hdr,XBOX::
 	l_err = VE_OK;
 	hdr.ToString(l_hdrstr);
 
-	if ( (hdr.GetHeaderValue(K_UPGRADE,l_tmp) != true) || (l_tmp.EqualToString(K_WEBSOCKET,true) != true) )
+	if ( !hdr.GetHeaderValue(K_UPGRADE,l_tmp) || !l_tmp.EqualToString(K_WEBSOCKET,true) )
 	{
 		l_err = VE_INVALID_PARAMETER;
 	}
-	if ( !l_err && ( (hdr.GetHeaderValue(HEADER_CONNECTION,l_tmp) != true) || (l_tmp.EqualToString(K_UPGRADE,true) != true) ) )
+	if ( !l_err && ( !hdr.GetHeaderValue(HEADER_CONNECTION,l_tmp) || (l_tmp.Find(K_UPGRADE) < 1 ) ) )
 	{
 		l_err = VE_INVALID_PARAMETER;
 	}
-	if ( !l_err && ( (hdr.GetHeaderValue(K_WBSCK_VERS,l_tmp) != true) || (l_tmp.GetWord() != 13) ) )
+	if ( !l_err && ( !hdr.GetHeaderValue(K_WBSCK_VERS,l_tmp) || (l_tmp.GetWord() < 13) ) )
 	{
 		l_err = VE_INVALID_PARAMETER;
 	}
-	if ( !l_err & (hdr.GetHeaderValue(K_WBSCK_KEY,outKey) != true) )
+	if ( !l_err && !hdr.GetHeaderValue(K_WBSCK_KEY,outKey) )
 	{
 		l_err = VE_INVALID_PARAMETER;
 	}	
@@ -212,10 +212,10 @@ XBOX::VError VHTTPWebsocketHandler::ReadBytes(void* inData, uLONG* ioLength)
 
 	if (l_err)
 	{
-		xbox_assert(!l_err);
 		DebugMsg("ReadBytes ERR=%d\n",l_err);
 		DebugMsg("ERRCODE_FROM_VERROR=%d\n",ERRCODE_FROM_VERROR(l_err));
 		DebugMsg("NATIVE_ERRCODE_FROM_VERROR=%d\n",NATIVE_ERRCODE_FROM_VERROR(l_err));
+		//xbox_assert(!l_err);
 	}
 
 	return l_err;
@@ -225,7 +225,6 @@ XBOX::VError VHTTPWebsocketHandler::ReadMessage( void* inData, uLONG* ioLength, 
 {
 
 	bool			l_header_found;
-	uLONG			length;
 	VError			l_err;
 
 	if (!fEndpt)
@@ -501,7 +500,7 @@ XBOX::VError VHTTPWebsocketHandler::TreatNewConnection( IHTTPResponse* inRespons
 	{
 		l_err = VE_INVALID_PARAMETER;
 	}
-	const IHTTPHeader &l_rqst_hdr = inResponse->GetRequestHeader();
+	const XBOX::VHTTPHeader &l_rqst_hdr = inResponse->GetRequestHeader();
 	if (!l_err)
 	{
 		l_err = ValidateHeader(l_rqst_hdr,l_key);

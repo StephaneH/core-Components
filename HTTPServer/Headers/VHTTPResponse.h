@@ -38,13 +38,14 @@ public:
 	XBOX::VError				ReadRequestFromEndPoint (uLONG inTimeout = 0);
 	const IHTTPRequest&			GetRequest() const;
 	const HTTPVersion			GetRequestHTTPVersion() const;
-	const VHTTPHeader&			GetRequestHeader() const;
+	const XBOX::VHTTPHeader&	GetRequestHeader() const;
 	const XBOX::VString&		GetRequestURL() const;
 	const XBOX::VString&		GetRequestRawURL() const;
 	const XBOX::VString&		GetRequestURLPath() const;
 	const XBOX::VString&		GetRequestURLQuery() const;
 	HTTPRequestMethod			GetRequestMethod() const;
 	void						GetRequestMethodName (XBOX::VString& outMethodName) const;
+	void						SetRequestURLPath (const XBOX::VString& inURLPath);
 
 	/* Request Header accessor functions */
 	bool						GetIfModifiedSinceHeader (XBOX::VTime& outTime);
@@ -76,8 +77,8 @@ public:
 	bool						SetContentTypeHeader (const XBOX::VString& inValue, const XBOX::CharSet inCharSet = XBOX::VTC_UNKNOWN);
 	bool						GetContentTypeHeader (XBOX::VString& outValue, XBOX::CharSet *outCharSet = NULL) const;
 	MimeTypeKind				GetContentTypeKind() const;
-	const VHTTPHeader&			GetResponseHeader() const { return GetHeaders(); }
-	VHTTPHeader&				GetResponseHeader() { return GetHeaders(); }
+	const XBOX::VHTTPHeader&	GetResponseHeader() const { return GetHeaders(); }
+	XBOX::VHTTPHeader&			GetResponseHeader() { return GetHeaders(); }
 
 	/* Cookies manipulation functions */
 	bool						AddCookie (	const XBOX::VString& inName,
@@ -113,7 +114,12 @@ public:
 	/* Normalize and Send Header only - Thou SHALL not use that function, for specific uses (WebSockets) only */
 	XBOX::VError				SendResponseHeader();
 
-	IP4							GetIPv4() const;
+#if WITH_DEPRECATED_IPV4_API
+	IP4 /*done*/				GetIPv4() const;
+#else
+	void						GetIP (XBOX::VString& outIP) const;
+#endif	
+	
 	XBOX::VTCPEndPoint *		GetEndPoint() const { return fEndPoint; }
 
 	VHTTPServer *				GetHTTPServer() const { return fHTTPServer; }
@@ -129,6 +135,9 @@ public:
 
 	uLONG						GetStartRequestTime() const { return fStartRequestTime; }
 	sLONG						GetRawSocket() const;
+
+	bool						GetForceCloseSession() const { return fForceCloseSession; }
+	void						SetForceCloseSession (bool inValue = true) { fForceCloseSession = inValue; }
 
 
 private:
@@ -153,6 +162,8 @@ private:
 
 	bool						fHeaderSent;
 
+	bool						fForceCloseSession;	// To avoid waiting Keep-Alive timeout when HTTP Server is shutting down
+
 private:
 	/* private functions */
 	bool						_NormalizeResponseHeader();
@@ -167,6 +178,8 @@ private:
 	 *	(size > compressionMinThreshold && size < compressionMaxThreshold && mime-type allows compression)
 	 */
 	XBOX::VError				_CompressData(); 
+
+	bool						_InitResponseHeaderFromBuffer (void *inBuffer, XBOX::VSize inBufferSize, XBOX::VSize& outBodyOffset);
 };
 
 

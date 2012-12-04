@@ -49,7 +49,13 @@ public:
 protected:
 	XBOX::VError				_AddVirtualHost (VVirtualHostMap& inMap, VVirtualHost *inVirtualHost, const XBOX::VString& inPattern);
 	VVirtualHost *				_FindMatchingVirtualHost (const VVirtualHostMap& inMap, const XBOX::VString& inPattern);
-	VVirtualHost *				_FindMatchingVirtualHost (const VVirtualHostMap& inMap, IP4 inIPv4Address, PortNumber inPort);
+
+#if WITH_DEPRECATED_IPV4_API
+	VVirtualHost *				_FindMatchingVirtualHost (const VVirtualHostMap& inMap, IP4 /*done*/ inIPv4Address, PortNumber inPort);
+#else
+	VVirtualHost *				_FindMatchingVirtualHost (const VVirtualHostMap& inMap, const XBOX::VString& inIPAddress, PortNumber inPort);
+#endif
+	
 	bool						_VirtualHostAlreadyExist (const VVirtualHostMap& inMap, const XBOX::VString& inPattern);
 	bool						_VirtualHostMatchPattern (const VVirtualHostMap& inMap, const XBOX::VString& inPattern);
 

@@ -153,7 +153,7 @@ public:
 	virtual Boolean IsSelectionEmpty() const = 0;
 	virtual bool FindString( const XBOX::VString& inToFind, bool inUp, bool inCaseSensitive, bool inWholeWord, sLONG inStartLineIndex, sLONG inStartOffset, bool inFindProtectedOnly, bool inWrap, bool inDoSelect = true ) = 0;
 	virtual void ReplaceAllText( const XBOX::VString& inToFind, const XBOX::VString& inToReplace ) = 0;
-	virtual void InsertText( const XBOX::VString& inString, bool inWithTokenization = false ) = 0;
+	virtual bool InsertText( const XBOX::VString& inString, bool inWithTokenization = false ) = 0;
 	virtual void SetLineText( sLONG inLineIndex, const XBOX::VString& inText ) = 0;
 	virtual void GetSelectedText( XBOX::VString& outString, bool inGetWholeWord = false ) = 0;
 	virtual void GetCodeText( XBOX::VString& outText, bool inForSave = true ) = 0;
@@ -289,7 +289,8 @@ public:
 	// tell if the editor allows tabulations
 	virtual bool UseTab() = 0;
 	virtual sLONG GetTabWidth() const { return 4; }		// tab width is exprimed in characters
-	virtual void SetTabWidth( sLONG inTabWidth ) {}		
+	virtual void SetTabWidth( sLONG inTabWidth ) {}
+	virtual bool UseInsertSpacesForTabs() { return false; }		// insert tab or spaces when user hits tab key or when auto inserting tabs
 
 	// Given a position within a line, determine the boundaries of a word, as well as its length.  This is used to handle situations
 	// like double-clicks, Ctrl+Left Arrow, etc.  The behavior depends on the language being dealt with as to what is considered a morpheme.
@@ -338,7 +339,8 @@ public:
 	virtual void PerformIdleProcessing( ICodeEditorDocument *inDocument ) = 0;
 
 	// for all languages that can automatically do some insertion. Maybe we'll have more specific cases to add later...
-	virtual void SetAutoInsertParameters( bool inTabs, bool inClosingChar, bool inBlock ) {}
+	virtual void SetAutoInsertParameters( bool inTabs, bool inClosingChar, bool inBlock, bool inInsertChars ) {}
+	virtual void GetAutoInsertParameters( bool& outTabs, bool &outClosingChar, bool& outBlock, bool& outInsertChars ) {}
 
 	virtual void GetDefinitions( ICodeEditorDocument* inInterface, XBOX::VString& outSelection, std::vector<IDefinition>& outDefinitions ) {}
 	virtual void GetDefinitions(XBOX::VectorOfVString& inParts, std::vector<IDefinition> & outDefinitions) { }

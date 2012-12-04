@@ -1,5 +1,5 @@
 #include "components_base.xcconfig"
-#include "../../XToolbox/WAK2/weak_icu_coverage.xcconfig"
+#include "../../XToolbox/Main/weak_icu_coverage.xcconfig"
 PRODUCT_NAME = $(PROJECT_NAME)Debug
 
 

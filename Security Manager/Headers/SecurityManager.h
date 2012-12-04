@@ -91,7 +91,7 @@ public:
 	//XBOX::VError ValidateUserGroup (const XBOX::VString& inUserName, const XBOX::VString& inUserGroup);
 
     //Returns True/False and a valid/unchanged token on authentication success/failure.
-    XBOX::VError ValidateBasicAuthentication(const XBOX::VString& inName, const XBOX::VString& inPassword, bool* outAuthOk, CUAGSession* &outUAGSession);
+    XBOX::VError ValidateBasicAuthentication(const XBOX::VString& inName, const XBOX::VString& inPassword, bool* outAuthOk, CUAGSession* &outUAGSession, XBOX::VJSGlobalContext* inContext);
 
 	XBOX::VError ValidateDigestAuthentication (	const XBOX::VString& inUserName,
 												const XBOX::VString& inAlgorithm,
@@ -104,7 +104,8 @@ public:
 												const XBOX::VString& inMethod,
 												const XBOX::VString& inChallenge,
 												bool *outAuthOk,
-												CUAGSession* &outUAGSession);
+												CUAGSession* &outUAGSession,
+												XBOX::VJSGlobalContext* inContext);
 	
 	XBOX::VString ComputeDigestHA1(	const XBOX::VString& inUserName,
 									const XBOX::VString& inPassword, 

@@ -38,6 +38,11 @@ static int xmlcolorShadow[11] = {0,5,5,1,5,5,0,8,8,8,6};
 
 VXMLSyntax::VXMLSyntax()
 {
+	fAutoInsertBlock = false;
+	fAutoInsertClosingChar = false;
+	fAutoInsertTabs = false;
+	fInsertSpaces = false;
+	fTabWidth = 4;
 }
 
 

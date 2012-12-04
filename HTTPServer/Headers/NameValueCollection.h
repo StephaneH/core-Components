@@ -13,9 +13,10 @@
 * Consequently, no title, copyright or other proprietary rights
 * other than those specified in the applicable license is granted.
 */
-#ifndef __NAME_VALUE_COLLECTION__INCLUDED__
-#define __NAME_VALUE_COLLECTION__INCLUDED__
+#ifndef __NAME_VALUE_COLLECTION_INCLUDED__
+#define __NAME_VALUE_COLLECTION_INCLUDED__
 
+#if 0 // TBD: Cleanup
 
 #include <map>
 
@@ -40,7 +41,6 @@ public:
 	typedef NameValueMap::const_iterator ConstIterator;
 
 	NameValueCollection&		operator = (const NameValueCollection& inNameValueCollection);
-	void						swap (NameValueCollection& ioNameValueCollection);
 	const XBOX::VString&		operator [] (const XBOX::VString& inName) const;
 	void						set (const XBOX::VString& inName, const XBOX::VString& inValue);	
 	void						add (const XBOX::VString& inName, const XBOX::VString& inValue);
@@ -63,13 +63,6 @@ public:
 private:
 	NameValueMap				fMap;
 };
+#endif
 
-
-inline
-void swap (NameValueCollection& ioNVC1, NameValueCollection& ioNVC2)
-{
-	ioNVC1.swap (ioNVC2);
-}
-
-
-#endif	// __NAME_VALUE_COLLECTION__INCLUDED__
+#endif	// __NAME_VALUE_COLLECTION_INCLUDED__

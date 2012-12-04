@@ -18,12 +18,13 @@
 
 
 class EntityAttribute;
+class AttributePath;
 
 class SortLine
 {
 	public:
 	
-		inline SortLine() { isfield = true; expression = nil; att = nil;};
+		inline SortLine() { isfield = true; expression = nil; att = nil; fAttPath = nil; };
 		Boolean operator == (const SortLine& other) const { return (numfield == other.numfield) && (numfile == other.numfile); };
 
 		VError PutInto(VStream* into);
@@ -35,6 +36,7 @@ class SortLine
 		uBOOL isfield;
 		DB4DLanguageExpression* expression;
 		EntityAttribute* att;
+		AttributePath *fAttPath;
 };
 
 /*
@@ -46,7 +48,7 @@ public:
 };
 */
 
-typedef Vx0ArrayOf<SortLine, 10> SortLineArray;
+typedef vector<SortLine> SortLineArray;
 
 
 class SortTab : public Obj4D, public IObjCounter
@@ -60,9 +62,10 @@ class SortTab : public Obj4D, public IObjCounter
 		inline void GetTriLine(sLONG numline, SortLine* xli) const { *xli = li[numline-1]; };
 		inline SortLine* GetTriLineRef(sLONG numline) { return &(li[numline-1]); };
 		inline const SortLine* GetTriLineRef(sLONG numline) const {return &(li[numline-1]); };
-		inline sLONG GetNbLine(void) const { return(li.GetCount()); };
+		inline sLONG GetNbLine(void) const { return((sLONG)li.size()); };
 		Boolean AddExpression(DB4DLanguageExpression* inExpression, Boolean ascendant = true);
 		Boolean AddAttribute(EntityAttribute* inAtt, Boolean ascendant = true);
+		Boolean AddAttributePath(AttributePath* inAttPath, Boolean ascendant);
 
 		VError PutInto(VStream* into);
 		VError GetFrom(VStream* from);

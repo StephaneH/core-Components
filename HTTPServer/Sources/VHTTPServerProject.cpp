@@ -255,26 +255,10 @@ void VHTTPServerProject::SetAuthenticationManager (IAuthenticationManager *inAut
 }
 
 
-#if HTTP_SERVER_GLOBAL_SETTINGS
-IHTTPServerSettings *VHTTPServerProject::GetHTTPServerSettings() const
-{
-	if (NULL != fHTTPServer)
-		return fHTTPServer->GetSettings();
-
-	return NULL;
-}
-#endif
-
-
 XBOX::VError VHTTPServerProject::StartProcessing()
 {
-#if HTTP_SERVER_GLOBAL_SETTINGS
-	if (fHTTPServer->GetSettings()->GetEnableCompression() && !VHTTPServer::GetZipComponentAvailable())
-		fHTTPServer->GetSettings()->SetEnableCompression (false);
-#else
 	if (fSettings->GetEnableCompression() && !VHTTPServer::GetZipComponentAvailable())
 		fSettings->SetEnableCompression (false);
-#endif
 
 	if (fConnectionListener && fConnectionListener->IsListening())
 	{
@@ -287,6 +271,8 @@ XBOX::VError VHTTPServerProject::StartProcessing()
 	fConnectionListener = fHTTPServer->FindConnectionListener (fSettings);
 	if (NULL != fConnectionListener)
 	{
+		if (fSettings->GetHostName().IsEmpty())
+			return VHTTPServer::ThrowError (VE_CAN_NOT_START_HTTP_SERVER_PROJECT, STRING_EMPTY);
 		fReuseConnectionListener = true;
 	}
 	else
@@ -312,8 +298,6 @@ XBOX::VError VHTTPServerProject::StartProcessing()
 		AddHTTPRequestHandler (handler);
 	XBOX::ReleaseRefCountable (&handler);
 #endif
-
-
 
 	/*handler = new VChromeDebugHandler();
 	if (testAssert (NULL != handler))
@@ -614,6 +598,16 @@ void VHTTPServerProject::_AddVirtualFoldersFromSettings (VVirtualHost *ioVirtual
 
 			waLibPath.ToSubFolder (keyword);
 			virtualFolder = fHTTPServer->RetainVirtualFolder (waLibPath.GetPath(), indexFileName, keyword);
+			if (NULL != virtualFolder)
+				ioVirtualHost->AddVirtualFolder (virtualFolder);
+
+			XBOX::ReleaseRefCountable (&virtualFolder);
+
+			// Temp for WAK3 - Support "webComponents" VirtualFolder
+			// TODO: Use .waResources settings later
+			XBOX::VFilePath	webComponentsPath (wakandaServerFolder->GetPath());
+			webComponentsPath.ToSubFolder (CVSTR ("resources")).ToSubFolder (CVSTR ("Web Components"));
+			virtualFolder = fHTTPServer->RetainVirtualFolder (webComponentsPath.GetPath(), indexFileName, CVSTR ("webComponents"));
 			if (NULL != virtualFolder)
 				ioVirtualHost->AddVirtualFolder (virtualFolder);
 
@@ -987,6 +981,9 @@ void VHTTPServerProject::SetAuthenticationDelegate (IAuthenticationDelegate *inA
 	
 		fAuthenticationDelegate = XBOX::RetainRefCountable (inAuthenticationDelegate);
 	}
+
+	if (NULL != dynamic_cast<VAuthenticationManager *>(fAuthenticationManager))
+		dynamic_cast<VAuthenticationManager *>(fAuthenticationManager)->SetAuthenticationDelegate( fAuthenticationDelegate);
 }
 
 
@@ -994,4 +991,13 @@ inline
 IAuthenticationDelegate *VHTTPServerProject::GetAuthenticationDelegate()
 {
 	return fAuthenticationDelegate;
+}
+
+
+XBOX::VError VHTTPServerProject::Validate()
+{
+	if (!fHTTPServer->CheckProjectSanity (fSettings))
+		return VHTTPServer::ThrowError (VE_HTTP_SERVER_PROJECT_ALREADY_EXIST, STRING_EMPTY);
+
+	return XBOX::VE_OK;
 }

@@ -15,6 +15,7 @@
 */
 #include "4DDBHeaders.h"
 #include "javascript_db4d.h"
+#include "Backup.h"
 
 VDBMgr *VDBMgr::sDB4DMgr = nil;
 //UniChar VDBMgr::sWildChar = '@';
@@ -473,10 +474,66 @@ VDBFlushMgr *VDBMgr::GetFlushManager()
 	return GetManager()->fFlushMgr;
 }
 
-CDB4DBase* VDBMgr::OpenBase( const VFile& inStructureFile, sLONG inParameters, VError* outErr, FileAccess inAccess, VString* EntityFileExt, 
-							CUAGDirectory* inUAGDirectory, const VString* inHtmlContent, unordered_map_VString<VRefPtr<VFile> >* outIncludedFiles )
+
+IBackupSettings* VDBMgr::CreateBackupSettings()
 {
-	return xOpenCreateBase( inStructureFile, false, inParameters, nil, outErr, inAccess, nil,  EntityFileExt, inUAGDirectory, inHtmlContent, outIncludedFiles );
+	return new VBackupSettings();
+}
+
+XBOX::VError VDBMgr::GetJournalInfo(const XBOX::VFilePath& inDataFilePath,XBOX::VFilePath& outJournalPath,XBOX::VUUID& outDataLink)
+{
+	XBOX::VError error = VE_OK;
+	XBOX::VFilePath extraPropsPath(inDataFilePath);
+	extraPropsPath.SetExtension(CVSTR("waExtra"));
+	XBOX::VFile* extraPropsFile = new VFile(extraPropsPath);
+	XBOX::VFileStream extraPropsStream(extraPropsFile);
+	error  = VE_FILE_NOT_FOUND;
+	if (extraPropsStream.OpenReading() == VE_OK)
+	{
+		VString jsonString;
+		if (extraPropsStream.GetText(jsonString) == VE_OK)
+		{
+			VValueBag *extraBag = new VValueBag();
+			extraBag->FromJSONString(jsonString);
+			const VValueBag* journal_bag = extraBag->RetainUniqueElement( LogFileBagKey::journal_file );
+			error  = VE_OK;
+			if ( journal_bag != NULL )
+			{
+				VString logFilePath;
+				journal_bag->GetString( LogFileBagKey::filepath, logFilePath );
+				journal_bag->GetVUUID( LogFileBagKey::datalink, outDataLink );
+				if( !logFilePath.IsEmpty() )
+				{
+					if ( logFilePath.BeginsWith(CVSTR(".")))
+					{
+						outJournalPath.FromRelativePath(inDataFilePath,logFilePath);
+					}
+					else
+					{
+						outJournalPath.FromFullPath(logFilePath);
+					}
+				}
+			}
+			XBOX::ReleaseRefCountable(&journal_bag);
+			XBOX::ReleaseRefCountable(&extraBag);
+		}
+		
+	}
+	extraPropsStream.CloseReading();
+	XBOX::ReleaseRefCountable(&extraPropsFile);
+	return error;
+}
+
+
+IBackupTool* VDBMgr::CreateBackupTool()
+{
+	return new VBackupTool();
+}
+
+CDB4DBase* VDBMgr::OpenBase( const VFile& inStructureFile, sLONG inParameters, VError* outErr, FileAccess inAccess, VString* EntityFileExt, 
+							CUAGDirectory* inUAGDirectory, const VString* inHtmlContent, unordered_map_VString<VRefPtr<VFile> >* outIncludedFiles, const VFile* inPermissionsFile )
+{
+	return xOpenCreateBase( inStructureFile, false, inParameters, nil, outErr, inAccess, nil,  EntityFileExt, inUAGDirectory, inHtmlContent, outIncludedFiles, inPermissionsFile );
 }
 
 #if 0
@@ -604,14 +661,16 @@ VError VDBMgr::RebuildStructure( const VFile& inStructureFile, const VFile& inDa
 }
 
 
-CDB4DBase* VDBMgr::CreateBase( const VFile& inStructureFile, sLONG inParameters, VIntlMgr* inIntlMgr, VError* outErr, FileAccess inAccess, const VUUID* inChosenID, VString* EntityFileExt, CUAGDirectory* inUAGDirectory)
+CDB4DBase* VDBMgr::CreateBase( const VFile& inStructureFile, sLONG inParameters, VIntlMgr* inIntlMgr, VError* outErr, FileAccess inAccess, const VUUID* inChosenID, VString* EntityFileExt, CUAGDirectory* inUAGDirectory, const VFile* inPermissionsFile)
 {
-	return xOpenCreateBase( inStructureFile, true, inParameters, inIntlMgr, outErr, inAccess, inChosenID, EntityFileExt, inUAGDirectory);
+	return xOpenCreateBase( inStructureFile, true, inParameters, inIntlMgr, outErr, inAccess, inChosenID, EntityFileExt, inUAGDirectory, nil, nil, inPermissionsFile);
 }
 
 
 CDB4DBase* VDBMgr::xOpenCreateBase( const VFile& inStructureFile, Boolean inCreate, sLONG inParameters, VIntlMgr* inIntlMgr, VError* outErr, FileAccess inAccess, 
-								     const VUUID* inChosenID, VString* EntityFileExt, CUAGDirectory* inUAGDirectory, const VString* inXmlContent, unordered_map_VString<VRefPtr<VFile> >* outIncludedFiles )
+								     const VUUID* inChosenID, VString* EntityFileExt, CUAGDirectory* inUAGDirectory, 
+									 const VString* inXmlContent, unordered_map_VString<VRefPtr<VFile> >* outIncludedFiles,
+									 const VFile* inPermissionsFile)
 {
 //	ClearError();
 	VError err = VE_OK;
@@ -624,9 +683,9 @@ CDB4DBase* VDBMgr::xOpenCreateBase( const VFile& inStructureFile, Boolean inCrea
 	} else {
 		
 		if (inCreate)
-			err=basd->CreateStructure( inStructureFile, inParameters, inIntlMgr, inAccess, inChosenID, EntityFileExt, inUAGDirectory);
+			err=basd->CreateStructure( inStructureFile, inParameters, inIntlMgr, inAccess, inChosenID, EntityFileExt, inUAGDirectory, inPermissionsFile);
 		else
-			err=basd->OpenStructure( inStructureFile, inParameters, inAccess, EntityFileExt, inUAGDirectory, inXmlContent, outIncludedFiles );
+			err=basd->OpenStructure( inStructureFile, inParameters, inAccess, EntityFileExt, inUAGDirectory, inXmlContent, outIncludedFiles, inPermissionsFile );
 		
 		if (err == 0 && ((inParameters & DB4D_Open_DefaultData) != 0) )
 		{
@@ -6737,6 +6796,7 @@ void VDBMgr::GetStaticRequiredJSFiles(vector<VFilePath>& outFiles)
 	{
 		addStaticRequiredJSFile(outFiles, compfolder, "directoryRest.js");
 		addStaticRequiredJSFile(outFiles, compfolder, "ImpExpRest.js");
+		addStaticRequiredJSFile(outFiles, compfolder, "reporting.js");
 
 		/*
 		VFile scriptfile(*compfolder, "directoryRest.js");

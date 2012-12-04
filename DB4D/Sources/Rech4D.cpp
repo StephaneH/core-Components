@@ -2118,20 +2118,23 @@ VError SearchTab::BuildFromString(const VString& input, VString& outOrderBy, Bas
 									bool needparenthesis = (next != nil);
 									if (needparenthesis)
 										AddSearchLineOpenParenthesis();
-									if (next != nil)
-									{
-										Join& join = cachePath.GetPath(attpath, model->GetMainTable()->GetNum());
-										cachePath.InsertJoinIntoQuery(join, *this, lastdestinstance);
-										attinst = attpath.LastPart();
-									}
 
 									if (testAssert(attinst != nil))
 									{
 										const EntityAttribute* att = attinst->fAtt;
+										EntityAttributeKind kind = att->GetKind();
+										if ( (next != nil) || (kind == eattr_relation_1toN || kind == eattr_relation_Nto1 || kind == eattr_composition))
+										{
+											Join& join = cachePath.GetPath(attpath, model->GetMainTable()->GetNum());
+											cachePath.InsertJoinIntoQuery(join, *this, lastdestinstance);
+											attinst = attpath.LastPart();
+										}
 										bool okfield = false;
 
+										att = attinst->fAtt;
+										kind = att->GetKind();
 										uBOOL checkExists = 2;
-										if (att->GetKind() == eattr_relation_1toN || att->GetKind() == eattr_relation_Nto1 || att->GetKind() == eattr_composition)
+										if (kind == eattr_relation_1toN || kind == eattr_relation_Nto1 || kind == eattr_composition)
 										{
 											if (checkfornull)
 											{

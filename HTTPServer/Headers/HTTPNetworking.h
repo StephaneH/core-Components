@@ -18,10 +18,11 @@
 
 #include "ServerNet/VServerNet.h"
 
+
 class HTTPNetworkOutputStream : public XBOX::VStream
 {
 public:
-									HTTPNetworkOutputStream (XBOX::VTCPEndPoint& vtcpEndPoint);
+									HTTPNetworkOutputStream (XBOX::VTCPEndPoint& inTCPEndPoint);
 	virtual							~HTTPNetworkOutputStream();
 
 protected:
@@ -37,9 +38,6 @@ protected:
 	virtual XBOX::VError			DoUngetData (const void * inBuffer, XBOX::VSize inNbBytes) { /* A dummy stub to make the class non-abstract. */ return XBOX::VE_OK; }
 	virtual sLONG8					DoGetSize() { /* A dummy stub to make the class non-abstract. */ return XBOX::VE_OK; }
 	virtual XBOX::VError			DoSetSize (sLONG8 inNewSize) { /* A dummy stub to make the class non-abstract. */ return XBOX::VE_OK; }
-
-private :
-	XBOX::VError					_WriteToSocket (char *szchBuffer, uLONG *nioBytes);
 };
 
 

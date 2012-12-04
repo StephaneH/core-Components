@@ -64,7 +64,7 @@ namespace RIASettingsKeys
 		EXTERN_BAGKEY_WITH_DEFAULT_SCALAR (maximumRequestsByConnection, XBOX::VLong, sLONG);
 		EXTERN_BAGKEY_WITH_DEFAULT_SCALAR (maximumTimeout, XBOX::VLong, sLONG);
 		EXTERN_BAGKEY_WITH_DEFAULT (logFormat, XBOX::VString);
-		EXTERN_BAGKEY_WITH_DEFAULT (logFolderPath, XBOX::VString);
+		EXTERN_BAGKEY_WITH_DEFAULT (logPath, XBOX::VString);
 		EXTERN_BAGKEY_WITH_DEFAULT (logFileName, XBOX::VString);
 		EXTERN_BAGKEY_WITH_DEFAULT_SCALAR (logMaxSize, XBOX::VLong, sLONG);
 
@@ -153,69 +153,6 @@ private:
 typedef std::vector<XBOX::VRefPtr<VVirtualFolderSetting> > VVirtualFolderSettingsVector;
 
 
-#if HTTP_SERVER_GLOBAL_SETTINGS
-class VHTTPServerSettings : public XBOX::VObject, public IHTTPServerSettings
-{
-public:
-										VHTTPServerSettings ();
-	virtual								~VHTTPServerSettings();
-
-	XBOX::VError						LoadFromBag (const XBOX::VValueBag *inBag);
-	XBOX::VError						SaveToBag (XBOX::VValueBag *outBag);
-
-	void								ResetToFactorySettings();
-
-	/* Cache settings accessors */
-	bool								GetEnableCache() const { return fEnableCache; }
-	sLONG								GetCacheMaxSize() const { return fCacheMaxSize; }
-	sLONG								GetCachedObjectMaxSize() const { return fCachedObjectMaxSize; }
-
-	void								SetEnableCache (bool inValue) { fEnableCache = inValue; }
-	void								SetCacheMaxSize (sLONG inValue) { fCacheMaxSize = inValue; }
-	void								SetCachedObjectMaxSize (sLONG inValue) { fCachedObjectMaxSize = inValue; }
-
-	/* Compression settings */
-	bool								GetEnableCompression() const { return fEnableCompression; }
-	sLONG								GetCompressionMinThreshold() const { return fCompressionMinThreshold; }
-	sLONG								GetCompressionMaxThreshold() const { return fCompressionMaxThreshold; }
-
-	void								SetEnableCompression (bool inValue) { fEnableCompression = inValue; }
-	void								SetCompressionMinThreshold (sLONG inValue) { fCompressionMinThreshold = inValue; }
-	void								SetCompressionMaxThreshold (sLONG inValue) { fCompressionMaxThreshold = inValue; }
-
-	/* Keep-Alive Settings */
-	bool								GetEnableKeepAlive() const { return fEnableKeepAlive; }
-	sLONG								GetKeepAliveTimeout() const { return fKeepAliveTimeout; }
-	sLONG								GetKeepAliveMaxConnections() const { return fKeepAliveMaxConnections; }
-
-	void								SetEnableKeepAlive (bool inValue) { fEnableKeepAlive = inValue; }
-	void								SetKeepAliveTimeout (sLONG inValue) { fKeepAliveTimeout = inValue; }
-	void								SetKeepAliveMaxConnections (sLONG inValue) { fKeepAliveMaxConnections = inValue; }
-
-	XBOX::VSize							GetMaxIncomingDataSize() const { return fMaxIncomingDataSize; }
-	void								SetMaxIncomingDataSize (XBOX::VSize inValue);
-protected:
-	/* Cache settings */
-	bool								fEnableCache;
-	sLONG								fCacheMaxSize;
-	sLONG								fCachedObjectMaxSize;
-
-	/* Compression settings */
-	bool								fEnableCompression;
-	sLONG								fCompressionMinThreshold;
-	sLONG								fCompressionMaxThreshold;
-
-	/* Keep-Alive Settings */
-	bool								fEnableKeepAlive;
-	sLONG								fKeepAliveTimeout;
-	sLONG								fKeepAliveMaxConnections;
-
-	/* Max Incoming Data Size */
-	XBOX::VSize							fMaxIncomingDataSize;
-};
-#endif
-
-
 class VHTTPServerProjectSettings : public XBOX::VObject, public IHTTPServerProjectSettings
 {
 public:
@@ -228,7 +165,12 @@ public:
 	void								ResetToFactorySettings();
 
 	/* Configuration settings accessors */
-	IP4									GetListeningAddress() const { return fListeningAddress; }
+#if WITH_DEPRECATED_IPV4_API	
+	IP4	/*done*/						GetListeningAddress() const { return fListeningAddress; }
+#else
+	const XBOX::VString&				GetListeningAddress() const { return fListeningAddress; }
+#endif
+	
 	PortNumber							GetListeningPort() const { return fPort; }
 	bool								GetAllowSSL() const { return fAllowSSL; }
 	bool								GetSSLMandatory() const { return fSSLMandatory; }
@@ -244,7 +186,10 @@ public:
 	const XBOX::VString&				GetDefaultRealm() const { return fRealm; }
 	HTTPAuthenticationMethod			GetDefaultAuthType() const { return fAuthType; }
 
-	void								SetListeningAddress (IP4 inValue) { fListeningAddress = inValue; }
+#if WITH_DEPRECATED_IPV4_API	
+	void								SetListeningAddress (IP4 /*done*/ inValue) { fListeningAddress = inValue; }
+#endif
+	
 	void								SetListeningAddress (const XBOX::VString& inIPAddressString);
 	void								SetListeningPort (PortNumber inValue) { fPort = inValue; }
 	void								SetAllowSSL (bool inValue) { fAllowSSL = inValue; }
@@ -264,7 +209,6 @@ public:
 	void								SetDefaultAuthType (HTTPAuthenticationMethod inValue) { fAuthType = inValue; }
 	void								SetDefaultAuthType (const XBOX::VString& inAuthenticationMethodName);
 
-#if !HTTP_SERVER_GLOBAL_SETTINGS
 	/* Cache settings accessors */
 	bool								GetEnableCache() const { return fEnableCache; }
 	sLONG								GetCacheMaxSize() const { return fCacheMaxSize; }
@@ -294,7 +238,6 @@ public:
 
 	XBOX::VSize							GetMaxIncomingDataSize() const { return fMaxIncomingDataSize; }
 	void								SetMaxIncomingDataSize (XBOX::VSize inValue);
-#endif
 
 	/* Log settings */
 	sLONG								GetLogFormat() const { return fLogFormat; }
@@ -348,7 +291,13 @@ public:
 
 protected:
 	/* Configuration settings */
-	IP4									fListeningAddress;
+
+#if WITH_DEPRECATED_IPV4_API
+	IP4	/*done*/						fListeningAddress;
+#else
+	XBOX::VString						fListeningAddress;
+#endif
+	
 	PortNumber							fPort;
 	bool								fAllowSSL;
 	bool								fSSLMandatory;
@@ -362,7 +311,6 @@ protected:
 	XBOX::VString						fProjectPattern;	// To handle http://localhost/myApp1/index.html
 #endif
 
-#if !HTTP_SERVER_GLOBAL_SETTINGS
 	/* Cache settings */
 	bool								fEnableCache;
 	sLONG								fCacheMaxSize;
@@ -380,7 +328,6 @@ protected:
 
 	/* Max Incoming Data Size */
 	XBOX::VSize							fMaxIncomingDataSize;
-#endif
 
 	/* Log settings */
 	sLONG								fLogFormat;

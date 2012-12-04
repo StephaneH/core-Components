@@ -25,7 +25,7 @@
 		<Configuration
 			Name="Debug|Win32"
 			ConfigurationType="2"
-			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC70.vsprops;..\..\..\Component_Win32_Debug.vsprops"
+			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC70.vsprops;..\..\..\Component_Win32_Debug.vsprops;$(SolutionDir)\WebKit_Settings.vsprops"
 			CharacterSet="2"
 			>
 			<Tool
@@ -91,7 +91,7 @@
 		<Configuration
 			Name="Debug|x64"
 			ConfigurationType="2"
-			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC70.vsprops;..\..\..\Component_Win64_Debug.vsprops"
+			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC70.vsprops;..\..\..\Component_Win64_Debug.vsprops;$(SolutionDir)\WebKit_Settings.vsprops"
 			CharacterSet="2"
 			>
 			<Tool
@@ -160,7 +160,7 @@
 		<Configuration
 			Name="Release|Win32"
 			ConfigurationType="2"
-			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC70.vsprops;..\..\..\Component_Win32_Release.vsprops"
+			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC70.vsprops;..\..\..\Component_Win32_Release.vsprops;$(SolutionDir)\WebKit_Settings.vsprops"
 			CharacterSet="2"
 			>
 			<Tool
@@ -226,7 +226,7 @@
 		<Configuration
 			Name="Release|x64"
 			ConfigurationType="2"
-			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC70.vsprops;..\..\..\Component_Win64_Release.vsprops"
+			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC70.vsprops;..\..\..\Component_Win64_Release.vsprops;$(SolutionDir)\WebKit_Settings.vsprops"
 			CharacterSet="2"
 			>
 			<Tool
@@ -297,7 +297,7 @@
 			OutputDirectory="..\..\..\Components\"
 			IntermediateDirectory="$(ConfigurationName)"
 			ConfigurationType="2"
-			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC70.vsprops;..\..\..\Component_Win32_Beta.vsprops"
+			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC70.vsprops;..\..\..\Component_Win32_Beta.vsprops;$(SolutionDir)\WebKit_Settings.vsprops"
 			CharacterSet="2"
 			>
 			<Tool
@@ -363,7 +363,7 @@
 		<Configuration
 			Name="Beta|x64"
 			ConfigurationType="2"
-			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC70.vsprops;..\..\..\Component_Win64_Beta.vsprops"
+			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC70.vsprops;..\..\..\Component_Win64_Beta.vsprops;$(SolutionDir)\WebKit_Settings.vsprops"
 			CharacterSet="2"
 			>
 			<Tool

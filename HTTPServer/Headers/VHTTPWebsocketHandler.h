@@ -86,7 +86,7 @@ typedef struct ws_frame_st
 
 	ws_frame_t						fFrame;
 
-	XBOX::VError					ValidateHeader(const IHTTPHeader& hdr,XBOX::VString & outKey);
+	XBOX::VError					ValidateHeader(const XBOX::VHTTPHeader& hdr,XBOX::VString & outKey);
 	XBOX::VError					SendHandshake(IHTTPResponse* resp, const XBOX::VString & key);
 
 	XBOX::VError					ReadHeader(bool* found);

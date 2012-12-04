@@ -53,27 +53,8 @@ VVirtualFolder::~VVirtualFolder()
 }
 
 
-XBOX::VError VVirtualFolder::GetFilePathFromURL (const XBOX::VString& inURL, XBOX::VString& outLocationPath)
+XBOX::VError VVirtualFolder::_GetFilePathFromURL (const XBOX::VString& inURL, const XBOX::VString& inDefaultIndexPage, XBOX::VString& outLocationPath, XBOX::VString *outURL)
 {
-	if (!fLocalFolder)
-	{
-		XBOX::VString URL (inURL);
-		sLONG pos = HTTPServerTools::FindASCIIVString (URL, fName);
-
-		if (pos > 0)
-			URL.Remove (1, pos + fName.GetLength() - 1);
-
-		if ((URL.GetLength() == 1) && (URL.GetUniChar (1) == CHAR_SOLIDUS) && (!fIndexFileName.IsEmpty()))
-			URL.AppendString (fIndexFileName);
-		
-		outLocationPath.FromString (fLocationPath);
-		if (outLocationPath.GetUniChar (outLocationPath.GetLength()) == CHAR_SOLIDUS)
-			outLocationPath.Truncate (outLocationPath.GetLength() - 1);
-		outLocationPath.AppendString (URL);
-
-		return VE_HTTP_PROTOCOL_FOUND;
-	}
-
 	XBOX::VError	error = XBOX::VE_FILE_NOT_FOUND;
 	XBOX::VFilePath	path (fFolder->GetPath());
 	XBOX::VString	pathString (inURL);
@@ -82,7 +63,7 @@ XBOX::VError VVirtualFolder::GetFilePathFromURL (const XBOX::VString& inURL, XBO
 
 	if ((pathString.GetLength() == 1) && (pathString.GetUniChar (1) == CHAR_SOLIDUS))
 	{
-		docName.FromString (fIndexFileName);
+		docName.FromString (inDefaultIndexPage);
 	}
 	else
 	{
@@ -142,7 +123,7 @@ XBOX::VError VVirtualFolder::GetFilePathFromURL (const XBOX::VString& inURL, XBO
 
 	/* if URL does not include a filename, try using the index file name set in prefs */
 	if (docName.IsEmpty())
-		docName.FromString (fIndexFileName);
+		docName.FromString (inDefaultIndexPage);
 
 	path = path.ToSubFile (docName);
 
@@ -154,6 +135,13 @@ XBOX::VError VVirtualFolder::GetFilePathFromURL (const XBOX::VString& inURL, XBO
 	if (path.GetPath().BeginsWith (fFolder->GetPath().GetPath()))
 	{
 		outLocationPath.FromString (path.GetPath());
+
+		if (NULL != outURL)
+		{
+			path.GetRelativePosixPath (fFolder->GetPath(), *outURL);
+			if (outURL->GetUniChar (1) != CHAR_SOLIDUS)
+				outURL->Insert (CHAR_SOLIDUS, 1);
+		}
 		error = VE_OK;
 	}
 	else
@@ -164,6 +152,67 @@ XBOX::VError VVirtualFolder::GetFilePathFromURL (const XBOX::VString& inURL, XBO
 	}
 
 	return error;
+}
+
+
+XBOX::VError VVirtualFolder::GetFilePathFromURL (const XBOX::VString& inURL, XBOX::VString& outLocationPath)
+{
+	if (!fLocalFolder)
+	{
+		XBOX::VString URL (inURL);
+		sLONG pos = HTTPServerTools::FindASCIIVString (URL, fName);
+
+		if (pos > 0)
+			URL.Remove (1, pos + fName.GetLength() - 1);
+
+		if ((URL.GetLength() == 1) && (URL.GetUniChar (1) == CHAR_SOLIDUS) && (!fIndexFileName.IsEmpty()))
+			URL.AppendString (fIndexFileName);
+		
+		outLocationPath.FromString (fLocationPath);
+		if (outLocationPath.GetUniChar (outLocationPath.GetLength()) == CHAR_SOLIDUS)
+			outLocationPath.Truncate (outLocationPath.GetLength() - 1);
+		outLocationPath.AppendString (URL);
+
+		return VE_HTTP_PROTOCOL_FOUND;
+	}
+	else
+	{
+		return _GetFilePathFromURL (inURL, fIndexFileName, outLocationPath);
+	}
+}
+
+
+bool VVirtualFolder::ResolveURLForAlternatePlatformPage (const XBOX::VString& inURL, const XBOX::VString& inPlatform, XBOX::VString& outResolvedURL)
+{
+	outResolvedURL.Clear();
+
+	if (!inPlatform.IsEmpty() && !fIndexFileName.IsEmpty())
+	{
+		XBOX::VString	URL (inURL);
+		XBOX::VString	alternatePageName (fIndexFileName);
+		XBOX::VString	alternateLocationPath;
+		XBOX::VIndex	pos = alternatePageName.FindUniChar (CHAR_FULL_STOP, alternatePageName.GetLength(), true);
+
+		if (pos > 0)
+		{
+			XBOX::VString platform (inPlatform);
+			platform.Insert (CHAR_HYPHEN_MINUS, 1);
+			alternatePageName.Insert (platform, pos);
+		}
+
+		if (XBOX::VE_OK == _GetFilePathFromURL (URL, alternatePageName, alternateLocationPath, &outResolvedURL))
+		{
+			if (HTTPServerTools::EndsWithASCIIVString (outResolvedURL, alternatePageName) ||
+				HTTPServerTools::EndsWithASCIIVString (outResolvedURL, fIndexFileName))
+			{
+				XBOX::VFile file (alternateLocationPath);
+				if (!file.Exists())
+					outResolvedURL.Clear();
+			}
+		}
+	}
+
+	return !outResolvedURL.IsEmpty();
 }
 
 

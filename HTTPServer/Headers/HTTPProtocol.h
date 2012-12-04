@@ -24,12 +24,15 @@ public:
 	static HTTPRequestMethod					GetMethodFromName (const XBOX::VString& inName);
 	static HTTPVersion							GetVersionFromRequestLine (const UniChar *inBuffer, sLONG inBufferLen);
 	static bool									GetRequestURIFromRequestLine (const UniChar *inBuffer, sLONG inBufferLen, XBOX::VString& outURI, bool decodeURI = true);
+	static XBOX::VError							ReadRequestLine (const XBOX::VString& inRequestLine, HTTPRequestMethod& outMethod, XBOX::VString& outURI, HTTPVersion& outVersion, bool inCheckValidity = false);
+	static void									ParseURL (const XBOX::VString& inRawURL, XBOX::VString& outDecodedURL, XBOX::VString& outURLPath, XBOX::VString& outURLQuery);
+	static XBOX::VError							ReadHeaderLine (const XBOX::VString& inLineString, XBOX::VString& outHeaderName, XBOX::VString& outHeaderValue);
 	static void									GetStatusCodeExplanation (sLONG inStatusCode, XBOX::VString& outExplanation, bool clearStringFirst = false);
 	static bool									IsValidStatusCode (sLONG inStatusCode);
 
 	static void									GetEncodingMethodName (HTTPCompressionMethod inMethod, XBOX::VString& outName);
 	static HTTPCompressionMethod				NegotiateEncodingMethod (XBOX::VString& inEncodingHeaderValue);
-	static bool									AcceptEncodingMethod (const XBOX::VString& inEncodingHeaderValue, HTTPCompressionMethod inEncodingMethod);
+	static bool									AcceptEncodingMethod (const XBOX::VString& inEncodingHeaderValue, HTTPCompressionMethod inWantedEncodingMethod);
 
 	static void									MakeStatusLine (HTTPVersion inVersion, sLONG inStatusCode, XBOX::VString& outStatusLine);
 	static void									MakeRFC822GMTDateString (const sLONG inMode, XBOX::VString& outDateString, bool withHeaderName = false, sLONG inTimeout = 5 * 60L);
@@ -50,6 +53,7 @@ public:
 
 private:
 	static XBOX::VRefPtr<XBOX::VRegexMatcher>	fRequestRegexMatcher;
+	static XBOX::VCriticalSection				fRequestRegexMatcherMutex;
 };
 
 

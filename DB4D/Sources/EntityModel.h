@@ -141,6 +141,11 @@ const VErrorDB4D	VE_DB4D_ENTITY_ATTRIBUTE_ALREADY_EXISTS = MAKE_VERROR(CDB4DMana
 
 const VErrorDB4D	VE_DB4D_ENTITY_ATTRIBUTE_IS_FROM_ANOTHER_DATACLASS = MAKE_VERROR(CDB4DManager::Component_Type, 1589);
 
+const VErrorDB4D	VE_DB4D_RELATION_PATH_IS_RECURSIVE = MAKE_VERROR(CDB4DManager::Component_Type, 1590);
+
+const VErrorDB4D	VE_DB4D_ENTITY_STRING_LESS_THAN_MIN = MAKE_VERROR(CDB4DManager::Component_Type, 1591);
+const VErrorDB4D	VE_DB4D_ENTITY_STRING_GREATER_THAN_MAX = MAKE_VERROR(CDB4DManager::Component_Type, 1592);
+const VErrorDB4D	VE_DB4D_ENTITY_STRING_LENGTH_EQUAL = MAKE_VERROR(CDB4DManager::Component_Type, 1593);
 
 
 const sLONG kDefaultTopSize = 100;
@@ -582,7 +587,7 @@ class AttributeType : public IRefCountable
 		inline sLONG GetMaxLength() const
 		{
 			if (fResultType == nil)
-				return fFixedLength;
+				return fMaxLength;
 			else
 				return fResultType->GetMaxLength();
 		}
@@ -615,6 +620,8 @@ class AttributeType : public IRefCountable
 			else
 				return fScalarType;
 		}
+
+		bool NeedValidation() const;
 
 
 
@@ -735,6 +742,8 @@ class EntityRelation : public IRefCountable
 		}
 
 		void RecalcPath();
+
+		bool MatchesBeginingOf(const EntityRelation* otherRel) const;
 
 		//VError ResolveMissingTables(EntityModelCatalog* catalog);
 
@@ -925,6 +934,10 @@ typedef const DBEvent* DBEventConstIterator;
 									// ---------------------------------------------
 
 
+class EntityModel;
+
+typedef pair<EntityModel*, VString> SubPathRef;
+typedef set<SubPathRef> SubPathRefSet;
 
 
 
@@ -1053,8 +1066,8 @@ class EntityAttribute : public VComponentImp<CDB4DEntityAttribute>
 		VError ScriptToBag(VValueBag& outBag, const VValueBag::StKey& inWhatScript, const VString& inStatement, const VString& inFrom, bool userDefined) const;
 		VError ToBag(VValueBag& outBag, bool forDax, bool forSave, bool forJSON, bool isTableDef) const;
 
-		VError ResolveRelatedEntities(EntityModelCatalog* catalog, bool devMode);
-		VError ResolveQueryStatements(EntityModelCatalog* catalog, bool devMode);
+		VError ResolveRelatedEntities(SubPathRefSet& already, EntityModelCatalog* catalog, bool devMode, BaseTaskInfo* context);
+		VError ResolveQueryStatements(EntityModelCatalog* catalog, bool devMode, BaseTaskInfo* context);
 
 		EntityAttribute* Clone(EntityModel* inModel) const;
 
@@ -1346,6 +1359,7 @@ class EntityAttribute : public VComponentImp<CDB4DEntityAttribute>
 			return fRelPath;
 		}
 
+		bool NeedValidation() const;
 
 	protected:
 		VString fName;
@@ -1433,6 +1447,8 @@ class AttributeStringPath : public IPartable<VectorOfVString, const VString*>
 	public:
 		AttributeStringPath(const VString& inPath);
 
+		void GetString(VString& outString) const;
+
 };
 
 
@@ -1443,7 +1459,7 @@ inline const VString* IPartable<VectorOfVString, const VString*>::GetElem(Vector
 }
 
 
-class AttributePath : public IPartable<EntityAttributeInstanceCollection, const EntityAttributeInstance*>
+class AttributePath : public IPartable<EntityAttributeInstanceCollection, const EntityAttributeInstance*>, public IRefCountable
 {
 	public:
 		AttributePath()
@@ -1452,10 +1468,10 @@ class AttributePath : public IPartable<EntityAttributeInstanceCollection, const 
 		}
 
 		AttributePath(EntityModel* model, const VString& inPath);
-		AttributePath(EntityModel* model, const AttributeStringPath& inPath);
+		AttributePath(EntityModel* model, const AttributeStringPath& inPath, bool fromstart = true);
 
 		bool FromPath(EntityModel* model, const VString& inPath, bool expandAliases = false);
-		bool FromPath(EntityModel* model, const AttributeStringPath& inPath, bool expandAliases = false);
+		bool FromPath(EntityModel* model, const AttributeStringPath& inPath, bool expandAliases = false, bool fromstart = true);
 
 		bool IsValid() const
 		{
@@ -1585,6 +1601,7 @@ public:
 		fAttribute = nil;
 		fSousSelection = nil;
 		fAscent = true;
+		fAttPath = nil;
 	}
 
 	inline EntityAttributeSortedItem(EntityAttribute* inAttribute, bool ascent = true)
@@ -1592,9 +1609,19 @@ public:
 		fAttribute = inAttribute;
 		fSousSelection = nil;
 		fAscent = ascent;
+		fAttPath = nil;
+	}
+
+	inline EntityAttributeSortedItem(AttributePath* inAttributePath, bool ascent = true)
+	{
+		fAttPath = inAttributePath;
+		fAttribute = (EntityAttribute*) inAttributePath->FirstPart()->fAtt;
+		fSousSelection = nil;
+		fAscent = ascent;
 	}
 
 	EntityAttribute* fAttribute;
+	AttributePath* fAttPath;
 	EntityAttributeSortedSelection* fSousSelection;
 	bool fAscent;
 };
@@ -1651,6 +1678,8 @@ class EntityAttributeSortedSelection : public vector<EntityAttributeSortedItem>
 		EntityAttributeSortedSelection::const_iterator FindAttribute(const EntityAttribute* att) const;
 
 		EntityAttributeSortedSelection* FindSubSelection(const EntityAttribute* att) const;
+
+		void ToString(VString& outString);
 
 
 	protected:
@@ -1761,7 +1790,7 @@ class EntityModel : public VComponentImp<CDB4DEntityModel>
 			fCollectionName = colName;
 		}
 
-		VError BuildRelPath(EntityModelCatalog* catalog, const VectorOfVString& path, EntityRelationCollection& outRelPath, VString& outLastpart, bool& outAllNto1, bool devMode, EntityModel* &outLastDest);
+		VError BuildRelPath(SubPathRefSet& already, EntityModelCatalog* catalog, const VectorOfVString& path, EntityRelationCollection& outRelPath, VString& outLastpart, bool& outAllNto1, bool devMode, EntityModel* &outLastDest);
 		VError ActivatePath(EntityRecord* erec, sLONG inPathID, SubEntityCache& outResult, bool Nto1, EntityModel* subEntityModel, BaseTaskInfo* context);
 
 		Selection* projectSelection(Selection* sel, EntityAttribute* att, VError& err, BaseTaskInfo* context);
@@ -1801,8 +1830,8 @@ class EntityModel : public VComponentImp<CDB4DEntityModel>
 
 		sLONG AddRelationPath(EntityRelation* relpath);
 
-		VError ResolveRelatedEntities(EntityModelCatalog* catalog, bool devMode);
-		VError ResolveQueryStatements(EntityModelCatalog* catalog, bool devMode);
+		VError ResolveRelatedEntities(SubPathRefSet& already, EntityModelCatalog* catalog, bool devMode, BaseTaskInfo* context);
+		VError ResolveQueryStatements(EntityModelCatalog* catalog, bool devMode, BaseTaskInfo* context);
 		//VError ResolveRelatedPath(EntityModelCatalog* catalog);
 
 		sLONG FindAttribute(const VString& AttributeName) const;
@@ -1991,8 +2020,8 @@ class EntityModel : public VComponentImp<CDB4DEntityModel>
 		virtual CDB4DSelection* Query( const VString& inQuery, CDB4DBaseContext* inContext, VErrorDB4D& err, const VValueSingle* param1 = nil, const VValueSingle* param2 = nil, const VValueSingle* param3 = nil);
 		virtual CDB4DEntityRecord* Find(const VString& inQuery, CDB4DBaseContext* inContext, VErrorDB4D& err, const VValueSingle* param1 = nil, const VValueSingle* param2 = nil, const VValueSingle* param3 = nil);
 
-		virtual VError SetPermission(DB4D_EM_Perm inPerm, const VUUID& inGroupID);
-		virtual VError GetPermission(DB4D_EM_Perm inPerm, VUUID& outGroupID) const;
+		virtual VError SetPermission(DB4D_EM_Perm inPerm, const VUUID& inGroupID, bool forced);
+		virtual VError GetPermission(DB4D_EM_Perm inPerm, VUUID& outGroupID, bool& forced) const;
 		virtual bool PermissionMatch(DB4D_EM_Perm inPerm, CUAGSession* inSession) const;
 		bool permissionMatch(DB4D_EM_Perm inPerm, CUAGSession* inSession) const;
 
@@ -2061,6 +2090,7 @@ class EntityModel : public VComponentImp<CDB4DEntityModel>
 		SearchTab* fRestrictingQuery;
 		const VValueBag* fExtraProperties;
 		VUUID fPerms[DB4D_EM_Promote_Perm+1];
+		uBYTE fForced[DB4D_EM_Promote_Perm+1];
 		DBEvent fEvents[dbev_lastEvent+1];
 		sLONG fQueryLimit;
 		sLONG fDefaultTopSize;
@@ -2141,6 +2171,8 @@ class SubEntityCache
 
 		~SubEntityCache();
 
+		void Clear();
+
 		EntityRecord* GetErec();
 			
 
@@ -2164,6 +2196,11 @@ class EntityAttributeValue : public VComponentImp<CDB4DEntityAttributeValue>
 {
 	public:
 		
+#if debuglr
+		virtual CComponent*	Retain (const char* DebugInfo = 0);
+		virtual void		Release (const char* DebugInfo = 0);
+#endif
+
 		EntityAttributeValue(EntityRecord* owner, const EntityAttribute* attribute, EntityAttributeValueKind kind, VValueSingle* inVal, bool isowned = false);
 
 		EntityAttributeValue(EntityRecord* owner, const EntityAttribute* attribute, EntityAttributeValueKind kind, EntityRecord* erec, EntityModel* inSubModel);
@@ -2341,6 +2378,10 @@ class EntityRecord : public VComponentImp<CDB4DEntityRecord>
 {
 	public:
 		
+#if debuglr
+		virtual CComponent*	Retain (const char* DebugInfo = 0);
+		virtual void		Release (const char* DebugInfo = 0);
+#endif
 
 		EntityRecord(EntityModel* inModel, FicheInMem* inMainRec, CDB4DBaseContext* inContext, DB4D_Way_of_Locking HowToLock);
 
@@ -2365,6 +2406,8 @@ class EntityRecord : public VComponentImp<CDB4DEntityRecord>
 		VError ThrowError( VError inErrCode, const VString* p1 = nil) const;
 
 		SubEntityCache* GetSubEntityCache(sLONG inPathID, VError& err, bool Nto1, EntityModel* subEntityModel, BaseTaskInfo* context);
+		bool SubEntityCacheNeedsActivation(sLONG inPathID);
+		void ClearSubEntityCache(sLONG inPathID);
 
 		EntityAttributeValue* getAttributeValue(const VString& inAttributeName, VError& err, BaseTaskInfo* context, bool restrictValue = false);
 		EntityAttributeValue* getAttributeValue(sLONG pos, VError& err, BaseTaskInfo* context, bool restrictValue = false);
@@ -2576,6 +2619,7 @@ class EntityRecord : public VComponentImp<CDB4DEntityRecord>
 		uLONG fModificationStamp, fStamp;
 		DB4D_Way_of_Locking fWayOfLock;
 		uBYTE fAlreadyCallEvent[dbev_lastEvent+1];
+		bool fAlreadySaving, fAlreadyDeleting;
 };
 
 
@@ -2615,6 +2659,7 @@ class EntityModelCatalog : public IRefCountable
 			fParseFileError = nil;
 			fPublishDataClassesAsGlobals = false;
 			fPublishDataClassesAsGlobalsDefined = false;
+			fill(&fForced[DB4D_EM_None_Perm], &fForced[DB4D_EM_Promote_Perm+1], 0);
 		}
 
 		Base4D* GetOwner()
@@ -2737,8 +2782,8 @@ class EntityModelCatalog : public IRefCountable
 			return (fParseFileError != nil);
 		}
 
-		VError SetPermission(DB4D_EM_Perm inPerm, const VUUID& inGroupID);
-		VError GetPermission(DB4D_EM_Perm inPerm, VUUID& outGroupID) const;
+		VError SetPermission(DB4D_EM_Perm inPerm, const VUUID& inGroupID, bool forced);
+		VError GetPermission(DB4D_EM_Perm inPerm, VUUID& outGroupID, bool& forced) const;
 
 		bool publishDataClassesAsGlobals() const
 		{
@@ -2776,6 +2821,7 @@ class EntityModelCatalog : public IRefCountable
 		VString fParseMessageError;
 		VFile* fParseFileError;
 		VUUID fPerms[DB4D_EM_Promote_Perm+1];
+		uBYTE fForced[DB4D_EM_Promote_Perm+1];
 
 };
 

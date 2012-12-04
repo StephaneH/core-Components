@@ -278,10 +278,11 @@ public:
 
 	VError BuildAndLoadFirstStageDBStruct( const VFile& inStructureFile, sLONG inParameters, FileAccess inAccess);
 	VError OpenStructure( const VFile& inStructureFile, sLONG inParameters, FileAccess inAccess, VString* EntityFileExt = nil, CUAGDirectory* inUAGDirectory = nil, 
-							const VString* inXmlContent = nil, unordered_map_VString<VRefPtr<VFile> >* outIncludedFiles = nil);
+							const VString* inXmlContent = nil, unordered_map_VString<VRefPtr<VFile> >* outIncludedFiles = nil, const VFile* inPermissionsFile = nil);
 
 	VError BuildAndCreateFirstStageDBStruct( const VFile& inStructureFile, sLONG inParameters, VIntlMgr* inIntlMgr, FileAccess inAccess, const VUUID* inChosenID = nil);
-	VError CreateStructure( const VFile& inStructureFile, sLONG inParameters, VIntlMgr* inIntlMgr, FileAccess inAccess, const VUUID* inChosenID = nil, VString* EntityFileExt = nil, CUAGDirectory* inUAGDirectory = nil);
+	VError CreateStructure( const VFile& inStructureFile, sLONG inParameters, VIntlMgr* inIntlMgr, FileAccess inAccess, const VUUID* inChosenID = nil, 
+							VString* EntityFileExt = nil, CUAGDirectory* inUAGDirectory = nil, const VFile* inPermissionsFile = nil);
 
 	VError CreateResMap();
 
@@ -791,6 +792,7 @@ public:
 
 	bool GetJournalUUIDLink( VUUID &outLink );
 	void GetJournalInfos( const VFilePath &inDataFilePath, VFilePath &outFilePath, VUUID &outDataLink);
+	VError CreateJournal( VFile *inFile, VUUID *inDataLink, bool inWriteOpenDataOperation = true);
 	VError OpenJournal( VFile *inFile, VUUID &inDataLink, bool inWriteOpenDataOperation = true);
 
 	inline Boolean IsWriteProtected() const { return fWriteProtected; };
@@ -927,7 +929,7 @@ public:
 	VError BuildAutoModelCatalog();
 	void InvalidateAutoCatalog();
 
-	VError LoadEntityModels(const VFile* inFile = nil, bool devMode = false, const VString* inXmlContent = nil, unordered_map_VString<VRefPtr<VFile> >* outIncludedFiles = nil, CUAGDirectory* inDirectory = nil);
+	VError LoadEntityModels(const VFile* inFile = nil, bool devMode = false, const VString* inXmlContent = nil, unordered_map_VString<VRefPtr<VFile> >* outIncludedFiles = nil, CUAGDirectory* inDirectory = nil, const VFile* inPermissions = nil);
 	VError ReLoadEntityModels(const VFile* inFile = nil);
 
 	VError SetEntityCatalog(EntityModelCatalog* newcat);

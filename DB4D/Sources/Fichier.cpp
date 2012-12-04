@@ -10465,6 +10465,17 @@ bool DataTableRegular::FreeMem(sLONG allocationBlockNumber, VSize combien, VSize
 
 }
 
+VError DataTableRegular::SetSeqID(const VUUIDBuffer& inID)
+{
+	if (fSeq != nil && fSeq != (AutoSeqNumber*)-1)
+	{
+		fSeq->Release();
+		fSeq = nil;
+	}
+	DFD.SeqNum_ID = inID;
+	setmodif(true, db, nil);
+	return VE_OK;
+}
 
 Blob4D* DataTableRegular::LoadBlobFromOutsideCache(const void* from, CreBlob_Code Code, VError& err, BaseTaskInfo* context)
 {
@@ -15907,26 +15918,12 @@ VError DataTableRegular::GetModificationsSinceStamp(uLONG8 stamp, VStream& outSt
 							cvaction = recsync->GetNthField(1, err);
 							action = cvaction->GetByte();
 
-							cvstamp = recsync->GetNthField(2, err);
-							cvtimestamp = recsync->GetNthField(3, err);
-
-							err = formatter->PutAction(action);
-							err = formatter->PutPrimaryKeyCount(bNbKeyFields);
-							for (sLONG i = 4; i < bNbKeyFields+4 && err == VE_OK; i++)
+							bool		bLoadFailed = false;
+							FicheInMem* rec = nil;
+							if (action == DB4D_SyncAction_Update)
 							{
-								VValueSingle* cv = recsync->GetNthField(i, err);
-								if (err == VE_OK)
-								{
-									err = formatter->PutVValue ( cv );
-								}
-							}
-
-							err = formatter->PutStamp(cvstamp->GetLong8());
-							err = formatter->PutTimeStamp(*cvtimestamp);
-
-							if (action == DB4D_SyncAction_Update && err == VE_OK)
-							{
-								err = formatter->PutFieldCount(nbcol);
+								// ACI0076719 Let's see if the data record is actually there. If it is not - then we skip it because there is nothing to send.
+								// The client-side does not use the row count sent earlier. 
 
 								SearchTab keyquery(crit);
 								bool first = true;
@@ -15950,28 +15947,55 @@ VError DataTableRegular::GetModificationsSinceStamp(uLONG8 stamp, VStream& outSt
 								OptimizedQuery xkeyquery;
 								xkeyquery.AnalyseSearch(&keyquery, context);
 								Selection* keysel = xkeyquery.Perform((Bittab*)nil, nil, context, err, DB4D_Do_Not_Lock);
-								FicheInMem* rec = nil;
 								if (keysel != nil && keysel->GetQTfic() > 0)
 								{
 									rec = LoadRecord(keysel->GetFic(0), err, DB4D_Do_Not_Lock, context);
 								}
-								QuickReleaseRefCountable(keysel);
+								else
+									bLoadFailed = true;
 
-								if (err == VE_OK && rec != nil)
+								QuickReleaseRefCountable(keysel);
+							}
+
+							if ( !bLoadFailed )
+							{
+								cvstamp = recsync->GetNthField(2, err);
+								cvtimestamp = recsync->GetNthField(3, err);
+
+								err = formatter->PutAction(action);
+								err = formatter->PutPrimaryKeyCount(bNbKeyFields);
+								for (sLONG i = 4; i < bNbKeyFields+4 && err == VE_OK; i++)
 								{
-									for (sLONG i = 0; (i < nbcol) && err == VE_OK; i++)
+									VValueSingle* cv = recsync->GetNthField(i, err);
+									if (err == VE_OK)
 									{
-										VValueSingle* cv = rec->GetNthField(cols[i], err);
-										if (err == VE_OK)
-										{
-											err = formatter->PutVValue(cv);
-										}
+										err = formatter->PutVValue ( cv );
 									}
 								}
-								else
-									err = ThrowError(VE_DB4D_NO_PRIMARYKEY_MATCHING_THIS_FOREIGNKEY, noaction);
-								QuickReleaseRefCountable(rec);
+
+								err = formatter->PutStamp(cvstamp->GetLong8());
+								err = formatter->PutTimeStamp(*cvtimestamp);
+
+								if (action == DB4D_SyncAction_Update && err == VE_OK)
+								{
+									err = formatter->PutFieldCount(nbcol);
+
+									if (err == VE_OK && rec != nil)
+									{
+										for (sLONG i = 0; (i < nbcol) && err == VE_OK; i++)
+										{
+											VValueSingle* cv = rec->GetNthField(cols[i], err);
+											if (err == VE_OK)
+											{
+												err = formatter->PutVValue(cv);
+											}
+										}
+									}
+									else
+										err = ThrowError(VE_DB4D_NO_PRIMARYKEY_MATCHING_THIS_FOREIGNKEY, noaction);
+								}
 							}
+							QuickReleaseRefCountable(rec);
 						}
 						QuickReleaseRefCountable(recsync);
 						numrec = itersel.NextRecord();
@@ -16906,6 +16930,10 @@ FicheInMem* DataTableOfFields::LoadRecord(sLONG n, VError& err, DB4D_Way_of_Lock
 					if (err == VE_OK)
 					{
 						sLONG size = ff->GetTypeSize();
+						sLONG nType = ff-> GetTyp ( );
+						if ( nType == VK_STRING && size >= 4 )
+							size -= 4;
+
 						VLong* slen = new VLong(size);
 						if (slen == nil)
 							err = ThrowError(memfull, DBaction_LoadingRecord);
@@ -19205,7 +19233,7 @@ VError DataFile_NotOpened::CheckAllBlobs(ToolLog* log)
 			log->GetVerifyOrCompactString(14, s);// Checking Blobs on Table {p1}
 
 			VString tablename;
-			bd->ExistTable(fNumTable, &tablename);
+			bd->ExistTable(fNumTableDef, &tablename);
 			FormatStringWithParamsStrings(s, &tablename);
 			errexec = log->OpenProgressSession(s, DFD.nbBlob);
 			if (errexec == VE_OK)
@@ -19252,7 +19280,7 @@ VError DataFile_NotOpened::CheckAllBlobs(ToolLog* log)
 			{
 				log->GetVerifyOrCompactString(15,s); // Checking List of Deleted Blobs on Table {p1}
 				VString tablename;
-				bd->ExistTable(fNumTable, &tablename);
+				bd->ExistTable(fNumTableDef, &tablename);
 				FormatStringWithParamsStrings(s, &tablename);
 				errexec = log->OpenProgressSession(s, DFD.nbBlob);
 				if (DFD.addrBlobtabaddr != 0 && DFD.debutBlobTrou != kFinDesTrou)
@@ -20149,7 +20177,7 @@ VError DataFile_NotOpened::CheckAllRecords(ToolLog* log)
 			VString s;
 			log->GetVerifyOrCompactString(16,s);	// Checking Records on Table {p1}
 			VString tablename;
-			bd->ExistTable(fNumTable, &tablename);
+			bd->ExistTable(fNumTableDef, &tablename);
 			FormatStringWithParamsStrings(s, &tablename);
 			errexec = log->OpenProgressSession(s, DFD.nbfic);
 			if (errexec == VE_OK)
@@ -20261,7 +20289,7 @@ VError DataFile_NotOpened::CheckAllRecords(ToolLog* log)
 			{
 				log->GetVerifyOrCompactString(17,s);	// Checking List of Deleted Records on Table {p1}
 				VString tablename;
-				bd->ExistTable(fNumTable, &tablename);
+				bd->ExistTable(fNumTableDef, &tablename);
 				FormatStringWithParamsStrings(s, &tablename);
 				errexec = log->OpenProgressSession(s, DFD.nbBlob);
 				if (DFD.addrtabaddr != 0 && DFD.debuttrou != kFinDesTrou && errexec == VE_OK)
@@ -20781,13 +20809,10 @@ void ReplicationOutputJSONFormatter::EscapeJSONString ( VString& ioValue )
 	for(long i =len-1;i >=0;i--)
 	{
 		UniChar car = ioValue[i];
-		if(car >=0 && car < 32 && car != 0x09 && car != 0x0a && car != 0x0D)
+		if ( car >=0 && car < 32 && car != 0x09 && car != 0x0a && car != 0x0D )
 		{
-			//ioValue.Remove(i+1,1);
-			char buf[5];	
-			sprintf(buf,"\\x%02d",car);
-			VString FormatedStr(buf);
-
+			VString		FormatedStr;
+			FormatedStr. AppendPrintf ( "\\u00%.2lX", ( sLONG ) car );
 			ioValue.Replace(FormatedStr,i+1,1);
 		}
 	}

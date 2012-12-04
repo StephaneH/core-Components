@@ -394,7 +394,7 @@
 		9398F534111A1F0300ABD708 /* HTMLLexer.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = HTMLLexer.cpp; path = ../../Sources/HTMLLexer.cpp; sourceTree = SOURCE_ROOT; };
 		9398F535111A1F0300ABD708 /* HTMLLexer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = HTMLLexer.h; path = ../../Sources/HTMLLexer.h; sourceTree = SOURCE_ROOT; };
 		F2CD1A0C0E6D6D830004A434 /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
-		F2CD1A230E6D6E560004A434 /* XML.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = XML.xcodeproj; path = ../../../../../XToolbox/WAK2/XML/Projects/Xcode/XML.xcodeproj; sourceTree = SOURCE_ROOT; };
+		F2CD1A230E6D6E560004A434 /* XML.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = XML.xcodeproj; path = ../../../../../XToolbox/Main/XML/Projects/Xcode/XML.xcodeproj; sourceTree = SOURCE_ROOT; };
 		F2D043830E79394400212B14 /* CSSSyntax.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = CSSSyntax.cpp; path = ../../Sources/CSSSyntax.cpp; sourceTree = SOURCE_ROOT; };
 		F2D043840E79394400212B14 /* CSSSyntax.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CSSSyntax.h; path = ../../Sources/CSSSyntax.h; sourceTree = SOURCE_ROOT; };
 		F2D043860E79394400212B14 /* PHPSyntaxData.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = PHPSyntaxData.cpp; path = ../../Sources/PHPSyntaxData.cpp; sourceTree = SOURCE_ROOT; };
@@ -427,17 +427,17 @@
 		F40EF59B0E6833CD0034AD99 /* components_performance.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; name = components_performance.xcconfig; path = ../../../components_performance.xcconfig; sourceTree = SOURCE_ROOT; };
 		F40EF59C0E6833CD0034AD99 /* components_release.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; name = components_release.xcconfig; path = ../../../components_release.xcconfig; sourceTree = SOURCE_ROOT; };
 		F40EF5E10E683AE30034AD99 /* LanguageSyntaxDebug.bundle */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = LanguageSyntaxDebug.bundle; sourceTree = BUILT_PRODUCTS_DIR; };
-		F40EF5EA0E6841BF0034AD99 /* Graphics.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = Graphics.xcodeproj; path = ../../../../../XToolbox/WAK2/Graphics/Projects/Xcode/Graphics.xcodeproj; sourceTree = SOURCE_ROOT; };
-		F40EF5F60E6842200034AD99 /* Kernel.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = Kernel.xcodeproj; path = ../../../../../XToolbox/WAK2/Kernel/Projects/Xcode/Kernel.xcodeproj; sourceTree = SOURCE_ROOT; };
-		F40EF6020E6842500034AD99 /* KernelIPC.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = KernelIPC.xcodeproj; path = ../../../../../XToolbox/WAK2/KernelIPC/Projects/Xcode/KernelIPC.xcodeproj; sourceTree = SOURCE_ROOT; };
+		F40EF5EA0E6841BF0034AD99 /* Graphics.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = Graphics.xcodeproj; path = ../../../../../XToolbox/Main/Graphics/Projects/Xcode/Graphics.xcodeproj; sourceTree = SOURCE_ROOT; };
+		F40EF5F60E6842200034AD99 /* Kernel.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = Kernel.xcodeproj; path = ../../../../../XToolbox/Main/Kernel/Projects/Xcode/Kernel.xcodeproj; sourceTree = SOURCE_ROOT; };
+		F40EF6020E6842500034AD99 /* KernelIPC.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = KernelIPC.xcodeproj; path = ../../../../../XToolbox/Main/KernelIPC/Projects/Xcode/KernelIPC.xcodeproj; sourceTree = SOURCE_ROOT; };
 		F416339310AC1F7C00BDD5A9 /* CoreFoundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreFoundation.framework; path = System/Library/Frameworks/CoreFoundation.framework; sourceTree = SDKROOT; };
 		F416339410AC1F7C00BDD5A9 /* System.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = System.framework; path = System/Library/Frameworks/System.framework; sourceTree = SDKROOT; };
-		F41633DF10AC206C00BDD5A9 /* JavaScript.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = JavaScript.xcodeproj; path = ../../../../../XToolbox/WAK2/JavaScript/Projects/Xcode/JavaScript.xcodeproj; sourceTree = SOURCE_ROOT; };
+		F41633DF10AC206C00BDD5A9 /* JavaScript.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = JavaScript.xcodeproj; path = ../../../../../XToolbox/Main/JavaScript/Projects/Xcode/JavaScript.xcodeproj; sourceTree = SOURCE_ROOT; };
 		F426372B140D1108009F0065 /* icu.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = icu.xcodeproj; path = ../../../../../icu/4.8/projets/XCode/icu.xcodeproj; sourceTree = SOURCE_ROOT; };
 		F437D24A113EC706009FE5D8 /* LanguageSyntaxDebug.bundle */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = LanguageSyntaxDebug.bundle; sourceTree = BUILT_PRODUCTS_DIR; };
 		F437D25A113EC71B009FE5D8 /* components_x64.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; name = components_x64.xcconfig; path = ../../../components_x64.xcconfig; sourceTree = SOURCE_ROOT; };
 		F44E9F501469365C009D4E40 /* ComponentStub.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ComponentStub.cpp; path = ../../Sources/ComponentStub.cpp; sourceTree = SOURCE_ROOT; };
-		F4DB8EFA15205FE9004D8C8C /* JavaScriptCore.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = 4DJavaScriptCore.xcodeproj; path = ../../../../../webkit/742/JavaScriptCore/JavaScriptCore.xcodeproj; sourceTree = SOURCE_ROOT; };
+		F4DB8EFA15205FE9004D8C8C /* JavaScriptCore.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = JavaScriptCore.xcodeproj; path = ../../../../../webkit/534.53/JavaScriptCore/JavaScriptCore.xcodeproj; sourceTree = SOURCE_ROOT; };
 		F4FA4BF21455AD83005067C9 /* de.lproj */ = {isa = PBXFileReference; lastKnownFileType = folder; name = de.lproj; path = ../../Resources/de.lproj; sourceTree = SOURCE_ROOT; };
 		F4FA4BF61455AD83005067C9 /* en.lproj */ = {isa = PBXFileReference; lastKnownFileType = folder; name = en.lproj; path = ../../Resources/en.lproj; sourceTree = SOURCE_ROOT; };
 		F4FA4BFA1455AD83005067C9 /* es.lproj */ = {isa = PBXFileReference; lastKnownFileType = folder; name = es.lproj; path = ../../Resources/es.lproj; sourceTree = SOURCE_ROOT; };
@@ -1294,7 +1294,6 @@
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				COPY_PHASE_STRIP = NO;
-				DEBUG_INFORMATION_FORMAT = dwarf;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(FRAMEWORK_SEARCH_PATHS)",
 					"$(FRAMEWORK_SEARCH_PATHS_JSC)",

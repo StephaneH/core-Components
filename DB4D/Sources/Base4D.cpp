@@ -2332,6 +2332,27 @@ bool Base4D::GetJournalUUIDLink( VUUID &outLink )
 	return uuidFound;
 }
 
+VError Base4D::CreateJournal( VFile *inFile, VUUID *inDataLink, bool inWriteOpenDataOperation)
+{
+	VError err32 = VE_OK;
+	
+	err32 = SetJournalFile(inFile,inDataLink,true);
+	if (err32  == VE_OK)
+	{
+		if(inWriteOpenDataOperation)
+		{
+			fCurrentLogOperation = hbbloc.lastaction;
+			WriteLog(DB4D_Log_OpenData, nil);
+		}
+	}
+	else
+	{
+		fLogErr = ThrowError( err32, DBaction_OpeningJournal);
+	}
+	return fLogErr;
+}
+
+
 VError Base4D::OpenJournal( VFile *inFile, VUUID &inDataLink, bool inWriteOpenDataOperation)
 {
 	if ( inFile != nil && inFile->Exists() )
@@ -2754,7 +2775,7 @@ VError Base4D::OpenData( const VFile& inFile, sLONG inParameters, Boolean BuildR
 		{
 			if ( logFile != nil )
 			{
-				OpenJournal( logFile, dataLink );
+				err = OpenJournal( logFile, dataLink );
 				logFile->Release();
 			}
 			else
@@ -9033,7 +9054,7 @@ VError Base4D::ReLoadEntityModels(const VFile* inFile)
 }
 
 
-VError Base4D::LoadEntityModels(const VFile* inFile, bool devMode, const VString* inXmlContent, unordered_map_VString<VRefPtr<VFile> >* outIncludedFiles, CUAGDirectory* inDirectory)
+VError Base4D::LoadEntityModels(const VFile* inFile, bool devMode, const VString* inXmlContent, unordered_map_VString<VRefPtr<VFile> >* outIncludedFiles, CUAGDirectory* inDirectory, const VFile* inPermissions)
 {
 	VTaskLock lock(&fEntityCatalogMutex);
 	VError err = VE_OK;
@@ -9045,23 +9066,45 @@ VError Base4D::LoadEntityModels(const VFile* inFile, bool devMode, const VString
 			if (inFile->Exists())
 			{
 				QuickReleaseRefCountable(fCatalogJSFile);
-				VString path;
+				VFilePath path;
 				inFile->GetPath(path);
-				path+=L".js";
+				path.SetExtension( "js" );
 				fCatalogJSFile = new VFile(path);
+				if ( ! fCatalogJSFile->Exists() )
+				{
+					VString alternateName;
+					path.GetFileName( alternateName, false );
+					alternateName += ".waModel.js";
+					path.SetFileName( alternateName, true );
+					VFile file( path);
+					if ( file.Exists() )
+					{
+						QuickReleaseRefCountable(fCatalogJSFile);
+						fCatalogJSFile = new VFile(path);
+					}
+				}
+
+
 				err = fEntityCatalog->LoadEntityModels(*inFile, true, devMode, inXmlContent, outIncludedFiles);
 				if (err == VE_OK && !devMode)
 				{
-					VFolder* parent = inFile->RetainParentFolder();
-					VString name;
-					inFile->GetNameWithoutExtension(name);
-					name += ".waPerm";
+					if ( inPermissions )
 					{
-						VFile permfile(*parent, name);
-						err = fEntityCatalog->LoadEntityPermissions(permfile, inDirectory, true, devMode);
+						err = fEntityCatalog->LoadEntityPermissions(*inPermissions, inDirectory, true, devMode);
 					}
+					else
+					{
+						VFolder* parent = inFile->RetainParentFolder();
+						VString name;
+						inFile->GetNameWithoutExtension(name);
+						name += ".waPerm";
+						{
+							VFile permfile(*parent, name);
+							err = fEntityCatalog->LoadEntityPermissions(permfile, inDirectory, true, devMode);
+						}
 
-					QuickReleaseRefCountable(parent);
+						QuickReleaseRefCountable(parent);
+					}
 				}
 			}
 		}
@@ -9278,7 +9321,7 @@ SynchroBaseHelper* Base4D::GetSyncHelper(bool BuildIfMissing)
 
 
 VError Base4D::OpenStructure( const VFile& inStructureFile, sLONG inParameters, FileAccess inAccess, VString* EntityFileExt,CUAGDirectory* inUAGDirectory, 
-							 const VString* inXmlContent, unordered_map_VString<VRefPtr<VFile> >* outIncludedFiles)
+							 const VString* inXmlContent, unordered_map_VString<VRefPtr<VFile> >* outIncludedFiles, const VFile* inPermissionsFile)
 {
 	// the structure file is actually a database in a single file
 	
@@ -9346,7 +9389,7 @@ VError Base4D::OpenStructure( const VFile& inStructureFile, sLONG inParameters, 
 				if (err == VE_OK)
 				{
 					fIsParsingStruct = true;
-					err = LoadEntityModels(fStructXMLFile, (inParameters & DB4D_Open_StructOnly) != 0, inXmlContent, outIncludedFiles, inUAGDirectory);
+					err = LoadEntityModels(fStructXMLFile, (inParameters & DB4D_Open_StructOnly) != 0, inXmlContent, outIncludedFiles, inUAGDirectory, inPermissionsFile);
 					fIsParsingStruct = false;
 
 					if (fEntityCatalog->IsXMLTouched() && !fEntityCatalog->someErrors())
@@ -9390,7 +9433,7 @@ VError Base4D::OpenStructure( const VFile& inStructureFile, sLONG inParameters, 
 			}
 			if (err == VE_OK && !fStoreAsXML)
 			{
-				err = LoadEntityModels(nil, false, nil, nil, inUAGDirectory);
+				err = LoadEntityModels(nil, false, nil, nil, inUAGDirectory, inPermissionsFile);
 				if (err == VE_OK && ((inParameters & DB4D_Open_BuildAutoEm) != 0))
 				{
 					BuildAutoModelCatalog();
@@ -9484,6 +9527,7 @@ VError Base4D::BuildAndCreateFirstStageDBStruct( const VFile& inStructureFile, s
 		VFolder* parent = inStructureFile.RetainParentFolder();
 		VString structname;
 		inStructureFile.GetNameWithoutExtension(structname);
+		CopyRefCountable(&fIntlMgr, inIntlMgr);
 		if ((inParameters & DB4D_Open_No_Respart) == 0)
 		{
 			VFile respart(*parent, structname+L".respart");
@@ -9515,7 +9559,7 @@ VError Base4D::BuildAndCreateFirstStageDBStruct( const VFile& inStructureFile, s
 
 
 
-VError Base4D::CreateStructure( const VFile& inStructureFile, sLONG inParameters, VIntlMgr* inIntlMgr, FileAccess InAccess, const VUUID* inChosenID, VString* EntityFileExt, CUAGDirectory* inUAGDirectory)
+VError Base4D::CreateStructure( const VFile& inStructureFile, sLONG inParameters, VIntlMgr* inIntlMgr, FileAccess InAccess, const VUUID* inChosenID, VString* EntityFileExt, CUAGDirectory* inUAGDirectory, const VFile* inPermissionsFile)
 {
 	if (EntityFileExt == nil)
 		fEntityFileExt.Clear();
@@ -9558,7 +9602,7 @@ VError Base4D::CreateStructure( const VFile& inStructureFile, sLONG inParameters
 				if (err == VE_OK)
 				{
 					fIsParsingStruct = true;
-					err = LoadEntityModels(fStructXMLFile, false, nil, nil, nil);
+					err = LoadEntityModels(fStructXMLFile, false, nil, nil, nil, inPermissionsFile);
 					fIsParsingStruct = false;
 
 					if (fEntityCatalog->IsXMLTouched() && !fEntityCatalog->someErrors())
@@ -12807,7 +12851,6 @@ VError Base4D::SetJournalFile(VFile* inNewLog, const VUUID *inDataLink, bool inR
 					myExtraPropertiesBag->RemoveElements( LogFileBagKey::journal_file );
 				}
 			}
-			
 			err = SetExtraProperties(myExtraPropertiesBag, true, nil);
 			ReleaseRefCountable( &myExtraPropertiesBag);
 
@@ -18488,6 +18531,10 @@ VError DataTableChecker::CheckObjWithAddr(DataAddr4D ou, sLONG len, sLONG numobj
 						if (dftarget == nil)
 						{
 							dftarget = target->CreateDataTable(nil, err, 0, &dfd, -1);
+						}
+						else
+						{
+							dftarget->SetSeqID(dfd.SeqNum_ID);
 						}
 						if (dftarget != nil)
 							dftarget->Release();

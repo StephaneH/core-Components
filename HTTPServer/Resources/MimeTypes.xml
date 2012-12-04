@@ -391,6 +391,7 @@
     <mimeType contentType="application/xspf+xml" extensions="xspf"/>
     <mimeType contentType="application/xv+xml" extensions="mxml;xhvml;xvml;xvm"/>
     <mimeType contentType="application/zip" extensions="zip"/>
+    <mimeType contentType="audio/aac" extensions="aac"/>
     <mimeType contentType="audio/basic" extensions="au;snd"/>
     <mimeType contentType="audio/midi" extensions="mid;midi;kar;rmi"/>
     <mimeType contentType="audio/mp4" extensions="mp4a"/>
@@ -403,6 +404,7 @@
     <mimeType contentType="audio/vnd.nuera.ecelp9600" extensions="ecelp9600"/>
     <mimeType contentType="audio/x-aiff" extensions="aif;aiff;aifc"/>
     <mimeType contentType="audio/x-flac" extensions="flac"/>
+    <mimeType contentType="audio/x-m4a" extensions="m4a"/>
     <mimeType contentType="audio/x-mpegurl" extensions="m3u"/>
     <mimeType contentType="audio/x-ms-wax" extensions="wax"/>
     <mimeType contentType="audio/x-ms-wma" extensions="wma"/>
@@ -501,7 +503,7 @@
     <mimeType contentType="video/jpeg" extensions="jpgv"/>
     <mimeType contentType="video/jpm" extensions="jpm;jpgm"/>
     <mimeType contentType="video/mj2" extensions="mj2;mjp2"/>
-    <mimeType contentType="video/mp4" extensions="mp4;mp4v;mpg4"/>
+    <mimeType contentType="video/mp4" extensions="mp4;mp4v;mpg4;m4v"/>
     <mimeType contentType="video/mpeg" extensions="mpeg;mpg;mpe;m1v;m2v"/>
     <mimeType contentType="video/quicktime" extensions="qt;mov"/>
     <mimeType contentType="video/vnd.fvt" extensions="fvt"/>

@@ -2177,6 +2177,11 @@ class DataTable : public ObjInCacheMem, public IObjToFlush, public IObjToFree, p
 			fSeqRatioCorrector = newValue;
 		}
 
+		virtual VError SetSeqID(const VUUIDBuffer& inID)
+		{
+			return ThrowError(VE_DB4D_TABLEISLOCKED, noaction);
+		}
+
 #if debugOverlaps_strong
 		virtual Boolean Debug_CheckBlobAddrMatching(DataAddr4D addrToCheck, sLONG blobID)
 		{
@@ -2550,6 +2555,8 @@ class DataTableRegular : public DataTable
 		Blob4D* RetainOutsideBlobFromCache(const VString& inPath);
 
 		virtual Blob4D* LoadBlobFromOutsideCache(const void* from, CreBlob_Code Code, VError& err, BaseTaskInfo* context);
+
+		virtual VError SetSeqID(const VUUIDBuffer& inID);
 
 	protected:
 		virtual ~DataTableRegular();

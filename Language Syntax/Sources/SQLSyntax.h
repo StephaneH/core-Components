@@ -40,7 +40,9 @@ private:
 		eUnexpectedTokenParsed,		// Used when parsing optional clauses
 	};
 
-	CSQLServer *fLexer;
+	SQLTokenizeFuncPtr			fTokenizeFuncPtr;
+	std::vector< VString * >	fKeywords;
+	std::vector< VString * >	fFunctions;
 
 	std::map< int, bool>* GetCommentMap( ICodeEditorDocument* inDocument );
 	void CleanTokens( std::vector< class ILexerToken * > &inTokens );
@@ -136,6 +138,8 @@ private:
 public:
 	explicit VSQLSyntax();
 	virtual ~VSQLSyntax();
+
+	void SetSQLTokenizer ( SQLTokenizeFuncPtr inPtr, const std::vector< XBOX::VString * >& vctrSQLKeywords, const std::vector< XBOX::VString * >& vctrSQLFunctions );
 
 	// la ligne 
 	virtual void Init( ICodeEditorDocument* inDocument );

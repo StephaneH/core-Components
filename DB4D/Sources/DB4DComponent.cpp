@@ -18,6 +18,7 @@
 //#include "kernelIPC/VComponentLibrary.h"
 #include "DB4DComponent.h"
 #include "javascript_db4d.h"
+#include "Backup.h"
 #include <set>
 
 
@@ -143,6 +144,21 @@ VDB4DMgr::~VDB4DMgr()
 DB4DNetworkManager* VDB4DMgr::CreateRemoteTCPSession(const VString& inServerName, sWORD inPortNum, VError& outerr, bool inSSL)
 {
 	return DB4DNetManager::NewConnection(inServerName, inPortNum, outerr, inSSL);
+}
+
+IBackupSettings* VDB4DMgr::CreateBackupSettings()
+{
+	return VDBMgr::CreateBackupSettings();
+}
+
+IBackupTool* VDB4DMgr::CreateBackupTool()
+{
+	return VDBMgr::CreateBackupTool();
+}
+
+XBOX::VError VDB4DMgr::GetJournalInfos(const XBOX::VFilePath& inDataFilePath,XBOX::VFilePath& outJournalPath,XBOX::VUUID& outJournalDataLink)
+{
+	return VDBMgr::GetJournalInfo(inDataFilePath,outJournalPath,outJournalDataLink);
 }
 
 
@@ -582,32 +598,32 @@ void VDB4DMgr::__test(const VString& command)
 }
 
 
-CDB4DBase* VDB4DMgr::OpenBase( const VString& inXMLContent, sLONG inParameters, VError* outErr, const VFilePath& inXMLPath, unordered_map_VString<VRefPtr<VFile> >* outIncludedFiles)
+CDB4DBase* VDB4DMgr::OpenBase( const VString& inXMLContent, sLONG inParameters, VError* outErr, const VFilePath& inXMLPath, unordered_map_VString<VRefPtr<VFile> >* outIncludedFiles, const VFile* inPermissionsFile)
 {
 	CDB4DBase* id = nil;
 	if (testAssert( fManager != nil)) {
 		VFile structureFile( inXMLPath );
-		id = fManager->OpenBase( structureFile, inParameters, outErr, XBOX::FA_READ, nil, nil, &inXMLContent, outIncludedFiles);
+		id = fManager->OpenBase( structureFile, inParameters, outErr, XBOX::FA_READ, nil, nil, &inXMLContent, outIncludedFiles, inPermissionsFile);
 	}
 	return id;
 }
 
 
-CDB4DBase* VDB4DMgr::OpenBase( const VFile& inStructureFile, sLONG inParameters, VError* outErr, FileAccess inAccess, VString* EntityFileExt, CUAGDirectory* inUAGDirectory)
+CDB4DBase* VDB4DMgr::OpenBase( const VFile& inStructureFile, sLONG inParameters, VError* outErr, FileAccess inAccess, VString* EntityFileExt, CUAGDirectory* inUAGDirectory, const VFile* inPermissionsFile)
 {
 	CDB4DBase* id = nil;
 	if (testAssert( fManager != nil)) {
-		id = fManager->OpenBase( inStructureFile, inParameters, outErr, inAccess, EntityFileExt, inUAGDirectory);
+		id = fManager->OpenBase( inStructureFile, inParameters, outErr, inAccess, EntityFileExt, inUAGDirectory, nil, nil, inPermissionsFile);
 	}
 	return id;
 }
 
 
-CDB4DBase* VDB4DMgr::CreateBase( const VFile& inStructureFile, sLONG inParameters, VIntlMgr* inIntlMgr, VError* outErr, FileAccess inAccess, const VUUID* inChosenID, VString* EntityFileExt, CUAGDirectory* inUAGDirectory)
+CDB4DBase* VDB4DMgr::CreateBase( const VFile& inStructureFile, sLONG inParameters, VIntlMgr* inIntlMgr, VError* outErr, FileAccess inAccess, const VUUID* inChosenID, VString* EntityFileExt, CUAGDirectory* inUAGDirectory, const VFile* inPermissionsFile)
 {
 	CDB4DBase* id = nil;
 	if (testAssert( fManager != nil)) {
-		id = fManager->CreateBase( inStructureFile, inParameters, inIntlMgr, outErr, inAccess, inChosenID, EntityFileExt, inUAGDirectory);
+		id = fManager->CreateBase( inStructureFile, inParameters, inIntlMgr, outErr, inAccess, inChosenID, EntityFileExt, inUAGDirectory, inPermissionsFile);
 	}
 	return id;
 }
@@ -1361,6 +1377,8 @@ void VDB4DMgr::InitializeJSGlobalObject( VJSGlobalContext* inContext, CDB4DBaseC
 		XBOX::VJSObject database( VJSDatabase::CreateInstance( jsContext, inBaseContext->GetOwner()));
 		globalObject.SetProperty( CVSTR( "db"), database, XBOX::JS4D::PropertyAttributeReadOnly | XBOX::JS4D::PropertyAttributeDontDelete, NULL);
 		globalObject.SetProperty( CVSTR( "ds"), database, XBOX::JS4D::PropertyAttributeReadOnly | XBOX::JS4D::PropertyAttributeDontDelete, NULL);
+		globalObject.SetProperty("BackupSettings", VJSBackupSettings::CreateInstance(jsContext,NULL), JS4D::PropertyAttributeDontDelete | JS4D::PropertyAttributeReadOnly); 
+
 		VJSDatabase::PutAllModelsInGlobalObject(globalObject, inBaseContext->GetOwner(), inBaseContext);
 	}
 
@@ -1431,6 +1449,11 @@ VJSObject VDB4DMgr::CreateJSEMObject( const VString& emName, const VJSContext& i
 	return VJSDatabase::CreateJSEMObject( emName, inContext, inBaseContext);
 }
 
+VJSObject VDB4DMgr::CreateJSBackupSettings(const VJSContext& inContext,IBackupSettings* retainedBackupSettings)
+{
+	return VJSBackupSettings::CreateInstance(inContext,retainedBackupSettings);
+}
+
 
 void VDB4DMgr::SetLimitPerSort(VSize inLimit)
 {
@@ -1491,6 +1514,32 @@ VError VDB4DMgr::EraseDataStore(VFile* dataDS)
 }
 
 
+IHTTPRequestHandler* VDB4DMgr::AddRestRequestHandler( VErrorDB4D& outError, CDB4DBase *inBase, IHTTPServerProject *inHTTPServerProject, RIApplicationRef inApplicationRef, const XBOX::VString& inPattern, bool inEnabled)
+{
+	outError = VE_OK;
+
+	RestRequestHandler *resthandler = NULL;
+	if (inHTTPServerProject != NULL)
+	{
+		VString pattern = (!inPattern.IsEmpty()) ? inPattern : L"(?i)/rest/.*";
+		resthandler = new RestRequestHandler( inBase, pattern, inEnabled, inApplicationRef);
+		if (resthandler != NULL)
+		{
+			outError = inHTTPServerProject->AddHTTPRequestHandler (resthandler);
+			if (outError != VE_OK)
+				ReleaseRefCountable( &resthandler);
+		}
+		else
+		{
+			outError = VE_MEMORY_FULL;
+		}
+
+	}
+	return resthandler;
+}
+
+
+
 //=================================================================================
 
 
@@ -1510,16 +1559,38 @@ VDB4DBase::VDB4DBase( VDBMgr *inManager, Base4D *inBase, Boolean mustRetain)
 	}
 
 	fIsRemote = inBase->IsRemote();
+	fBackupSettings = NULL;
 }
 
 
 VDB4DBase::~VDB4DBase()
 {
- if (fMustRetain) 
+	XBOX::ReleaseRefCountable(&fBackupSettings);
+	
+	if (fMustRetain) 
 		fBase->Release(); // a la derniere instance de fBase, le destructeur de celle ci appelera le CloseBase
 	fManager->Release();
 }
 
+
+const IBackupSettings* VDB4DBase::RetainBackupSettings()
+{
+	if (fBackupSettings)
+		fBackupSettings->Retain();
+	return fBackupSettings;
+}
+
+void  VDB4DBase::SetRetainedBackupSettings(IBackupSettings* inSettings)
+{
+	if (inSettings == NULL)
+	{
+		XBOX::ReleaseRefCountable(&fBackupSettings);
+	}
+	else
+	{
+		XBOX::CopyRefCountable(&fBackupSettings,inSettings);
+	}
+}
 
 Boolean VDB4DBase::MatchBase(CDB4DBase* InBaseToCompare) const
 {
@@ -2871,6 +2942,11 @@ void VDB4DBase::GetJournalInfos( const VFilePath &inDataFilePath, VFilePath &out
 VError VDB4DBase::OpenJournal( VFile *inFile, VUUID &inDataLink, bool inWriteOpenDataOperation )
 {
 	return fBase->OpenJournal( inFile, inDataLink, inWriteOpenDataOperation);
+}
+
+VError VDB4DBase::CreateJournal( VFile *inFile, VUUID *inDataLink, bool inWriteOpenDataOperation )
+{
+	return fBase->CreateJournal( inFile, inDataLink, inWriteOpenDataOperation);
 }
 
 const VValueBag* VDB4DBase::RetainExtraProperties(VError &err, CDB4DBaseContextPtr inContext)
@@ -5075,7 +5151,7 @@ Boolean VDB4DSelection::SortSelection(const VString orderString, VDB4DProgressIn
 	{
 		EntityModel* model = VImpCreator<EntityModel>::GetImpObject(fModel);
 		EntityAttributeSortedSelection sortorder(model);
-		if (sortorder.BuildFromString(orderString, ConvertContext(inContext), true, true, nil))
+		if (sortorder.BuildFromString(orderString, ConvertContext(inContext), false, true, nil))
 		{
 			Selection* newsel = fSel->SortSel(err, model, &sortorder, ConvertContext(inContext), InProgress);
 			if (newsel != nil)
@@ -5123,7 +5199,7 @@ Boolean VDB4DSelection::SortSelection(SortTab* tabs, VDB4DProgressIndicator* InP
 			if (fSel->GetQTfic() > 1)
 			{
 				Boolean withformula = false;
-				for (SortLineArray::Iterator cur = tabs->GetLI()->First(), end = tabs->GetLI()->End(); cur != end; cur++)
+				for (SortLineArray::iterator cur = tabs->GetLI()->begin(), end = tabs->GetLI()->end(); cur != end; cur++)
 				{
 					if (!cur->isfield)
 					{
@@ -6661,7 +6737,7 @@ CDB4DEntityRecord* VDB4DSelection::LoadEntity( RecIDType inEntityIndex, DB4D_Way
 		if (fModel != nil)
 		{
 			EntityModel* xmodel = VImpCreator<EntityModel>::GetImpObject(fModel);
-			if (okperm(context, xmodel, DB4D_EM_Read_Perm))
+			if (okperm(context, xmodel, DB4D_EM_Read_Perm) || okperm(context, xmodel, DB4D_EM_Update_Perm) || okperm(context, xmodel, DB4D_EM_Delete_Perm))
 			{
 				FicheInMem *fiche = LoadFicheInMem( recordID, HowToLock, context, false, outLockWasKeptInTrans);
 				if (fiche != nil)
@@ -11409,6 +11485,16 @@ sLONG8 VDB4DRecord::GetSequenceNumber()
 {
 	return fRecord->GetAutoSeqValue();
 }
+	
+
+void VDB4DRecord::TransferSequenceNumber( CDB4DRecord *inDestination)
+{
+	if (fRecord != nil)
+	{
+		FicheInMem* destination = (inDestination == nil) ? nil : VImpCreator<VDB4DRecord>::GetImpObject(inDestination)->fRecord;
+		fRecord->TransferSeqNumToken( fContext, destination);
+	}
+}
 
 
 VError VDB4DRecord::FillAllFieldsEmpty()
@@ -13467,6 +13553,9 @@ const VValueBag* VDB4DContext::RetainExtraData() const
 
 CDB4DBaseContextPtr VDB4DContext::RetainDataBaseContext(CDB4DBase* inTarget, Boolean ForceCreate, bool reallyRetain)
 {
+	if (inTarget == nil)
+		return nil;
+	
 	VTaskLock lock(&fMutex);
 
 	CDB4DBaseContextPtr res = nil;

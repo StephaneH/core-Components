@@ -120,25 +120,69 @@ VError UAGUser::RetainOwners(CUAGGroupVector& outgroups, bool oneLevelDeep)
 {
 	outgroups.clear();
 	VError err = VE_OK;
-	CDB4DEntityAttributeValue* xval = fUserRec->GetAttributeValue(L"groups", err);
-	if (xval != nil)
+	if (oneLevelDeep)
 	{
-		CDB4DBaseContext* context = fUserRec->GetContext();
-		CDB4DSelection* sel = xval->GetRelatedSelection();
-		if (sel != nil)
+		CDB4DEntityAttributeValue* xval = fUserRec->GetAttributeValue(L"groups", err);
+		if (xval != nil)
 		{
-			sLONG nb = sel->CountRecordsInSelection(context);
-			outgroups.resize(nb, nil);
-			for (sLONG i = 0; i < nb && err == VE_OK; i++)
+			CDB4DBaseContext* context = fUserRec->GetContext();
+			CDB4DSelection* sel = xval->GetRelatedSelection();
+			if (sel != nil)
 			{
-				CDB4DEntityRecord* gowner = fDirectory->GetGroupModel()->LoadEntity(sel->GetSelectedRecordID(i+1, context), err, DB4D_Do_Not_Lock, context, false);
-				if (gowner != nil)
+				sLONG nb = sel->CountRecordsInSelection(context);
+				outgroups.resize(nb, nil);
+				for (sLONG i = 0; i < nb && err == VE_OK; i++)
 				{
-					CUAGGroup* group = new UAGGroup(fDirectory, gowner);
-					outgroups[i].Adopt(group);
-					gowner->Release();
+					CDB4DEntityRecord* gowner = fDirectory->GetGroupModel()->LoadEntity(sel->GetSelectedRecordID(i+1, context), err, DB4D_Do_Not_Lock, context, false);
+					if (gowner != nil)
+					{
+						CUAGGroup* group = new UAGGroup(fDirectory, gowner);
+						outgroups[i].Adopt(group);
+						gowner->Release();
+					}
 				}
 			}
+		}
+	}
+	else
+	{
+		VString root = "parents";
+		set<VUUIDBuffer> alreadyGroup;
+		CUAGGroupVector firstLevelGroups;
+		//err = RetainSubGroups(firstLevelGroups, true);
+		err = RetainOwners(firstLevelGroups, true);
+		if (err == VE_OK)
+		{
+			for (CUAGGroupVector::iterator curg = firstLevelGroups.begin(), endg = firstLevelGroups.end(); curg != endg && err == VE_OK; ++curg)
+			{
+				VUUID xid;
+				CUAGGroup* fgroup = *curg;
+				UAGGroup* xfgroup = VImpCreator<UAGGroup>::GetImpObject(fgroup);
+				fgroup->GetID(xid);
+				if (alreadyGroup.find(xid.GetBuffer()) == alreadyGroup.end())
+				{
+					outgroups.push_back(fgroup);
+					alreadyGroup.insert(xid.GetBuffer());
+					CUAGGroupVector otherGroups;
+					//err = fgroup->RetainSubGroups(otherGroups, false);
+					err = xfgroup->RetainOtherGroups(otherGroups, false, root);
+					if (err == VE_OK)
+					{
+						for (CUAGGroupVector::iterator cur = otherGroups.begin(), end = otherGroups.end(); cur != end; ++cur)
+						{
+							CUAGGroup* otherGroup = *cur;
+							VUUID xid2;
+							otherGroup->GetID(xid2);
+							if (alreadyGroup.find(xid2.GetBuffer()) == alreadyGroup.end())
+							{
+								outgroups.push_back(otherGroup);
+								alreadyGroup.insert(xid2.GetBuffer());						
+							}
+						}
+					}
+
+				}
+			}		
 		}
 	}
 
@@ -313,7 +357,7 @@ VJSSessionStorageObject* UAGUser::RetainStorageObject()
 // --------------------------------------------------------------------------------
 
 
-UAGSession::UAGSession(UAGDirectory* inDirectory, const VUUID& inUserID, CUAGUser* inUser)
+UAGSession::UAGSession(UAGDirectory* inDirectory, const VUUID& inUserID, CUAGUser* inUser, bool fromLogout)
 {
 	fUserID = inUserID;
 	fDirectory = RetainRefCountable(inDirectory);
@@ -326,6 +370,7 @@ UAGSession::UAGSession(UAGDirectory* inDirectory, const VUUID& inUserID, CUAGUse
 	VTime::Now( fExpirationTime);
 	fExpirationTime.AddSeconds( fLifeTime);
 	fIsDefault = false;
+	fIsFromLogout = fromLogout;
 }
 
 
@@ -380,7 +425,7 @@ VError UAGSession::BuildDependences(CUAGGroupVector& groups)
 
 
 
-bool UAGSession::BelongsTo(const XBOX::VUUID& inGroupID)
+bool UAGSession::BelongsTo(const XBOX::VUUID& inGroupID, bool checkNoAdmin)
 {
 	bool result = false;
 
@@ -388,15 +433,22 @@ bool UAGSession::BelongsTo(const XBOX::VUUID& inGroupID)
 		result = true;
 	else if (fPromotedTo.find(inGroupID) != fPromotedTo.end())
 		result = true;
+	else if (fDirectory->NoAdmin() && checkNoAdmin)
+	{
+		if (inGroupID.GetBuffer() == fDirectory->GetAdminID())
+			result = true;
+		else if (inGroupID.GetBuffer() == fDirectory->GetDebugID())
+			result = true;
+	}
 
 	return result;
 }
 
-bool UAGSession::BelongsTo(CUAGGroup* inGroup)
+bool UAGSession::BelongsTo(CUAGGroup* inGroup, bool checkNoAdmin)
 {
 	VUUID id;
 	inGroup->GetID(id);
-	return BelongsTo(id);
+	return BelongsTo(id, checkNoAdmin);
 }
 
 bool UAGSession::Matches(const XBOX::VUUID& inUserID)
@@ -439,7 +491,7 @@ void UAGSession::BuildSubPromotions(CUAGGroupVector& groups, IDSet* outGroupsAdd
 		{
 			VUUID groupid;
 			group->GetID(groupid);
-			if (!BelongsTo(groupid))
+			if (!BelongsTo(groupid, false))
 			{
 				outGroupsAdded->insert(groupid);
 				fPromotedTo.insert(groupid);
@@ -459,7 +511,7 @@ sLONG UAGSession::PromoteIntoGroup(CUAGGroup* inGroup)
 	VUUID groupid;
 	inGroup->GetID(groupid);
 
-	if (!BelongsTo(groupid))
+	if (!BelongsTo(groupid, false))
 	{
 		resultToken = GetNextToken();
 		groupsAdded = &(fPromotions[resultToken]);

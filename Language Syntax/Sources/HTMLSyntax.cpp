@@ -56,7 +56,11 @@ VArrayOf<VString> allhtmltags;
 
 VHTMLSyntax::VHTMLSyntax()
 {
-	fTabWidth=4;
+	fAutoInsertBlock = false;
+	fAutoInsertClosingChar = false;
+	fAutoInsertTabs = false;
+	fInsertSpaces = false;
+	fTabWidth = 4;
 }
 
 VHTMLSyntax::~VHTMLSyntax()

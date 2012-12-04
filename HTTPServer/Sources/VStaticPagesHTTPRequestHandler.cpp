@@ -41,14 +41,10 @@ XBOX::VError VStaticPagesHTTPRequestHandler::HandleRequest (IHTTPResponse *ioRes
 	if (NULL == virtualHost)
 		return VE_HTTP_PROTOCOL_NOT_FOUND;
 
-	XBOX::VError		error = VE_OK;
-	XBOX::VFilePath		filePath;
-	const XBOX::VString	URL (httpResponse->GetRequestURLPath());
-#if HTTP_SERVER_GLOBAL_CACHE
-	VCacheManager *		cacheManager = virtualHost->GetProject()->GetHTTPServer()->GetCacheManager();
-#else
-	VCacheManager *		cacheManager = virtualHost->GetCacheManager();
-#endif
+	XBOX::VError			error = VE_OK;
+	XBOX::VFilePath			filePath;
+	const XBOX::VString		URL (httpResponse->GetRequestURLPath());
+	VCacheManager *			cacheManager = virtualHost->GetProject()->GetHTTPServer()->GetCacheManager();
 	const HTTPRequestMethod	method = httpResponse->GetRequestMethod();
 
 	if ((method == HTTP_GET) || (method == HTTP_HEAD))

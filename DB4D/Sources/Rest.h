@@ -95,10 +95,13 @@ class RestRequestHandler : public IHTTPRequestHandler
 {
 	public:
 
-		RestRequestHandler( CDB4DBase* inBase, const VString& inPattern, bool inEnabled, RIApplicationRef inApplicationRef) : fPattern(inPattern), fEnable(inEnabled), fApplicationRef(inApplicationRef)
+		RestRequestHandler( CDB4DBase* inBase, const VString& inPattern, bool inEnabled, RIApplicationRef inApplicationRef) : fxBase(nil), fBase(nil), fPattern(inPattern), fEnable(inEnabled), fApplicationRef(inApplicationRef)
 		{
-			fxBase = RetainRefCountable(inBase);
-			fBase = VImpCreator<VDB4DBase>::GetImpObject(inBase)->GetBase();
+			if (inBase != nil)
+			{
+				fxBase = RetainRefCountable(inBase);
+				fBase = VImpCreator<VDB4DBase>::GetImpObject(inBase)->GetBase();
+			}
 		}
 
 		virtual ~RestRequestHandler()

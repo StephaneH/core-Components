@@ -81,6 +81,18 @@
           <source>Cache rule expires.</source>
           <target>Cache rule expires.</target>
         </trans-unit>
+        <trans-unit id="x" resname="ERR_HTTP_1023">
+          <source>Some HTTP Server Project Settings are already used. Check Port, SSLPort or Hostname Settings.</source>
+          <target>Some HTTP Server Project Settings are already used. Check Port, SSLPort or Hostname Settings.</target>
+        </trans-unit>
+        <trans-unit id="x" resname="ERR_HTTP_1024">
+          <source>Virtual Folder already exists.</source>
+          <target>Virtual Folder already exists.</target>
+        </trans-unit>
+        <trans-unit id="x" resname="ERR_HTTP_1025">
+          <source>Hostname is missing in Project Settings.</source>
+          <target>Hostname is missing in Project Settings.</target>
+        </trans-unit>
       </group>
 
       <group resname="HTTP_Messages">

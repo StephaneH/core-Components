@@ -16,6 +16,7 @@
 #include "4DDBHeaders.h"
 
 
+
 VError SortLine::PutInto(VStream* into)
 {
 	VError err = into->PutLong(numfield);
@@ -54,10 +55,12 @@ VError SortLine::GetFrom(VStream* from)
 
 SortTab::~SortTab()
 {
-	for (SortLineArray::Iterator cur = li.First(), end = li.End(); cur != end; cur++)
+	for (SortLineArray::iterator cur = li.begin(), end = li.end(); cur != end; cur++)
 	{
 		if (cur->expression != nil)
 			cur->expression->Release();
+		if (cur->fAttPath != nil)
+			QuickReleaseRefCountable(cur->fAttPath);
 	}
 }
 
@@ -87,8 +90,7 @@ VError SortTab::AddTriLineField(sLONG numfile, sLONG numfield, uBOOL ascendant)
 			xli.numfile = numfile;
 			xli.numfield = numfield;
 			xli.ascendant = ascendant;
-			if (!li.Add(xli))
-				err = fBD->ThrowError(memfull, dbaction_BuildingSortCriterias);
+			li.push_back(xli);
 			cri->Release();
 		}
 		table->Release();
@@ -106,13 +108,8 @@ Boolean SortTab::AddExpression(DB4DLanguageExpression* inExpression, Boolean asc
 	xli.expression = inExpression;
 	xli.isfield = false;
 	xli.ascendant = ascendant;
-	if (li.Add(xli))
-		inExpression->Retain();
-	else
-	{
-		fBD->ThrowError(memfull, dbaction_BuildingSortCriterias);
-		return false;
-	}
+	li.push_back(xli);
+	inExpression->Retain();
 
 	return true;
 }
@@ -125,11 +122,20 @@ Boolean SortTab::AddAttribute(EntityAttribute* inAtt, Boolean ascendant)
 	xli.att = inAtt;
 	xli.isfield = false;
 	xli.ascendant = ascendant;
-	if (!li.Add(xli))
-	{
-		fBD->ThrowError(memfull, dbaction_BuildingSortCriterias);
-		return false;
-	}
+	li.push_back(xli);
+
+	return true;
+}
+
+
+Boolean SortTab::AddAttributePath(AttributePath* inAttPath, Boolean ascendant)
+{
+	SortLine xli;
+
+	xli.fAttPath = RetainRefCountable(inAttPath);
+	xli.isfield = false;
+	xli.ascendant = ascendant;
+	li.push_back(xli);
 
 	return true;
 }
@@ -139,10 +145,10 @@ Boolean SortTab::AddAttribute(EntityAttribute* inAtt, Boolean ascendant)
 VError SortTab::PutInto(VStream* into)
 {
 	VError err = VE_OK;
-	sLONG nb = li.GetCount();
+	sLONG nb = li.size();
 
 	err = into->PutLong(nb);
-	for (SortLineArray::Iterator cur = li.First(), end = li.End(); cur != end && err == VE_OK; cur++)
+	for (SortLineArray::iterator cur = li.begin(), end = li.end(); cur != end && err == VE_OK; cur++)
 	{
 		err = cur->PutInto(into);
 	}
@@ -163,8 +169,7 @@ VError SortTab::GetFrom(VStream* from)
 			err = xli.GetFrom(from);
 			if (err == VE_OK)
 			{
-				if (!li.Add(xli))
-					err = ThrowBaseError(memfull, noaction);
+				li.push_back(xli);
 			}
 		}
 	}
@@ -1398,8 +1403,18 @@ Boolean TypeSortElemArray<Type>::TryToSort(Selection* From, Selection* &into, VE
 											for (; cur != end; cur++)
 											{
 												EntityAttribute* att = cur->GetAttribute();
+												AttributePath* attpath = cur->GetAttributePath();
 												VValueSingle* cv = nil;
-												if (att == nil)
+												if (attpath != nil)
+												{
+													const EntityAttribute* firstpart = attpath->FirstPart()->fAtt;
+													if (erec == nil)
+														erec = new EntityRecord(firstpart->GetOwner(), fic, context->GetEncapsuleur(), DB4D_Do_Not_Lock);
+													EntityAttributeValue* val = erec->getAttributeValue(*attpath, err, context);
+													if (val != nil)
+														cv = val->getVValue();
+												}
+												else if (att == nil)
 													cv = fic->GetNthField(cur->GetNumCrit(), err, false, true);
 												else
 												{
@@ -1781,6 +1796,10 @@ Boolean TypeSortElemArray<Type>::TryToSort(Selection* From, Selection* &into, VE
 					void* partdata = nil;
 					if (taillebloc < 2000000)
 						taillebloc = 2000000;
+
+					// no more than 1Gb
+					if (taillebloc > 1024*1024*1024)
+						taillebloc = 1024*1024*1024;
 
 					do 
 					{
@@ -4840,7 +4859,11 @@ Boolean Selection::TryToSortMulti(VError& err, const SortTab* tabs, BaseTaskInfo
 		}
 		else
 		{
-			if (li->att != nil)
+			if (li->fAttPath != nil)
+			{
+				totlen += off.AddOffset(totlen, li->fAttPath, li->ascendant);
+			}
+			else if (li->att != nil)
 			{
 				totlen += off.AddOffset(totlen, li->att, li->ascendant);
 			}
@@ -5357,23 +5380,31 @@ Selection* Selection::SortSel(VError& err, EntityModel* em, EntityAttributeSorte
 		SortTab criterias(em->GetOwner());
 		for (EntityAttributeSortedSelection::iterator cur = sortingAtt->begin(), end = sortingAtt->end(); cur != end && err == VE_OK; cur++)
 		{
-			EntityAttribute* att = cur->fAttribute;
-			if (att->IsSortable())
+			AttributePath* attpath = cur->fAttPath;
+			if (attpath == nil)
 			{
-				switch(att->GetKind())
+				EntityAttribute* att = cur->fAttribute;
+				if (att->IsSortable())
 				{
-					case eattr_storage:
-						if (att->HasEvent(dbev_load))
-							criterias.AddAttribute(att,cur->fAscent);
-						else
-							criterias.AddTriLineField(att->GetOwner()->GetMainTable()->GetNum(), att->GetFieldPos(), cur->fAscent);
-						break;
+					switch(att->GetKind())
+					{
+						case eattr_storage:
+							if (att->HasEvent(dbev_load))
+								criterias.AddAttribute(att,cur->fAscent);
+							else
+								criterias.AddTriLineField(att->GetOwner()->GetMainTable()->GetNum(), att->GetFieldPos(), cur->fAscent);
+							break;
 
-					case eattr_alias:
-					case eattr_computedField:
-						criterias.AddAttribute(att,cur->fAscent);
-						break;
+						case eattr_alias:
+						case eattr_computedField:
+							criterias.AddAttribute(att,cur->fAscent);
+							break;
+					}
 				}
+			}
+			else
+			{
+				criterias.AddAttributePath(attpath, cur->fAscent);
 			}
 		}
 

@@ -49,6 +49,8 @@ public:
 
 	void SetBreakPointManager( ISyntaxInterface* inSyntax, IBreakPointManager* inBreakPointManager );
 
+	virtual void SetSQLTokenizer ( SQLTokenizeFuncPtr inPtr, const std::vector< XBOX::VString * >& vctrSQLKeywords, const std::vector< XBOX::VString * >& vctrSQLFunctions );
+
 	virtual void Stop();
 
 protected:

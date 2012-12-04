@@ -35,6 +35,8 @@ extern const VString kSyncHeaderExt;
 
 extern const VString kDataMatchExt;
 
+extern const VString kDataExtraExt;	// no dot
+
 void InitFileExtensions(DB4D_Running_Mode inRunningMode);
 
 #define noaction DBactionFinale
@@ -1125,6 +1127,11 @@ class OccupableStack
 			return fSavedStamp != VInterlocked::AtomicGet(&fStamp);
 		}
 
+		inline VTaskID GetTaskId() const
+		{
+			return fTaskID;
+		}
+
 		void PutObjectsInto(OccupableSet& OccupiedObjects);
 
 		bool FindObjectInStack(const IOccupable* inObject); // used for debugging purpose
@@ -1155,6 +1162,8 @@ public:
 	~OccupablePool();
 
 	OccupableStack* GetStackForCurrentThread(); // doit etre appelee une fois par LockRead ou LockWrite
+
+	void RemoveStack(VTaskID threadID);
 
 	void WaitForMemoryManager(OccupableStack* curstack); // dois etre appelee avant chaque occupy
 	void EndWaitForMemoryManager(OccupableStack* curstack); // dois etre appelee apres chaque occupy
@@ -1199,13 +1208,15 @@ public:
 
 	sLONG fWaitForMemMgr;
 
-protected:
-	typedef vector<OccupableStack*> OccupableStackCollection;
+protected: 
+	//typedef vector<OccupableStack*> OccupableStackCollection;
+	typedef map<VTaskID, OccupableStack*> OccupableStackCollection;
 	OccupableStackCollection fAllStacks;
 	OccupableSet fOccupiedObjects;
 	VCriticalSection fMutex;
 	vxSyncEvent* fWaitMemMgrSync;
 	sLONG memorybarrier;
+	VTaskDataKey fTaskDataKey;
 	//sLONG fGlobalStamp;
 
 
@@ -2823,6 +2834,7 @@ class xTime
 
 
 class EntityAttribute;
+class AttributePath;
 class Bittab;
 
 const sLONG kMaxMultiFieldData = 128;
@@ -2833,12 +2845,17 @@ class xMultiFieldDataOffset
 		inline xMultiFieldDataOffset()
 		{
 			fNulls = nil;
+			att = nil;
+			fAttPath = nil;
+			expression = nil;
 		}
 
+		/*
 		~xMultiFieldDataOffset()  // non virtual on purpose
 		{
 			QuickReleaseRefCountable(fNulls);
 		}
+		*/
 
 		inline void Set(sLONG xoffset, sLONG xtyp, sLONG xnumcrit, sLONG xsize, Boolean xascent) 
 		{ 
@@ -2847,8 +2864,6 @@ class xMultiFieldDataOffset
 			numcrit = xnumcrit; 
 			size = xsize; 
 			ascent = xascent; 
-			expression = nil;
-			att = nil;
 		};
 
 		inline void Set(DB4DLanguageExpression* inExpression, Boolean xascent) 
@@ -2859,10 +2874,10 @@ class xMultiFieldDataOffset
 			size = 0; 
 			ascent = xascent; 
 			expression = inExpression;
-			att = nil;
 		};
 
 		sLONG Set(sLONG xoffset, EntityAttribute* inAtt, Boolean xascent);
+		sLONG Set(sLONG xoffset, AttributePath* inAttPath, Boolean xascent);
 		
 		inline sLONG GetOffset() const { return offset; };
 		inline sLONG GetDataType() const { return typ; };
@@ -2872,11 +2887,9 @@ class xMultiFieldDataOffset
 		inline void SetDataType(sLONG inType) { typ = inType; };
 		inline DB4DLanguageExpression* GetExpression() const { return expression; };
 		inline EntityAttribute* GetAttribute() const { return att; };
+		inline AttributePath* GetAttributePath() const { return fAttPath; };
 
-		void Release()
-		{
-			QuickReleaseRefCountable(fNulls);
-		}
+		void Release();
 
 		bool IsNull(sLONG recnum) const;
 
@@ -2891,6 +2904,7 @@ class xMultiFieldDataOffset
 		Bittab* fNulls;
 		DB4DLanguageExpression* expression;
 		EntityAttribute* att;
+		AttributePath* fAttPath;
 };
 
 typedef xMultiFieldDataOffset* xMultiFieldDataOffset_iterator;
@@ -2912,13 +2926,14 @@ class xMultiFieldDataOffsets
 
 		xMultiFieldDataOffsets(Field* cri, sLONG typ, Boolean ascent, sLONG size);
 		xMultiFieldDataOffsets(EntityAttribute* att, Boolean ascent);
-		//~xMultiFieldDataOffsets(); // non virtual on purpose
+		~xMultiFieldDataOffsets(); // non virtual on purpose
 		inline sLONG GetCount() const { return count; };
 		inline xMultiFieldDataOffset* GetOffset(sLONG n) { return &(offsets[n]); };
 		inline const xMultiFieldDataOffset* GetOffset(sLONG n) const { return &(offsets[n]); };
 		Boolean AddOffset(sLONG offset, sLONG typ, sLONG numcrit, sLONG size, Boolean ascent);
 		Boolean AddOffset(DB4DLanguageExpression* inExpression, Boolean ascent);
 		sLONG AddOffset(sLONG offset, EntityAttribute* inAtt, Boolean ascent);
+		sLONG AddOffset(sLONG offset, AttributePath* inAttPath, Boolean ascent);
 		xMultiFieldDataOffset_iterator Begin() { return &(offsets[0]); };
 		xMultiFieldDataOffset_iterator End() { return &(offsets[count]); };
 		xMultiFieldDataOffset_constiterator Begin() const { return &(offsets[0]); };

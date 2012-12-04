@@ -42,8 +42,22 @@ USING_TOOLBOX_NAMESPACE
 //--------------------------------------------------------------------------------------------------
 
 
-HTTPNetworkOutputStream::HTTPNetworkOutputStream (XBOX::VTCPEndPoint& inEndPoint)
-: fEndPoint (inEndPoint)
+inline
+XBOX::VError _WriteToSocket (XBOX::VTCPEndPoint& inEndPoint, char *inBuffer, uLONG *ioBytes)
+{
+	XBOX::StErrorContextInstaller errorContext (VE_SRVR_WRITE_FAILED,
+												VE_SRVR_CONNECTION_BROKEN,
+												VE_SOCK_WRITE_FAILED,
+												XBOX::VE_OK);
+
+	return inEndPoint.WriteExactly (inBuffer, *ioBytes, 10000 /*10s*/);
+}
+
+//--------------------------------------------------------------------------------------------------
+
+
+HTTPNetworkOutputStream::HTTPNetworkOutputStream (XBOX::VTCPEndPoint& inTCPEndPoint)
+: fEndPoint (inTCPEndPoint)
 , fBufferMaxSize (HTTP_NETWORK_STREAM_BUFFER_LENGTH)	// Default Value
 , fBuffer (NULL)
 , fBufferSize (0)
@@ -89,7 +103,7 @@ XBOX::VError HTTPNetworkOutputStream::DoPutData (const void *inBuffer, XBOX::VSi
 		nbBytes -= bytesToWriteToBuffer;
 		if (fBufferSize == fBufferMaxSize)
 		{
-			error = _WriteToSocket (fBuffer, &fBufferSize);
+			error = _WriteToSocket (fEndPoint, fBuffer, &fBufferSize);
 			if (XBOX::VE_OK != error)
 				return error;
 
@@ -106,7 +120,7 @@ XBOX::VError HTTPNetworkOutputStream::DoFlush()
 	if (0 == fBufferSize)
 		return XBOX::VE_OK;
 
-	XBOX::VError error = _WriteToSocket (fBuffer, &fBufferSize);
+	XBOX::VError error = _WriteToSocket (fEndPoint, fBuffer, &fBufferSize);
 	if (XBOX::VE_OK != error)
 		return error;
 
@@ -116,27 +130,11 @@ XBOX::VError HTTPNetworkOutputStream::DoFlush()
 }
 
 
-XBOX::VError HTTPNetworkOutputStream::_WriteToSocket (char *inBuffer, uLONG *ioBytes)
-{
-	XBOX::VError error = XBOX::VE_OK;
-
-	do
-	{
-		error = fEndPoint.Write (inBuffer, ioBytes, HTTP_NC_WRITE_WITH_TAIL && !fEndPoint.IsSSL());
-		if (error == VE_SRVR_RESOURCE_TEMPORARILY_UNAVAILABLE)
-			VTask::GetCurrent()->Sleep (1);
-	}
-	while (error == VE_SRVR_RESOURCE_TEMPORARILY_UNAVAILABLE);
-
-	return error;
-}
-
-
 //--------------------------------------------------------------------------------------------------
 
 
-HTTPNetworkInputStream::HTTPNetworkInputStream (XBOX::VTCPEndPoint& inEndPoint)
-: fEndPoint (inEndPoint)
+HTTPNetworkInputStream::HTTPNetworkInputStream (XBOX::VTCPEndPoint& inTCPEndPoint)
+: fEndPoint (inTCPEndPoint)
 , fBufferMaxSize (HTTP_MAX_BUFFER_LENGTH)
 , fBufferSize (0)
 , fUseFullBuffering (false)

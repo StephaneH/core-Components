@@ -73,7 +73,6 @@ const sLONG kMaxSegDataSpeciaux = 64;
 //#include "DB4DLang/DB4DLang_ClassDef.h"
 //#include "vtuneapi.h"
 #include "JavaScript/VJavaScript.h"
-#include "JavaScript/Sources/VJSJSON.h"
 
 
 #if VERSIONWIN
@@ -425,5 +424,6 @@ struct select2nd : public unary_function<PairType, typename PairType::second_typ
 #include "IndexTemplatePart2.h"
 #include "javascript_db4d.h"
 #include "VCacheLog.h"
+#include "RemoteModel.h"
 
 #endif

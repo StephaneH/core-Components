@@ -33,89 +33,16 @@
 #ifndef HTTP_SERVER_DETAILED_OPERATIONS_TIMES
 	#define HTTP_SERVER_DETAILED_OPERATIONS_TIMES	0	//VERSIONDEBUG
 #endif
-#ifndef HTTP_SERVER_GLOBAL_CACHE									/* Uses one global cache manager object for the whole opened projects */
-	#define HTTP_SERVER_GLOBAL_CACHE				1
-#endif
 #ifndef HTTP_SERVER_USE_SYSTEM_NOTIFICATIONS						/* Uses file system notifications in order to invalidate cached objects */
 	#define HTTP_SERVER_USE_SYSTEM_NOTIFICATIONS	0
 #endif
-#ifndef HTTP_SERVER_GLOBAL_SETTINGS
-	#define HTTP_SERVER_GLOBAL_SETTINGS				0
-#endif
 #ifndef HTTP_SERVER_USE_PROJECT_PATTERNS
 	#define HTTP_SERVER_USE_PROJECT_PATTERNS		0
-#endif
-#ifndef HTTP_SERVER_USE_QUALITY_FACTOR
-	#define HTTP_SERVER_USE_QUALITY_FACTOR			1
 #endif
 
 
 class IVirtualHost;
 class IHTTPResponse;
-
-
-class IHTMLFormPart : public XBOX::IRefCountable
-{
-public:
-	virtual	const XBOX::VString&			GetName() const = 0;
-	virtual	const XBOX::VString&			GetFileName() const = 0;
-	virtual	const XBOX::VString&			GetMediaType() const = 0;
-	virtual const MimeTypeKind				GetMediaTypeKind() const = 0;
-	virtual const XBOX::CharSet				GetMediaTypeCharSet() const = 0;
-	virtual const XBOX::VSize				GetSize() const = 0;
-	virtual	const XBOX::VPtrStream&			GetData() const = 0;
-};
-
-
-class IHTMLForm
-{
-public:
-	virtual const XBOX::VString&			GetEncoding() const = 0;
-	virtual const XBOX::VString&			GetBoundary() const = 0;
-	virtual void							GetFormPartsList (std::vector<IHTMLFormPart *> &outFormPartsList) const = 0;
-};
-
-
-class IHTTPHeader
-{
-public:
-	virtual	bool							IsHeaderSet (const HTTPCommonHeaderCode inCode) const = 0;
-	virtual	bool							IsHeaderSet (const XBOX::VString& inName) const = 0;
-
-	virtual bool							RemoveHeader (const HTTPCommonHeaderCode inCode) = 0;
-	virtual bool							RemoveHeader (const XBOX::VString& inName) = 0;
-	
-	virtual	bool							GetHeaderValue (const HTTPCommonHeaderCode inCode, XBOX::VString& outValue) const = 0;
-	virtual	bool							GetHeaderValue (const XBOX::VString& inName, XBOX::VString& outValue) const = 0;
-	virtual bool							GetContentType (XBOX::VString& outContentType, XBOX::CharSet *outCharSet = NULL) const = 0;
-	
-	virtual	bool							SetHeaderValue (const HTTPCommonHeaderCode inCode, const XBOX::VString& inValue, bool inOverride = true) = 0;
-	virtual	bool							SetHeaderValue (const XBOX::VString& inName, const XBOX::VString& inValue, bool inOverride = true) = 0;
-	virtual bool							SetContentType (const XBOX::VString& inContentType, const XBOX::CharSet& inCharSet = XBOX::VTC_UNKNOWN) = 0;
-
-	virtual void							GetHeadersList (std::vector<std::pair<XBOX::VString, XBOX::VString> > &outHeadersList) const = 0;
-
-	virtual bool							GetBoundary (XBOX::VString& outBoundary) const = 0;
-
-	virtual void							ToString (XBOX::VString& outString) const = 0;
-	virtual void							FromString (const XBOX::VString& inString) = 0;
-};
-
-
-class IHTTPCookie : public XBOX::IRefCountable
-{
-public:
-	virtual sLONG							GetVersion() const = 0;
-	virtual const XBOX::VString&			GetName() const = 0;
-	virtual const XBOX::VString&			GetValue() const = 0;
-	virtual const XBOX::VString&			GetComment() const = 0;
-	virtual const XBOX::VString&			GetDomain() const = 0;
-	virtual const XBOX::VString&			GetPath() const = 0;
-	virtual bool							GetSecure() const = 0;
-	virtual sLONG							GetMaxAge() const = 0;
-	virtual bool							GetHttpOnly() const = 0;
-	virtual XBOX::VString					ToString() const = 0;
-};
 
 
 class IAuthenticationInfos
@@ -138,6 +65,8 @@ public:
 	virtual void							GetURI (XBOX::VString& outValue) const = 0;
 	virtual void							GetDomain (XBOX::VString& outValue) const = 0;
 	virtual bool							NeedAddUAGSession() const = 0;
+
+	virtual	void							SetUAGSession( CUAGSession* inSession) = 0;
 };
 
 
@@ -169,7 +98,7 @@ public:
 	virtual const XBOX::VString&			GetURLPath() const  = 0;		// Path part of the URL "/path/file.html"
 	virtual const XBOX::VString&			GetURLQuery() const  = 0;		// Query Part of the URL "?param1=1&param2=2"
 	virtual const XBOX::VString&			GetHost() const = 0;
-	virtual	const IHTTPHeader&				GetHTTPHeaders() const = 0;
+	virtual	const XBOX::VHTTPHeader&		GetHTTPHeaders() const = 0;
 	virtual HTTPVersion						GetHTTPVersion() const = 0;
 	virtual void							GetRequestHTTPVersionString (XBOX::VString& outVersionString) const = 0;
 	virtual	const XBOX::VPtrStream&			GetRequestBody() const = 0;
@@ -177,12 +106,17 @@ public:
 	virtual IAuthenticationInfos *			GetAuthenticationInfos() const = 0;
 	virtual	const XBOX::VString&			GetRequestLine() const = 0;
 	virtual void							GetContentTypeHeader (XBOX::VString& outContentType, XBOX::CharSet *outCharSet = NULL) const = 0;
-	virtual MimeTypeKind					GetContentTypeKind() const = 0;
-	virtual bool							GetCookies (std::vector<IHTTPCookie *>& outCookies) const = 0;
+	virtual XBOX::MimeTypeKind				GetContentTypeKind() const = 0;
+	virtual bool							GetCookies (XBOX::VectorOfCookie& outCookies) const = 0;
 	virtual bool							GetCookie (const XBOX::VString& inName, XBOX::VString& outValue) const = 0;
 	virtual const XBOX::VError				GetParsingError() const = 0 ;
 	virtual bool							IsParsingComplete() const = 0;
-	virtual const IHTMLForm *				GetHTMLForm() const = 0;
+	virtual const XBOX::VMIMEMessage *		GetHTMLForm() const = 0;
+	virtual XBOX::VString					GetLocalIP() const = 0;
+	virtual PortNumber						GetLocalPort() const = 0;
+	virtual bool							IsSSL() const = 0;
+	virtual XBOX::VString					GetPeerIP() const = 0;
+	virtual PortNumber						GetPeerPort() const = 0;
 };
 
 
@@ -192,11 +126,12 @@ public:
 	/* HTTP Request Message manipulation functions */
 	virtual	const IHTTPRequest&				GetRequest() const = 0;
 	virtual const HTTPVersion				GetRequestHTTPVersion() const = 0;
-	virtual	const IHTTPHeader&				GetRequestHeader() const = 0;
+	virtual	const XBOX::VHTTPHeader&		GetRequestHeader() const = 0;
 	virtual	const XBOX::VString&			GetRequestURL() const = 0;
 	virtual	const XBOX::VString&			GetRequestRawURL() const = 0;
 	virtual	HTTPRequestMethod				GetRequestMethod() const = 0;
 	virtual	void							GetRequestMethodName (XBOX::VString& outMethodName) const = 0;
+	virtual void							SetRequestURLPath (const XBOX::VString& inURLPath) = 0;
 
 	/* HTTP Response Message manipulation functions */
 	virtual	HTTPStatusCode					GetResponseStatusCode() const = 0;
@@ -212,19 +147,19 @@ public:
 	/* Response Header manipulation functions */
 	virtual void							SetHTTPVersion (HTTPVersion inValue) = 0;
 	virtual	bool							AddResponseHeader (const XBOX::VString& inName, const XBOX::VString& inValue, bool inOverride = true) = 0;
-	virtual	bool							AddResponseHeader (const HTTPCommonHeaderCode inCode, const XBOX::VString& inValue, bool inOverride = true) = 0;
+	virtual	bool							AddResponseHeader (const XBOX::HTTPCommonHeaderCode inCode, const XBOX::VString& inValue, bool inOverride = true) = 0;
 	virtual	bool							SetContentLengthHeader (const sLONG8 inValue) = 0;
 	virtual	bool							SetExpiresHeader (const sLONG inValue) = 0; /* possible values: -1-> Yesterday, 0-> Now, 1-> Tomorrow, 2-> Far Future (10 years) */
 	virtual bool							SetExpiresHeader (const XBOX::VTime& inValue) = 0;
-	virtual	bool							IsResponseHeaderSet (const HTTPCommonHeaderCode inCode) const = 0;
+	virtual	bool							IsResponseHeaderSet (const XBOX::HTTPCommonHeaderCode inCode) const = 0;
 	virtual	bool							IsResponseHeaderSet (const XBOX::VString& inName) const = 0;
-	virtual bool							GetResponseHeader (const HTTPCommonHeaderCode inCode, XBOX::VString& outValue) const = 0;
+	virtual bool							GetResponseHeader (const XBOX::HTTPCommonHeaderCode inCode, XBOX::VString& outValue) const = 0;
 	virtual bool							GetResponseHeader (const XBOX::VString& inName, XBOX::VString& outValue) const = 0;
 	virtual	bool							SetContentTypeHeader (const XBOX::VString& inValue, const XBOX::CharSet inCharSet = XBOX::VTC_UNKNOWN) = 0;
 	virtual bool							GetContentTypeHeader (XBOX::VString& outContentType, XBOX::CharSet *outCharSet = NULL) const = 0;
-	virtual MimeTypeKind					GetContentTypeKind() const = 0;
-	virtual	const IHTTPHeader&				GetResponseHeader() const = 0;
-	virtual	IHTTPHeader&					GetResponseHeader() = 0;
+	virtual XBOX::MimeTypeKind				GetContentTypeKind() const = 0;
+	virtual	const XBOX::VHTTPHeader&		GetResponseHeader() const = 0;
+	virtual	XBOX::VHTTPHeader&				GetResponseHeader() = 0;
 
 	/* Cookies manipulation functions */
 	virtual bool							IsCookieSet (const XBOX::VString& inCookieName) const = 0;
@@ -267,7 +202,12 @@ public:
 	 */
 	virtual XBOX::VError					SendResponseHeader() = 0;
 
-	virtual uLONG							GetIPv4() const = 0;
+#if WITH_DEPRECATED_IPV4_API
+	virtual IP4 /*done*/					GetIPv4() const = 0;
+#else
+	virtual void							GetIP (XBOX::VString& outIP) const = 0;
+#endif	
+	
 	virtual XBOX::VTCPEndPoint *			GetEndPoint() const = 0;
 	virtual sLONG							GetRawSocket() const = 0;
 
@@ -286,6 +226,11 @@ public:
 	virtual void							SetWantedAuthRealm (const XBOX::VString& inValue) = 0;
 	virtual void							GetWantedAuthRealm (XBOX::VString& outValue) const = 0;
 
+	/*
+	 *	Set ForceCloseSession flag to avoid waiting Keep-Alive timeout when HTTP Server is shutting down 
+	 */
+	virtual bool							GetForceCloseSession() const = 0;
+	virtual void							SetForceCloseSession (bool inValue = true) = 0;
 };
 
 
@@ -333,60 +278,35 @@ public:
 };
 
 
+
+namespace xbox
+{
+	class VJSGlobalContext;
+};
+
+
+
 class IAuthenticationDelegate : public XBOX::IRefCountable
 {
 public:
+	virtual	XBOX::VJSGlobalContext*			RetainJSContext( XBOX::VError* outError, bool inReusable) = 0;
+	virtual	XBOX::VError					ReleaseJSContext( XBOX::VJSGlobalContext* inContext) = 0;
+
 	virtual CUAGSession *					CopyUAGSession (const XBOX::VString& inUAGSessionID) = 0;
 	virtual void							SetUAGSessionAndCookie (IHTTPResponse *ioResponse) = 0; // CUAGSession can be retrieved with ioResponse->GetRequest().GetAuthenticationInfos()->GetUAGSession(), 
 };
-
-
-/*
- *	Global HTTP Server Settings
- */
-#if HTTP_SERVER_GLOBAL_SETTINGS
-class IHTTPServerSettings : public XBOX::IRefCountable
-{
-public:
-	/* Cache settings accessors */
-	virtual bool							GetEnableCache() const = 0;
-	virtual sLONG							GetCacheMaxSize() const = 0;
-	virtual sLONG							GetCachedObjectMaxSize() const = 0;
-
-	virtual void							SetEnableCache (bool inValue) = 0;
-	virtual void							SetCacheMaxSize (sLONG inValue) = 0;
-	virtual void							SetCachedObjectMaxSize (sLONG inValue) = 0;
-
-	/* Compression settings */
-	virtual bool							GetEnableCompression() const = 0;
-	virtual sLONG							GetCompressionMinThreshold() const = 0;
-	virtual sLONG							GetCompressionMaxThreshold() const = 0;
-
-	virtual void							SetEnableCompression (bool inValue) = 0;
-	virtual void							SetCompressionMinThreshold (sLONG inValue) = 0;
-	virtual void							SetCompressionMaxThreshold (sLONG inValue) = 0;
-
-	/* Keep-Alive Settings */
-	virtual bool							GetEnableKeepAlive() const = 0;
-	virtual sLONG							GetKeepAliveTimeout() const = 0;
-	virtual sLONG							GetKeepAliveMaxConnections() const = 0;
-
-	virtual void							SetEnableKeepAlive (bool inValue) = 0;
-	virtual void							SetKeepAliveTimeout (sLONG inValue) = 0;
-	virtual void							SetKeepAliveMaxConnections (sLONG inValue) = 0;
-
-	/* Max Incoming Data Settings */
-	virtual XBOX::VSize						GetMaxIncomingDataSize() const = 0;
-	virtual void							SetMaxIncomingDataSize (XBOX::VSize inValue) = 0;
-};
-#endif
 
 
 class IHTTPServerProjectSettings : public XBOX::IRefCountable
 {
 public:
 	/* Configuration settings accessors */
-	virtual IP4								GetListeningAddress() const = 0;
+#if WITH_DEPRECATED_IPV4_API	
+	virtual IP4	/*done*/					GetListeningAddress() const = 0;
+#else
+	virtual const XBOX::VString&			GetListeningAddress() const = 0;
+#endif
+	
 	virtual PortNumber						GetListeningPort() const = 0;
 	virtual bool							GetAllowSSL() const = 0;
 	virtual bool							GetSSLMandatory() const = 0;
@@ -402,7 +322,10 @@ public:
 	virtual const XBOX::VString&			GetDefaultRealm() const = 0;
 	virtual HTTPAuthenticationMethod		GetDefaultAuthType() const = 0;
 
-	virtual void							SetListeningAddress (IP4 inValue) = 0;
+#if WITH_DEPRECATED_IPV4_API	
+	virtual void							SetListeningAddress (IP4 /*done*/ inValue) = 0;
+#endif
+	
 	virtual void							SetListeningAddress (const XBOX::VString& inIPAddressString) = 0;
 	virtual void							SetListeningPort (PortNumber inValue) = 0;
 	virtual void							SetAllowSSL (bool inValue) = 0;
@@ -422,7 +345,6 @@ public:
 	virtual void							SetDefaultAuthType (HTTPAuthenticationMethod inValue) = 0;
 	virtual void							SetDefaultAuthType (const XBOX::VString& inAuthenticationMethodName) = 0;
 
-#if !HTTP_SERVER_GLOBAL_SETTINGS
 	/* Cache settings accessors */
 	virtual bool							GetEnableCache() const = 0;
 	virtual sLONG							GetCacheMaxSize() const = 0;
@@ -453,7 +375,6 @@ public:
 	/* Max Incoming Data Settings */
 	virtual XBOX::VSize						GetMaxIncomingDataSize() const = 0;
 	virtual void							SetMaxIncomingDataSize (XBOX::VSize inSize) = 0;
-#endif
 
 	/* Log settings */
 	virtual sLONG							GetLogFormat() const = 0;
@@ -512,14 +433,12 @@ public:
 	virtual XBOX::VError					SetListeningSSLSocketDescriptor (sLONG inSSLSocketDescriptor) = 0;
 
 	virtual IHTTPServerProjectSettings *	GetSettings() const = 0;
-#if HTTP_SERVER_GLOBAL_SETTINGS
-	virtual IHTTPServerSettings *			GetHTTPServerSettings() const = 0;
-#endif
 
 	/* Deal with custom HTTP Request Handlers */
 	virtual XBOX::VError					AddHTTPRequestHandler (IHTTPRequestHandler *inRequestHandler) = 0;
 	virtual XBOX::VError					RemoveHTTPRequestHandler (IHTTPRequestHandler *inRequestHandler) = 0;
 	virtual IHTTPRequestHandler *			RetainHTTPRequestHandlerByPrivateData (const void *inPrivateData) = 0;
+	virtual IHTTPRequestHandler *			RetainMatchingHTTPRequestHandler (const XBOX::VString& inURL) = 0;
 	virtual IHTTPRequestHandler *			RetainHTTPRequestHandlerMatchingPattern (const XBOX::VString& inPattern) = 0;
 
 	/* Default Request Handler */
@@ -564,6 +483,12 @@ public:
 	/* Signals */
 	virtual XBOX::VSignalT_0 *				GetSignal_DidStart() = 0;
 	virtual XBOX::VSignalT_0 *				GetSignal_DidStop() = 0;
+
+	/*	Check Project sanity:
+	 *	May throw an VE_HTTP_SERVER_PROJECT_ALREADY_EXIST error when Project already exists 
+	 *	or when 2 or many projects use the same hostname with the same port (or SSLPort)
+	 */
+	virtual XBOX::VError					Validate() = 0;
 };
 
 
@@ -601,12 +526,16 @@ public:
 class IVirtualHost : public XBOX::IRefCountable
 {
 public:
-#if !HTTP_SERVER_GLOBAL_CACHE
-	virtual ICacheManager *					GetCacheManager() const = 0;
-#endif
 	virtual IHTTPServerProject *			GetProject() const = 0;
 	virtual XBOX::VError					GetFilePathFromURL (const XBOX::VString& inURL, XBOX::VString& outLocationPath) = 0;
 	virtual XBOX::VError					GetFileContentFromURL (const XBOX::VString& inURL, IHTTPResponse *ioResponse, bool inUseFullPath = false) = 0;
+	virtual bool							GetMatchingVirtualFolderInfos (const XBOX::VString& inURL, XBOX::VFilePath& outVirtualFolderPath, XBOX::VString& outDefaultIndexName, XBOX::VString& outVirtualFolderName) = 0;
+	virtual bool							ResolveURLForAlternatePlatformPage (const XBOX::VString& inURL, const XBOX::VString& inPlatform, XBOX::VString& outResolvedURL) = 0;
+
+	/* Make VirtualHost available/unavailable (Client will receive a 503 status code when unavailable) */
+	virtual void							MakeAvailable() = 0;
+	virtual void							MakeUnavailable() = 0;
+	virtual bool							IsAvailable() const = 0;
 };
 
 
@@ -644,13 +573,7 @@ public:
 
 	virtual XBOX::VError					StopConnectionHandler (XBOX::VTaskID nTaskID) = 0;
 
-#if HTTP_SERVER_GLOBAL_CACHE
 	virtual ICacheManager *					GetCacheManager() const = 0;
-#endif
-
-#if HTTP_SERVER_GLOBAL_SETTINGS
-	virtual IHTTPServerSettings *			GetSettings() const = 0; 
-#endif
 
 	/* Export some utilities functions from HTTPServerTools.h */
 	virtual bool							EqualASCIIVString (const XBOX::VString& inString1, const XBOX::VString& inString2, bool isCaseSensitive = false) = 0;
@@ -669,7 +592,7 @@ public:
 	virtual void							FindContentType (const XBOX::VString& inExtension, XBOX::VString& outContentType, bool *outIsCompressible = NULL, bool *outIsParsable = NULL) = 0;
 	virtual bool							IsMimeTypeCompressible (const XBOX::VString& inContentType) = 0;
 	virtual bool							IsMimeTypeParsable (const XBOX::VString& inContentType) = 0;
-	virtual MimeTypeKind					GetMimeTypeKind (const XBOX::VString& inContentType) = 0;
+	virtual XBOX::MimeTypeKind				GetMimeTypeKind (const XBOX::VString& inContentType) = 0;
 };
 
 

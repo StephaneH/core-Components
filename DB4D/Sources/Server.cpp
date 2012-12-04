@@ -101,8 +101,9 @@ VError ServerManager::Start(sWORD inPortNumber, bool inSSL)
 #if WITH_DEPRECATED_IPV4_API			
 				DB4DFactory-> SetIP ( 0 ); // listen to all IP addresses
 				err = DB4DFactory-> AddNewPort ( inPortNumber );
-#elif DEPRECATED_IPV4_API_SHOULD_NOT_COMPILE
-	#error NEED AN IP V6 UPDATE
+#else
+				DB4DFactory->SetIP(VNetAddress::GetAnyIP());
+				err=DB4DFactory->AddNewPort(inPortNumber);
 #endif
 
 				DB4DFactory-> SetIsSSL ( inSSL );

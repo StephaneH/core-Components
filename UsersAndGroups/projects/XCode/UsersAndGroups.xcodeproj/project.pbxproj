@@ -7,8 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		54DFEC5B13815B4C002B85BE /* 4DJavaScriptDebug.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 54DFEC1E138159F1002B85BE /* 4DJavaScriptDebug.framework */; };
-		54DFEC5C13815B61002B85BE /* 4DJavaScriptDebug.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 54DFEC20138159F1002B85BE /* 4DJavaScriptDebug.framework */; };
+		54DFEC5B13815B4C002B85BE /* 4DJavaScript.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 54DFEC1E138159F1002B85BE /* 4DJavaScript.framework */; };
+		54DFEC5C13815B61002B85BE /* 4DJavaScript.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 54DFEC20138159F1002B85BE /* 4DJavaScript.framework */; };
 		853E524E0FCBE4F00082B740 /* Groups.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 853E52430FCBE4F00082B740 /* Groups.cpp */; };
 		853E524F0FCBE4F00082B740 /* UAG.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 853E52450FCBE4F00082B740 /* UAG.cpp */; };
 		853E52510FCBE4F00082B740 /* Users.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 853E52490FCBE4F00082B740 /* Users.cpp */; };
@@ -31,8 +31,6 @@
 		F45A280F113EBFA600A0C014 /* XMLDebug.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F45A2746113EBE6200A0C014 /* XMLDebug.framework */; };
 		F45BF04613BCC1DF00E94338 /* JsUAG.cpp in Sources */ = {isa = PBXBuildFile; fileRef = F45BF04413BCC1DF00E94338 /* JsUAG.cpp */; };
 		F45BF04713BCC1DF00E94338 /* JsUAG.cpp in Sources */ = {isa = PBXBuildFile; fileRef = F45BF04413BCC1DF00E94338 /* JsUAG.cpp */; };
-		F4DB8E9215205FCE004D8C8C /* 4DJavaScriptCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F4DB8E8F15205FB7004D8C8C /* 4DJavaScriptCore.framework */; };
-		F4DB901815206067004D8C8C /* 4DJavaScriptCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F4DB8E8D15205FB7004D8C8C /* 4DJavaScriptCore.framework */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -183,76 +181,6 @@
 			remoteGlobalIDString = F9D1B73112436DB500E98EC6;
 			remoteInfo = "KernelIPC x64 BSD";
 		};
-		F4DB8E8015205FB7004D8C8C /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = F4DB8E7215205FB7004D8C8C /* JavaScriptCore.xcodeproj */;
-			proxyType = 2;
-			remoteGlobalIDString = 932F5BD90822A1C700736975;
-			remoteInfo = JavaScriptCore;
-		};
-		F4DB8E8215205FB7004D8C8C /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = F4DB8E7215205FB7004D8C8C /* JavaScriptCore.xcodeproj */;
-			proxyType = 2;
-			remoteGlobalIDString = F434BC9314FCBF7700FC487C;
-			remoteInfo = "JavaScriptCore x86_64";
-		};
-		F4DB8E8415205FB7004D8C8C /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = F4DB8E7215205FB7004D8C8C /* JavaScriptCore.xcodeproj */;
-			proxyType = 2;
-			remoteGlobalIDString = 141211200A48793C00480255;
-			remoteInfo = minidom;
-		};
-		F4DB8E8615205FB7004D8C8C /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = F4DB8E7215205FB7004D8C8C /* JavaScriptCore.xcodeproj */;
-			proxyType = 2;
-			remoteGlobalIDString = 14BD59BF0A3E8F9000BAF59C;
-			remoteInfo = testapi;
-		};
-		F4DB8E8815205FB7004D8C8C /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = F4DB8E7215205FB7004D8C8C /* JavaScriptCore.xcodeproj */;
-			proxyType = 2;
-			remoteGlobalIDString = 932F5BE10822A1C700736975;
-			remoteInfo = jsc;
-		};
-		F4DB8E8A15205FB7004D8C8C /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = F4DB8E7215205FB7004D8C8C /* JavaScriptCore.xcodeproj */;
-			proxyType = 2;
-			remoteGlobalIDString = 6511230514046A4C002B101D;
-			remoteInfo = testRegExp;
-		};
-		F4DB8E8C15205FB7004D8C8C /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = F4DB8E7215205FB7004D8C8C /* JavaScriptCore.xcodeproj */;
-			proxyType = 2;
-			remoteGlobalIDString = F45BFAF214F52432008390F1;
-			remoteInfo = 4DJavaScriptCore;
-		};
-		F4DB8E8E15205FB7004D8C8C /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = F4DB8E7215205FB7004D8C8C /* JavaScriptCore.xcodeproj */;
-			proxyType = 2;
-			remoteGlobalIDString = F434BCA814FCBFAA00FC487C;
-			remoteInfo = "4DJavaScriptCore x86_64";
-		};
-		F4DB8E9015205FC1004D8C8C /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = F4DB8E7215205FB7004D8C8C /* JavaScriptCore.xcodeproj */;
-			proxyType = 1;
-			remoteGlobalIDString = F434BC9B14FCBFAA00FC487C;
-			remoteInfo = "4DJavaScriptCore x86_64";
-		};
-		F4DB901615206061004D8C8C /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = F4DB8E7215205FB7004D8C8C /* JavaScriptCore.xcodeproj */;
-			proxyType = 1;
-			remoteGlobalIDString = F45BFAF114F52432008390F1 /* 4DJavaScriptCore */;
-			remoteInfo = 4DJavaScriptCore;
-		};
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -277,7 +205,7 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
-		54DFEC18138159F1002B85BE /* JavaScript.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = JavaScript.xcodeproj; path = ../../../../../XToolbox/WAK2/JavaScript/Projects/Xcode/JavaScript.xcodeproj; sourceTree = SOURCE_ROOT; };
+		54DFEC18138159F1002B85BE /* JavaScript.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = JavaScript.xcodeproj; path = ../../../../../XToolbox/Main/JavaScript/Projects/Xcode/JavaScript.xcodeproj; sourceTree = SOURCE_ROOT; };
 		853E52430FCBE4F00082B740 /* Groups.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Groups.cpp; path = ../../Sources/Groups.cpp; sourceTree = SOURCE_ROOT; };
 		853E52440FCBE4F00082B740 /* Groups.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Groups.h; path = ../../Sources/Groups.h; sourceTree = SOURCE_ROOT; };
 		853E52450FCBE4F00082B740 /* UAG.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = UAG.cpp; path = ../../Sources/UAG.cpp; sourceTree = SOURCE_ROOT; };
@@ -289,11 +217,11 @@
 		853E524B0FCBE4F00082B740 /* UsersAndGroups.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = UsersAndGroups.h; path = ../../Sources/UsersAndGroups.h; sourceTree = SOURCE_ROOT; };
 		853E524C0FCBE4F00082B740 /* Utils.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Utils.cpp; path = ../../Sources/Utils.cpp; sourceTree = SOURCE_ROOT; };
 		853E524D0FCBE4F00082B740 /* Utils.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Utils.h; path = ../../Sources/Utils.h; sourceTree = SOURCE_ROOT; };
-		853E529C0FCBE53F0082B740 /* Kernel.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = Kernel.xcodeproj; path = ../../../../../XToolbox/WAK2/Kernel/Projects/Xcode/Kernel.xcodeproj; sourceTree = SOURCE_ROOT; };
-		853E52AA0FCBE5620082B740 /* KernelIPC.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = KernelIPC.xcodeproj; path = ../../../../../XToolbox/WAK2/KernelIPC/Projects/Xcode/KernelIPC.xcodeproj; sourceTree = SOURCE_ROOT; };
+		853E529C0FCBE53F0082B740 /* Kernel.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = Kernel.xcodeproj; path = ../../../../../XToolbox/Main/Kernel/Projects/Xcode/Kernel.xcodeproj; sourceTree = SOURCE_ROOT; };
+		853E52AA0FCBE5620082B740 /* KernelIPC.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = KernelIPC.xcodeproj; path = ../../../../../XToolbox/Main/KernelIPC/Projects/Xcode/KernelIPC.xcodeproj; sourceTree = SOURCE_ROOT; };
 		853E53920FCC2C360082B740 /* CoreFoundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreFoundation.framework; path = System/Library/Frameworks/CoreFoundation.framework; sourceTree = SDKROOT; };
 		853E53C10FCC2C610082B740 /* System.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = System.framework; path = System/Library/Frameworks/System.framework; sourceTree = SDKROOT; };
-		853E53E90FCC2D440082B740 /* XML.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = XML.xcodeproj; path = ../../../../../XToolbox/WAK2/XML/Projects/Xcode/XML.xcodeproj; sourceTree = SOURCE_ROOT; };
+		853E53E90FCC2D440082B740 /* XML.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = XML.xcodeproj; path = ../../../../../XToolbox/Main/XML/Projects/Xcode/XML.xcodeproj; sourceTree = SOURCE_ROOT; };
 		85E2E76C0ED1D41700FFDCAD /* UsersAndGroupsDebug.bundle */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = UsersAndGroupsDebug.bundle; sourceTree = BUILT_PRODUCTS_DIR; };
 		F439E3CE0D51DC9400F55316 /* components.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; name = components.xcconfig; path = ../../../components.xcconfig; sourceTree = SOURCE_ROOT; };
 		F439E3CF0D51DC9400F55316 /* components_base.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; name = components_base.xcconfig; path = ../../../components_base.xcconfig; sourceTree = SOURCE_ROOT; };
@@ -308,7 +236,6 @@
 		F45BF04413BCC1DF00E94338 /* JsUAG.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = JsUAG.cpp; path = ../../Sources/JsUAG.cpp; sourceTree = SOURCE_ROOT; };
 		F45BF04513BCC1DF00E94338 /* JsUAG.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = JsUAG.h; path = ../../Sources/JsUAG.h; sourceTree = SOURCE_ROOT; };
 		F47C3D740E66A78F007448A6 /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
-		F4DB8E7215205FB7004D8C8C /* JavaScriptCore.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = 4DJavaScriptCore.xcodeproj; path = ../../../../../webkit/742/JavaScriptCore/JavaScriptCore.xcodeproj; sourceTree = SOURCE_ROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -316,8 +243,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				F4DB8E9215205FCE004D8C8C /* 4DJavaScriptCore.framework in Frameworks */,
-				54DFEC5C13815B61002B85BE /* 4DJavaScriptDebug.framework in Frameworks */,
+				54DFEC5C13815B61002B85BE /* 4DJavaScript.framework in Frameworks */,
 				F437D03B113EC62A009FE5D8 /* KernelIPCDebug.framework in Frameworks */,
 				F437D03A113EC625009FE5D8 /* KernelDebug.framework in Frameworks */,
 				F45A280F113EBFA600A0C014 /* XMLDebug.framework in Frameworks */,
@@ -330,8 +256,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				F4DB901815206067004D8C8C /* 4DJavaScriptCore.framework in Frameworks */,
-				54DFEC5B13815B4C002B85BE /* 4DJavaScriptDebug.framework in Frameworks */,
+				54DFEC5B13815B4C002B85BE /* 4DJavaScript.framework in Frameworks */,
 				F45A27F9113EBF6100A0C014 /* XMLDebug.framework in Frameworks */,
 				F45A27F8113EBF5E00A0C014 /* KernelIPCDebug.framework in Frameworks */,
 				F45A27F5113EBF5A00A0C014 /* KernelDebug.framework in Frameworks */,
@@ -346,8 +271,8 @@
 		54DFEC19138159F1002B85BE /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				54DFEC1E138159F1002B85BE /* 4DJavaScriptDebug.framework */,
-				54DFEC20138159F1002B85BE /* 4DJavaScriptDebug.framework */,
+				54DFEC1E138159F1002B85BE /* 4DJavaScript.framework */,
+				54DFEC20138159F1002B85BE /* 4DJavaScript.framework */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -435,7 +360,6 @@
 		F439E3F50D51DECE00F55316 /* Dependencies */ = {
 			isa = PBXGroup;
 			children = (
-				F4DB8E7215205FB7004D8C8C /* JavaScriptCore.xcodeproj */,
 				54DFEC18138159F1002B85BE /* JavaScript.xcodeproj */,
 				853E53E90FCC2D440082B740 /* XML.xcodeproj */,
 				853E52AA0FCBE5620082B740 /* KernelIPC.xcodeproj */,
@@ -470,21 +394,6 @@
 			name = Resources;
 			sourceTree = "<group>";
 		};
-		F4DB8E7315205FB7004D8C8C /* Products */ = {
-			isa = PBXGroup;
-			children = (
-				F4DB8E8115205FB7004D8C8C /* JavaScriptCore.framework */,
-				F4DB8E8315205FB7004D8C8C /* JavaScriptCore.framework */,
-				F4DB8E8515205FB7004D8C8C /* minidom */,
-				F4DB8E8715205FB7004D8C8C /* testapi */,
-				F4DB8E8915205FB7004D8C8C /* jsc */,
-				F4DB8E8B15205FB7004D8C8C /* testRegExp */,
-				F4DB8E8D15205FB7004D8C8C /* 4DJavaScriptCore.framework */,
-				F4DB8E8F15205FB7004D8C8C /* 4DJavaScriptCore.framework */,
-			);
-			name = Products;
-			sourceTree = "<group>";
-		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -504,7 +413,6 @@
 				F45A27FF113EBF8400A0C014 /* PBXTargetDependency */,
 				F45A2801113EBF8700A0C014 /* PBXTargetDependency */,
 				54DFEC5A13815B3C002B85BE /* PBXTargetDependency */,
-				F4DB8E9115205FC1004D8C8C /* PBXTargetDependency */,
 			);
 			name = "UsersAndGroups x64";
 			productName = CodeEditor;
@@ -527,7 +435,6 @@
 				F45A27F1113EBF4600A0C014 /* PBXTargetDependency */,
 				F45A27F3113EBF4C00A0C014 /* PBXTargetDependency */,
 				54DFEC5813815B32002B85BE /* PBXTargetDependency */,
-				F4DB901715206061004D8C8C /* PBXTargetDependency */,
 			);
 			name = UsersAndGroups;
 			productName = CodeEditor;
@@ -561,10 +468,6 @@
 					ProjectRef = 54DFEC18138159F1002B85BE /* JavaScript.xcodeproj */;
 				},
 				{
-					ProductGroup = F4DB8E7315205FB7004D8C8C /* Products */;
-					ProjectRef = F4DB8E7215205FB7004D8C8C /* JavaScriptCore.xcodeproj */;
-				},
-				{
 					ProductGroup = 853E529D0FCBE53F0082B740 /* Products */;
 					ProjectRef = 853E529C0FCBE53F0082B740 /* Kernel.xcodeproj */;
 				},
@@ -586,17 +489,17 @@
 /* End PBXProject section */
 
 /* Begin PBXReferenceProxy section */
-		54DFEC1E138159F1002B85BE /* 4DJavaScriptDebug.framework */ = {
+		54DFEC1E138159F1002B85BE /* 4DJavaScript.framework */ = {
 			isa = PBXReferenceProxy;
 			fileType = wrapper.framework;
-			path = 4DJavaScriptDebug.framework;
+			path = 4DJavaScript.framework;
 			remoteRef = 54DFEC1D138159F1002B85BE /* PBXContainerItemProxy */;
 			sourceTree = BUILT_PRODUCTS_DIR;
 		};
-		54DFEC20138159F1002B85BE /* 4DJavaScriptDebug.framework */ = {
+		54DFEC20138159F1002B85BE /* 4DJavaScript.framework */ = {
 			isa = PBXReferenceProxy;
 			fileType = wrapper.framework;
-			path = 4DJavaScriptDebug.framework;
+			path = 4DJavaScript.framework;
 			remoteRef = 54DFEC1F138159F1002B85BE /* PBXContainerItemProxy */;
 			sourceTree = BUILT_PRODUCTS_DIR;
 		};
@@ -675,62 +578,6 @@
 			fileType = wrapper.framework;
 			path = KernelIPCDebug.framework;
 			remoteRef = F45FADD312B8F3BB007B551A /* PBXContainerItemProxy */;
-			sourceTree = BUILT_PRODUCTS_DIR;
-		};
-		F4DB8E8115205FB7004D8C8C /* JavaScriptCore.framework */ = {
-			isa = PBXReferenceProxy;
-			fileType = wrapper.framework;
-			path = JavaScriptCore.framework;
-			remoteRef = F4DB8E8015205FB7004D8C8C /* PBXContainerItemProxy */;
-			sourceTree = BUILT_PRODUCTS_DIR;
-		};
-		F4DB8E8315205FB7004D8C8C /* JavaScriptCore.framework */ = {
-			isa = PBXReferenceProxy;
-			fileType = wrapper.framework;
-			path = JavaScriptCore.framework;
-			remoteRef = F4DB8E8215205FB7004D8C8C /* PBXContainerItemProxy */;
-			sourceTree = BUILT_PRODUCTS_DIR;
-		};
-		F4DB8E8515205FB7004D8C8C /* minidom */ = {
-			isa = PBXReferenceProxy;
-			fileType = "compiled.mach-o.executable";
-			path = minidom;
-			remoteRef = F4DB8E8415205FB7004D8C8C /* PBXContainerItemProxy */;
-			sourceTree = BUILT_PRODUCTS_DIR;
-		};
-		F4DB8E8715205FB7004D8C8C /* testapi */ = {
-			isa = PBXReferenceProxy;
-			fileType = "compiled.mach-o.executable";
-			path = testapi;
-			remoteRef = F4DB8E8615205FB7004D8C8C /* PBXContainerItemProxy */;
-			sourceTree = BUILT_PRODUCTS_DIR;
-		};
-		F4DB8E8915205FB7004D8C8C /* jsc */ = {
-			isa = PBXReferenceProxy;
-			fileType = "compiled.mach-o.executable";
-			path = jsc;
-			remoteRef = F4DB8E8815205FB7004D8C8C /* PBXContainerItemProxy */;
-			sourceTree = BUILT_PRODUCTS_DIR;
-		};
-		F4DB8E8B15205FB7004D8C8C /* testRegExp */ = {
-			isa = PBXReferenceProxy;
-			fileType = "compiled.mach-o.executable";
-			path = testRegExp;
-			remoteRef = F4DB8E8A15205FB7004D8C8C /* PBXContainerItemProxy */;
-			sourceTree = BUILT_PRODUCTS_DIR;
-		};
-		F4DB8E8D15205FB7004D8C8C /* 4DJavaScriptCore.framework */ = {
-			isa = PBXReferenceProxy;
-			fileType = wrapper.framework;
-			path = 4DJavaScriptCore.framework;
-			remoteRef = F4DB8E8C15205FB7004D8C8C /* PBXContainerItemProxy */;
-			sourceTree = BUILT_PRODUCTS_DIR;
-		};
-		F4DB8E8F15205FB7004D8C8C /* 4DJavaScriptCore.framework */ = {
-			isa = PBXReferenceProxy;
-			fileType = wrapper.framework;
-			path = 4DJavaScriptCore.framework;
-			remoteRef = F4DB8E8E15205FB7004D8C8C /* PBXContainerItemProxy */;
 			sourceTree = BUILT_PRODUCTS_DIR;
 		};
 /* End PBXReferenceProxy section */
@@ -822,16 +669,6 @@
 			name = "KernelIPC x64";
 			targetProxy = F45A2800113EBF8700A0C014 /* PBXContainerItemProxy */;
 		};
-		F4DB8E9115205FC1004D8C8C /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			name = "4DJavaScriptCore x86_64";
-			targetProxy = F4DB8E9015205FC1004D8C8C /* PBXContainerItemProxy */;
-		};
-		F4DB901715206061004D8C8C /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			name = 4DJavaScriptCore;
-			targetProxy = F4DB901615206061004D8C8C /* PBXContainerItemProxy */;
-		};
 /* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
@@ -866,10 +703,6 @@
 				GCC_OPTIMIZATION_LEVEL = 0;
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "";
-				OTHER_LDFLAGS = (
-					"-weak_framework",
-					icuDebug,
-				);
 			};
 			name = Coverage;
 		};
@@ -907,10 +740,6 @@
 				GCC_OPTIMIZATION_LEVEL = 0;
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "";
-				OTHER_LDFLAGS = (
-					"-weak_framework",
-					icuDebug,
-				);
 			};
 			name = Beta;
 		};
@@ -1081,10 +910,6 @@
 				GCC_OPTIMIZATION_LEVEL = 0;
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "";
-				OTHER_LDFLAGS = (
-					"-weak_framework",
-					icuDebug,
-				);
 			};
 			name = Debug;
 		};

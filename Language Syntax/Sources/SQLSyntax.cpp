@@ -2417,11 +2417,7 @@ VSQLSyntax::ParserReturnValue VSQLSyntax::ParseScalarFunction( SuggestionList &o
 	// Get the first token
 	outToken = GetNextToken();
 	if (!outToken) {
-		// Fill out the legal list of scalar functions
-		vector< VString * > funcs;
-		fLexer->GetFunctionList( funcs );
-
-		for ( vector< VString * >::iterator iter = funcs.begin(); iter != funcs.end(); ++iter) {
+		for ( vector< VString * >::iterator iter = fFunctions.begin(); iter != fFunctions.end(); ++iter) {
 			outSuggestions.Suggest( **iter, SuggestionInfo::eScalarMethod );
 		}
 		return eNothingLeftToParse;
@@ -2732,11 +2728,9 @@ VSQLSyntax::ParserReturnValue VSQLSyntax::ParseScalarFunction( SuggestionList &o
 			// it rather quickly.  If this turns out to be a performance bottleneck, we can always
 			// disable it, or modify it to use a map instead of a vector (though that may require
 			// some work since we're dealing with VString * instead of VString).
-			vector< VString * > funcs;
-			fLexer->GetFunctionList( funcs );
 
 			bool bFound = false;
-			for ( vector< VString * >::iterator iter = funcs.begin(); iter != funcs.end() && !bFound; ++iter) {
+			for ( vector< VString * >::iterator iter = fFunctions.begin(); iter != fFunctions.end() && !bFound; ++iter) {
 				bFound = ((**iter) == outToken->GetText());
 			}
 
@@ -5157,14 +5151,45 @@ VSQLSyntax::VSQLSyntax()
 {
 	fTabWidth = 4;
 
-	// Retain the entire server component -- we do this because the
-	// server already exposes a lexer for the SQL syntax the user
-	// expects.  Some day, the lexer should be moved into its own
-	// component, but until then, this works.
-	fLexer = VComponentManager::RetainComponentOfType< CSQLServer >();
+	fTokenizeFuncPtr = NULL;
 	fTokenList = NULL;
 	fSymTable = NULL;
-	if ( fLexer != 0 )
+}
+
+
+VSQLSyntax::~VSQLSyntax()
+{
+	if (fTokenList)	delete fTokenList;
+	if (fSymTable) fSymTable->Release();
+}
+
+void VSQLSyntax::SetSQLTokenizer ( SQLTokenizeFuncPtr inPtr, const std::vector< XBOX::VString * >& vctrSQLKeywords, const std::vector< XBOX::VString * >& vctrSQLFunctions )
+{
+	fTokenizeFuncPtr = inPtr;
+
+	fKeywords. clear ( );
+	std::vector< XBOX::VString * >::const_iterator		citer = vctrSQLKeywords. begin ( );
+	while ( citer != vctrSQLKeywords. end ( ) )
+	{
+		if ( testAssert ( *citer != NULL ) )
+		{
+			fKeywords. push_back ( ( *citer )-> Clone ( ) );
+		}
+		citer++;
+	}
+
+	fFunctions. clear ( );
+	citer = vctrSQLFunctions. begin ( );
+	while ( citer != vctrSQLFunctions. end ( ) )
+	{
+		if ( testAssert ( *citer != NULL ) )
+		{
+			fFunctions. push_back ( ( *citer )-> Clone ( ) );
+		}
+		citer++;
+	}
+
+	if ( fTokenizeFuncPtr != 0 )
 	{
 		// This is a unit test of sorts -- we want to make sure that developers do not break
 		// this component when they update the grammar file to add new tokens to the SQL parser.
@@ -5172,7 +5197,7 @@ VSQLSyntax::VSQLSyntax()
 		// then we bark at them to deal with the problem they caused.
 		std::vector< ILexerToken * > tokens;
 		VString text = "?";
-		fLexer->Tokenize( text, tokens );
+		( *fTokenizeFuncPtr ) ( text, tokens, false );
 		xbox_assert( tokens.size() == 1 );
 		if (tokens[ 0 ]->GetValue() != QUESTION_MARK ) {
 			/////////////////////// BIG HAIRY NOTE //////////////////
@@ -5189,15 +5214,6 @@ VSQLSyntax::VSQLSyntax()
 			XBOX_BREAK_INLINE;	// Look up a comment, it'll be worth it.
 		}
 	}
-}
-
-
-VSQLSyntax::~VSQLSyntax()
-{
-	if ( fLexer != 0 )
-		fLexer->Release();
-	if (fTokenList)	delete fTokenList;
-	if (fSymTable) fSymTable->Release();
 }
 
 void VSQLSyntax::Init( ICodeEditorDocument* inDocument )
@@ -5251,7 +5267,8 @@ bool VSQLSyntax::DetermineMorphemeBoundary( ICodeEditorDocument *inDocument, sLO
 
 	// Tokenize that line
 	TokenList tokens;
-	fLexer->Tokenize( xstr, tokens, false );
+	xbox_assert ( fTokenizeFuncPtr != NULL );
+	( *fTokenizeFuncPtr ) ( xstr, tokens, false );
 	
 	// Now that we have the tokens, look for the one containing the offset
 	ILexerToken *morpheme = NULL;
@@ -5297,7 +5314,8 @@ void VSQLSyntax::SetLine( ICodeEditorDocument* inDocument, sLONG inLineNumber, b
 
 	// Tokenize that line
 	vector< ILexerToken * > tokens;
-	VError err = fLexer->Tokenize( xstr, tokens, previousLineEndsWithComment );
+	xbox_assert ( fTokenizeFuncPtr != NULL );
+	VError err = ( *fTokenizeFuncPtr )( xstr, tokens, previousLineEndsWithComment );
 
 	// Iterate over the tokens, and ask the document to highlight 
 	// them as needed.
@@ -5377,7 +5395,8 @@ bool VSQLSyntax::CheckFolding( ICodeEditorDocument* inDocument, sLONG inLineNumb
 
 	// Tokenize that line
 	vector< ILexerToken * > tokens;
-	fLexer->Tokenize( xstr, tokens );
+	xbox_assert ( fTokenizeFuncPtr != NULL );
+	( *fTokenizeFuncPtr ) ( xstr, tokens, false );
 
 	// If the line starts with an open comment, then we need to check the folding
 	bool ret = false;
@@ -5419,7 +5438,8 @@ void VSQLSyntax::ComputeFolding( ICodeEditorDocument *inDocument, sLONG inStartI
 
 		// Tokenize that line
 		vector< ILexerToken * > tokens;
-		fLexer->Tokenize( xstr, tokens, previousLineEndsWithComment );
+		xbox_assert ( fTokenizeFuncPtr != NULL );
+		( *fTokenizeFuncPtr ) ( xstr, tokens, previousLineEndsWithComment );
 
 		// Remove any whitespace, but not comment tokens
 		for (vector< ILexerToken * >::reverse_iterator iter = tokens.rbegin(); iter != tokens.rend(); iter++) {
@@ -5564,7 +5584,8 @@ bool VSQLSyntax::FindStatementStart( ICodeEditorDocument* inDocument, sLONG inLi
 
 		// Tokenize that line
 		vector< ILexerToken * > tokens;
-		fLexer->Tokenize( xstr, tokens, previousLineEndsWithComment );
+		xbox_assert ( fTokenizeFuncPtr != NULL );
+		( *fTokenizeFuncPtr ) ( xstr, tokens, previousLineEndsWithComment );
 
 		// Grab the first non-whitespace token so that we can inspect its value.  Also grab the last non-whitespace
 		// token so we can see if it's a semicolon.
@@ -5647,7 +5668,8 @@ bool VSQLSyntax::FindStatementStart( ICodeEditorDocument* inDocument, sLONG inLi
 
 					// Tokenize that line
 					vector< ILexerToken * > otherTokens;
-					fLexer->Tokenize( xstr, otherTokens, previousLineEndsWithComment );
+					xbox_assert ( fTokenizeFuncPtr != NULL );
+					( *fTokenizeFuncPtr ) ( xstr, otherTokens, previousLineEndsWithComment );
 
 					// If the line has no semantic meaning, then we want to walk up a step to the next line
 					if (!LineHasSemanticMeaning( otherTokens )) {
@@ -5794,7 +5816,8 @@ void VSQLSyntax::GetSuggestions( ICodeEditorDocument* inDocument, sLONG inLineIn
 	// results.  For instance, if we have a SET keyword, the only possible item that's
 	// legal is the DEBUG keyword.
 	vector< ILexerToken * > tokens;
-	fLexer->Tokenize( xstr, tokens );
+	xbox_assert ( fTokenizeFuncPtr != NULL );
+	( *fTokenizeFuncPtr ) ( xstr, tokens, false );
 
 	// We need to determine whether the last token is whitespace before we start stripping
 	// whitespace tokens from the list.  This is used to determine whether our completion
@@ -5939,9 +5962,7 @@ void VSQLSyntax::GetSuggestions( ICodeEditorDocument* inDocument, sLONG inLineIn
 		// We're going to start off with a cheap and dirty list of keywords that the
 		// user can make use of.  Unfortunately, this list comes to us as a list of 
 		// VString *, which we need to convert down to a list of VString
-		vector< VString * > tempList;
-		fLexer->GetKeywordList( tempList );
-		for (vector< VString * >::iterator iter = tempList.begin(); iter != tempList.end(); ++iter) {
+		for (vector< VString * >::iterator iter = fKeywords.begin(); iter != fKeywords.end(); ++iter) {
 			completions.push_back( Completion( **iter, eKeyword ) );
 		}
 
@@ -6049,7 +6070,8 @@ void VSQLSyntax::UpdateCompileErrors( ICodeEditorDocument *inDocument, sLONG inS
 
 		// Now that we have the code, we want to tokenize it and parse it like always
 		vector< ILexerToken * > tokens;
-		fLexer->Tokenize( code, tokens );
+		xbox_assert ( fTokenizeFuncPtr != NULL );
+		( *fTokenizeFuncPtr ) ( code, tokens, false );
 
 		for (vector< ILexerToken * >::reverse_iterator iter = tokens.rbegin(); iter != tokens.rend(); iter++) {
 			if (-1 == (*iter)->GetValue()) {
@@ -6176,7 +6198,8 @@ bool VSQLSyntax::IsComment( ICodeEditorDocument* inDocument, const VString& inSt
 	// says "this is a comment", then we're set.  If multiple tokens come back that are
 	// non-white space, we know it's not a comment.
 	vector< ILexerToken * > tokens;
-	fLexer->Tokenize( (VString&)inString, tokens );
+	xbox_assert ( fTokenizeFuncPtr != NULL );
+	( *fTokenizeFuncPtr ) ( (VString&)inString, tokens, false );
 
 	// Loop over the tokens and see what we've got
 	bool isComment = false;

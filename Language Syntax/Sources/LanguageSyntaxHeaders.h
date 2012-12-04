@@ -15,7 +15,6 @@
 */
 #include "KernelIPC/VKernelIPC.h"
 #include "Code Editor/CodeEditorDocuments.h"
-#include "SQL/Interfaces/CSQLServer.h"
 #include "CLanguageSyntax.h"
 #include "DB4D/Headers/DB4D.h"
 

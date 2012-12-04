@@ -35,7 +35,9 @@ public:
 	virtual XBOX::VError				AddConnectionHandlerFactory (VConnectionHandlerFactory *inFactory);
 	virtual XBOX::VError				AddWorkerPool (XBOX::VWorkerPool *inPool);
 	virtual XBOX::VError				AddSelectIOPool (XBOX::VTCPSelectIOPool *inPool);
-	virtual void						SetSSLCertificatePaths (const XBOX::VString& inCertificatePath, const XBOX::VString& inKeyPath);
+	
+	// TODO: change VString by VFilePath for all file paths.
+	virtual void						SetSSLCertificatePaths (const XBOX::VFilePath& inCertificatePath, const XBOX::VFilePath& inKeyPath);
 
 	virtual XBOX::VError				GetPorts  (std::vector<PortNumber>& outPorts) { outPorts.push_back (GetPort()); return VE_OK; }
 	virtual PortNumber					GetPort() { return fPort; }
@@ -48,9 +50,14 @@ public:
 	virtual void						SetSSLMandatory (bool inValue);
 
 	/* Returns either an IP or 0 which means 'ALL'. */
-	virtual IP4							GetListeningIP() const { return fListeningIP; }
-	virtual void						SetListeningIP (const IP4 inIP) { fListeningIP = inIP; }
-
+#if WITH_DEPRECATED_IPV4_API
+	virtual IP4	/*done*/				GetListeningIP() const { return fListeningIP; }
+	virtual void						SetListeningIP (const IP4 /*done*/ inIP) { fListeningIP = inIP; }
+#else
+	virtual const XBOX::VString&		GetListeningIP() const { return fListeningIP; }
+	virtual void						SetListeningIP (const XBOX::VString& inIP) { fListeningIP.FromString (inIP); }
+#endif
+	
 	virtual XBOX::VWorkerPool *			GetWorkerPool() const { return fWorkerPool; }
 	virtual XBOX::VTCPSelectIOPool *	GetSelectIOPool() const { return fSelectIOPool; }
 
@@ -70,12 +77,19 @@ protected:
 	VSockListener *						fServerListener;
 	XBOX::VWorkerPool *					fWorkerPool;
 	XBOX::VTCPSelectIOPool *			fSelectIOPool;
-	XBOX::VString						fCertificatePath;
-	XBOX::VString						fKeyPath;
+	XBOX::VFilePath						fCertificatePath;
+	XBOX::VFilePath						fKeyPath;
 	IRequestLogger *					fRequestLogger;
+	bool								fAbortTask;
 
 private:
-	IP4									fListeningIP;
+	
+#if WITH_DEPRECATED_IPV4_API	
+	IP4	/*done*/						fListeningIP;
+#else
+	XBOX::VString						fListeningIP;
+#endif
+	
 	PortNumber							fPort;
 	PortNumber							fSSLPort;
 	bool								fSSLEnabled;

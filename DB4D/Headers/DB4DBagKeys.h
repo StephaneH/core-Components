@@ -133,6 +133,7 @@ namespace d4
 	CREATE_BAGKEY(group);
 	CREATE_BAGKEY(groupID);
 	CREATE_BAGKEY(resource);
+	CREATE_BAGKEY(temporaryForcePermissions);
 	CREATE_BAGKEY(entityModelPerm);
 	CREATE_BAGKEY(read);
 	CREATE_BAGKEY(update);

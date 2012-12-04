@@ -15,7 +15,7 @@
 */
 #include "HTTPServer.h"
 
-
+#if 0 // TBD: Cleanup
 //--------------------------------------------------------------------------------------------------
 
 
@@ -45,12 +45,6 @@ NameValueCollection& NameValueCollection::operator = (const NameValueCollection&
 	}
 
 	return *this;
-}
-
-
-void NameValueCollection::swap (NameValueCollection& ioNameValueCollection)
-{
-	std::swap (fMap, ioNameValueCollection.fMap);
 }
 
 
@@ -165,3 +159,4 @@ void NameValueCollection::clear()
 	fMap.clear();
 }
 
+#endif

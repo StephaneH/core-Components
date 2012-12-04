@@ -5,7 +5,7 @@
 	Name="Component - LanguageSyntax"
 	ProjectGUID="{E9385EE8-B15A-43AF-9FB7-DB0BD5C3FBC2}"
 	RootNamespace="LanguageSyntax"
-	SccProjectName="&quot;//depot/Components/WAK2/Language Syntax&quot;"
+	SccProjectName="&quot;//depot/Components/Main/Language Syntax&quot;"
 	SccLocalPath="..\.."
 	SccProvider="MSSCCI:Perforce SCM"
 	Keyword="Win32Proj"

@@ -31,6 +31,7 @@ public:
 	const XBOX::VString&	GetLocationPath() const { return fLocationPath; }
 	const XBOX::VString&	GetIndexFileName() const { return fIndexFileName; }
 	XBOX::VError			GetFilePathFromURL (const XBOX::VString& inURL, XBOX::VString& outLocationPath);
+	bool					ResolveURLForAlternatePlatformPage (const XBOX::VString& inURL, const XBOX::VString& inPlatform, XBOX::VString& outResolvedURL);
 	const XBOX::VString&	GetName() const { return fName; }
 
 private:
@@ -43,6 +44,7 @@ private:
 
 	/* private methods */
 	void					_NormalizeFolder();
+	XBOX::VError			_GetFilePathFromURL (const XBOX::VString& inURL, const XBOX::VString& inDefaultIndexPage, XBOX::VString& outLocationPath, XBOX::VString *outURL = NULL);
 };
 
 

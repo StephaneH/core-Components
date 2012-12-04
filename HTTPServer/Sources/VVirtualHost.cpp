@@ -38,92 +38,56 @@ namespace NSVirtualHost
 
 
 static
-void MakeHostPattern (const XBOX::VString& inHost, IP4 inListeningAddress, PortNumber inPort, bool inEnableSSL, PortNumber inSSLPort, XBOX::VString& outHostPattern)
+void MakeHostPattern (const XBOX::VString& inHost, XBOX::VString inListeningAddress, PortNumber inPort, bool inEnableSSL, PortNumber inSSLPort, XBOX::VString& outHostPattern)
 {
+	XBOX::VectorOfVString	vectorOfHostOrIPAddr;
+	XBOX::VectorOfVString	vectorOfPorts;
 	XBOX::VString			string;
-	XBOX::VectorOfVString	addressesPatterns;
-	XBOX::VectorOfVString	portsPatterns;
-	XBOX::VString			hostname;
 
-	XBOX::VSystem::GetHostName (hostname);
-	hostname.ToLowerCase();
-
-	if (!inHost.IsEmpty())
+	if (inHost.IsEmpty())
 	{
-		if (!hostname.IsEmpty() && !HTTPServerTools::EqualASCIIVString (inHost, hostname))
-			AppendUniqueValueToVector (addressesPatterns, inHost);
-
-		string.Clear();
-#if WITH_DEPRECATED_IPV4_API
-		XBOX::ServerNetTools::ResolveAddress (inHost, &string);
-#elif DEPRECATED_IPV4_API_SHOULD_NOT_COMPILE
-	#error NEED AN IP V6 UPDATE
-#endif
-		
-		AppendUniqueValueToVector (addressesPatterns, string);
-	}
-
-	if (!hostname.IsEmpty())
-	{
-		// YT 26-Jan-2011 - For Ke-Fong: There was a bug in VirtualHost resolve with Safari and Bonjour
-		// KFL 27-Jan-2011 - Accept "<hostname>" or "<hostname>.local" or "<hostname>.local." (note the ending dot).
-
-		hostname.AppendCString ("(.local(.|)|)"); 
-		AppendUniqueValueToVector (addressesPatterns, hostname);
-	}
-
-	// Listening on all local addresses
-	if (0 == inListeningAddress)
-	{
-		std::vector<IP4> ipv4Addresses;
-#if WITH_DEPRECATED_IPV4_API
-		XBOX::ServerNetTools::GetLocalIPv4Addresses (ipv4Addresses);
-#elif DEPRECATED_IPV4_API_SHOULD_NOT_COMPILE
-	#error NEED AN IP V6 UPDATE
-#endif
-		AppendUniqueValueToVector (addressesPatterns, CVSTR ("localhost"));
-		AppendUniqueValueToVector (addressesPatterns, CVSTR ("127.0.0.1"));
-
-		for (std::vector<IP4>::const_iterator it = ipv4Addresses.begin(); it != ipv4Addresses.end(); ++it)
+		// Listening on all local addresses
+		if (inListeningAddress.IsEmpty() || (HTTPServerTools::EqualASCIIVString (inListeningAddress, XBOX::VNetAddress::GetAnyIP())))
+		{	
+			AppendUniqueValueToVector (vectorOfHostOrIPAddr, CVSTR (".*"));
+		}
+		else
 		{
-			string.Clear();
-#if WITH_DEPRECATED_IPV4_API			
-			XBOX::ServerNetTools::GetIPAdress ((*it), string);
-#elif DEPRECATED_IPV4_API_SHOULD_NOT_COMPILE
-	#error NEED AN IP V6 UPDATE
-#endif
-			AppendUniqueValueToVector (addressesPatterns, string);
+			AppendUniqueValueToVector (vectorOfHostOrIPAddr, inListeningAddress);
 		}
 	}
-	// Listening on a specific local address
 	else
 	{
-		string.Clear();
-#if WITH_DEPRECATED_IPV4_API
-		XBOX::ServerNetTools::GetIPAdress (inListeningAddress, string);
-#elif DEPRECATED_IPV4_API_SHOULD_NOT_COMPILE
-	#error NEED AN IP V6 UPDATE
-#endif		
-		AppendUniqueValueToVector (addressesPatterns, string);
+		VectorOfVString vectorOfHosts;
+
+		if (inHost.GetSubStrings (CHAR_COMMA, vectorOfHosts, false, true) && !vectorOfHosts.empty())
+		{
+			for (VectorOfVString::const_iterator it = vectorOfHosts.begin(); it != vectorOfHosts.end(); ++it)
+				AppendUniqueValueToVector (vectorOfHostOrIPAddr, (*it));
+		}
+		else
+		{
+			AppendUniqueValueToVector (vectorOfHostOrIPAddr, inHost);
+		}
 	}
 
 	// Listening Port
 	if (inPort != DEFAULT_LISTENING_PORT)
 	{
 		string.FromLong (inPort);
-		AppendUniqueValueToVector (portsPatterns, string);
+		AppendUniqueValueToVector (vectorOfPorts, string);
 	}
 
 	// Listening SSL Port
-	if (inEnableSSL)
+	if (inEnableSSL && (inSSLPort != DEFAULT_LISTENING_SSL_PORT))
 	{
 		string.FromLong (inSSLPort);
-		AppendUniqueValueToVector (portsPatterns, string);
+		AppendUniqueValueToVector (vectorOfPorts, string);
 	}
 
 	// Build Pattern such as "(?i)(localhost|127.0.0.1)+:(8080:443)"
 	size_t i = 0;
-	size_t size = addressesPatterns.size();
+	size_t size = vectorOfHostOrIPAddr.size();
 
 	outHostPattern.FromCString ("(?i)");	// UREGEX_CASE_INSENSITIVE
 	if (size > 1)
@@ -131,7 +95,7 @@ void MakeHostPattern (const XBOX::VString& inHost, IP4 inListeningAddress, PortN
 
 	for (i = 0; i < size; ++i)
 	{
-		outHostPattern.AppendString (addressesPatterns.at (i));
+		outHostPattern.AppendString (vectorOfHostOrIPAddr.at (i));
 		if (i < size -1)
 			outHostPattern.AppendUniChar (CHAR_VERTICAL_LINE);
 	}
@@ -139,7 +103,7 @@ void MakeHostPattern (const XBOX::VString& inHost, IP4 inListeningAddress, PortN
 	if (size > 1)
 		outHostPattern.AppendUniChar (CHAR_RIGHT_PARENTHESIS);
 
-	size = portsPatterns.size();
+	size = vectorOfPorts.size();
 	if (size > 0)
 	{
 		outHostPattern.AppendCString ("+:");
@@ -149,7 +113,7 @@ void MakeHostPattern (const XBOX::VString& inHost, IP4 inListeningAddress, PortN
 
 		for (i = 0; i < size; ++i)
 		{
-			outHostPattern.AppendString (portsPatterns.at (i));
+			outHostPattern.AppendString (vectorOfPorts.at (i));
 			if (i < size -1)
 				outHostPattern.AppendUniChar (CHAR_VERTICAL_LINE);
 		}
@@ -168,7 +132,7 @@ void MakeHostPattern (const XBOX::VString& inHost, IP4 inListeningAddress, PortN
 		if (DEFAULT_LISTENING_PORT == inPort)
 			outHostPattern.AppendCString ("|:80");
 
-		if (DEFAULT_LISTENING_SSL_PORT == inSSLPort)
+		if (inEnableSSL && (DEFAULT_LISTENING_SSL_PORT == inSSLPort))
 			outHostPattern.AppendCString ("|:443");
 
 		outHostPattern.AppendUniChar (CHAR_RIGHT_PARENTHESIS);
@@ -213,10 +177,8 @@ VVirtualHost::VVirtualHost (const VHTTPServerProject *inProject)
 , fProject (NULL)
 , fServerLog (NULL)
 , fHostRegexMatcher (NULL)
-#if !HTTP_SERVER_GLOBAL_CACHE
-, fCacheManager (NULL)
-#endif
 , fUUIDString()
+, fUnavailableCount (0)
 {
 	fProject = (VHTTPServerProject *)inProject;
 
@@ -232,11 +194,7 @@ VVirtualHost::~VVirtualHost()
 	XBOX::VFileSystemNotifier::Instance()->StopWatchingForChanges (*fDefaultVirtualFolder->GetFolder(), this);
 #endif
 
-#if HTTP_SERVER_GLOBAL_CACHE
 	_Deinit();
-#else
-	XBOX::ReleaseRefCountable (&fCacheManager);
-#endif
 
 	XBOX::ReleaseRefCountable (&fDefaultVirtualFolder);
 	XBOX::ReleaseRefCountable (&fServerLog);
@@ -246,7 +204,6 @@ VVirtualHost::~VVirtualHost()
 }
 
 
-inline
 VHTTPServerProjectSettings *VVirtualHost::GetSettings() const
 {
 	return dynamic_cast<VHTTPServerProjectSettings *>(fProject->GetSettings());
@@ -255,6 +212,8 @@ VHTTPServerProjectSettings *VVirtualHost::GetSettings() const
 
 void VVirtualHost::_Init()
 {
+	XBOX::VInterlocked::Increment (&fUnavailableCount);
+
 #if HTTP_SERVER_USE_PROJECT_PATTERNS
 	fProjectPattern.FromString (GetSettings()->GetProjectPattern());
 
@@ -269,18 +228,20 @@ void VVirtualHost::_Init()
 		fURLPattern.Clear();
 	}
 #endif
+	XBOX::VString ipString;
+#if WITH_DEPRECATED_IPV4_API
+	XBOX::ServerNetTools::GetIPAdress (GetSettings()->GetListeningAddress(), ipString);
+#else
+	ipString.FromString (GetSettings()->GetListeningAddress());
+#endif		
 
-	XBOX::VString string;
-	string.FromString (GetSettings()->GetHostName());
-
-	MakeHostPattern (string, GetSettings()->GetListeningAddress(), GetSettings()->GetListeningPort(), GetSettings()->GetAllowSSL(), GetSettings()->GetListeningSSLPort(), fHostPattern);
+	MakeHostPattern (GetSettings()->GetHostName(), ipString, GetSettings()->GetListeningPort(), GetSettings()->GetAllowSSL(), GetSettings()->GetListeningSSLPort(), fHostPattern);
 
 	XBOX::VError error = XBOX::VE_OK;
 	fHostRegexMatcher = XBOX::VRegexMatcher::Create (fHostPattern, &error);
 	if (XBOX::VE_OK != error)
 		XBOX::ReleaseRefCountable (&fHostRegexMatcher);
 
-#if HTTP_SERVER_GLOBAL_CACHE
 	XBOX::VValueBag *bag = new XBOX::VValueBag();
 	if (testAssert (NULL != bag))
 	{
@@ -289,25 +250,6 @@ void VVirtualHost::_Init()
 
 		bag->Release();
 	}
-#else
-	/* Init Cache Manager */
-	fCacheManager = new VCacheManager();
-	if (testAssert (NULL != fCacheManager))
-	{
-		fCacheManager->SetEnableDataCache (GetSettings()->GetEnableCache());
-		fCacheManager->SetCachedObjectMaxSize (GetSettings()->GetCachedObjectMaxSize());
-		fCacheManager->SetCacheMaxSize (GetSettings()->GetCacheMaxSize());
-
-		XBOX::VValueBag *bag = new XBOX::VValueBag();
-		if (testAssert (NULL != bag))
-		{
-			if (XBOX::VE_OK == GetSettings()->SaveToBag (bag))
-				fCacheManager->LoadRulesFromBag (bag);
-
-			bag->Release();
-		}
-	}
-#endif
 
 	/* Init HTTP Log */
 	fServerLog = new VHTTPServerLog ();
@@ -349,13 +291,13 @@ void VVirtualHost::_Init()
 
 	XBOX::VUUID uid (true);
 	uid.GetString (fUUIDString);
+
+	XBOX::VInterlocked::Decrement (&fUnavailableCount);
 }
 
 
 void VVirtualHost::_Deinit()
 {
-#if HTTP_SERVER_GLOBAL_CACHE
-
 	XBOX::VString	patternString;
 	XBOX::VError	error = XBOX::VE_OK;
 	const VHTTPResourcesVector resourcesVector = GetSettings()->GetResourcesVector();
@@ -377,8 +319,24 @@ void VVirtualHost::_Deinit()
 	}
 
 	GetSettings()->GetSignal_SettingsChanged()->Disconnect (this);
+}
 
-#endif
+
+void VVirtualHost::MakeAvailable()
+{
+	XBOX::VInterlocked::Decrement (&fUnavailableCount);
+}
+
+
+void VVirtualHost::MakeUnavailable()
+{
+	XBOX::VInterlocked::Increment (&fUnavailableCount);
+}
+
+
+bool VVirtualHost::IsAvailable() const
+{
+	return (fUnavailableCount == 0);
 }
 
 
@@ -537,6 +495,43 @@ XBOX::VError VVirtualHost::GetFilePathFromURL (const XBOX::VString& inURL, XBOX:
 }
 
 
+bool VVirtualHost::GetMatchingVirtualFolderInfos (const XBOX::VString& inURL, XBOX::VFilePath& outVirtualFolderPath, XBOX::VString& outDefaultIndexName, XBOX::VString& outVirtualFolderName)
+{
+	VVirtualFolder *virtualFolder = RetainMatchingVirtualFolder (inURL);
+
+	if (NULL != virtualFolder)
+	{
+		virtualFolder->GetFolder()->GetPath (outVirtualFolderPath);
+		outDefaultIndexName.FromString (virtualFolder->GetIndexFileName());
+		outVirtualFolderName.FromString (virtualFolder->GetName());
+		XBOX::QuickReleaseRefCountable (virtualFolder);
+
+		return true;
+	}
+	else
+	{
+		outVirtualFolderPath.Clear();
+		outDefaultIndexName.Clear();
+		outVirtualFolderName.Clear();
+	}
+
+	return false;
+}
+
+
+bool VVirtualHost::ResolveURLForAlternatePlatformPage (const XBOX::VString& inURL, const XBOX::VString& inPlatform, XBOX::VString& outResolvedURL)
+{
+	VVirtualFolder *virtualFolder = RetainMatchingVirtualFolder (inURL);
+
+	if (NULL != virtualFolder)
+		virtualFolder->ResolveURLForAlternatePlatformPage (inURL, inPlatform, outResolvedURL);
+
+	XBOX::QuickReleaseRefCountable (virtualFolder);
+
+	return (!outResolvedURL.IsEmpty() && !HTTPServerTools::EqualASCIIVString (inURL, outResolvedURL));
+}
+
+
 XBOX::VError VVirtualHost::GetFileContentFromURL (const XBOX::VString& inURL, IHTTPResponse *ioResponse, bool inUseFullPath)
 {
 	XBOX::VError		error = XBOX::VE_FILE_NOT_FOUND;
@@ -619,7 +614,7 @@ XBOX::VError VVirtualHost::GetFileContentFromURL (const XBOX::VString& inURL, IH
 		XBOX::QuickReleaseRefCountable (file);
 	}
 
-	if ((error == XBOX::VE_OK) && filePath.IsFile() && !ioResponse->IsResponseHeaderSet (HEADER_CONTENT_TYPE))
+	if ((error == XBOX::VE_OK) && filePath.IsFile() && !ioResponse->IsResponseHeaderSet (STRING_HEADER_CONTENT_TYPE))
 	{
 		XBOX::VString contentType;
 		XBOX::VString extension;
@@ -639,11 +634,7 @@ void VVirtualHost::FileSystemEventHandler (const std::vector<XBOX::VFilePath> &i
 	{
 		for (std::vector<XBOX::VFilePath>::const_iterator it = inFilePaths.begin(); it != inFilePaths.end(); ++it)
 		{
-#if HTTP_SERVER_GLOBAL_CACHE
 			fProject->GetHTTPServer()->GetCacheManager()->RemoveCachedObject (*it);
-#else
-			fCacheManager->RemoveCachedObject (*it);
-#endif
 		}
 	}
 }
@@ -664,8 +655,16 @@ bool VVirtualHost::AcceptConnectionsOnPort (const PortNumber inPort) const
 	return ((GetSettings()->GetListeningPort() == inPort) || (GetSettings()->GetAllowSSL() && (GetSettings()->GetListeningSSLPort() == inPort)));
 }
 
-
-bool VVirtualHost::AcceptConnectionsOnAddress (const IP4 inIPv4Address) const
+#if WITH_DEPRECATED_IPV4_API
+bool VVirtualHost::AcceptConnectionsOnAddress (const IP4 /*done*/ inIPAddress) const
 {
-	return ((GetSettings()->GetListeningAddress() == 0) || (GetSettings()->GetListeningAddress() == inIPv4Address));
+	return ((GetSettings()->GetListeningAddress() == 0) || (GetSettings()->GetListeningAddress() == inIPAddress));
 }
+#else
+bool VVirtualHost::AcceptConnectionsOnAddress (const VString& inIPAddress) const	
+{
+	return (HTTPServerTools::EqualASCIIVString (GetSettings()->GetListeningAddress(), VNetAddress::GetAnyIP()) ||
+			HTTPServerTools::EqualASCIIVString (GetSettings()->GetListeningAddress(), inIPAddress));
+}
+#endif
+

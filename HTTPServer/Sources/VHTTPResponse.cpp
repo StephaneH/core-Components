@@ -33,7 +33,7 @@ bool _RemoveProjectPatternFromURL (const XBOX::VString& inProjectPattern, XBOX::
 		return true;
 	}
 
-	return false;;
+	return false;
 }
 
 
@@ -57,6 +57,7 @@ VHTTPResponse::VHTTPResponse (VHTTPServer *inServer, XBOX::VTCPEndPoint* inEndPo
 , fMinCompressionThreshold (-1) // -1 means: Use Default Threshold defined in project settings
 , fMaxCompressionThreshold (-1) // -1 means: Use Default Threshold defined in project settings
 , fHeaderSent (false)
+, fForceCloseSession (false)
 {
 	fStartRequestTime = XBOX::VSystem::GetCurrentTime();
 }
@@ -175,6 +176,12 @@ const VHTTPHeader& VHTTPResponse::GetRequestHeader() const
 const XBOX::VString& VHTTPResponse::GetRequestURL() const
 {
 	return fRequest->GetURL();
+}
+
+
+void VHTTPResponse::SetRequestURLPath (const XBOX::VString& inURLPath)
+{
+	fRequest->fURLPath.FromString (inURLPath);
 }
 
 
@@ -617,21 +624,13 @@ XBOX::VError VHTTPResponse::SendResponse()
 		if (NULL != virtualHost)
 		{
 			// Compress HTTP Message body when applicable
-#if HTTP_SERVER_GLOBAL_SETTINGS
-			bool compressionEnabled = fHTTPServer->GetSettings()->GetEnableCompression();
-#else
 			bool compressionEnabled = virtualHost->GetSettings()->GetEnableCompression();
-#endif
 			if (fCanCompressBody && compressionEnabled)
 			{
 				sLONG size = (sLONG)GetBody().GetSize();
-#if HTTP_SERVER_GLOBAL_SETTINGS
-				sLONG minThreshold = (fMinCompressionThreshold == -1) ? fHTTPServer->GetSettings()->GetCompressionMinThreshold() : fMinCompressionThreshold;
-				sLONG maxThreshold = (fMaxCompressionThreshold == -1) ? fHTTPServer->GetSettings()->GetCompressionMaxThreshold() : fMaxCompressionThreshold;
-#else
 				sLONG minThreshold = (fMinCompressionThreshold == -1) ? virtualHost->GetSettings()->GetCompressionMinThreshold() : fMinCompressionThreshold;
 				sLONG maxThreshold = (fMaxCompressionThreshold == -1) ? virtualHost->GetSettings()->GetCompressionMaxThreshold() : fMaxCompressionThreshold;
-#endif
+
 				if ((size > minThreshold) && (size <= maxThreshold))
 				{
 					if (!contentType.IsEmpty() && (VMimeTypeManager::IsMimeTypeCompressible (contentType)))
@@ -645,11 +644,7 @@ XBOX::VError VHTTPResponse::SendResponse()
 		// Put HTTP Message body in cache when applicable
 		if ((NULL != virtualHost) && fCanCacheBody && (fResponseStatusCode == HTTP_OK))
 		{
-#if HTTP_SERVER_GLOBAL_CACHE
 			VCacheManager *	cacheManager = virtualHost->GetProject()->GetHTTPServer()->GetCacheManager();
-#else
-			VCacheManager *	cacheManager = virtualHost->GetCacheManager();
-#endif
 			XBOX::VFilePath	filePath;
 			XBOX::VString	locationPath;
 			XBOX::VTime		lastModified;
@@ -657,7 +652,7 @@ XBOX::VError VHTTPResponse::SendResponse()
 			XBOX::VError	fileError = XBOX::VE_OK;
 			bool			staticFile = false;
 
-			if (XBOX::VE_OK == (fileError = virtualHost->GetFilePathFromURL (fRequest->GetURL(), locationPath)))
+			if (XBOX::VE_OK == (fileError = virtualHost->GetFilePathFromURL (fRequest->GetURLPath(), locationPath)))
 			{
 				filePath.FromFullPath (locationPath);
 				if (filePath.IsFile() && (XBOX::VE_OK == HTTPServerTools::GetFileInfos (filePath, &lastModified)))
@@ -678,7 +673,7 @@ XBOX::VError VHTTPResponse::SendResponse()
 
 					XBOX::VTime::Now (lastChecked);
 
-					bool ok = cacheManager->AddPageToCache (fRequest->GetURL(),
+					bool ok = cacheManager->AddPageToCache (fRequest->GetURLPath(),
 															virtualHost->GetUUIDString(),
 															contentType,
 															buffer,
@@ -732,7 +727,15 @@ XBOX::VError VHTTPResponse::SendResponse()
 					sLONG8	fileSize = 0;
 					
 					fFileToSend->GetSize (&fileSize);
-					this->SetContentLengthHeader (fileSize); // YT 18-Jul-2011 - ACI0072287
+					SetContentLengthHeader (fileSize); // YT 18-Jul-2011 - ACI0072287
+
+					if (!IsResponseHeaderSet (STRING_HEADER_CONTENT_TYPE))
+					{
+						XBOX::VString fileExtension;
+						fFileToSend->GetPath().GetExtension (fileExtension);
+						VMimeTypeManager::FindContentType (fileExtension, contentType);
+						AddResponseHeader (STRING_HEADER_CONTENT_TYPE, contentType);
+					}
 
 					if (XBOX::VE_OK == (error = _SendResponseHeader()))
 					{
@@ -848,10 +851,28 @@ XBOX::VError VHTTPResponse::SendData (void *inData, XBOX::VSize inDataSize, bool
 	if ((NULL == inData) || (inDataSize <= 0))
 		return VE_HTTP_INVALID_ARGUMENT;
 
-	XBOX::VError error = XBOX::VE_OK;
+	XBOX::VError	error = XBOX::VE_OK;
+	XBOX::VSize		bodyOffset = 0;
+	void *			buffer = inData;
+	XBOX::VSize		bufferSize = inDataSize;
 
 	if (!fNumOfChunkSent)
 	{
+		// Check if the data chunk contains a StatusLine or/and and HTTP Header (used only for 4D's backward compatibility)
+		if (_InitResponseHeaderFromBuffer (buffer, bufferSize, bodyOffset)) // YT 17-Jul-2012 - ACI0075655
+		{
+			if ((bufferSize - bodyOffset) > 0)
+			{
+				buffer = (((char *)inData) + bodyOffset);
+				bufferSize = (inDataSize - bodyOffset);
+			}
+			else
+			{
+				buffer = NULL;
+				bufferSize = 0;
+			}
+		}
+
 		// Check if chunked data is possible (that's not the case before HTTP/1.1)
 		if (isChunked && (GetRequestHTTPVersion() == VERSION_1_1))
 		{
@@ -871,21 +892,20 @@ XBOX::VError VHTTPResponse::SendData (void *inData, XBOX::VSize inDataSize, bool
 		}
 	}
 
-	if ((XBOX::VE_OK == error) && (NULL != inData) && (inDataSize > 0))
+	if ((XBOX::VE_OK == error) && (NULL != buffer) && (bufferSize > 0))
 	{
 		if (fIsChunked)
 		{
-			uLONG	bufferSize = (uLONG)inDataSize;
-			void *	buffer = inData;
+			uLONG	size = (uLONG)bufferSize;
 
-			error = _WriteChunkSize (inDataSize);
+			error = _WriteChunkSize (bufferSize);
 			if (XBOX::VE_OK == error)
-				error = _WriteToSocket (buffer, &bufferSize);
+				error = _WriteToSocket (buffer, &size);
 		}
 		else
 		{
 			/* Buffered response: Append data to body VPtrStream */
-			error = SetResponseBody (inData, inDataSize);
+			error = SetResponseBody (buffer, bufferSize);
 			AllowCompression (true);
 		}
 	}
@@ -999,8 +1019,8 @@ IVirtualHost *VHTTPResponse::GetVirtualHost()
 		{
 #if WITH_DEPRECATED_IPV4_API			
 			HTTPServerTools::MakeIPv4String (fEndPoint->GetIPv4HostOrder(), fRequest->fHost);
-#elif DEPRECATED_IPV4_API_SHOULD_NOT_COMPILE
-	#error NEED AN IP V6 UPDATE
+#else
+			fEndPoint->GetIP (fRequest->fHost);
 #endif
 			fRequest->fHost.AppendUniChar (CHAR_COLON);
 			fRequest->fHost.AppendLong (fEndPoint->GetPort());
@@ -1075,16 +1095,91 @@ void VHTTPResponse::AllowCompression (bool inValue, sLONG inMinThreshold, sLONG 
 		fMaxCompressionThreshold = inMaxThreshold;
 }
 
-
+#if WITH_DEPRECATED_IPV4_API
 inline
-IP4 VHTTPResponse::GetIPv4() const
+IP4 /*done*/ VHTTPResponse::GetIPv4() const
 {
-#if WITH_DEPRECATED_IPV4_API	
 	if (NULL != fEndPoint)
 		return fEndPoint->GetIPv4HostOrder();
-#elif DEPRECATED_IPV4_API_SHOULD_NOT_COMPILE
-	#error NEED AN IP V6 UPDATE
-#endif
 
 	return 0;
+}
+#else
+inline
+void VHTTPResponse::GetIP (XBOX::VString& outIP) const
+{
+	if (NULL != fEndPoint)
+		fEndPoint->GetIP (outIP);
+	else
+		outIP.Clear();
+}
+#endif
+
+
+bool VHTTPResponse::_InitResponseHeaderFromBuffer (void *inBuffer, XBOX::VSize inBufferSize, XBOX::VSize& outBodyOffset)
+{
+	outBodyOffset = 0;
+
+	if ((inBuffer == NULL) || (inBufferSize == 0))
+		return false;
+
+	char *		buffer = (char *)inBuffer;
+	char *		bufferEnd = buffer + inBufferSize;
+
+	if ((inBufferSize > 8)
+		&& ((buffer[0] == 'H') || (buffer[0] == 'h'))
+		&& ((buffer[1] == 'T') || (buffer[1] == 't'))
+		&& ((buffer[2] == 'T') || (buffer[2] == 't'))
+		&& ((buffer[3] == 'P') || (buffer[3] == 'p'))
+		&& ((buffer[4] == '/')))
+	{
+		// there is a first line to be parsed:
+		// typically: HTTP/1.1 200 Ok
+		if ((buffer[5] == '1') && (buffer[6] == '.') && (buffer[7] == '1'))
+		{
+			buffer+=8;
+			fHTTPVersion = VERSION_1_1;
+		}
+		else if ((buffer[5] == '1') && (buffer[6] == '.') && (buffer[7] == '0'))
+		{
+			buffer+=8;
+			fHTTPVersion = VERSION_1_0;
+		}
+
+		while ((buffer < bufferEnd) && std::isspace (*buffer))
+			++buffer;
+
+		if ((buffer + 3) < bufferEnd)
+		{
+			// parse status code
+			if ((buffer[0] >= '0') && (buffer[0] <= '9')
+				&& (buffer[1] >= '0') && (buffer[1] <= '9')
+				&& (buffer[2] >= '0') && (buffer[2] <= '9'))
+			{
+				fResponseStatusCode = HTTPStatusCode(((buffer[0] - '0') * 100) + ((buffer[1] - '0') * 10) + (buffer[2] - '0'));
+				buffer +=3;
+			}
+		}
+
+		const sLONG HTTP_CRLF_SIZE = (sizeof (HTTP_CRLF) - 1);
+		char *endLinePtr = strstr (buffer, HTTP_CRLF);
+		if ((endLinePtr != NULL) && ((endLinePtr + HTTP_CRLF_SIZE) <= bufferEnd))
+			buffer = (endLinePtr + HTTP_CRLF_SIZE);
+
+		outBodyOffset += (buffer - (char *)inBuffer);
+	}
+
+	const sLONG	HTTP_CRLFCRLF_SIZE = (sizeof (HTTP_CRLFCRLF) - 1);
+	char *		startHeaderPtr = buffer;
+	char *		endHeaderPtr = strstr (startHeaderPtr, HTTP_CRLFCRLF);
+	if ((endHeaderPtr != NULL) && ((endHeaderPtr + HTTP_CRLFCRLF_SIZE) <= bufferEnd))
+	{
+		XBOX::VString headerString;
+		headerString.FromBlock (buffer, endHeaderPtr - startHeaderPtr, XBOX::VTC_UTF_8);
+		GetResponseHeader().FromString (headerString);
+		buffer = (endHeaderPtr + HTTP_CRLFCRLF_SIZE);
+		outBodyOffset += (buffer - startHeaderPtr);
+	}
+
+	return (outBodyOffset != 0);
 }

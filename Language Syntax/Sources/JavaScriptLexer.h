@@ -175,7 +175,7 @@ protected:
 
 	virtual bool IsIdentifierStart( UniChar inChar );
 	virtual bool IsIdentifierCharacter( UniChar inChar );
-	virtual bool IsRegularExpressionStart( UniChar inChar );
+	virtual bool IsRegularExpressionStart( TokenList* inTokens, UniChar inChar );
 
 	virtual int GetNumericTokenValueFromNumericType( ENumericType inType );
 	virtual bool IsNumericStart( UniChar inChar, ENumericType &outType );

@@ -77,15 +77,15 @@ typedef map<sLONG, IDSet> IDSetMap;
 class UAGSession : public VComponentImp<CUAGSession>
 {
 	public:
-		UAGSession(UAGDirectory* inDirectory, const VUUID& inUserID, CUAGUser* inUser);
+		UAGSession(UAGDirectory* inDirectory, const VUUID& inUserID, CUAGUser* inUser, bool fromLogout = false);
 		virtual ~UAGSession();
 
 		VError BuildDependences();
 		VError BuildDependences(CUAGGroupVector& groups);
 
-		virtual bool BelongsTo(const XBOX::VUUID& inGroupID);
+		virtual bool BelongsTo(const XBOX::VUUID& inGroupID, bool checkNoAdmin = true);
 
-		virtual bool BelongsTo(CUAGGroup* inGroup);
+		virtual bool BelongsTo(CUAGGroup* inGroup, bool checkNoAdmin = true);
 
 		virtual bool Matches(const XBOX::VUUID& inUserID);
 
@@ -131,6 +131,16 @@ class UAGSession : public VComponentImp<CUAGSession>
 			fIsDefault = value;
 		}
 
+		virtual bool IsFromLogout() const
+		{
+			return fIsFromLogout;
+		}
+
+		virtual void ClearFromLogout()
+		{
+			fIsFromLogout = false;
+		}
+
 	protected:
 
 		sLONG GetNextToken()
@@ -155,7 +165,7 @@ class UAGSession : public VComponentImp<CUAGSession>
 		VJSGlobalContext *fJSContext;
 		VTime fExpirationTime;
 		sLONG fLifeTime;	// in seconds
-		bool fIsDefault;
+		bool fIsDefault, fIsFromLogout;
 
 };
 

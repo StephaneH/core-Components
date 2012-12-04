@@ -5,7 +5,7 @@
 	Name="Component - HTTPServer"
 	ProjectGUID="{1D16FBE6-9C83-445F-BAE4-3A8E3C0C2778}"
 	RootNamespace="HTTPServer"
-	SccProjectName="&quot;//depot/Components/WAK2/HTTPServer&quot;"
+	SccProjectName="&quot;//depot/Components/Main/HTTPServer&quot;"
 	SccLocalPath="..\.."
 	SccProvider="MSSCCI:Perforce SCM"
 	Keyword="Win32Proj"

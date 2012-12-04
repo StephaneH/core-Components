@@ -137,6 +137,11 @@ CUAGDirectory* VUAGManager::RetainDirectory(const VFile& inXMLFile, FileAccess i
 		
 	}
 
+	if (err == VE_OK)
+	{
+		Directory->ComputeNoAdmin();
+	}
+
 	if (err != VE_OK)
 	{
 		Directory->Release();
@@ -168,6 +173,11 @@ UAGDirectory::UAGDirectory(VUAGManager* inManager)
 
 	fXmlFile = nil;
 	fLoginPromote = nil;
+
+	fNoAdmin = true;
+
+	fAdminGroupID.FromLong((sLONG)AdminGroup);
+	fDebugGroupID.FromLong((sLONG)DebuggerGroup);
 
 }
 
@@ -786,7 +796,8 @@ VError UAGDirectory::ImportXMLData(const VFile& inFile, CDB4DBaseContext* contex
 				paramsValues.push_back(jsDB);
 				paramsValues.push_back(jsPath);
 
-				jscontext.EvaluateScript("importUAG", nil, &result, nil, nil);
+				result = jscontext.GetGlobalObject().GetProperty("importUAG");
+				// jscontext.EvaluateScript("importUAG", nil, &result, nil, nil);
 				if (!result.IsUndefined() && result.IsObject())
 				{
 					VJSObject objfunc(jscontext);
@@ -1312,7 +1323,7 @@ bool UAGDirectory::TakenByListener(const VString& inUserName, const VString& inP
 }
 
 
-CUAGSession* UAGDirectory::MakeDefaultSession(VError* outErr, VJSContext* inJSContext)
+CUAGSession* UAGDirectory::MakeDefaultSession(VError* outErr, VJSContext* inJSContext, bool fromLogout)
 {
 	UAGSession* session = nil;
 	CDB4DEntityRecord* userrec = fUserModel->NewEntity(fContext, DB4D_Do_Not_Lock);
@@ -1329,7 +1340,7 @@ CUAGSession* UAGDirectory::MakeDefaultSession(VError* outErr, VJSContext* inJSCo
 
 	if (newuser != nil)
 	{
-		session = new UAGSession(this, xid, newuser);
+		session = new UAGSession(this, xid, newuser, fromLogout);
 		session->SetDefault(true);
 		newuser->Release();
 	}
@@ -1530,6 +1541,44 @@ void UAGDirectory::DropUserStorage(const VUUID& inID)
 		fUserStorages.erase(found);
 	}
 }
+
+
+
+bool UAGDirectory::NoAdmin()
+{
+	return fNoAdmin;
+}
+
+
+void UAGDirectory::ComputeNoAdmin()
+{
+	fNoAdmin = true;
+	CUAGGroup* admins = RetainSpecialGroup(AdminGroup);
+	if (admins != nil)
+	{
+		CUAGUserVector users;
+		admins->RetainUsers(users, false);
+		if (users.size() > 0)
+		{
+			if (users.size() == 1)
+			{
+				CUAGUser* user = users[0];
+				if (user->ValidatePassword("") != VE_OK)
+				{
+					fNoAdmin = false;
+				}
+			}
+			else
+			{
+				fNoAdmin = false;
+			}
+		}
+		admins->Release();
+	}
+}
+
+
+
 
 
 

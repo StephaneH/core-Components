@@ -234,6 +234,7 @@ void RestTools::DeInit()
 	QuickReleaseRefCountable(fProgressIndicator);
 	if (newwafkeepselptr != nil)
 		delete newwafkeepselptr;
+	QuickReleaseRefCountable(fUAGDirectory);
 }
 
 
@@ -562,12 +563,18 @@ VError RestTools::CalculateDataURI(VString& outURI, const EntityModel* em, const
 			outURI = L"\"dataURI\":";
 	}
 
+	/*
 	if (withquotes)
 		outURI += L"\"http://";
 	else
 		outURI += L"http://";
 
 	outURI += fHostName;
+	*/
+
+	if (withquotes)
+		outURI.AppendUniChar('"');
+
 	outURI += L"/rest/";
 
 	VString entityname;
@@ -594,12 +601,18 @@ VError RestTools::CalculateURI(VString& outURI, const EntityModel* em, const VSt
 			outURI = L"\"uri\":";
 	}
 
+	/*
 	if (withquotes)
 		outURI += L"\"http://";
 	else
 		outURI += L"http://";
 
 	outURI += fHostName;
+	*/
+
+	if (withquotes)
+		outURI.AppendUniChar('"');
+
 	outURI += L"/rest/$catalog/";
 
 	VString entityname;
@@ -626,12 +639,18 @@ VError RestTools::CalculateURI(VString& outURI, EntityRecord* erec, const Entity
 			outURI = L"\"uri\":";
 	}
 
+	/*
 	if (withquotes)
 		outURI += L"\"http://";
 	else
 		outURI += L"http://";
 
 	outURI += fHostName;
+	*/
+
+	if (withquotes)
+		outURI.AppendUniChar('"');
+
 	outURI += L"/rest/";
 
 	VString entityname;
@@ -692,12 +711,17 @@ VError RestTools::CalculateURI(VString& outURI, DataSet* inDataSet, const Entity
 			outURI = L"\"uri\":";
 	}
 
+	/*
 	if (withquotes)
 		outURI += L"\"http://";
 	else
 		outURI += L"http://";
 
 	outURI += fHostName;
+	*/
+
+	if (withquotes)
+		outURI.AppendUniChar('"');
 	outURI += L"/rest/";
 
 	VString tablename;
@@ -2274,9 +2298,12 @@ VError RestTools::ImportEntities(EntityModel* em)
 
 bool RestTools::CalculateHtmlBaseURI(VString& outUri)
 {
+	/*
 	outUri = L"http://";
 
 	outUri += fHostName;
+	*/
+
 	outUri += L"/rest";
 	fURL->SetCurPartPos(0);
 	const VString* s = fURL->NextPart();

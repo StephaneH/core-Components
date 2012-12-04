@@ -6,7 +6,11 @@
 	>
 	<Tool
 		Name="VCCLCompilerTool"
-		AdditionalIncludeDirectories="&quot;$(ProjectDir)\..\..\Headers&quot;;&quot;$(ProjectDir)\..\..\Sources&quot;;..\..;..\..\..\;..\..\..\..\..\XToolbox\WAK2"
+		AdditionalIncludeDirectories="&quot;$(ProjectDir)\..\..\Headers&quot;;&quot;$(ProjectDir)\..\..\Sources&quot;;..\..;..\..\..\;..\..\..\..\..\XToolbox\Main"
 		PreprocessorDefinitions="_CRT_SECURE_NO_DEPRECATE;_HAS_ITERATOR_DEBUGGING=0;_BIND_TO_CURRENT_CRT_VERSION=1"
+	/>
+	<Tool
+		Name="VCLinkerTool"
+		SubSystem="2"
 	/>
 </VisualStudioPropertySheet>

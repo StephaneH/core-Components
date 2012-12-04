@@ -37,8 +37,9 @@ VHTTPRequest::VHTTPRequest()
 , fParsingState (PS_Undefined)
 , fParsingError (XBOX::VE_OK)
 , fHTMLForm (NULL)
-, fEndPointIPv4 (0)
-, fEndPointPort (0)
+, fLocalAddress()
+, fPeerAddress()
+, fIsSSL (false)
 {
 }
 
@@ -88,35 +89,13 @@ void VHTTPRequest::Reset()
 }
 
 
-/* private */
-VHTTPRequest& VHTTPRequest::operator = (const VHTTPRequest& inHTTPRequest)
-{
-	if (&inHTTPRequest != this)
-	{
-		fRequestMethod = inHTTPRequest.fRequestMethod;
-		fRequestLine.FromString (inHTTPRequest.fRequestLine);
-		fURL.FromString (inHTTPRequest.fURL);
-		fRawURL.FromString (inHTTPRequest.fRawURL);
-		fURLPath.FromString (inHTTPRequest.fURLPath);
-		fURLQuery.FromString (inHTTPRequest.fURLQuery);
-		fHost.FromString (inHTTPRequest.fHost);
-		fHTTPVersion = inHTTPRequest.fHTTPVersion;
-		fAuthenticationInfos = new VAuthenticationInfos (*inHTTPRequest.fAuthenticationInfos);
-		fParsingState = inHTTPRequest.fParsingState;
-		fParsingError = inHTTPRequest.fParsingError;
-	}
-
-	return *this;
-}
-
-
-XBOX::VError VHTTPRequest::ReadFromEndPoint (XBOX::VEndPoint& inEndPoint, uLONG inTimeout)
+XBOX::VError VHTTPRequest::ReadFromEndPoint (XBOX::VTCPEndPoint& inEndPoint, uLONG inTimeout)
 {
 	// Read Request-Line and extract Method, URL and HTTP version
-#define	MAX_BUFFER_LENGTH	8192
+#define	MAX_BUFFER_LENGTH					8192
 
 	sLONG			bufferSize = MAX_BUFFER_LENGTH;
-	char *			buffer = (char *)XBOX::vMalloc (bufferSize, 0);
+	char *			buffer = (char *)XBOX::vMalloc (bufferSize + 1, 0);
 
 	if (NULL == buffer)
 		return XBOX::VE_MEMORY_FULL;
@@ -145,13 +124,10 @@ XBOX::VError VHTTPRequest::ReadFromEndPoint (XBOX::VEndPoint& inEndPoint, uLONG 
 	fParsingState = PS_Undefined;
 	fRequestLine.Clear();
 
-#if WITH_DEPRECATED_IPV4_API
-	fEndPointIPv4 = dynamic_cast<VTCPEndPoint &>(inEndPoint).GetIPv4HostOrder();
-	fEndPointPort = dynamic_cast<VTCPEndPoint &>(inEndPoint).GetPort();
-#elif DEPRECATED_IPV4_API_SHOULD_NOT_COMPILE
-	#error NEED AN IP V6 UPDATE
-#endif
-	
+	fLocalAddress.FromLocalAddr (inEndPoint.GetRawSocket());
+	fPeerAddress.FromPeerAddr (inEndPoint.GetRawSocket());
+	fIsSSL = inEndPoint.IsSSL();
+
 	XBOX::StErrorContextInstaller errorContext (VE_SRVR_TOO_MANY_SOCKETS_FOR_SELECT_IO,
 												VE_SRVR_READ_FAILED,
 												VE_SRVR_CONNECTION_FAILED,
@@ -176,7 +152,7 @@ XBOX::VError VHTTPRequest::ReadFromEndPoint (XBOX::VEndPoint& inEndPoint, uLONG 
 
 	while ((XBOX::VE_OK == endPointError) && !stopReadingSocket)
 	{
-		if (0 == unreadBytes)
+		if ((0 == unreadBytes) || (bufferOffset >= MAX_BUFFER_LENGTH))
 			bufferOffset = 0;
 
 		bufferSize = MAX_BUFFER_LENGTH - bufferOffset;
@@ -188,7 +164,11 @@ XBOX::VError VHTTPRequest::ReadFromEndPoint (XBOX::VEndPoint& inEndPoint, uLONG 
 #if LOG_IN_CONSOLE
 		VDebugTimer readTimer;
 #endif
-		endPointError = inEndPoint.Read (buffer + bufferOffset, (uLONG *)&bufferSize);
+		
+		endPointError = inEndPoint.ReadWithTimeout (buffer + bufferOffset, (uLONG *)&bufferSize, 5000 /*timeout ms*/);
+		
+		if (fParsingState <= PS_ReadingHeaders)
+			buffer[bufferOffset + bufferSize] = '\0'; //  YT 29-May-2012 - ACI0076811
 
 		//jmo - tentatives de fix pour ne plus lire en boucle une socket sur laquelle le client a fait un shutdown...
 		if(VE_OK==endPointError && 0==bufferSize)
@@ -196,11 +176,19 @@ XBOX::VError VHTTPRequest::ReadFromEndPoint (XBOX::VEndPoint& inEndPoint, uLONG 
 			//jmo - on ne devrait plus passer par là.
 			xbox_assert(false);
 			stopReadingSocket=true;
+#if VERSIONWIN && VERSIONDEBUG
+			::OutputDebugStringW (L"VEndPoint.Read() returned Zero Bytes !!");
+#endif
 		}
 		
 		//jmo - erreur qu'on recupere sur un shutdown cote client
 		if(VE_SRVR_NOTHING_TO_READ==endPointError)
+		{
 			stopReadingSocket=true;
+#if VERSIONWIN && VERSIONDEBUG
+			::OutputDebugStringW (L"VEndPoint.Read() returned VE_SRVR_NOTHING_TO_READ !!");
+#endif
+		}
 		
 #if LOG_IN_CONSOLE
 		readTimer.DebugMsg ("\tVTCPEndPoint::Read()");
@@ -283,62 +271,16 @@ XBOX::VError VHTTPRequest::ReadFromEndPoint (XBOX::VEndPoint& inEndPoint, uLONG 
 						}
 						else
 						{
-#if CHECK_REQUEST_LINE_VALIDITY // disabled, cause pattern used causes crashes..
-							if (HTTPProtocol::IsValidRequestLine (fRequestLine))
-#endif
-							{
-								const UniChar *	lineBuffer = fRequestLine.GetCPointer();
-								const sLONG		lineLength = fRequestLine.GetLength();
-
-								fRequestMethod = HTTPProtocol::GetMethodFromRequestLine (lineBuffer, lineLength);
-								if (fRequestMethod != HTTP_UNKNOWN)
-								{
-									if (HTTPProtocol::GetRequestURIFromRequestLine (lineBuffer, lineLength, fRawURL, false))
-									{
-										fURL.FromString (fRawURL);
-										XBOX::VURL::Decode (fURL);
-										fHTTPVersion = HTTPProtocol::GetVersionFromRequestLine (lineBuffer, lineLength);
-										if (fHTTPVersion == VERSION_UNSUPPORTED)
-										{
-											fParsingError = VE_HTTP_PROTOCOL_HTTP_VERSION_NOT_SUPPORTED;
-											break;
-										}
-
-										XBOX::VURL url;
-										url.FromString (fURL, false);
-										url.GetPath (fURLPath, eURL_POSIX_STYLE, false);
-										url.GetQuery (fURLQuery, false);
-
-										fParsingState = PS_ReadingHeaders;
-									}
-									else
-									{
-										fParsingError = VHTTPServer::ThrowError (VE_HTTP_PROTOCOL_BAD_REQUEST, CVSTR ("Request Line parsing failed !!"));
-										break;
-									}
-								}
-								else
-								{
-									/*
-									YT 02-May-2011 - RFC2616 compliance
-									Reference: RFC2616 chapter: 5.1.1 Method
-									[...]
-									An origin server SHOULD return the status code 405 (Method Not Allowed)
-									if the method is known by the origin server but not allowed for the
-									requested resource, and 501 (Not Implemented) if the method is
-									unrecognized or not implemented by the origin server.
-									*/
-									fParsingError = VE_HTTP_PROTOCOL_NOT_IMPLEMENTED;
-									break;
-								}
-							}
-#if CHECK_REQUEST_LINE_VALIDITY // disabled, cause pattern used causes crashes..
-							else
-							{
-								fParsingError = VHTTPServer::ThrowError (VE_HTTP_PROTOCOL_BAD_REQUEST, CVSTR ("Request Line validation failed !!"));
+							fParsingError = HTTPProtocol::ReadRequestLine (fRequestLine, fRequestMethod, fRawURL, fHTTPVersion, true /*verifyRequestLineValidity*/);
+							if (XBOX::VE_OK != fParsingError)
 								break;
-							}
-#endif
+
+							HTTPProtocol::ParseURL (fRawURL, fURL, fURLPath, fURLQuery);
+
+							fParsingState = PS_ReadingHeaders;
+
+							if ((NULL != endHeaderPtr) && (endLinePtr == endHeaderPtr))
+								stopReadingSocket = true;
 						}
 					}
 					else
@@ -447,7 +389,7 @@ XBOX::VError VHTTPRequest::ReadFromEndPoint (XBOX::VEndPoint& inEndPoint, uLONG 
 							bodyContentSize += unreadBytes;
 							bufferOffset = unreadBytes = 0;
 
-							if (contentLength > 0 && bodyContentSize == contentLength)
+							if ((contentLength > 0) && (bodyContentSize >= contentLength))
 								stopReadingSocket = true;
 						}
 					}
@@ -630,18 +572,20 @@ XBOX::VError VHTTPRequest::ReadFromEndPoint (XBOX::VEndPoint& inEndPoint, uLONG 
 
 XBOX::VError VHTTPRequest::ReadFromStream (XBOX::VStream& inStream)
 {
-	return inherited::_ReadFromStream ( inStream,
-										CVSTR (""),
-										&fRequestLine,
-										&fRequestMethod,
-										&fHTTPVersion,
-										&fHost,
-										&fRawURL,
-										&fURL,
-										&fURLPath,
-										&fURLQuery,
-										&fParsingState,
-										&fParsingError);
+	assert (false); // TODO: Cleanup, Dead Code, should never be called
+// 	return inherited::_ReadFromStream ( inStream,
+// 										CVSTR (""),
+// 										&fRequestLine,
+// 										&fRequestMethod,
+// 										&fHTTPVersion,
+// 										&fHost,
+// 										&fRawURL,
+// 										&fURL,
+// 										&fURLPath,
+// 										&fURLQuery,
+// 										&fParsingState,
+// 										&fParsingError);
+	return XBOX::VE_OK;
 }
 
 
@@ -691,7 +635,7 @@ MimeTypeKind VHTTPRequest::GetContentTypeKind() const
 }
 
 
-bool VHTTPRequest::GetCookies (std::vector<IHTTPCookie *>& outCookies) const
+bool VHTTPRequest::GetCookies (XBOX::VectorOfCookie& outCookies) const
 {
 	XBOX::VectorOfVString values;
 
@@ -700,10 +644,10 @@ bool VHTTPRequest::GetCookies (std::vector<IHTTPCookie *>& outCookies) const
 	{
 		for (XBOX::VectorOfVString::const_iterator it = values.begin(); it != values.end(); ++it)
 		{
-			VHTTPCookie * cookie = new VHTTPCookie (*it);
+			XBOX::VHTTPCookie * cookie = new XBOX::VHTTPCookie (*it);
 
 			if (NULL != cookie)
-				outCookies.push_back (dynamic_cast<IHTTPCookie *>(cookie));
+				outCookies.push_back (cookie);
 		}
 	}
 
@@ -738,12 +682,15 @@ bool VHTTPRequest::_AcceptIncomingDataSize (XBOX::VSize inSize)
 }
 
 
-const IHTMLForm *VHTTPRequest::GetHTMLForm() const
+const XBOX::VMIMEMessage *VHTTPRequest::GetHTMLForm() const
 {
 	if (NULL == fHTMLForm)
 	{
-		fHTMLForm = new VHTMLForm();
-		fHTMLForm->Load (*this);
+		XBOX::VString contentType;
+
+		fHTMLForm = new XBOX::VMIMEMessage();
+		GetHeaders().GetHeaderValue (STRING_HEADER_CONTENT_TYPE, contentType);
+		fHTMLForm->Load ((fRequestMethod == HTTP_POST), contentType, fURLQuery, GetBody());
 	}
 
 	return fHTMLForm;

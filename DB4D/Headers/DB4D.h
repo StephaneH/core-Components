@@ -60,6 +60,8 @@ const OsType DB4D_PrefFileType = (OsType)'.prf';
 const OsType DB4D_Creator = (OsType)'4D07';
 
 class CDB4DIndex;
+class CDB4DBase;
+
 typedef XBOX::VArrayOf<sLONG> xArrayOfLong;
 typedef XBOX::VArrayOf<XBOX::VErrorBase*> ListOfErrors;
 typedef XBOX::VError VErrorDB4D;
@@ -144,6 +146,276 @@ public:
 			/** @brief	set the UAGSession for the context */
 };
 
+/**
+ * \brief This interface describes a way to set and and retrieve backup related settings.
+ * \detail Backup settings feature an overriding/inheritance mechanism.
+ *  Instance A can be set as instance B 'parent'. The rationale is that A (the parent) will be looked
+ *  up whenever B does not have a setting defined.
+ *  Backups are stored in a specific folder which can be specified.
+ * By default successive backups will overwrite one another. If that behaviour is
+ * not desirable one can specify to use unique names for backups by storing them
+ * under timestamped sub-folders inside the destination folder:
+ * <code>
+ * |-MyBackupFolder
+ * |
+ * |-Backup_06-06-2012_12:06:23
+ * |    |
+ * |    | backup content
+ * |    
+ * |-Backup_06-06-2012_18:06:23
+ * |    |
+ * |    | backup content
+ * |    
+ * |-Backup_06-06-2012_18:06:23_2
+ * |    |
+ * |    | backup content
+ * |    
+ * </code>
+ */
+class IBackupSettings : public XBOX::IRefCountable
+{
+public:
+	IBackupSettings(){}
+	virtual ~IBackupSettings(){}
+
+	/**
+	 * \brief Initialies the instance using a value bag
+	 * \param inBaseFolder specifies the base folder to use if a relative backup folder is specified
+	 */	
+	virtual bool Initialize(const XBOX::VValueBag& inBag,const  XBOX::VFilePath& inBaseFolder) = 0;
+
+	/**
+	 * \brief Initializes/resets the instance using a JSON object
+	 * \details this method can be called using only a subset of initializations keys enabling to partially reset the instance
+	 * and preserve some values.
+	 * The JS syntax is as follows:
+	 * <code>
+	 * {
+	 *    destination: Folder(...),
+	 *    backupRegistryFolder: Folder(...),
+	 *    useUniqueNames: true|false
+	 * }
+	 * </code>
+	 * \param inObject the JS object carrying the init values.
+	 * \return false if the final object is invalid state after the new values have been taken into account
+	 * \return true if the object is valid after the new values have been taken into account
+	 * \see CheckValidity()
+	 */
+	virtual bool FromJSObject(const XBOX::VJSObject& inObject) = 0;
+
+	/**
+	 * \brief Sets this instance's parent and retain it
+	 * \param inParent the address of the new parent. NULL means that the current parent instance must be released.
+	 */
+	virtual bool SetRetainedParent(const IBackupSettings* inParent ) = 0;
+
+	/**
+	 * \brief Returns a retained reference to the parent parent instance
+	 * \return a retained reference or NULL if no parent instance is defined
+	 */
+	virtual const IBackupSettings*  RetainParent() = 0;
+	
+	/**
+	 * \brief Sets the folder to use as a backup registry
+	 * \details The backup registry folder is a special folder where the backup tools
+	 * store and retrieve some informations such as the backup manifest registry.
+	 * \param inBackupRegistryFolder the folder where the backup registry is located
+	 */
+	virtual bool SetBackupRegistryFolder(const XBOX::VFilePath& inBackupRegistryFolder) = 0;
+
+	/**
+	 * \brief Gets the folder to use as a backup registry
+	 * \details The backup registry folder is a special folder where the backup tools
+	 * store and retrieve some informations such as the backup manifest registry
+	 * \param outBackupRegistryFolder the folder currently used to store the backup registry
+	 * \return true if @c outBackupRegistryFolder is a valid
+	 * \return false if @c outBackupRegistryFolder is not specified
+	 */
+	virtual bool GetBackupRegistryFolder(XBOX::VFilePath& outBackupRegistryFolder)const  = 0;
+
+	/**
+	 * \brief Sets the backup destination folder for this instance
+	 * \details backups will be directly stored under this folder. 
+	 * \see SetUseUniqueNames()
+	 */
+	virtual void SetDestination(const XBOX::VFilePath& inBackupFolder) = 0;
+	
+	/**
+	 * \brief Returns the destination folder where backups are stored.
+	 * \details If the instance does not have a proper value set the parent chain is walked up until
+	 * no ancestor remain or a valid value is found
+	 * \return true if the setting is defined and valid
+	 * \return false if no setting was found
+	 */
+	virtual bool GetDestination(XBOX::VFilePath& inBackupFolder)const = 0;	
+
+	/**
+	 * \brief Returns if each backup should have a unique name
+	 * \returns true if each backup should have a unique name
+	 */
+	virtual bool GetUseUniqueNames()const = 0;
+
+	/**
+	 * \brief Sets whether each backup should have a unique name
+	 * \param inUseUniqueNames if true then backups should be stored in individual sub-directories ensuring that they can be distinguished e.g. timestamp)
+	 * 
+	 */
+	virtual void SetUseUniqueNames(bool inUseUniqueNames) = 0;
+
+
+	/**
+	 * \brief Checks the setting validity for this instance
+	 */
+	virtual  XBOX::VError CheckValidity()const = 0;
+
+	virtual void ToJSONString(XBOX::VString& outJSON)const = 0; 
+
+	/**
+	 * \brief Converts this instance into a JS object
+	 * \param outObject the resulting object, must be passed empty on entry
+	 * \see FromJSObject() for reslting syntax details
+	 */
+	virtual void ToJSObject(XBOX::VJSObject& outObject)const  = 0;
+};
+
+
+
+
+class CDB4DBaseContext;
+
+/**
+ * \brief Interface for core backup related services
+ * \details This class abstracts the backup processing for a database, in a variety of scenarii.
+ * A backup is configured using backup settings (IBackupSettings) that control where and how backups are
+ * performed.
+ * Each successfull backup produces a backup manifest file which can be used later when restoring a datastore.
+ * Backup manifests are stored along side the backup they describe. All backup manifest file paths are further stored
+ * in a registry file of arbitrary name which parent folder is given by @c IBackupSettings::GetBackupRegistryFolder().
+ */
+class DB4D_API IBackupTool
+{
+public:
+
+	/**
+	 * Enumeration deteermining which item to restore
+	 */
+	typedef enum 
+	{
+		eDataFolder = 0x0001,
+		eDataFile = 0x0002,
+		eJournal = 0x0004
+	} BackupItem;
+
+	IBackupTool(){}
+	virtual ~IBackupTool(){}
+
+	/**
+	 * \brief Converts the designated backup registry into a JS of manifest objects
+	 * \param inBackupRegistryFilePath path to the backup registry file
+	 * \param outManifests the JS array where the registry is stored
+	 * \return true if the operation succeeded.
+	 */
+	virtual bool ConvertBackupRegistryToJsObject(const XBOX::VFilePath& inBackupRegistryFilePath,XBOX::VJSArray& outManifests) = 0;
+
+
+	/**
+	 * \brief Backs up a database and maintains the current journal configuration
+	 * \details This method will backup the current journal if applicable, then it will archive the data.
+	 * If ajournal was used, then after backing up it will be reset and re-activated.
+	 * \param inBase the database to backup
+	 * \param inContext the database context or NULL if not available
+	 * \param inBackupSettings the backup configuration to use for this backup
+	 * \param outManifestFilePath the resulting backup manifest fullpath
+	 * \return true if the backup went fine
+	 * \return false if an error occured in the process
+	 */
+	virtual bool BackupDatabase(CDB4DBase* inBase,CDB4DBaseContext* inContext,const IBackupSettings& inBackupSettings,XBOX::VFilePath* outManifestFilePath,IDB4D_DataToolsIntf* inBackupEventLog) = 0;
+
+	/**
+	 * \brief Backs up a database and change the journal according to settings
+	 * \param inBase the database to backup
+	 * \param inContext the database context or NULL if not available
+	 * \param inBackupSettings the backup configuration to use for this backup
+	 * \param inNextJournalPath the name of the journal to use after the backup has completed. If NULL then journaling *WILL BE DISABLED*.
+	 * \param outManifestFilePath the resulting backup manifest fullpath
+	 * \return true if the backup went fine
+	 * \return false if an error occured in the process
+	 * \see BackupDatabase()
+	 */
+	virtual bool BackupDatabaseAndChangeJournal(CDB4DBase* inBase,CDB4DBaseContext* inContext,const IBackupSettings& inBackupSettings,const XBOX::VFilePath* inNextJournalPath,XBOX::VFilePath* outManifestFilePath,IDB4D_DataToolsIntf* inBackupEventLog) = 0;
+	
+	/**
+	 * \brief Backs up a database without applying journaling-policy changes.
+	 * \param inBase the database to backup
+	 * \param inJournalToArchive an optional path to the journal to archive in this backup
+	 * \param inBackupSettings the backup configuration to use for this backup
+	 * \return true if the backup went fine
+	 * \return false if an error occured in the process
+	 */
+	virtual bool BackupDatabaseAndDontResetJournal(CDB4DBase* inBase,const XBOX::VFilePath& inJournalToArchive,const IBackupSettings& inBackupSettings,XBOX::VFilePath* outManifestFilePath,IDB4D_DataToolsIntf* inBackupEventLog) = 0;
+
+
+	/**
+	 * \brief Backs up a closed database 
+	 * \details This method will backup the database journal (if applicable) and data folder.
+	 * After backup if the database was using a journal, the latter will be reset
+	 * \param inModelFile the database model/structure file 
+	 * \param inDataFile the database data file
+	 * \param inContext the database context or NULL if not available
+	 * \param inBackupSettings the backup configuration to use for this backup
+	 * \param outManifestFilePath the resulting backup manifest fullpath
+	 * \return true if the backup went fine
+	 * \return false if an error occured in the process
+	 */
+	virtual bool BackupClosedDatabase(XBOX::VFile& inModelFile,XBOX::VFile& inDataFile,CDB4DBaseContext* inContext,const IBackupSettings& inBackupSettings,XBOX::VFilePath* outManifestFilePath,IDB4D_DataToolsIntf* inBackupEventLog) = 0;
+
+	/**
+	 * \returns the full path of the folder containing the last backup location	
+	 * \param inBackupSettings settings used for the last backup
+	 * \param outLastBackupLocation on success contains the full path to the folder storing the last backup
+	 * \return VE_OK if everything went fine
+	 * \return VE_FOLDER_NOT_FOUND if the information cannot be retrieved
+	 */
+	virtual XBOX::VError GetLastBackupPath(const IBackupSettings& inBackupSettings,XBOX::VFilePath& outLastBackupLocation) = 0;
+
+	/**
+	 * \brief Restores the data file from a backup archive
+	 * \param inBackupManifestPath the path the backup manifest
+	 * \param inRestoredFilePath the full filepath of the restored file. 
+	 * \param inOverwrite if true then if when any file named @c inRestoredFilePath will be overwritten otherwise the extract will fail
+	 * \param inProgress the progress object to give feedback about the extraction
+	 * \return true if the restoration succeeded return false otherwise
+ 	 */
+	virtual bool RestoreDataFile(const XBOX::VFilePath& inBackupManifestPath,const XBOX::VFilePath& inRestoredFilePath,IDB4D_DataToolsIntf* inProgress,bool inOverwrite) = 0;
+
+	/**
+	 * \brief Restores the data file from a backup archive
+	 * \param inBackupManifestPath the the backup manifest path  
+	 * \param inRestoredDataFolderParentPath Path of the folder where the data folder will be restored 
+	 * \param outRenamedDataFolderPath stores the name of the existing data folder in @inRestoredDataFolderPath, if any.
+	 * \param inProgress the progress object to give feedback about the extraction
+	 * \return true if the restoration succeeded return false otherwise
+	 * Example
+	 * <pre>
+	 * VFilePath folder;
+	 * folder.FromFullPath(CVSTR("c:/MyProject/"));
+	 * backupTool->RestoreDataFolder(myManifest,folder,renamed,NULL);
+	 * 
+	 * Will create the following:
+	 * c:/
+	 * |-MyProject
+	 * |     |-DataFolder                                <--- this is the restored data folder
+	 * |     |    |-data.waData
+	 * |     |    |-index.waIndex
+	 * |     |
+	 * |     |-DataFolder_REPLACED_2012-12-25_09-36-23   <--- that was the pre-existing data folder, renamed and returned in outRenamedDataFolderPath
+	 * |     |    |-data.waData
+	 * |     |    |-index.waIndex
+	 * </pre>
+ 	 */
+	virtual bool RestoreDataFolder(const XBOX::VFilePath& inBackupManifestPath,const XBOX::VFilePath& inRestoredDataFolderParentPath,XBOX::VFilePath& outRenamedDataFolderPath,IDB4D_DataToolsIntf* inProgress) = 0;
+
+};
 
 // ----------  [12/4/2008 LR]
 // ce code est amene a disparaitre : L.R le 4 dec 2008
@@ -863,6 +1135,7 @@ class CDB4DSelection;
 class CDB4DRecord;
 class CDB4DComplexQuery;
 class CDB4DJournalParser;
+class IBackupSettings;
 
 typedef void* (*GetCurrentSelectionFromContextMethod) (void* inContext, sLONG tablenum);
 typedef CDB4DRecord* (*GetCurrentRecordFromContextMethod) (void* inContext, sLONG tablenum);
@@ -874,6 +1147,12 @@ public:
 
 	virtual void __test(const XBOX::VString& command) = 0;
 
+	virtual IBackupSettings* CreateBackupSettings() = 0;
+
+	virtual IBackupTool* CreateBackupTool() = 0;
+
+	virtual XBOX::VError GetJournalInfos(const XBOX::VFilePath& inDataFilePath,XBOX::VFilePath& journalPath,XBOX::VUUID& journalDataLink) = 0;
+
 	virtual DB4DNetworkManager* CreateRemoteTCPSession(const XBOX::VString& inServerName, sWORD inPortNum, VErrorDB4D& outerr, bool inSSL = false) = 0;
 
 	virtual CDB4DBase* OpenRemoteBase( CDB4DBase* inLocalDB, const XBOX::VUUID& inBaseID, VErrorDB4D& outErr, DB4DNetworkManager *inLegacyNetworkManager, CUAGDirectory* inUAGDirectory = nil) = 0;
@@ -883,7 +1162,12 @@ public:
 
 	virtual CDB4DBase* OpenRemoteBase( CDB4DBase* inLocalDB, const XBOX::VString& inBaseName, VErrorDB4D& outErr, DB4DNetworkManager* inNetworkManager = nil, CUAGDirectory* inUAGDirectory = nil) = 0;
 
+
+
+
 	virtual void* GetComponentLibrary() const = 0;
+
+	
 
 	/*!
 		@function	CreateBase
@@ -895,7 +1179,8 @@ public:
 		@param	inStructureFile location of the structure file (must not already exist).
 	*/
 	virtual CDB4DBase* CreateBase( const XBOX::VFile& inStructureFile, sLONG inParameters, XBOX::VIntlMgr* inIntlMgr, VErrorDB4D* outErr = nil, 
-									XBOX::FileAccess inAccess = XBOX::FA_READ_WRITE, const XBOX::VUUID* inChosenID = nil, XBOX::VString* EntityFileExt = nil, CUAGDirectory* inUAGDirectory = nil) = 0;
+									XBOX::FileAccess inAccess = XBOX::FA_READ_WRITE, const XBOX::VUUID* inChosenID = nil, XBOX::VString* EntityFileExt = nil,
+									CUAGDirectory* inUAGDirectory = nil, const XBOX::VFile* inPermissionsFile = nil) = 0;
 
 
 	/*!
@@ -909,11 +1194,11 @@ public:
 		@param	inStructureFile location of the structure file (must exist).
 	*/
 	virtual CDB4DBase* OpenBase( const XBOX::VFile& inStructureFile, sLONG inParameters, VErrorDB4D* outErr = nil, 
-									XBOX::FileAccess inAccess = XBOX::FA_READ_WRITE, XBOX::VString* EntityFileExt = nil, CUAGDirectory* inUAGDirectory = nil) = 0;
+		XBOX::FileAccess inAccess = XBOX::FA_READ_WRITE, XBOX::VString* EntityFileExt = nil, CUAGDirectory* inUAGDirectory = nil, const XBOX::VFile* inPermissionsFile = nil) = 0;
 
 
 	virtual CDB4DBase* OpenBase( const XBOX::VString& inXMLContent, sLONG inParameters, XBOX::VError* outErr, const XBOX::VFilePath& inXMLPath, 
-									XBOX::unordered_map_VString<XBOX::VRefPtr<XBOX::VFile> >* outIncludedFiles = nil) = 0;
+									XBOX::unordered_map_VString<XBOX::VRefPtr<XBOX::VFile> >* outIncludedFiles = nil, const XBOX::VFile* inPermissionsFile = nil) = 0;
 
 
 
@@ -1123,6 +1408,7 @@ public:
 
 	// Attach the base context owner (the db4d context) to the JavaScript context and append the "db" and "ds" properties to the global object (4D language context need)
 	virtual	void				InitializeJSGlobalObject( XBOX::VJSGlobalContext *inJSContext, CDB4DBaseContext *inBaseContext) = 0;
+	
 	// Attach the DB4D context to the JavaScript context
 	virtual	void				InitializeJSContext( XBOX::VJSGlobalContext *inContext, CDB4DContext *inDB4DContext) = 0;
 	// Remove private attachments according to the attached DB4D context and detach the DB4D context
@@ -1137,6 +1423,7 @@ public:
 
 	virtual	XBOX::VJSObject		CreateJSDatabaseObject( const XBOX::VJSContext& inContext, CDB4DBaseContext *inBaseContext) = 0;
 	virtual	XBOX::VJSObject		CreateJSEMObject( const XBOX::VString& emName, const XBOX::VJSContext& inContext, CDB4DBaseContext *inBaseContext) = 0;
+	virtual XBOX::VJSObject		CreateJSBackupSettings(const XBOX::VJSContext& inContext,IBackupSettings* retainedBackupSettings) = 0;
 	virtual	void				PutAllEmsInGlobalObject(XBOX::VJSObject& globalObject, CDB4DBaseContext *inBaseContext) = 0;
 
 	virtual void SetLimitPerSort(XBOX::VSize inLimit) = 0;
@@ -1180,6 +1467,11 @@ public:
 	virtual IDB4D_DataToolsIntf* CreateJSDataToolsIntf(XBOX::VJSContext& jscontext, XBOX::VJSObject& paramObj) = 0;
 
 	virtual XBOX::VError EraseDataStore(XBOX::VFile* dataDS) = 0;
+	
+	/*		
+		Call AddRestRequestHandler() to initialize the REST requests handler for the HTTP Server project. inBase can be NULL.
+	*/
+	virtual IHTTPRequestHandler*	AddRestRequestHandler( VErrorDB4D& outError, CDB4DBase *inBase, IHTTPServerProject *inHTTPServerProject, RIApplicationRef inApplicationRef, const XBOX::VString& inPattern, bool inEnabled) = 0;
 };
 
 
@@ -1234,6 +1526,8 @@ public:
 	virtual void GetBasePath( XBOX::VFilePath& outPath, CDB4DBaseContextPtr inContext = NULL) const = 0; // this may be the folder for temp files in c/s or the first data segment path
 	virtual XBOX::VValueBag *CreateDefinition( bool inWithTables, bool inWithIndices, bool inWithRelations, CDB4DBaseContextPtr inContext = NULL) const = 0;
 
+	virtual const IBackupSettings* RetainBackupSettings()= 0;
+	virtual void  SetRetainedBackupSettings(IBackupSettings* inSettings) = 0;
 
 	virtual Boolean IsDataOpened(CDB4DBaseContextPtr inContext = NULL) const = 0;
 	virtual Boolean OpenDefaultData( Boolean inCreateItIfNotFound, sLONG inParameters, CDB4DBaseContextPtr inContext = NULL, 
@@ -1379,7 +1673,9 @@ public:
 	virtual XBOX::VFile* RetainJournalFile(CDB4DBaseContextPtr inContext = NULL) = 0;
 	virtual bool GetJournalUUIDLink( XBOX::VUUID &outLink ) = 0;
 	virtual void GetJournalInfos( const XBOX::VFilePath &inDataFilePath, XBOX::VFilePath &outFilePath, XBOX::VUUID &outDataLink) = 0;
+	virtual VErrorDB4D CreateJournal( XBOX::VFile *inFile, XBOX::VUUID *inDataLink, bool inWriteOpenDataOperation = true ) = 0;
 	virtual VErrorDB4D OpenJournal( XBOX::VFile *inFile, XBOX::VUUID &inDataLink, bool inWriteOpenDataOperation = true ) = 0;
+	
 
 	virtual const XBOX::VValueBag* RetainExtraProperties(VErrorDB4D &err, CDB4DBaseContextPtr inContext = NULL) = 0;
 	virtual VErrorDB4D SetExtraProperties(XBOX::VValueBag* inExtraProperties, CDB4DBaseContextPtr inContext = NULL) = 0;
@@ -2497,6 +2793,10 @@ public:
 	virtual void WhoLockedIt(DB4D_KindOfLock& outLockType, const XBOX::VValueBag **outLockingContextRetainedExtraData) const = 0;
 
 	virtual sLONG8 GetSequenceNumber() = 0;
+	
+	// move the sequence number from this record to destination record.
+	// if this record previously had a sequence number, it is unvalidated first.
+	virtual	void	TransferSequenceNumber( CDB4DRecord *inDestination) = 0;
 
 	virtual VErrorDB4D FillAllFieldsEmpty() = 0;
 
@@ -3204,8 +3504,8 @@ class CDB4DEntityModel : public XBOX::CComponent
 		virtual CDB4DSelection* Query( const XBOX::VString& inQuery, CDB4DBaseContext* inContext, VErrorDB4D& err, const XBOX::VValueSingle* param1 = nil, const XBOX::VValueSingle* param2 = nil, const XBOX::VValueSingle* param3 = nil) = 0;
 		virtual CDB4DEntityRecord* Find(const XBOX::VString& inQuery, CDB4DBaseContext* inContext, VErrorDB4D& err, const XBOX::VValueSingle* param1 = nil, const XBOX::VValueSingle* param2 = nil, const XBOX::VValueSingle* param3 = nil) = 0;
 
-		virtual VErrorDB4D SetPermission(DB4D_EM_Perm inPerm, const XBOX::VUUID& inGroupID) = 0;
-		virtual VErrorDB4D GetPermission(DB4D_EM_Perm inPerm, XBOX::VUUID& outGroupID) const = 0 ;
+		virtual VErrorDB4D SetPermission(DB4D_EM_Perm inPerm, const XBOX::VUUID& inGroupID, bool forced) = 0;
+		virtual VErrorDB4D GetPermission(DB4D_EM_Perm inPerm, XBOX::VUUID& outGroupID, bool& forced) const = 0 ;
 
 		virtual bool PermissionMatch(DB4D_EM_Perm inPerm, CUAGSession* inSession) const = 0;
 
@@ -3820,6 +4120,17 @@ const VErrorDB4D	VE_DB4D_INTEGRATE_JOURNAL_FAILED_AT	= MAKE_VERROR(CDB4DManager:
 const VErrorDB4D	VE_DB4D_JS_NOT_ALLOWED_IN_THAT_QUERY	= MAKE_VERROR(CDB4DManager::Component_Type, 1278);
 
 
+/* Backup related errors */
+const VErrorDB4D	VE_DB4D_BACKUP_FOLDER_INVALID	  = MAKE_VERROR(CDB4DManager::Component_Type, 3000);
+const VErrorDB4D	VE_DB4D_BACKUP_FOLDER_NOT_FOUND   = MAKE_VERROR(CDB4DManager::Component_Type, 3001);
+const VErrorDB4D	VE_DB4D_BACKUP_CANNOT_BACKUP_JOURNAL = MAKE_VERROR(CDB4DManager::Component_Type, 3002);
+const VErrorDB4D	VE_DB4D_BACKUP_CANNOT_RESTORE_JOURNAL = MAKE_VERROR(CDB4DManager::Component_Type, 3003);
+const VErrorDB4D	VE_DB4D_BACKUP_CANNOT_BACKUP_ITEM = MAKE_VERROR(CDB4DManager::Component_Type, 3004);
+
+
+
+
+
            /* -------------------------------------- */
 
 typedef enum { DBaction_SavingRecord, DBaction_LoadingRecord, DBaction_DeletingRecord, DBaction_UpdatingRecord, 
@@ -4141,6 +4452,7 @@ namespace d4
 	EXTERN_BAGKEY(group);
 	EXTERN_BAGKEY(groupID);
 	EXTERN_BAGKEY(resource);
+	EXTERN_BAGKEY(temporaryForcePermissions);
 	EXTERN_BAGKEY(entityModelPerm);
 	EXTERN_BAGKEY(read);
 	EXTERN_BAGKEY(update);

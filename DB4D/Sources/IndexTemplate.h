@@ -1433,7 +1433,7 @@ class IndexIterator
 		{
 			if (val2.cle == val.cle)
 			{
-				if (val.qui = val2.qui)
+				if (val.qui == val2.qui)
 					return CR_EQUAL;
 				else
 					return val.qui < val2.qui ? CR_SMALLER : CR_BIGGER;

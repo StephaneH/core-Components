@@ -5,7 +5,7 @@
 	Name="Component - UsersAndGroups"
 	ProjectGUID="{A8671F78-018E-4EC3-99A4-DF048A96905A}"
 	RootNamespace="Component - UsersAndGroups"
-	SccProjectName="&quot;//depot/Components/WAK2/UsersAndGroups&quot;"
+	SccProjectName="&quot;//depot/Components/Main/UsersAndGroups&quot;"
 	SccLocalPath="..\.."
 	SccProvider="MSSCCI:Perforce SCM"
 	Keyword="Win32Proj"

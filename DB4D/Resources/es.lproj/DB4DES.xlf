@@ -1429,8 +1429,8 @@
           <target>El nombre del método "{Param1}" es desconocido</target>
         </trans-unit>
         <trans-unit resname="ERR_dbmg_1574" id="574">
-          <source>Attribute {Param1} doest not have the right kind</source>
-          <target>El tipo del atributo {Param1} no es correcto</target>
+          <source>Attribute {EntityAttributeName} does not have the right kind</source>
+          <target>El tipo del atributo {EntityAttributeName} no es correcto</target>
         </trans-unit>
         <trans-unit resname="ERR_dbmg_1575" id="575">
           <source></source>
@@ -1489,33 +1489,33 @@
           <target>El atributo de entidad "{Param1}" está duplicado</target>
         </trans-unit>
 		 <trans-unit resname="ERR_dbmg_1589" id="589">
-          <source>Attribute "{Param1}" is from another datastore class"</source>
-          <target>El atributo "{Param1}" es de otra clase de datos"</target>
+          <source>Attribute "{Param1}" is from another datastore class</source>
+          <target>El atributo "{Param1}" es de otra clase de datos</target>
         </trans-unit>
         
         <trans-unit resname="ERR_dbmg_1800" id="800">
-          <source>datastore class "{p1}" cannot be found</source>
-          <target>no se encontró el modelo de entidad "{p1}"</target>
+          <source>datastore class "{Param1}" cannot be found</source>
+          <target>no se encontró el modelo de entidad "{Param1}"</target>
         </trans-unit>
         <trans-unit resname="ERR_dbmg_1801" id="801">
-          <source>Format "{p1}" is not supported</source>
-          <target>El formato "{p1}" no se soporta</target>
+          <source>Format "{Param1}" is not supported</source>
+          <target>El formato "{Param1}" no se soporta</target>
         </trans-unit>
         <trans-unit resname="ERR_dbmg_1802" id="802">
-          <source>EntitySet "{p1}" cannot be found</source>
-          <target>ConjuntoEntidad "{p1}" no se encontró</target>
+          <source>EntitySet "{Param1}" cannot be found</source>
+          <target>ConjuntoEntidad "{Param1}" no se encontró</target>
         </trans-unit>
         <trans-unit resname="ERR_dbmg_1803" id="803">
-          <source>EntitySet "{p1}" does not belong to the datastore class "{p2}"</source>
-          <target>ConjuntoEntidad "{p1}" no pertenece al modelo de entidad "{p2}"</target>
+          <source>EntitySet "{Param1}" does not belong to the datastore class "{Param2}"</source>
+          <target>ConjuntoEntidad "{Param1}" no pertenece al modelo de entidad "{Param2}"</target>
         </trans-unit>
         <trans-unit resname="ERR_dbmg_1804" id="804">
-          <source>Cannot completely build a list of attributes with "{p1}" for the datastore class "{p2}"</source>
-          <target>No es posible crear completamente una lista de atributos con "{p1}" para el modelo de entidad "{p2}"</target>
+          <source>Cannot completely build a list of attributes with "{Param1}" for the datastore class "{Param2}"</source>
+          <target>No es posible crear completamente una lista de atributos con "{Param1}" para el modelo de entidad "{Param2}"</target>
         </trans-unit>
         <trans-unit resname="ERR_dbmg_1805" id="805">
-          <source>Cannot completely build a list of expanded attributes with "{p1}" for the datastore class "{p2}"</source>
-          <target>No se puede crear por completo una lista de atributos extendidos con "{p1}" para el modelo de entidad  "{p2}"</target>
+          <source>Cannot completely build a list of expanded attributes with "{Param1}" for the datastore class "{Param2}"</source>
+          <target>No se puede crear por completo una lista de atributos extendidos con "{Param1}" para el modelo de entidad  "{Param2}"</target>
         </trans-unit>
         <trans-unit resname="ERR_dbmg_1806" id="806">
           <source>URL is not well formed</source>
@@ -1534,20 +1534,20 @@
           <target>Falta la comilla doble de cierre correspondiente en el URL</target>
         </trans-unit>
         <trans-unit resname="ERR_dbmg_1810" id="810">
-          <source>Cannot order by "{p1}" for the datastore class "{p2}"</source>
-          <target>No es posible ordenar por "{p1}" para el  modelo de entidad "{p2}"</target>
+          <source>Cannot order by "{Param1}" for the datastore class "{Param2}"</source>
+          <target>No es posible ordenar por "{Param1}" para el  modelo de entidad "{Param2}"</target>
         </trans-unit>
         <trans-unit id="811" resname="ERR_dbmg_1811">
-          <source>"{p1}" is an unknown REST keyword</source>
-          <target>"{p1}" es una palabra clave REST desconocida</target>
+          <source>"{Param1}" is an unknown REST keyword</source>
+          <target>"{Param1}" es una palabra clave REST desconocida</target>
         </trans-unit>
         <trans-unit id="812" resname="ERR_dbmg_1812">
-          <source>"{p1}" is an unknown REST method</source>
-          <target>"{p1}" es un método REST desconocido</target>
+          <source>"{Param1}" is an unknown REST method</source>
+          <target>"{Param1}" es un método REST desconocido</target>
         </trans-unit>
         <trans-unit id="813" resname="ERR_dbmg_1813">
-          <source>"{p1}" REST method is not applicable here</source>
-          <target>"{p1}" El método REST no es aplicable aquí</target>
+          <source>"{Param1}" REST method is not applicable here</source>
+          <target>"{Param1}" El método REST no es aplicable aquí</target>
         </trans-unit>
       </group>
             
@@ -2215,8 +2215,7 @@
         </trans-unit>
         <trans-unit id="23">
           <source>Problem on page address directory # {IndexPageAddressTable} in {IndexName} index</source>
-          <target>Problema en el directorio de direcciones de páginas # {IndexPageAddressTable}
-		  en el índice {IndexName}</target>
+          <target>Problema en el directorio de direcciones de páginas # {IndexPageAddressTable} en el índice {IndexName}</target>
         </trans-unit>
         <trans-unit id="24">
           <source>Problem on page # {IndexPageNum} in {IndexName} index</source>

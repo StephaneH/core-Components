@@ -129,11 +129,21 @@ class UAGDirectory : public VComponentImp<CUAGDirectory>
 			return fContext;
 		}
 
+		inline const VUUIDBuffer& GetAdminID() const
+		{
+			return fAdminGroupID;
+		}
+
+		inline const VUUIDBuffer& GetDebugID() const
+		{
+			return fDebugGroupID;
+		}
+
 		bool TakenByListener(const VString& inUserName, const VString& inPassword, VError& err, UAGSession* &session, VJSContext* inJSContext);
 		virtual CUAGSession* OpenSession(const VString& inUserName, const VString& inPassword, VError* outErr = nil, VJSContext* inJSContext = nil);
 		virtual CUAGSession* OpenSession(const VString& inUserAtRealm, VError* outErr = nil, VJSContext* inJSContext = nil);
 		virtual CUAGSession* OpenSession(CUAGUser* inUser, VError* outErr = nil, VJSContext* inJSContext = nil);
-		virtual CUAGSession* MakeDefaultSession(VError* outErr = nil, VJSContext* inJSContext = nil);
+		virtual CUAGSession* MakeDefaultSession(VError* outErr = nil, VJSContext* inJSContext = nil,bool fromLogout = false);
 
 		virtual	XBOX::VJSObject	CreateJSDirectoryObject( const XBOX::VJSContext& inContext);
 
@@ -147,6 +157,14 @@ class UAGDirectory : public VComponentImp<CUAGDirectory>
 			outListenerRef = fLoginListener;
 			return VE_OK;
 		}
+
+		virtual bool HasLoginListener()
+		{
+			return !fLoginListener.IsEmpty();
+		}
+
+		virtual bool NoAdmin();
+		virtual void ComputeNoAdmin();
 
 		VJSSessionStorageObject* RetainUserStorage(const VUUID& inID);
 		void DropUserStorage(const VUUID& inID);
@@ -174,6 +192,12 @@ class UAGDirectory : public VComponentImp<CUAGDirectory>
 
 		StorageMap fUserStorages;
 		VCriticalSection fUserStoragesMutex;
+
+		VUUIDBuffer fAdminGroupID;
+		VUUIDBuffer fDebugGroupID;
+
+
+		bool fNoAdmin;
 };
 
 

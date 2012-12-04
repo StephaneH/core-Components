@@ -67,6 +67,64 @@ namespace NSHTTPServer
 //--------------------------------------------------------------------------------------------------
 
 
+struct ConnectionListenerFunctor
+{
+	ConnectionListenerFunctor (const VHTTPServerProjectSettings *inSettings)
+	: fSettings (inSettings)
+	{
+	}
+
+	bool operator() (const VHTTPConnectionListener *inConnectionListener) const
+	{
+		assert (NULL != inConnectionListener);
+
+		VHTTPConnectionListener *listener = const_cast<VHTTPConnectionListener *>(inConnectionListener);
+
+		if (listener->GetListeningIP() == fSettings->GetListeningAddress() &&
+			listener->GetPort() == fSettings->GetListeningPort() &&
+			listener->IsSSLEnabled() == fSettings->GetAllowSSL() &&
+			listener->GetSSLPort() == fSettings->GetListeningSSLPort())
+			return true;
+		else
+			return false;
+	}
+
+private:
+	const VHTTPServerProjectSettings *	fSettings;
+};
+
+
+struct HTTPServerProjectFunctor
+{
+	HTTPServerProjectFunctor (const IHTTPServerProjectSettings *inProjectSettings)
+		: fSettings (inProjectSettings)
+	{
+	}
+
+	bool operator() (const IHTTPServerProject *inProject) const
+	{
+		assert (NULL != inProject);
+
+		const IHTTPServerProjectSettings *settings = inProject->GetSettings();
+
+		/*
+			Project's are considered as identical when they use the same Port (or SSL port) and use the same hostname...
+		*/
+		if ((settings->GetListeningPort() == fSettings->GetListeningPort() || (settings->GetAllowSSL() && fSettings->GetAllowSSL() && settings->GetListeningSSLPort() == fSettings->GetListeningSSLPort())) &&
+			HTTPServerTools::EqualASCIIVString (settings->GetHostName(), fSettings->GetHostName()))
+			return true;
+		else
+			return false;
+	}
+
+private:
+	const IHTTPServerProjectSettings *	fSettings;
+};
+
+
+//--------------------------------------------------------------------------------------------------
+
+
 VHTTPServer::VHTTPServer ()
 : fServerNet (NULL)
 , fRequestLogger (NULL)
@@ -75,26 +133,14 @@ VHTTPServer::VHTTPServer ()
 , fHTTPServerProjects()
 , fConnectionListenersLock()
 , fHTTPServerProjectsLock()
-#if HTTP_SERVER_GLOBAL_CACHE
 , fCacheManager (NULL)
-#endif
-#if HTTP_SERVER_GLOBAL_SETTINGS
-, fSettings (NULL) 
-#endif
 {
 	fVirtualHostManager = new VVirtualHostManager();
 	if (testAssert (NULL != fVirtualHostManager))
 		fVirtualHostManager->Notify_DidStart();
 
 	fServerNet = new VTCPServer();
-
-#if HTTP_SERVER_GLOBAL_CACHE
 	fCacheManager = new VCacheManager();
-#endif
-
-#if HTTP_SERVER_GLOBAL_SETTINGS
-	fSettings = new VHTTPServerSettings(); 
-#endif
 }
 
 
@@ -104,16 +150,8 @@ VHTTPServer::~VHTTPServer()
 
 	fServerNet->Stop();
 	XBOX::ReleaseRefCountable (&fServerNet);
-
 	XBOX::ReleaseRefCountable (&fVirtualHostManager);
-
-#if HTTP_SERVER_GLOBAL_CACHE
 	XBOX::ReleaseRefCountable (&fCacheManager);
-#endif
-
-#if HTTP_SERVER_GLOBAL_SETTINGS
-	XBOX::ReleaseRefCountable (&fSettings);
-#endif
 
 	fRequestLogger = NULL;
 
@@ -203,10 +241,8 @@ IHTTPServerProject *VHTTPServer::NewHTTPServerProject (const XBOX::VValueBag *in
 			AppendHTTPServerProject (result);
 	}
 
-#if HTTP_SERVER_GLOBAL_CACHE
 	if (NULL != fCacheManager)
 		fCacheManager->LoadRulesFromBag (inSettings);
-#endif
 
 	return result;
 }
@@ -248,7 +284,7 @@ XBOX::VError VHTTPServer::AppendHTTPServerProject (IHTTPServerProject *inHTTPSer
 
 	XBOX::VTaskLock							locker (&fHTTPServerProjectsLock);
 	XBOX::VRefPtr<IHTTPServerProject>		serverProject = inHTTPServerProject;
-	VectorOfHTTPServerProjects::iterator	foundProject = std::find (fHTTPServerProjects.begin(), fHTTPServerProjects.end(), serverProject);
+	VectorOfHTTPServerProjects::iterator	foundProject = std::find_if (fHTTPServerProjects.begin(), fHTTPServerProjects.end(), HTTPServerProjectFunctor (inHTTPServerProject->GetSettings()));
 
 	if (foundProject == fHTTPServerProjects.end())
 	{
@@ -256,7 +292,7 @@ XBOX::VError VHTTPServer::AppendHTTPServerProject (IHTTPServerProject *inHTTPSer
 	}
 	else
 	{
-		return VE_HTTP_SERVER_PROJECT_ALREADY_EXIST;
+		return VHTTPServer::ThrowError (VE_HTTP_SERVER_PROJECT_ALREADY_EXIST, STRING_EMPTY);
 	}
 
 	return XBOX::VE_OK;
@@ -288,33 +324,6 @@ XBOX::VFolder *VHTTPServer::_RetainApplicationPackageContentFolder() const
 
 	return folder;
 }
-
-
-struct ConnectionListenerFunctor
-{
-	ConnectionListenerFunctor (const VHTTPServerProjectSettings *inSettings)
-	: fSettings (inSettings)
-	{
-	}
-
-	bool operator() (const VHTTPConnectionListener *inConnectionListener) const
-	{
-		assert (NULL != inConnectionListener);
-
-		VHTTPConnectionListener *listener = const_cast<VHTTPConnectionListener *>(inConnectionListener);
-
-		if (listener->GetListeningIP() == fSettings->GetListeningAddress() &&
-			listener->GetPort() == fSettings->GetListeningPort() &&
-			listener->IsSSLEnabled() == fSettings->GetAllowSSL() &&
-			listener->GetSSLPort() == fSettings->GetListeningSSLPort())
-			return true;
-		else
-			return false;
-	}
-
-private:
-	const VHTTPServerProjectSettings *	fSettings;
-};
 
 
 IConnectionListener *VHTTPServer::FindConnectionListener (const VHTTPServerProjectSettings *inSettings)
@@ -362,13 +371,14 @@ IConnectionListener *VHTTPServer::CreateConnectionListener (const VHTTPServerPro
 			{
 				if (inSettings->GetSSLCertificatesFolderPath().IsValid())
 				{
-					XBOX::VString certPath;
-					XBOX::VString keyPath;
+					XBOX::VFilePath certPath;
+					XBOX::VFilePath keyPath;
 
 					_BuildCertificatesFilePathes (inSettings->GetSSLCertificatesFolderPath(), certPath, keyPath);
 
 					XBOX::VFile certFile (certPath);
 					XBOX::VFile keyFile (keyPath);
+					
 					if (certFile.Exists() && keyFile.Exists())
 						connectionListener->SetSSLCertificatePaths (certPath, keyPath);
 					else
@@ -560,27 +570,16 @@ void VHTTPServer::LocalizeErrorMessage (const XBOX::VError inErrorCode, XBOX::VS
 }
 
 
-void VHTTPServer::_BuildCertificatesFilePathes (const XBOX::VFilePath& inPath, XBOX::VString& outCertFilePath, XBOX::VString& outKeyFilePath)
+void VHTTPServer::_BuildCertificatesFilePathes (const XBOX::VFilePath& inPath, XBOX::VFilePath& outCertFilePath, XBOX::VFilePath& outKeyFilePath)
 {
-	outCertFilePath.Clear();
-	outKeyFilePath.Clear();
-
 	XBOX::VFilePath path (inPath);
 
 	path.SetFileName (STRING_CERT_FILE_NAME);
-	path.GetPath (outCertFilePath);
+	outCertFilePath=path;
 
 	path.SetFileName (STRING_KEY_FILE_NAME);
-	path.GetPath (outKeyFilePath);
+	outKeyFilePath=path;
 }
-
-
-#if HTTP_SERVER_GLOBAL_SETTINGS
-IHTTPServerSettings *VHTTPServer::GetSettings() const
-{
-	return fSettings; 
-}
-#endif
 
 
 bool VHTTPServer::EqualASCIIVString (const XBOX::VString& inString1, const XBOX::VString& inString2, bool isCaseSensitive)
@@ -654,4 +653,15 @@ bool VHTTPServer::IsMimeTypeParsable (const XBOX::VString& inContentType)
 MimeTypeKind VHTTPServer::GetMimeTypeKind (const XBOX::VString& inContentType)
 {
 	return VMimeTypeManager::GetMimeTypeKind (inContentType);
+}
+
+
+bool VHTTPServer::CheckProjectSanity (const VHTTPServerProjectSettings *inSettings)
+{
+	XBOX::VTaskLock	locker (&fHTTPServerProjectsLock);
+
+	if (std::count_if (fHTTPServerProjects.begin(), fHTTPServerProjects.end(), HTTPServerProjectFunctor (inSettings)) > 1)
+		return false;
+
+	return true;
 }

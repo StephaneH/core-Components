@@ -13,8 +13,10 @@
 * Consequently, no title, copyright or other proprietary rights
 * other than those specified in the applicable license is granted.
 */
+
 #include "SecurityManager.h"
 #include "UsersAndGroups/Sources/UsersAndGroups.h"
+#include "JavaScript/VJavaScript.h"
 
 #if WITH_KERBEROS
 	#include "gssapi.h"
@@ -175,7 +177,7 @@ XBOX::VError VSecurityManager::ValidateUserGroup (const XBOX::VString& inUserNam
 */
 
 //Returns True/False and a valid/unchanged token on authentication success/failure.
-XBOX::VError VSecurityManager::ValidateBasicAuthentication(const XBOX::VString& inName, const XBOX::VString& inPassword, bool* outAuthOk, CUAGSession* &outUAGSession)
+XBOX::VError VSecurityManager::ValidateBasicAuthentication(const XBOX::VString& inName, const XBOX::VString& inPassword, bool* outAuthOk, CUAGSession* &outUAGSession, XBOX::VJSGlobalContext* inContext)
 {
     *outAuthOk=false;
 	outUAGSession = NULL;
@@ -196,7 +198,16 @@ XBOX::VError VSecurityManager::ValidateBasicAuthentication(const XBOX::VString& 
 		//      le popup et on ne repercute pas /l'erreur/.
 
 		XBOX::VTask::GetCurrent()->GetDebugContext().DisableUI();
-		session=fUAGDirectory->OpenSession(inName, inPassword, &rv);
+		if (inContext != NULL)
+		{
+			// sc 22/06/2012, custom JavaScript authentication support
+			XBOX::VJSContext jsContext( inContext);
+			session=fUAGDirectory->OpenSession( inName, inPassword, &rv, &jsContext);
+		}
+		else
+		{
+			session=fUAGDirectory->OpenSession(inName, inPassword, &rv, NULL);
+		}
 		XBOX::VTask::GetCurrent()->GetDebugContext().EnableUI();
 
 		if(session)
@@ -231,7 +242,8 @@ XBOX::VError VSecurityManager::ValidateDigestAuthentication (	const XBOX::VStrin
 																const XBOX::VString& inMethod,
 																const XBOX::VString& inChallenge,
 																bool *outAuthOk,
-																CUAGSession* &outUAGSession)
+																CUAGSession* &outUAGSession,
+																XBOX::VJSGlobalContext* inContext)
 {
 	//jmo - FIX ME : pour l'instant le realm est codŽ en dur dans le reste de Wakanda ! 
 	//				 (et le realm reu ici, "Digest Realm", ne correspond pas)
@@ -305,7 +317,16 @@ XBOX::VError VSecurityManager::ValidateDigestAuthentication (	const XBOX::VStrin
 				}
 				*/
 
-				outUAGSession = fUAGDirectory->OpenSession(user, &error);
+				if (inContext != NULL)
+				{
+					// sc 22/06/2012, custom JavaScript authentication support
+					XBOX::VJSContext jsContext( inContext);
+					outUAGSession = fUAGDirectory->OpenSession(user, &error, &jsContext);
+				}
+				else
+				{
+					outUAGSession = fUAGDirectory->OpenSession(user, &error, NULL);
+				}
 
 				*outAuthOk = true;
 			}

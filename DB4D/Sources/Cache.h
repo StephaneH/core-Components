@@ -13,6 +13,7 @@
 * Consequently, no title, copyright or other proprietary rights
 * other than those specified in the applicable license is granted.
 */
+#ifndef __CACHE__
 #define __CACHE__
 
 #include <map>
@@ -366,3 +367,5 @@ inline bool operator==(const cache_allocator<T>&, const cache_allocator<U>){retu
 
 template <typename T, typename U>
 inline bool operator!=(const cache_allocator<T>&, const cache_allocator<U>){return false;}
+
+#endif

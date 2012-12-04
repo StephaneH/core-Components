@@ -225,7 +225,7 @@ void VHTTPServerComponentLibrary::DoRegister()
 #if 0
 	const XBOX::VString	SAMPLE_REQUEST_FILE (CVSTR ("E:\\VCS\\depot\\Components\\Main\\HTTPServer\\SampleRequest.txt"));
 	VHTTPRequest		request;
-	VHTMLForm			htmlForm;
+	VMIMEMessage		htmlForm;
 	XBOX::VFile			file (SAMPLE_REQUEST_FILE);
 	XBOX::VFileStream	fileStream (&file);
 	XBOX::VError		error = request.ReadFromStream (fileStream);

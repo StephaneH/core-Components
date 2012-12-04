@@ -384,17 +384,17 @@ sLONG VHTTPServerLog::_BackgroundFlushLog (XBOX::VTask *inTask)
 
 void VHTTPServerLog::_StartBackgroundLogFlusher()
 {
-	if (NULL == fBackgroundFlusherTask)
+	if (fBackgroundFlusherAccessLock.Lock())
 	{
-		if (fBackgroundFlusherAccessLock.Lock())
+		if (NULL == fBackgroundFlusherTask)
 		{
 			fBackgroundFlusherTask = new XBOX::VTask (this, 0, XBOX::eTaskStylePreemptive, &_BackgroundFlushLog);
 			fBackgroundFlusherTask->SetName (CVSTR ("HTTP Server Log Flush"));
 			fBackgroundFlusherTask->SetKindData ((sLONG_PTR)this);
 			fBackgroundFlusherTask->Run();
 
-			fBackgroundFlusherAccessLock.Unlock();
 		}
+		fBackgroundFlusherAccessLock.Unlock();
 	}
 }
 
@@ -777,7 +777,8 @@ XBOX::VError VHTTPServerLog::_WriteCLF_DLF (const IHTTPResponse& inHTTPResponse)
 	time.FromSystemTime();
 
 	// Client IP address
-	HTTPServerTools::MakeIPv4String (inHTTPResponse.GetIPv4(), string);
+	string.FromString (inHTTPResponse.GetRequest().GetPeerIP());
+	
 	fRequestsBuffer.AppendString (string);
 	fRequestsBuffer.AppendUniChar (CHAR_SPACE);
 	
@@ -895,16 +896,14 @@ XBOX::VError VHTTPServerLog::_WriteWLF_ELF (const IHTTPResponse& inHTTPResponse)
 				break;
 
 			case LOG_TOKEN_ELF_S_IP:
-				string.Clear();
-				HTTPServerTools::MakeIPv4String (inHTTPResponse.GetIPv4(), string);
+				string.FromString (inHTTPResponse.GetRequest().GetPeerIP());
 				fRequestsBuffer.AppendString (string);
 				break;
 
 			case LOG_TOKEN_HOST_NAME:	//	= C_DNS .....
 			case LOG_TOKEN_ELF_C_DNS:	//	DNS lookup : tres couteux en perf : remplacé par l'IP du client (les analyseurs de log font le DNS lookup)...
 			case LOG_TOKEN_ELF_C_IP:	//	Client IP Address 192.0.1.3
-				string.Clear();
-				HTTPServerTools::MakeIPv4String (inHTTPResponse.GetIPv4(), string);
+				string.FromString (inHTTPResponse.GetRequest().GetPeerIP());
 				fRequestsBuffer.AppendString (string);
 				break;
 

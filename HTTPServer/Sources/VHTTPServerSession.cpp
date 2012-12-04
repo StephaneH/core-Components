@@ -105,8 +105,8 @@ XBOX::VError VHTTPServerSession::HandleTRACE()
 	bodyString.FromString (fHTTPResponse->GetRequest().GetRequestLine());
 	bodyString.AppendCString (HTTP_CRLF);
 
-	const VHeaderList requestHeader = fHTTPResponse->GetRequestHeader().GetHeaderList();
-	for (VHeaderListConstIterator it = requestHeader.begin(); it != requestHeader.end(); ++it)
+	XBOX::VNameValueCollection requestHeader = fHTTPResponse->GetRequestHeader().GetHeaderList();
+	for (XBOX::VNameValueCollection::Iterator it = requestHeader.begin(); it != requestHeader.end(); ++it)
 	{
 		if ((*it).first.GetLength() > 0)
 		{
@@ -195,8 +195,8 @@ XBOX::VError VHTTPServerSession::HandleRequest()
 	{
 		if (NULL != virtualHost)
 		{
-			if (!virtualHost->GetProject()->GetAcceptIncommingRequests())
-				error = VE_HTTP_PROTOCOL_SERVICE_UNAVAILABLE;	//VE_HTTP_SERVER_IS_BEING_TURNED_OFF;
+			if (!virtualHost->GetProject()->GetAcceptIncommingRequests() || !virtualHost->IsAvailable())
+				error = VE_HTTP_PROTOCOL_SERVICE_UNAVAILABLE;
 
 			if (XBOX::VE_OK == error)
 			{
@@ -206,7 +206,11 @@ XBOX::VError VHTTPServerSession::HandleRequest()
 		}
 		else
 		{
-			error = VE_HTTP_PROTOCOL_NOT_FOUND;
+			/*
+			 *	Send 409 - Conflict when we were unable to determine the proper VirtualHost
+			 *	May happens when, for example, 2 or many VirtualHosts use the same IPAddress/Port pair and doesn't use hostnames
+			 */
+			error = VE_HTTP_PROTOCOL_CONFLICT;
 		}
 	}
 
@@ -414,6 +418,10 @@ XBOX::VError VHTTPServerSession::HandleRequest()
 
 	++fRequestCount;
 
+	/* No Keep-Alive when ForceCloseSession flag is set (when Server is shutting down for example) */
+	if (fHTTPResponse->GetForceCloseSession())
+		fKeepAlive = false;
+
 	/* No Keep-Live for redirections, authentications or erroneous responses */
 	if (fKeepAlive)
 		fKeepAlive = (HTTP_OK == fHTTPResponse->GetResponseStatusCode());
@@ -422,18 +430,29 @@ XBOX::VError VHTTPServerSession::HandleRequest()
 	if (IsMaxConnectionsReached())
 		fKeepAlive = false;
 
-	/* Reset Keep-Alive flag when HTTP Request version is < 1.1 or when Connection header is explicitly "close" */
+	/* Reset Keep-Alive flag:
+	 *	- with HTTP/1.0 when Connection header is NOT explicitly "Keep-Alive"
+	 *	- with HTTP/1.1 when Connection header is explicitly "close"
+	 */
 	if (fKeepAlive)
 	{
 		XBOX::VString	connectionValue;
 
-		/*
-			YT 20-Oct-2011 - WAK0072937 - According to RFC2616 - Chapter 8.1.2.1 Negotiation:
-			An HTTP/1.1 server MAY assume that HTTP/1.1 client intends to maintain a persistent connection
-			unless a Connection header including the connection-token "close" was sent in the request.
-		*/
-		if ((fHTTPResponse->GetRequestHTTPVersion() < VERSION_1_1) ||
-			(fHTTPResponse->GetRequestHeader().GetHeaderValue (STRING_HEADER_CONNECTION, connectionValue) && HTTPServerTools::EqualASCIIVString (connectionValue, STRING_HEADER_VALUE_CLOSE)))
+		/*	YT 20-Oct-2011 - WAK0072937 - According to RFC2616 - Chapter 8.1.2.1 Negotiation:
+		 *	An HTTP/1.1 server MAY assume that HTTP/1.1 client intends to maintain a persistent connection
+		 *	unless a Connection header including the connection-token "close" was sent in the request.
+		 */
+
+		fHTTPResponse->GetRequestHeader().GetHeaderValue (STRING_HEADER_CONNECTION, connectionValue);
+
+		if (fHTTPResponse->GetRequestHTTPVersion() < VERSION_1_1)
+		{
+			/*	YT 05-Apr-2012 - We support Keep-Alive for HTTP/1.0 clients who explicitly 
+			 *	ask for it (using header "Connection: Keep-Alive")
+			 */
+			fKeepAlive = (HTTPServerTools::FindASCIIVString (connectionValue, STRING_HEADER_VALUE_KEEP_ALIVE) > 0);
+		}
+		else if (HTTPServerTools::FindASCIIVString (connectionValue, STRING_HEADER_VALUE_CLOSE) > 0)
 		{
 			fKeepAlive = false;
 		}
@@ -443,11 +462,12 @@ XBOX::VError VHTTPServerSession::HandleRequest()
 	if (fKeepAlive)
 	{
 		fHTTPResponse->AddResponseHeader (STRING_HEADER_CONNECTION, STRING_HEADER_VALUE_KEEP_ALIVE);
+
 #if HTTP_SERVER_VERBOSE_MODE
 		/* The Keep-Alive field is NOT a standard HTTP header field and may not be supported by all clients. */
-		XBOX::VString keepAliveString;
-		keepAliveString.Printf ("timeout=%d, max=%d", (fKeepAliveTimeOut / 1000), fMaxRequest);
-		fHTTPResponse->AddResponseHeader (STRING_HEADER_KEEP_ALIVE, keepAliveString);
+		XBOX::VString stringValue;
+		stringValue.Printf ("timeout=%d, max=%d", (fKeepAliveTimeOut / 1000), (fMaxRequest - fRequestCount));
+		fHTTPResponse->AddResponseHeader (STRING_HEADER_KEEP_ALIVE, stringValue);
 #endif
 	}
 	else

@@ -167,7 +167,12 @@ const XBOX::VString STRING_ERROR_PARAMETER_NAME			= CVSTR ("p1"); /* used to set
 
 const XBOX::VTime TIME_EMPTY_DATE;
 
-const IP4			DEFAULT_LISTENING_ADDRESS = 0;
+#if WITH_DEPRECATED_IPV4_API
+const IP4 /*done*/	DEFAULT_LISTENING_ADDRESS = 0;
+#else
+const XBOX::VString	DEFAULT_LISTENING_ADDRESS = CVSTR("::1");
+#endif
+
 const PortNumber	DEFAULT_LISTENING_PORT = 80;
 const PortNumber	DEFAULT_LISTENING_SSL_PORT = 443;
 
@@ -242,7 +247,7 @@ inline sLONG _FindASCIICString (const T1 *inText, const sLONG inTextLen, const T
 		T2		c = '\0';
 
 		target[0] = j;
-		while (i != patternSize)
+		while (i < patternSize)
 		{
 			T2 pchar = inPattern[i];
 
@@ -275,7 +280,7 @@ inline sLONG _FindASCIICString (const T1 *inText, const sLONG inTextLen, const T
 
 		m = 0;
 		i = 0;
-		while ((m + i != textSize) && (i != patternSize))
+		while (((m + i) < textSize) && (i < patternSize))
 		{
 			T1		tchar = inText[m + i];
 			T2		pchar = inPattern[i];
@@ -352,7 +357,7 @@ bool EndsWithASCIIVString (const XBOX::VString& inText, const XBOX::VString& inP
 	sLONG textSize = inText.GetLength();
 	sLONG patternSize = inPattern.GetLength();
 
-	return (_FindASCIICString (inText.GetCPointer() + (textSize - patternSize), textSize, inPattern.GetCPointer(), patternSize, isCaseSensitive) == 1);
+	return (_FindASCIICString (inText.GetCPointer() + (textSize - patternSize), patternSize, inPattern.GetCPointer(), patternSize, isCaseSensitive) == 1);
 }
 
 
@@ -361,7 +366,7 @@ bool EndsWithASCIICString (const XBOX::VString& inText, const char *inPattern, b
 	sLONG textSize = inText.GetLength();
 	sLONG patternSize = (sLONG)strlen (inPattern);
 
-	return (_FindASCIICString (inText.GetCPointer() + (textSize - patternSize), textSize, inPattern, patternSize, isCaseSensitive) == 1);
+	return (_FindASCIICString (inText.GetCPointer() + (textSize - patternSize), patternSize, inPattern, patternSize, isCaseSensitive) == 1);
 }
 
 
@@ -437,7 +442,6 @@ void CopyUniString (UniChar* const target, const UniChar* const src)
 }
 
 
-inline
 void GetSubString (const XBOX::VString& inString, sLONG inFirst, sLONG inLast, XBOX::VString& outString)
 {
 	if (testAssert ((inFirst >= 0) && (inLast < inString.GetLength())))
@@ -653,8 +657,10 @@ const XBOX::VString& GetHTTPContentType (const HTTPCommonContentType inCode)
 	return STRING_EMPTY;
 }
 
-
-void MakeIPv4AddressString (IP4 inIPv4, XBOX::VString& outIPv4String)
+	
+#if WITH_DEPRECATED_IPV4_API
+	
+void MakeIPv4AddressString (IP4 /*done*/ inIPv4, XBOX::VString& outIPv4String)
 {
 	struct in_addr	addr = {0};
 	char *			buffer = NULL;
@@ -669,7 +675,7 @@ void MakeIPv4AddressString (IP4 inIPv4, XBOX::VString& outIPv4String)
 }
 
 
-void GetIPv4FromString (const XBOX::VString& inIPv4String, IP4& outIPv4)
+void GetIPv4FromString (const XBOX::VString& inIPv4String, IP4& /*done*/ outIPv4)
 {
 	sLONG	hostNameSize = inIPv4String.GetLength() + 1;
 	char *	hostName = new char[hostNameSize];
@@ -700,15 +706,17 @@ void GetIPv4FromString (const XBOX::VString& inIPv4String, IP4& outIPv4)
 	}
 }
 
+#endif
 
-void MakeHostString (IP4 inIPv4, PortNumber inPort, XBOX::VString& outHostString)
+#if WITH_DEPRECATED_IPV4_API	
+void MakeHostString (IP4 /*done*/ inIPv4, PortNumber inPort, XBOX::VString& outHostString)
 {
 	XBOX::VString IPv4String;
 
 	MakeIPv4AddressString (inIPv4, IPv4String);
 	MakeHostString (IPv4String, inPort, outHostString);
 }
-
+#endif
 
 void MakeHostString (const XBOX::VString& inHost, PortNumber inPort, XBOX::VString& outHostString)
 {
@@ -725,30 +733,32 @@ void MakeHostString (const XBOX::VString& inHost, PortNumber inPort, XBOX::VStri
 }
 
 
-void ParseHostString (const XBOX::VString& inHostString, IP4& outIPv4, PortNumber& outPort)
+#if WITH_DEPRECATED_IPV4_API
+void ParseHostString (const XBOX::VString& inHostString, IP4& /*done*/ outIPv4, PortNumber& outPort)
 {
 	XBOX::VString	ipv4String;
 
 	ParseHostString (inHostString, ipv4String, outPort);
 	GetIPv4FromString (ipv4String, outIPv4);
 }
+#endif
 
-
-void ParseHostString (const XBOX::VString& inHostString, XBOX::VString& outIPv4String, PortNumber& outPort)
+	
+void ParseHostString (const XBOX::VString& inHostString, XBOX::VString& outIPString, PortNumber& outPort)
 {
 	XBOX::VIndex pos = inHostString.FindUniChar (CHAR_COLON);
 
 	if (pos > 0)
 	{
 		XBOX::VString	portString;
-		inHostString.GetSubString (1, pos - 1, outIPv4String);
+		inHostString.GetSubString (1, pos - 1, outIPString);
 		inHostString.GetSubString (pos + 1, inHostString.GetLength() - pos, portString);
 
 		outPort = portString.GetLong();
 	}
 	else
 	{
-		outIPv4String.FromString (inHostString);
+		outIPString.FromString (inHostString);
 		outPort = DEFAULT_LISTENING_PORT;
 	}
 }
@@ -913,9 +923,9 @@ EHTTPServerLogToken GetLogTokenFromName (const XBOX::VString& inTokenName)
 		return LOG_TOKEN_METHOD;
 	else if (HTTPServerTools::EqualASCIICString (inTokenName, "cs-uri"))
 		return LOG_TOKEN_ELF_URI;
-	else if (HTTPServerTools::EqualASCIICString (inTokenName, "bytes_sent"))
+	else if (HTTPServerTools::EqualASCIICString (inTokenName, "bytes_sent") || HTTPServerTools::EqualASCIICString (inTokenName, "bytes-sent"))
 		return LOG_TOKEN_BYTES_SENT;
-	else if (HTTPServerTools::EqualASCIICString (inTokenName, "time-taken"))
+	else if (HTTPServerTools::EqualASCIICString (inTokenName, "time-taken") || HTTPServerTools::EqualASCIICString (inTokenName, "transfert_time"))
 		return LOG_TOKEN_TRANSFER_TIME;
 	else if (HTTPServerTools::EqualASCIICString (inTokenName, "agent"))
 		return LOG_TOKEN_AGENT;
@@ -925,11 +935,11 @@ EHTTPServerLogToken GetLogTokenFromName (const XBOX::VString& inTokenName)
 		return LOG_TOKEN_REFERER;
 	else if (HTTPServerTools::EqualASCIICString (inTokenName, "connection_id"))
 		return LOG_TOKEN_CONNECTION_ID;
-	else if (HTTPServerTools::EqualASCIICString (inTokenName, "sc-status"))
+	else if (HTTPServerTools::EqualASCIICString (inTokenName, "sc-status") || HTTPServerTools::EqualASCIICString (inTokenName, "status"))
 		return LOG_TOKEN_STATUS;
 	else if (HTTPServerTools::EqualASCIICString (inTokenName, "c-ip"))
 		return LOG_TOKEN_ELF_C_IP;
-	else if (HTTPServerTools::EqualASCIICString (inTokenName, "cs-cdns"))
+	else if (HTTPServerTools::EqualASCIICString (inTokenName, "cs-cdns") || HTTPServerTools::EqualASCIICString (inTokenName, "c-dns"))
 		return LOG_TOKEN_ELF_C_DNS;
 	else if (HTTPServerTools::EqualASCIICString (inTokenName, "cs-uri-stem"))
 		return LOG_TOKEN_ELF_CS_URI_STEM;
@@ -1250,6 +1260,39 @@ MimeTypeKind GetMimeTypeKind (const XBOX::VString& inContentType)
 		return MIMETYPE_BINARY;
 	}
 }
+
+
+sLONG GetLocalIPAddresses (XBOX::VectorOfVString& outIPAddresses, bool  bClearFirst)
+{
+	if (bClearFirst)
+		outIPAddresses.clear();
+
+#if WITH_DEPRECATED_IPV4_API
+	std::vector<IP4>	ipv4Addresses;
+	XBOX::VString		string;
+
+	XBOX::ServerNetTools::GetLocalIPv4Addresses (ipv4Addresses);
+
+	for (std::vector<IP4>::const_iterator it = ipv4Addresses.begin(); it != ipv4Addresses.end(); ++it)
+	{
+		string.Clear();
+		XBOX::ServerNetTools::GetIPAdress ((*it), string);
+		outIPAddresses.push_back (string);
+	}
+#else
+	XBOX::VNetAddressList	addrList;
+	XBOX::VError		error = addrList.FromLocalInterfaces();
+
+	if (XBOX::VE_OK == error)
+	{
+		for (XBOX::VNetAddressList::const_iterator it = addrList.begin(); it != addrList.end(); ++it)
+			outIPAddresses.push_back (it->GetIP());
+	}
+#endif
+
+	return (sLONG)outIPAddresses.size();
+}
+
 
 } // namespace HTTPServerTools
 

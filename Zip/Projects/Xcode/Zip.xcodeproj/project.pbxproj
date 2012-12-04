@@ -221,8 +221,8 @@
 		391CC97D08E9635C0082DFC3 /* VZipComponent.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = VZipComponent.h; sourceTree = "<group>"; };
 		391CC97F08E9637D0082DFC3 /* CZipComponent.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = CZipComponent.h; sourceTree = "<group>"; };
 		391CC99908E964730082DFC3 /* System.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = System.framework; path = System/Library/Frameworks/System.framework; sourceTree = SDKROOT; };
-		391CC99E08E964910082DFC3 /* KernelIPC.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = KernelIPC.xcodeproj; path = ../../../../../XToolbox/WAK2/KernelIPC/Projects/Xcode/KernelIPC.xcodeproj; sourceTree = SOURCE_ROOT; };
-		396D21C508F2C345002CC010 /* Kernel.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = Kernel.xcodeproj; path = ../../../../../XToolbox/WAK2/Kernel/Projects/Xcode/Kernel.xcodeproj; sourceTree = SOURCE_ROOT; };
+		391CC99E08E964910082DFC3 /* KernelIPC.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = KernelIPC.xcodeproj; path = ../../../../../XToolbox/Main/KernelIPC/Projects/Xcode/KernelIPC.xcodeproj; sourceTree = SOURCE_ROOT; };
+		396D21C508F2C345002CC010 /* Kernel.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = Kernel.xcodeproj; path = ../../../../../XToolbox/Main/Kernel/Projects/Xcode/Kernel.xcodeproj; sourceTree = SOURCE_ROOT; };
 		8541A92D0F24DAEC00C093AB /* components_performance.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; name = components_performance.xcconfig; path = ../../../components_performance.xcconfig; sourceTree = SOURCE_ROOT; };
 		8D01CCD10486CAD60068D4B7 /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		8D01CCD20486CAD60068D4B7 /* ZipDebug.bundle */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ZipDebug.bundle; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -737,12 +737,12 @@
 				GCC_PREPROCESSOR_DEFINITIONS = "VERSIONDEBUG=1";
 				HEADER_SEARCH_PATHS_QUOTED_1 = "../../../Language\\ Kernel";
 				HEADER_SEARCH_PATHS_QUOTED_2 = "\"${SRCROOT}/../../..\"";
-				HEADER_SEARCH_PATHS_QUOTED_3 = "\"${SRCROOT}/../../../../../XToolbox/WAK2/\"";
+				HEADER_SEARCH_PATHS_QUOTED_3 = "\"${SRCROOT}/../../../../../XToolbox/Main/\"";
 				HEADER_SEARCH_PATHS_QUOTED_4 = "\"${SRCROOT}/../../../DB4D/Headers\"";
-				HEADER_SEARCH_PATHS_QUOTED_5 = "\"${SRCROOT}/../../../../../4eDimension/WAK2/Network/NC/COMMON\"";
-				HEADER_SEARCH_PATHS_QUOTED_6 = "\"${SRCROOT}/../../../../../4eDimension/WAK2/Network/NC/Mac\"";
-				HEADER_SEARCH_PATHS_QUOTED_7 = "\"${SRCROOT}/../../../../../4eDimension/WAK2/4D/HSrc\"";
-				HEADER_SEARCH_PATHS_QUOTED_8 = "\"${SRCROOT}/../../../../../XToolbox/WAK2/XML/Sources\"";
+				HEADER_SEARCH_PATHS_QUOTED_5 = "\"${SRCROOT}/../../../../../4eDimension/main/Network/NC/COMMON\"";
+				HEADER_SEARCH_PATHS_QUOTED_6 = "\"${SRCROOT}/../../../../../4eDimension/main/Network/NC/Mac\"";
+				HEADER_SEARCH_PATHS_QUOTED_7 = "\"${SRCROOT}/../../../../../4eDimension/main/4D/HSrc\"";
+				HEADER_SEARCH_PATHS_QUOTED_8 = "\"${SRCROOT}/../../../../../XToolbox/Main/XML/Sources\"";
 				MACOSX_DEPLOYMENT_TARGET = 10.4;
 				SEPARATE_STRIP = YES;
 				SKIP_INSTALL = YES;

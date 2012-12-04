@@ -16,8 +16,8 @@
 #ifndef __HTTP_MESSAGE_INCLUDED__
 #define __HTTP_MESSAGE_INCLUDED__
 
-class VHTTPHeader;
-
+#if 0 // TODO: Cleanup
+class XBOX::VHTTPHeader;
 
 class VHTTPMessage : public XBOX::VObject
 {
@@ -33,8 +33,8 @@ public:
 	XBOX::VPtrStream&			GetBody();
 	const XBOX::VPtrStream&		GetBody() const;
 
-	VHTTPHeader&				GetHeaders() { return fHeaders; }
-	const VHTTPHeader&			GetHeaders() const { return fHeaders; }
+	XBOX::VHTTPHeader&			GetHeaders() { return fHeaders; }
+	const XBOX::VHTTPHeader&	GetHeaders() const { return fHeaders; }
 
 	enum HTTPParsingState
 	{
@@ -62,11 +62,11 @@ protected:
 													XBOX::VError *outParsingError);
 
 private:
-	VHTTPHeader					fHeaders;
+	XBOX::VHTTPHeader			fHeaders;
 	mutable XBOX::VPtrStream *	fBody;
 	bool						fDisposeBody;	// Do NOT systematically dispose body (data can be owned by cache manager)
 };
-
+#endif
 
 #endif // __HTTP_MESSAGE_INCLUDED__
 

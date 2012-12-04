@@ -18,6 +18,8 @@
 		85192D2A103E93A900E76966 /* KernelIPCDebug.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 85192D27103E93A000E76966 /* KernelIPCDebug.framework */; };
 		853E53E10FCC2CA40082B740 /* CoreFoundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 853E53E00FCC2CA40082B740 /* CoreFoundation.framework */; };
 		F47C3DA90E66C6B4007448A6 /* VComponentLibrary.cpp in Sources */ = {isa = PBXBuildFile; fileRef = F439E3F40D51DD3C00F55316 /* VComponentLibrary.cpp */; };
+		F4DC997D1599E9FF004D1218 /* 4DJavaScript.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F4DC99731599E89B004D1218 /* 4DJavaScript.framework */; };
+		F4DC997E1599EA02004D1218 /* 4DJavaScript.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F4DC99751599E89B004D1218 /* 4DJavaScript.framework */; };
 		F9EB2F5810764B1B004B9B99 /* Template.cpp in Sources */ = {isa = PBXBuildFile; fileRef = F9EB2F5610764B1B004B9B99 /* Template.cpp */; };
 		F9EB2F5910764B1B004B9B99 /* SecurityManager.cpp in Sources */ = {isa = PBXBuildFile; fileRef = F9EB2F5710764B1B004B9B99 /* SecurityManager.cpp */; };
 		F9EB2F8C1079E88D004B9B99 /* Kerberos.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F9EB2F8B1079E88D004B9B99 /* Kerberos.framework */; };
@@ -115,6 +117,34 @@
 			remoteGlobalIDString = F4643159113E7A3E00639653;
 			remoteInfo = "Kernel x64";
 		};
+		F4DC99721599E89B004D1218 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = F4DC996D1599E89B004D1218 /* JavaScript.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = 8D07F2C80486CC7A007CD1D0;
+			remoteInfo = 4DJavaScript;
+		};
+		F4DC99741599E89B004D1218 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = F4DC996D1599E89B004D1218 /* JavaScript.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = F4643803113E9F6000639653;
+			remoteInfo = "4DJavaScript x64";
+		};
+		F4DC997F1599EA1C004D1218 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = F4DC996D1599E89B004D1218 /* JavaScript.xcodeproj */;
+			proxyType = 1;
+			remoteGlobalIDString = 8D07F2BC0486CC7A007CD1D0;
+			remoteInfo = 4DJavaScript;
+		};
+		F4DC99811599EA23004D1218 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = F4DC996D1599E89B004D1218 /* JavaScript.xcodeproj */;
+			proxyType = 1;
+			remoteGlobalIDString = F46437CB113E9F6000639653;
+			remoteInfo = "4DJavaScript x64";
+		};
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -141,8 +171,8 @@
 /* Begin PBXFileReference section */
 		42F429F0147E567800B02139 /* SecurityManagerDebug.bundle */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = SecurityManagerDebug.bundle; sourceTree = BUILT_PRODUCTS_DIR; };
 		42F429FA147E575000B02139 /* components_x64.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; name = components_x64.xcconfig; path = ../../../components_x64.xcconfig; sourceTree = SOURCE_ROOT; };
-		85192CEA103E90C100E76966 /* Kernel.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = Kernel.xcodeproj; path = ../../../../../XToolbox/WAK2/Kernel/Projects/Xcode/Kernel.xcodeproj; sourceTree = SOURCE_ROOT; };
-		85192D21103E93A000E76966 /* KernelIPC.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = KernelIPC.xcodeproj; path = ../../../../../XToolbox/WAK2/KernelIPC/Projects/Xcode/KernelIPC.xcodeproj; sourceTree = SOURCE_ROOT; };
+		85192CEA103E90C100E76966 /* Kernel.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = Kernel.xcodeproj; path = ../../../../../XToolbox/Main/Kernel/Projects/Xcode/Kernel.xcodeproj; sourceTree = SOURCE_ROOT; };
+		85192D21103E93A000E76966 /* KernelIPC.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = KernelIPC.xcodeproj; path = ../../../../../XToolbox/Main/KernelIPC/Projects/Xcode/KernelIPC.xcodeproj; sourceTree = SOURCE_ROOT; };
 		853E53E00FCC2CA40082B740 /* CoreFoundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreFoundation.framework; path = /System/Library/Frameworks/CoreFoundation.framework; sourceTree = "<absolute>"; };
 		85E2E76C0ED1D41700FFDCAD /* SecurityManagerDebug.bundle */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = SecurityManagerDebug.bundle; sourceTree = BUILT_PRODUCTS_DIR; };
 		F439E3CE0D51DC9400F55316 /* components.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; name = components.xcconfig; path = ../../../components.xcconfig; sourceTree = SOURCE_ROOT; };
@@ -152,8 +182,10 @@
 		F439E3D20D51DC9400F55316 /* components_debug.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; name = components_debug.xcconfig; path = ../../../components_debug.xcconfig; sourceTree = SOURCE_ROOT; };
 		F439E3D30D51DC9400F55316 /* components_performance.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; name = components_performance.xcconfig; path = ../../../components_performance.xcconfig; sourceTree = SOURCE_ROOT; };
 		F439E3D40D51DC9400F55316 /* components_release.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; name = components_release.xcconfig; path = ../../../components_release.xcconfig; sourceTree = SOURCE_ROOT; };
-		F439E3F40D51DD3C00F55316 /* VComponentLibrary.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = VComponentLibrary.cpp; path = ../../../../../XToolbox/WAK2/KernelIPC/Sources/VComponentLibrary.cpp; sourceTree = SOURCE_ROOT; };
+		F439E3F40D51DD3C00F55316 /* VComponentLibrary.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = VComponentLibrary.cpp; path = ../../../../../XToolbox/Main/KernelIPC/Sources/VComponentLibrary.cpp; sourceTree = SOURCE_ROOT; };
 		F47C3D740E66A78F007448A6 /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		F4DC996D1599E89B004D1218 /* JavaScript.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = JavaScript.xcodeproj; path = ../../../../../XToolbox/Main/JavaScript/Projects/Xcode/JavaScript.xcodeproj; sourceTree = SOURCE_ROOT; };
+		F4DC997A1599E8CC004D1218 /* 4DJavaScript.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = 4DJavaScript.framework; path = "/Users/Stephane/sources/sclairet-macsosx107-a/depot/XToolbox/Main/Frameworks x86_64/4DJavaScript.framework"; sourceTree = "<absolute>"; };
 		F962079D10A827DA00622530 /* gssapi.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = gssapi.h; path = /System/Library/Frameworks/Kerberos.framework/Headers/gssapi.h; sourceTree = "<absolute>"; };
 		F962079F10A827DA00622530 /* gssapi_krb5.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = gssapi_krb5.h; path = /System/Library/Frameworks/Kerberos.framework/Headers/gssapi_krb5.h; sourceTree = "<absolute>"; };
 		F9EB2F5310764B0B004B9B99 /* SecurityManager.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SecurityManager.h; path = ../../Headers/SecurityManager.h; sourceTree = SOURCE_ROOT; };
@@ -169,6 +201,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				F4DC997E1599EA02004D1218 /* 4DJavaScript.framework in Frameworks */,
 				42F42A6B147E59A600B02139 /* KernelDebug.framework in Frameworks */,
 				42F42A70147E59B500B02139 /* KernelIPCDebug.framework in Frameworks */,
 				42F429E7147E567800B02139 /* CoreFoundation.framework in Frameworks */,
@@ -180,6 +213,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				F4DC997D1599E9FF004D1218 /* 4DJavaScript.framework in Frameworks */,
 				85192D2A103E93A900E76966 /* KernelIPCDebug.framework in Frameworks */,
 				85192D05103E90FE00E76966 /* KernelDebug.framework in Frameworks */,
 				853E53E10FCC2CA40082B740 /* CoreFoundation.framework in Frameworks */,
@@ -222,6 +256,7 @@
 				F439E3D60D51DCC200F55316 /* Sources */,
 				F439E4260D51DF7300F55316 /* Frameworks */,
 				F47C3D350E669416007448A6 /* Products */,
+				F4DC997A1599E8CC004D1218 /* 4DJavaScript.framework */,
 			);
 			sourceTree = "<group>";
 		};
@@ -265,6 +300,7 @@
 		F439E3F50D51DECE00F55316 /* Dependencies */ = {
 			isa = PBXGroup;
 			children = (
+				F4DC996D1599E89B004D1218 /* JavaScript.xcodeproj */,
 				85192D21103E93A000E76966 /* KernelIPC.xcodeproj */,
 				85192CEA103E90C100E76966 /* Kernel.xcodeproj */,
 			);
@@ -297,6 +333,15 @@
 			name = Resources;
 			sourceTree = "<group>";
 		};
+		F4DC996E1599E89B004D1218 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				F4DC99731599E89B004D1218 /* 4DJavaScript.framework */,
+				F4DC99751599E89B004D1218 /* 4DJavaScript.framework */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
 		F962079210A827DA00622530 /* Headers kerberos */ = {
 			isa = PBXGroup;
 			children = (
@@ -324,6 +369,7 @@
 			dependencies = (
 				42F42A58147E594100B02139 /* PBXTargetDependency */,
 				42F42A5A147E594500B02139 /* PBXTargetDependency */,
+				F4DC99821599EA23004D1218 /* PBXTargetDependency */,
 			);
 			name = "Security Manager x64";
 			productName = CodeEditor;
@@ -344,6 +390,7 @@
 			dependencies = (
 				85192D04103E90F400E76966 /* PBXTargetDependency */,
 				85192D2C103E93AF00E76966 /* PBXTargetDependency */,
+				F4DC99801599EA1C004D1218 /* PBXTargetDependency */,
 			);
 			name = "Security Manager";
 			productName = CodeEditor;
@@ -372,6 +419,10 @@
 			productRefGroup = F47C3D350E669416007448A6 /* Products */;
 			projectDirPath = "";
 			projectReferences = (
+				{
+					ProductGroup = F4DC996E1599E89B004D1218 /* Products */;
+					ProjectRef = F4DC996D1599E89B004D1218 /* JavaScript.xcodeproj */;
+				},
 				{
 					ProductGroup = 85192CEB103E90C100E76966 /* Products */;
 					ProjectRef = 85192CEA103E90C100E76966 /* Kernel.xcodeproj */;
@@ -453,6 +504,20 @@
 			remoteRef = F45FAC0412B8D70F007B551A /* PBXContainerItemProxy */;
 			sourceTree = BUILT_PRODUCTS_DIR;
 		};
+		F4DC99731599E89B004D1218 /* 4DJavaScript.framework */ = {
+			isa = PBXReferenceProxy;
+			fileType = wrapper.framework;
+			path = 4DJavaScript.framework;
+			remoteRef = F4DC99721599E89B004D1218 /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		F4DC99751599E89B004D1218 /* 4DJavaScript.framework */ = {
+			isa = PBXReferenceProxy;
+			fileType = wrapper.framework;
+			path = 4DJavaScript.framework;
+			remoteRef = F4DC99741599E89B004D1218 /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
 /* End PBXReferenceProxy section */
 
 /* Begin PBXResourcesBuildPhase section */
@@ -516,6 +581,16 @@
 			name = KernelIPC;
 			targetProxy = 85192D2B103E93AF00E76966 /* PBXContainerItemProxy */;
 		};
+		F4DC99801599EA1C004D1218 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			name = 4DJavaScript;
+			targetProxy = F4DC997F1599EA1C004D1218 /* PBXContainerItemProxy */;
+		};
+		F4DC99821599EA23004D1218 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			name = "4DJavaScript x64";
+			targetProxy = F4DC99811599EA23004D1218 /* PBXContainerItemProxy */;
+		};
 /* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
@@ -525,12 +600,15 @@
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = YES;
 				COPY_PHASE_STRIP = NO;
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(inherited)",
+					"\"$(SRCROOT)/../../../../../XToolbox/Main/Frameworks x86_64\"",
+				);
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_MODEL_TUNING = G5;
 				GCC_OPTIMIZATION_LEVEL = 0;
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "";
-				INFOPLIST_FILE = info.plist;
 				INSTALL_PATH = "";
 			};
 			name = Debug;
@@ -541,12 +619,15 @@
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = YES;
 				COPY_PHASE_STRIP = NO;
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(inherited)",
+					"\"$(SRCROOT)/../../../../../XToolbox/Main/Frameworks x86_64\"",
+				);
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_MODEL_TUNING = G5;
 				GCC_OPTIMIZATION_LEVEL = 0;
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "";
-				INFOPLIST_FILE = info.plist;
 				INSTALL_PATH = "";
 				OTHER_LDFLAGS = (
 					"-weak_framework",
@@ -561,17 +642,16 @@
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = YES;
 				COPY_PHASE_STRIP = NO;
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(inherited)",
+					"\"$(SRCROOT)/../../../../../XToolbox/Main/Frameworks x86_64\"",
+				);
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_MODEL_TUNING = G5;
 				GCC_OPTIMIZATION_LEVEL = 0;
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "";
-				INFOPLIST_FILE = info.plist;
 				INSTALL_PATH = "";
-				OTHER_LDFLAGS = (
-					"-weak_framework",
-					icuDebug,
-				);
 			};
 			name = Beta;
 		};
@@ -581,6 +661,10 @@
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = YES;
 				COPY_PHASE_STRIP = NO;
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(inherited)",
+					"\"$(SRCROOT)/../../../../../XToolbox/Main/Frameworks x86_64\"",
+				);
 				GCC_GENERATE_DEBUGGING_SYMBOLS = NO;
 				GCC_MODEL_TUNING = G5;
 				GCC_PRECOMPILE_PREFIX_HEADER = NO;
@@ -588,7 +672,6 @@
 				GCC_PREPROCESSOR_DEFINITIONS = "VERSIONDEBUG=0";
 				GCC_WARN_ABOUT_RETURN_TYPE = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				INFOPLIST_FILE = info.plist;
 				INSTALL_PATH = "";
 				OTHER_LDFLAGS = (
 					"-framework",
@@ -604,6 +687,10 @@
 				ALWAYS_SEARCH_USER_PATHS = YES;
 				COPY_PHASE_STRIP = NO;
 				DEPLOYMENT_POSTPROCESSING = NO;
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(inherited)",
+					"\"$(SRCROOT)/../../../../../XToolbox/Main/Frameworks x86_64\"",
+				);
 				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
 				GCC_MODEL_TUNING = G5;
 				GCC_PRECOMPILE_PREFIX_HEADER = NO;
@@ -611,7 +698,6 @@
 				GCC_PREPROCESSOR_DEFINITIONS = "VERSIONDEBUG=0";
 				GCC_WARN_ABOUT_RETURN_TYPE = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				INFOPLIST_FILE = info.plist;
 				INSTALL_PATH = "";
 				OTHER_LDFLAGS = (
 					"-framework",
@@ -627,6 +713,10 @@
 			buildSettings = {
 				ADDITIONAL_SDKS = "";
 				COPY_PHASE_STRIP = NO;
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(FRAMEWORK_SEARCH_PATHS)",
+					"$(FRAMEWORK_SEARCH_PATHS_JSC)",
+				);
 				GCC_GENERATE_TEST_COVERAGE_FILES = YES;
 				GCC_MODEL_TUNING = G4;
 				GCC_OPTIMIZATION_LEVEL = 0;
@@ -636,10 +726,8 @@
 				GCC_WARN_ABOUT_RETURN_TYPE = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				HEADER_SEARCH_PATHS = (
-					../../,
-					../../../,
-					../../../../../XToolbox/WAK2/,
-					../../../UsersAndGroups/Sources/,
+					"$(HEADER_SEARCH_PATHS)",
+					"$(HEADER_SEARCH_PATHS_JSC)",
 				);
 				PRODUCT_NAME = SecurityManagerDebug;
 				SEPARATE_STRIP = YES;
@@ -658,10 +746,6 @@
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "";
 				INSTALL_PATH = "";
-				OTHER_LDFLAGS = (
-					"-weak_framework",
-					icuDebug,
-				);
 			};
 			name = Coverage;
 		};
@@ -671,6 +755,10 @@
 			buildSettings = {
 				ADDITIONAL_SDKS = "";
 				COPY_PHASE_STRIP = NO;
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(FRAMEWORK_SEARCH_PATHS)",
+					"$(FRAMEWORK_SEARCH_PATHS_JSC)",
+				);
 				GCC_MODEL_TUNING = G5;
 				GCC_OPTIMIZATION_LEVEL = s;
 				GCC_PFE_FILE_C_DIALECTS = "c objective-c c++ objective-c++";
@@ -683,10 +771,8 @@
 				GCC_WARN_ABOUT_RETURN_TYPE = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				HEADER_SEARCH_PATHS = (
-					../../,
-					../../../,
-					../../../../../XToolbox/WAK2/,
-					../../../UsersAndGroups/Sources/,
+					"$(HEADER_SEARCH_PATHS)",
+					"$(HEADER_SEARCH_PATHS_JSC)",
 				);
 				PRODUCT_NAME = SecurityManagerBeta;
 				SEPARATE_STRIP = YES;
@@ -705,10 +791,6 @@
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "";
 				INSTALL_PATH = "";
-				OTHER_LDFLAGS = (
-					"-weak_framework",
-					icuDebug,
-				);
 			};
 			name = Beta;
 		};
@@ -718,15 +800,17 @@
 			buildSettings = {
 				ADDITIONAL_SDKS = "";
 				COPY_PHASE_STRIP = YES;
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(FRAMEWORK_SEARCH_PATHS)",
+					"$(FRAMEWORK_SEARCH_PATHS_JSC)",
+				);
 				GCC_PREFIX_HEADER = "../../Sources/$(PROJECT_NAME)PCH.cpp";
 				GCC_PREPROCESSOR_DEFINITIONS = "VERSIONDEBUG=0";
 				GCC_WARN_ABOUT_RETURN_TYPE = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				HEADER_SEARCH_PATHS = (
-					../../,
-					../../../,
-					../../../../../XToolbox/WAK2/,
-					../../../UsersAndGroups/Sources/,
+					"$(HEADER_SEARCH_PATHS)",
+					"$(HEADER_SEARCH_PATHS_JSC)",
 				);
 				PRODUCT_NAME = SecurityManagerPerf;
 				SEPARATE_STRIP = YES;
@@ -762,6 +846,10 @@
 			buildSettings = {
 				ADDITIONAL_SDKS = "";
 				COPY_PHASE_STRIP = NO;
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(FRAMEWORK_SEARCH_PATHS)",
+					"$(FRAMEWORK_SEARCH_PATHS_JSC)",
+				);
 				GCC_MODEL_TUNING = G4;
 				GCC_OPTIMIZATION_LEVEL = 0;
 				GCC_PFE_FILE_C_DIALECTS = "objective-c c c++ objective-c++";
@@ -769,10 +857,8 @@
 				GCC_PREPROCESSOR_DEFINITIONS = "VERSIONDEBUG=1";
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				HEADER_SEARCH_PATHS = (
-					../../,
-					../../../,
-					../../../../../XToolbox/WAK2/,
-					../../../UsersAndGroups/Sources/,
+					"$(HEADER_SEARCH_PATHS)",
+					"$(HEADER_SEARCH_PATHS_JSC)",
 				);
 				PRODUCT_NAME = SecurityManagerDebug;
 				SEPARATE_STRIP = YES;
@@ -786,16 +872,18 @@
 			buildSettings = {
 				ADDITIONAL_SDKS = "";
 				COPY_PHASE_STRIP = NO;
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(FRAMEWORK_SEARCH_PATHS)",
+					"$(FRAMEWORK_SEARCH_PATHS_JSC)",
+				);
 				GCC_GENERATE_DEBUGGING_SYMBOLS = NO;
 				GCC_PREFIX_HEADER = "../../Sources/$(PROJECT_NAME)PCH.cpp";
 				GCC_PREPROCESSOR_DEFINITIONS = "VERSIONDEBUG=0";
 				GCC_WARN_ABOUT_RETURN_TYPE = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				HEADER_SEARCH_PATHS = (
-					../../,
-					../../../,
-					../../../../../XToolbox/WAK2/,
-					../../../UsersAndGroups/Sources/,
+					"$(HEADER_SEARCH_PATHS)",
+					"$(HEADER_SEARCH_PATHS_JSC)",
 				);
 				PRODUCT_NAME = SecurityManager;
 				SEPARATE_STRIP = YES;

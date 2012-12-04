@@ -15,7 +15,7 @@
 */
 #include "HTTPServer.h"
 
-
+#if 0 // TODO: Cleanup
 //--------------------------------------------------------------------------------------------------
 
 
@@ -39,7 +39,7 @@ bool VHTTPHeader::IsHeaderSet (const HTTPCommonHeaderCode inHeaderCode) const
 
 bool VHTTPHeader::IsHeaderSet (const XBOX::VString& inName) const
 {
-	return fHeaderList.has (inName);
+	return fHeaderList.Has (inName);
 }
 
 
@@ -51,7 +51,7 @@ bool VHTTPHeader::RemoveHeader (const HTTPCommonHeaderCode inHeaderCode)
 
 bool VHTTPHeader::RemoveHeader (const XBOX::VString& inName)
 {
-	if (fHeaderList.has (inName))
+	if (fHeaderList.Has (inName))
 	{
 		fHeaderList.erase (inName);
 		return true;
@@ -122,13 +122,13 @@ bool VHTTPHeader::SetHeaderValue (const XBOX::VString& inName, const XBOX::VStri
 	if ((it != fHeaderList.end()) && !bIsCookie)
 	{
 		if (inOverride)
-			fHeaderList.set (inName, inValue);
+			fHeaderList.Set (inName, inValue);
 		else
-			fHeaderList.add (inName, inValue);
+			fHeaderList.Add (inName, inValue);
 	}
 	else
 	{
-		fHeaderList.add (inName, inValue);
+		fHeaderList.Add (inName, inValue);
 	}
 
 	return true;
@@ -516,7 +516,7 @@ void VHTTPHeader::SplitElements (const XBOX::VString& inString, XBOX::VectorOfVS
 
 
 /* static */
-void VHTTPHeader::SplitParameters (const XBOX::VString& inString, XBOX::VString& outValue, NameValueCollection& outParameters, bool withReverseSolidus)
+void VHTTPHeader::SplitParameters (const XBOX::VString& inString, XBOX::VString& outValue, XBOX::VNameValueCollection& outParameters, bool withReverseSolidus)
 {
 	const UniChar *	it  = inString.GetCPointer();
 	const UniChar *	end = it + inString.GetLength();
@@ -539,7 +539,7 @@ void VHTTPHeader::SplitParameters (const XBOX::VString& inString, XBOX::VString&
 
 
 /* static */
-void VHTTPHeader::SplitParameters (const UniChar *begin, const UniChar *end, NameValueCollection& outParameters, bool withReverseSolidus)
+void VHTTPHeader::SplitParameters (const UniChar *begin, const UniChar *end, XBOX::VNameValueCollection& outParameters, bool withReverseSolidus)
 {
 	XBOX::VString name;
 	XBOX::VString value;
@@ -596,7 +596,7 @@ void VHTTPHeader::SplitParameters (const UniChar *begin, const UniChar *end, Nam
 
 		value.TrimeSpaces();
 		if (!name.IsEmpty())
-			outParameters.add (name, value);
+			outParameters.Add (name, value);
 
 		if (it != end)
 			++it;
@@ -627,3 +627,4 @@ void VHTTPHeader::Quote (const XBOX::VString& inValue, XBOX::VString& outResult,
 }
 
 
+#endif

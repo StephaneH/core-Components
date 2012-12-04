@@ -106,10 +106,10 @@ class RestTools
 	public:
 		typedef enum { jsonNone = 0, jsonBeginObject, jsonEndObject, jsonBeginArray, jsonEndArray, jsonSeparator, jsonAssigne, jsonString } JsonToken;
 
-		RestTools(BaseTaskInfo* context, const VStream* inputStream, VStream* outputStream, const VString& hostName, const VString& inURLstring, IHTTPResponse* inResponse)
+		RestTools(BaseTaskInfo* context, const VStream* inputStream, VStream* outputStream, const VString& hostName, const VString& inURLstring, IHTTPResponse* inResponse, VJSGlobalContext* inGlobalContext, RIApplicationRef inApplicationRef)
 		{
 			_staticInit();
-			Init(context, inputStream, outputStream, hostName, inURLstring, inResponse);
+			Init(context, inputStream, outputStream, hostName, inURLstring, inResponse, inGlobalContext, inApplicationRef);
 		}
 
 		~RestTools()
@@ -124,12 +124,28 @@ class RestTools
 			fContext = context;
 		}
 
-		void Init(BaseTaskInfo* context, const VStream* inputStream, VStream* outputStream, const VString& hostName, const VString& inURLstring, IHTTPResponse* inResponse)
+		void Init(BaseTaskInfo* context, const VStream* inputStream, VStream* outputStream, const VString& hostName, const VString& inURLstring, IHTTPResponse* inResponse, VJSGlobalContext* inGlobalContext, RIApplicationRef inApplicationRef)
 		{
 			fResponse = inResponse;
 			url.ParseURL(inURLstring, false);
+			fJSGlobalContext = inGlobalContext;
+			fApplicationRef = inApplicationRef;
 			fContext = context;
-			labase = context->GetBase();
+			if (context != nil)
+			{
+				labase = context->GetBase();
+				if (fJSGlobalContext == nil)
+					fJSGlobalContext = context->GetJSContext();
+				else
+					assert(fJSGlobalContext == context->GetJSContext());
+			}
+			else
+			{
+				labase = nil;
+			}
+
+			assert(inGlobalContext != NULL);
+
 			fInput = (VStream*)inputStream;
 			fOutput = outputStream;
 			fHostName = hostName;
@@ -157,8 +173,17 @@ class RestTools
 			fUserSession = nil;
 			fUAGDirectory = nil;
 			fHTTPError = 0;
+
 			if (context != nil)
-				fUAGDirectory = context->GetBase()->GetUAGDirectory();
+			{
+				fUAGDirectory = RetainRefCountable( context->GetBase()->GetUAGDirectory());
+			}
+			else if (fApplicationRef != nil)
+			{
+				VError lError = VE_OK;
+				IDB4D_ApplicationIntf *applicationIntf = VDBMgr::GetManager()->GetApplicationInterface();
+				fUAGDirectory = applicationIntf->RetainUAGDirectory( fApplicationRef, lError);
+			}
 
 			numrec = -2;
 			curdataset = nil;
@@ -416,6 +441,8 @@ class RestTools
 
 		VFullURL* fURL;
 		BaseTaskInfo* fContext;
+		VJSGlobalContext* fJSGlobalContext;
+		RIApplicationRef fApplicationRef;
 		sLONG fCurlevel;
 		VString fTabString;
 		VStream* fOutput;

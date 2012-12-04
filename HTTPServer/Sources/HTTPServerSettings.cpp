@@ -127,7 +127,7 @@ namespace RIASettingsKeys
 		CREATE_BAGKEY_WITH_DEFAULT_SCALAR (maximumRequestsByConnection, XBOX::VLong, sLONG, DEFAULT_KEEP_ALIVE_MAX_CONNECTIONS);
 		CREATE_BAGKEY_WITH_DEFAULT_SCALAR (maximumTimeout, XBOX::VLong, sLONG, DEFAULT_KEEP_ALIVE_TIMEOUT);
 		CREATE_BAGKEY_WITH_DEFAULT (logFormat, XBOX::VString, L"No Log File");
-		CREATE_BAGKEY_WITH_DEFAULT (logFolderPath, XBOX::VString, HTTP_SERVER_LOG_FILE_PATH);
+		CREATE_BAGKEY_WITH_DEFAULT (logPath, XBOX::VString, HTTP_SERVER_LOG_FILE_PATH);
 		CREATE_BAGKEY_WITH_DEFAULT (logFileName, XBOX::VString, HTTP_SERVER_LOG_FILE_NAME);
 		CREATE_BAGKEY_WITH_DEFAULT_SCALAR (logMaxSize, XBOX::VLong, sLONG, DEFAULT_LOG_FILE_MAX_SIZE);
 
@@ -218,7 +218,11 @@ void BuildFolderPath (const XBOX::VFilePath& inBaseFolder, const XBOX::VString& 
 	{
 		XBOX::VString	pathString (inPath);
 		
-		if (pathString[0] == CHAR_SOLIDUS) // POSIX Path ?
+		if ((pathString[0] == CHAR_SOLIDUS) // POSIX Path ?
+#if VERSIONWIN
+			|| ((pathString.GetLength() > 2) && (pathString[1] == CHAR_COLON) && (pathString[2] == CHAR_SOLIDUS)) // POSIX path like c:/blahblah/
+#endif
+		)
 		{
 			if (!pathString.IsEmpty() && (pathString[pathString.GetLength()-1] != CHAR_SOLIDUS))
 				pathString.AppendUniChar (CHAR_SOLIDUS);
@@ -254,128 +258,6 @@ void BuildFolderPath (const XBOX::VFilePath& inBaseFolder, const XBOX::VString& 
 		}
 	}
 }
-
-
-//--------------------------------------------------------------------------------------------------
-
-
-#if HTTP_SERVER_GLOBAL_SETTINGS
-VHTTPServerSettings::VHTTPServerSettings ()
-: fEnableCache (DEFAULT_ENABLE_CACHE)
-, fCacheMaxSize (DEFAULT_CACHE_MAX_SIZE)
-, fCachedObjectMaxSize (DEFAULT_CACHED_OBJECT_MAX_SIZE)
-, fEnableCompression (DEFAULT_COMPRESSION_ENABLED)
-, fCompressionMinThreshold (DEFAULT_COMPRESSION_MIN_THRESHOLD)
-, fCompressionMaxThreshold (DEFAULT_COMPRESSION_MAX_THRESHOLD)
-, fEnableKeepAlive (DEFAULT_KEEP_ALIVE_ENABLED)
-, fKeepAliveTimeout (DEFAULT_KEEP_ALIVE_TIMEOUT)
-, fKeepAliveMaxConnections (DEFAULT_KEEP_ALIVE_MAX_CONNECTIONS)
-, fMaxIncomingDataSize (XBOX::MaxLongInt)
-{
-}
-
-
-VHTTPServerSettings::~VHTTPServerSettings ()
-{
-}
-
-
-void VHTTPServerSettings::ResetToFactorySettings()
-{
-	SetEnableCache (DEFAULT_ENABLE_CACHE);
-	SetCacheMaxSize (DEFAULT_CACHE_MAX_SIZE);
-	SetCachedObjectMaxSize (DEFAULT_CACHED_OBJECT_MAX_SIZE);
-	SetEnableCompression (DEFAULT_COMPRESSION_ENABLED);
-	SetCompressionMinThreshold (DEFAULT_COMPRESSION_MIN_THRESHOLD);
-	SetCompressionMaxThreshold (DEFAULT_COMPRESSION_MAX_THRESHOLD);
-	SetEnableKeepAlive (DEFAULT_KEEP_ALIVE_ENABLED);
-	SetKeepAliveTimeout (DEFAULT_KEEP_ALIVE_TIMEOUT);
-	SetKeepAliveMaxConnections (DEFAULT_KEEP_ALIVE_MAX_CONNECTIONS);
-	SetMaxIncomingDataSize (XBOX::MaxLongInt);
-}
-
-
-inline
-void VHTTPServerSettings::SetMaxIncomingDataSize (XBOX::VSize inValue)
-{
-	fMaxIncomingDataSize = inValue;
-	VHTTPRequest::SetMaxIncomingDataSize (fMaxIncomingDataSize);
-}
-
-
-XBOX::VError VHTTPServerSettings::LoadFromBag (const XBOX::VValueBag *inBag)
-{
-	if (NULL == inBag)
-		return XBOX::VE_INVALID_PARAMETER;
-
-#if 0 /*VERSIONDEBUG*/
-	XBOX::VString xmlString ("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
-	inBag->DumpXML (xmlString, CVSTR ("settings"), true);
-#endif
-
-	/*  HTTP Settings */
-	const XBOX::VValueBag *httpSettings = RetainSettings (inBag, RIASettingsKeys::HTTP::kXmlElement);
-	if (NULL != httpSettings)
-	{
-		/* cache settings */
-		fEnableCache = RIASettingsKeys::HTTP::useCache.Get (httpSettings);
-		fCacheMaxSize = RIASettingsKeys::HTTP::pageCacheSize.Get (httpSettings) * 1024;			// expressed in Kilo-Bytes in settings file
-		fCachedObjectMaxSize = RIASettingsKeys::HTTP::cachedObjectMaxSize.Get (httpSettings);	// expressed in Bytes in settings file
-
-		/* compression settings */
-		fEnableCompression = RIASettingsKeys::HTTP::allowCompression.Get (httpSettings);
-		fCompressionMinThreshold = RIASettingsKeys::HTTP::compressionMinThreshold.Get (httpSettings);
-		fCompressionMaxThreshold = RIASettingsKeys::HTTP::compressionMaxThreshold.Get (httpSettings);
-
-		/* Keep-Alive settings */
-		fEnableKeepAlive = RIASettingsKeys::HTTP::acceptKeepAliveConnections.Get (httpSettings);
-/* Temporary disable theses settings loading... because of a bug with long timeout values (sic...)
-		fKeepAliveTimeout = RIASettingsKeys::HTTP::maximumTimeout.Get (httpSettings);
-		fKeepAliveMaxConnections = RIASettingsKeys::HTTP::maximumRequestsByConnection.Get (httpSettings);
-*/
-
-		XBOX::QuickReleaseRefCountable (httpSettings);
-	}
-
-	return XBOX::VE_OK;
-}
-
-
-XBOX::VError VHTTPServerSettings::SaveToBag (XBOX::VValueBag *outBag)
-{
-	if (NULL == outBag)
-		return XBOX::VE_INVALID_PARAMETER;
-
-	XBOX::VValueBag *httpSettings = new XBOX::VValueBag ();
-	if (httpSettings)
-	{
-		/* cache settings */
-		httpSettings->SetBool (RIASettingsKeys::HTTP::useCache, fEnableCache);
-		httpSettings->SetLong (RIASettingsKeys::HTTP::pageCacheSize, fCacheMaxSize);
-		httpSettings->SetLong (RIASettingsKeys::HTTP::cachedObjectMaxSize, fCachedObjectMaxSize);
-
-		/* compression settings */
-		httpSettings->SetBool (RIASettingsKeys::HTTP::allowCompression, fEnableCompression);
-		httpSettings->SetLong (RIASettingsKeys::HTTP::compressionMinThreshold, fCompressionMinThreshold);
-		httpSettings->SetLong (RIASettingsKeys::HTTP::compressionMaxThreshold, fCompressionMaxThreshold);
-
-		/* Keep-Alive settings */
-		httpSettings->SetBool (RIASettingsKeys::HTTP::acceptKeepAliveConnections, fEnableKeepAlive);
-		httpSettings->SetLong (RIASettingsKeys::HTTP::maximumTimeout, fKeepAliveTimeout);
-		httpSettings->SetLong (RIASettingsKeys::HTTP::maximumRequestsByConnection, fKeepAliveMaxConnections);
-
-		outBag->AddElement (RIASettingsKeys::HTTP::kXmlElement, httpSettings);
-		XBOX::ReleaseRefCountable (&httpSettings);
-	}
-
-#if 0 /*VERSIONDEBUG*/
-	XBOX::VString xmlString ("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
-	outBag->DumpXML (xmlString, CVSTR ("settings"), true);
-#endif
-
-	return XBOX::VE_OK;
-}
-#endif
 
 
 //--------------------------------------------------------------------------------------------------
@@ -466,7 +348,6 @@ VHTTPServerProjectSettings::VHTTPServerProjectSettings (const XBOX::VValueBag *i
 , fLogTokensVector()
 , fProjectFolderPath (inProjectFolderPath)
 , fUseWALibVirtualFolder (true)
-#if !HTTP_SERVER_GLOBAL_SETTINGS
 , fEnableCache (DEFAULT_ENABLE_CACHE)
 , fCacheMaxSize (DEFAULT_CACHE_MAX_SIZE)
 , fCachedObjectMaxSize (DEFAULT_CACHED_OBJECT_MAX_SIZE)
@@ -477,7 +358,6 @@ VHTTPServerProjectSettings::VHTTPServerProjectSettings (const XBOX::VValueBag *i
 , fKeepAliveTimeout (DEFAULT_KEEP_ALIVE_TIMEOUT)
 , fKeepAliveMaxConnections (DEFAULT_KEEP_ALIVE_MAX_CONNECTIONS)
 , fMaxIncomingDataSize (XBOX::MaxLongInt)
-#endif
 , fSignal_SettingsChanged()
 {
 	LoadFromBag (inBag);
@@ -519,7 +399,6 @@ void VHTTPServerProjectSettings::ResetToFactorySettings()
 	fLogTokensVector.clear();
 	fProjectFolderPath.Clear();
 	SetUseWALibVirtualFolder (true);
-#if !HTTP_SERVER_GLOBAL_SETTINGS
 	SetEnableCache (DEFAULT_ENABLE_CACHE);
 	SetCacheMaxSize (DEFAULT_CACHE_MAX_SIZE);
 	SetCachedObjectMaxSize (DEFAULT_CACHED_OBJECT_MAX_SIZE);
@@ -530,7 +409,6 @@ void VHTTPServerProjectSettings::ResetToFactorySettings()
 	SetKeepAliveTimeout (DEFAULT_KEEP_ALIVE_TIMEOUT);
 	SetKeepAliveMaxConnections (DEFAULT_KEEP_ALIVE_MAX_CONNECTIONS);
 	SetMaxIncomingDataSize (XBOX::MaxLongInt);
-#endif
 
 	Tell_SettingsChanged();
 }
@@ -550,15 +428,25 @@ void VHTTPServerProjectSettings::SetListeningAddress (const XBOX::VString& inIPA
 				fListeningAddress = 0; // Listening on all IP addresses
 		}
 	}
+#else
+	fListeningAddress.FromString (inIPAddressString);
+
+	if ((fListeningAddress != XBOX::VNetAddress::GetAnyIP()) && (fListeningAddress != XBOX::VNetAddress::GetLoopbackIP()))
+	{
+		XBOX::VectorOfVString	localIPAddresses;
+
+		if (HTTPServerTools::GetLocalIPAddresses (localIPAddresses) > 0)
+		{
+			if (!FindValueInVector (localIPAddresses, fListeningAddress))
+				fListeningAddress.FromString (VNetAddress::GetAnyIP()); // Listening on all IP addresses
+		}
+	}
+#endif	
 
 	Tell_SettingsChanged();
-#elif DEPRECATED_IPV4_API_SHOULD_NOT_COMPILE
-	#error NEED AN IP V6 UPDATE
-#endif	
 }
 
 
-inline
 void VHTTPServerProjectSettings::SetMaxIncomingDataSize (XBOX::VSize inValue)
 {
 	fMaxIncomingDataSize = inValue;
@@ -568,7 +456,6 @@ void VHTTPServerProjectSettings::SetMaxIncomingDataSize (XBOX::VSize inValue)
 }
 
 
-inline
 void VHTTPServerProjectSettings::SetDefaultAuthType (const XBOX::VString& inAuthenticationMethodName)
 {
 	fAuthType = HTTPServerTools::GetAuthenticationMethodFromName (inAuthenticationMethodName);
@@ -601,7 +488,6 @@ void VHTTPServerProjectSettings::SetLogFormat (sLONG inValue, VectorOfLogToken *
 }
 
 
-inline
 void VHTTPServerProjectSettings::SetLogFormat (const XBOX::VString& inLogFormatName, VectorOfLogToken *inLogTokens)
 {
 	SetLogFormat (HTTPServerTools::GetLogFormatFromName (inLogFormatName), inLogTokens);
@@ -623,49 +509,42 @@ void VHTTPServerProjectSettings::SetLogFormat (const XBOX::VString& inLogFormatN
 }
 
 
-inline
 bool VHTTPServerProjectSettings::RotateOnSchedule() const
 {
 	return fLogBackupSettings.RotateOnSchedule();
 }
 
 
-inline
 ELogRotationMode VHTTPServerProjectSettings::GetLogRotationMode() const
 {
 	return fLogBackupSettings.GetLogRotationMode();
 }
 
 
-inline
 sLONG VHTTPServerProjectSettings::GetLogMaxSize () const
 {
 	return fLogBackupSettings.GetLogMaxSize();
 }
 
 
-inline
 sLONG VHTTPServerProjectSettings::GetFrequency() const
 {
 	return fLogBackupSettings.GetFrequency();
 }
 
 
-inline
 sLONG VHTTPServerProjectSettings::GetStartingTime() const
 {
 	return fLogBackupSettings.GetStartingTime();
 }
 
 
-inline
 const std::map<sLONG, sLONG>& VHTTPServerProjectSettings::GetDaysHoursMap() const
 {
 	return fLogBackupSettings.GetDaysHoursMap();
 }
 
 
-inline
 void VHTTPServerProjectSettings::SetLogRotationMode (ELogRotationMode inValue)
 {
 	fLogBackupSettings.SetLogRotationMode (inValue);
@@ -674,7 +553,6 @@ void VHTTPServerProjectSettings::SetLogRotationMode (ELogRotationMode inValue)
 }
 
 
-inline
 void VHTTPServerProjectSettings::SetLogMaxSize (sLONG inValue)
 {
 	fLogBackupSettings.SetLogMaxSize (inValue);
@@ -683,7 +561,6 @@ void VHTTPServerProjectSettings::SetLogMaxSize (sLONG inValue)
 }
 
 
-inline
 void VHTTPServerProjectSettings::SetFrequency (sLONG inValue)
 {
 	fLogBackupSettings.SetFrequency (inValue);
@@ -692,7 +569,6 @@ void VHTTPServerProjectSettings::SetFrequency (sLONG inValue)
 }
 
 
-inline
 void VHTTPServerProjectSettings::SetStartingTime (sLONG inValue)
 {
 	fLogBackupSettings.SetStartingTime (inValue);
@@ -701,7 +577,6 @@ void VHTTPServerProjectSettings::SetStartingTime (sLONG inValue)
 }
 
 
-inline
 void VHTTPServerProjectSettings::SetDaysHoursMap (const std::map<sLONG, sLONG>& inValue)
 {
 	return fLogBackupSettings.SetDaysHoursMap (inValue);
@@ -790,28 +665,38 @@ XBOX::VError VHTTPServerProjectSettings::LoadFromBag (const XBOX::VValueBag *inB
 	const XBOX::VValueBag *projectSettings = RetainSettings (inBag, RIASettingsKeys::Project::kXmlElement);
 	if (projectSettings)
 	{
-		XBOX::VString ipv4String = RIASettingsKeys::Project::listen.Get (projectSettings);
+		XBOX::VString ipString = RIASettingsKeys::Project::listen.Get (projectSettings);
 #if WITH_DEPRECATED_IPV4_API
-		fListeningAddress = ServerNetTools::GetIPAddress (ipv4String);
-#elif DEPRECATED_IPV4_API_SHOULD_NOT_COMPILE
-	#error NEED AN IP V6 UPDATE
+		fListeningAddress = ServerNetTools::GetIPAddress (ipString);
+#else
+		fListeningAddress.FromString (ipString);
 #endif		
 		fHostName = RIASettingsKeys::Project::hostName.Get (projectSettings);
 #if HTTP_SERVER_USE_PROJECT_PATTERNS
 		fProjectPattern = RIASettingsKeys::Project::pattern.Get (projectSettings);
 #endif
 
-		if ((fListeningAddress != 0) && (fListeningAddress != LOCALHOST_ADDRESS))
-		{
-			std::vector<IP4> ipv4Addresses;
 #if WITH_DEPRECATED_IPV4_API
+		if ((fListeningAddress != 0) && (fListeningAddress != LOCALHOST_ADDRESS))
+#else
+		if ((fListeningAddress != XBOX::VNetAddress::GetAnyIP()) && (fListeningAddress != XBOX::VNetAddress::GetLoopbackIP()))
+#endif		
+		{
+#if WITH_DEPRECATED_IPV4_API
+			std::vector<IP4> ipv4Addresses;
 			if (ServerNetTools::GetLocalIPv4Addresses (ipv4Addresses) > 0)
 			{
 				if (!FindValueInVector (ipv4Addresses, fListeningAddress))
 					fListeningAddress = 0; // Listening on all IP addresses
 			}
-#elif DEPRECATED_IPV4_API_SHOULD_NOT_COMPILE
-#	error NEED AN IP V6 UPDATE
+#else
+			XBOX::VectorOfVString	localIPAddresses;
+
+			if (HTTPServerTools::GetLocalIPAddresses (localIPAddresses) > 0)
+			{
+				if (!FindValueInVector (localIPAddresses, fListeningAddress))
+					fListeningAddress.FromString (XBOX::VNetAddress::GetAnyIP()); // Listening on all IP addresses
+			}
 #endif			
 		}
 
@@ -846,7 +731,6 @@ XBOX::VError VHTTPServerProjectSettings::LoadFromBag (const XBOX::VValueBag *inB
 		XBOX::CharSet charSet = VTextConverters::Get()->GetCharSetFromName (charSetString);
 		fDefaultCharSet = (charSet != XBOX::VTC_UNKNOWN) ? charSet : XBOX::VTC_UTF_8;
 
-#if !HTTP_SERVER_GLOBAL_SETTINGS
 		/* cache settings */
 		fEnableCache = RIASettingsKeys::HTTP::useCache.Get (httpSettings);
 		fCacheMaxSize = RIASettingsKeys::HTTP::pageCacheSize.Get (httpSettings) * 1024;			// expressed in Kilo-Bytes in settings file
@@ -863,13 +747,12 @@ XBOX::VError VHTTPServerProjectSettings::LoadFromBag (const XBOX::VValueBag *inB
 		fKeepAliveTimeout = RIASettingsKeys::HTTP::maximumTimeout.Get (httpSettings);
 		fKeepAliveMaxConnections = RIASettingsKeys::HTTP::maximumRequestsByConnection.Get (httpSettings);
 */
-#endif
 
 		/* Log settings */
 		fLogFormat = HTTPServerTools::GetLogFormatFromName (RIASettingsKeys::HTTP::logFormat.Get (httpSettings));
 		SetLogRotationMode (LRC_ROTATE_ON_FILE_SIZE);
 		SetLogMaxSize (RIASettingsKeys::HTTP::logMaxSize.Get (httpSettings));
-		XBOX::VString logFolderPathString = RIASettingsKeys::HTTP::logFolderPath.Get (httpSettings);
+		XBOX::VString logFolderPathString = RIASettingsKeys::HTTP::logPath.Get (httpSettings);
 		BuildFolderPath (fProjectFolderPath, logFolderPathString, fLogFolderPath);
 		fLogFileName = RIASettingsKeys::HTTP::logFileName.Get (httpSettings);
 
@@ -938,18 +821,18 @@ XBOX::VError VHTTPServerProjectSettings::SaveToBag (XBOX::VValueBag *outBag)
 	XBOX::VValueBag *projectSettings = new XBOX::VValueBag ();
 	if (projectSettings)
 	{
-		XBOX::VString	ipv4String;
+		XBOX::VString	ipString;
 		XBOX::VString	authTypeString;
 
 #if WITH_DEPRECATED_IPV4_API
-		ServerNetTools::GetIPAdress (fListeningAddress, ipv4String);
-#elif DEPRECATED_IPV4_API_SHOULD_NOT_COMPILE
-	#error NEED AN IP V6 UPDATE
+		ServerNetTools::GetIPAdress (fListeningAddress, ipString);
+#else
+		ipString.FromString (fListeningAddress);
 #endif
 		HTTPServerTools::GetAuthenticationMethodName (fAuthType, authTypeString);
 
 		projectSettings->SetLong (RIASettingsKeys::Project::refCount, GetRefCount());
-		projectSettings->SetString (RIASettingsKeys::Project::listen, ipv4String);
+		projectSettings->SetString (RIASettingsKeys::Project::listen, ipString);
 		projectSettings->SetString (RIASettingsKeys::Project::hostName, fHostName);
 #if HTTP_SERVER_USE_PROJECT_PATTERNS
 		projectSettings->SetString (RIASettingsKeys::Project::pattern, fProjectPattern);
@@ -980,7 +863,6 @@ XBOX::VError VHTTPServerProjectSettings::SaveToBag (XBOX::VValueBag *outBag)
 		VTextConverters::Get()->GetNameFromCharSet (fDefaultCharSet, charSetName);
 		httpSettings->SetString (RIASettingsKeys::HTTP::standardSet, charSetName);
 
-#if !HTTP_SERVER_GLOBAL_SETTINGS
 		/* cache settings */
 		httpSettings->SetBool (RIASettingsKeys::HTTP::useCache, fEnableCache);
 		httpSettings->SetLong (RIASettingsKeys::HTTP::pageCacheSize, fCacheMaxSize);
@@ -995,7 +877,6 @@ XBOX::VError VHTTPServerProjectSettings::SaveToBag (XBOX::VValueBag *outBag)
 		httpSettings->SetBool (RIASettingsKeys::HTTP::acceptKeepAliveConnections, fEnableKeepAlive);
 		httpSettings->SetLong (RIASettingsKeys::HTTP::maximumTimeout, fKeepAliveTimeout);
 		httpSettings->SetLong (RIASettingsKeys::HTTP::maximumRequestsByConnection, fKeepAliveMaxConnections);
-#endif
 
 		/* Log settings */
 		XBOX::VString logFormatName;
@@ -1003,7 +884,7 @@ XBOX::VError VHTTPServerProjectSettings::SaveToBag (XBOX::VValueBag *outBag)
 		posixPath.Clear();
 		fLogFolderPath.GetPosixPath (posixPath);
 		httpSettings->SetString (RIASettingsKeys::HTTP::logFormat, logFormatName);
-		httpSettings->SetString (RIASettingsKeys::HTTP::logFolderPath, posixPath);
+		httpSettings->SetString (RIASettingsKeys::HTTP::logPath, posixPath);
 		httpSettings->SetString (RIASettingsKeys::HTTP::logFileName, fLogFileName);
 		httpSettings->SetLong (RIASettingsKeys::HTTP::logMaxSize, GetLogMaxSize());
 
@@ -1084,7 +965,6 @@ XBOX::VError VHTTPServerProjectSettings::SaveToBag (XBOX::VValueBag *outBag)
 }
 
 
-inline
 void VHTTPServerProjectSettings::SetSSLCertificatesFolderPath (const XBOX::VFilePath& inValue)
 {
 	BuildFolderPath (fProjectFolderPath, inValue.GetPath(), fSSLCertificatesFolderPath);
@@ -1093,7 +973,6 @@ void VHTTPServerProjectSettings::SetSSLCertificatesFolderPath (const XBOX::VFile
 }
 
 
-inline
 void VHTTPServerProjectSettings::SetSSLCertificatesFolderPath (const XBOX::VString& inValue)
 {
 	BuildFolderPath (fProjectFolderPath, inValue, fSSLCertificatesFolderPath);
@@ -1102,7 +981,6 @@ void VHTTPServerProjectSettings::SetSSLCertificatesFolderPath (const XBOX::VStri
 }
 
 
-inline
 void VHTTPServerProjectSettings::SetWebFolderPath (const XBOX::VFilePath& inValue)
 {
 	BuildFolderPath (fProjectFolderPath, inValue.GetPath(), fWebFolderPath);
@@ -1111,7 +989,6 @@ void VHTTPServerProjectSettings::SetWebFolderPath (const XBOX::VFilePath& inValu
 }
 
 
-inline
 void VHTTPServerProjectSettings::SetWebFolderPath (const XBOX::VString& inValue)
 {
 	BuildFolderPath (fProjectFolderPath, inValue, fWebFolderPath);
@@ -1126,7 +1003,6 @@ VSignalSettingsChanged *VHTTPServerProjectSettings::GetSignal_SettingsChanged()
 }
 
 
-inline
 void VHTTPServerProjectSettings::Tell_SettingsChanged()
 {
 	fSignal_SettingsChanged (this);

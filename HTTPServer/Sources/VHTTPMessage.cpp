@@ -15,7 +15,7 @@
 */
 #include "HTTPServer.h"
 
-
+#if 0 //TODO: Cleanup
 //--------------------------------------------------------------------------------------------------
 
 
@@ -250,9 +250,6 @@ XBOX::VError VHTTPMessage::_ReadFromStream (XBOX::VStream& inStream,
 
 								if (HTTPProtocol::GetRequestURIFromRequestLine (lineBuffer, lineLength, rawURL, false))
 								{
-									URLString.FromString (rawURL);
-									XBOX::VURL::Decode (URLString);
-
 									if (NULL != outRequestHTTPVersion)
 									{
 										*outRequestHTTPVersion = HTTPProtocol::GetVersionFromRequestLine (lineBuffer, lineLength);
@@ -263,10 +260,7 @@ XBOX::VError VHTTPMessage::_ReadFromStream (XBOX::VStream& inStream,
 										}
 									}
 
-									XBOX::VURL url;
-									url.FromString (URLString, false);
-									url.GetPath (URLPath, eURL_POSIX_STYLE, false);
-									url.GetQuery (URLQuery, false);
+									HTTPProtocol::ParseURL (rawURL, URLString, URLPath, URLQuery);
 
 									if (NULL != outRawURL)
 										outRawURL->FromString (rawURL);
@@ -484,3 +478,4 @@ XBOX::VError VHTTPMessage::_ReadFromStream (XBOX::VStream& inStream,
 
 #undef MAX_BUFFER_LENGTH
 }
+#endif

@@ -536,7 +536,7 @@ VError IndexHeader::ModifyNulls(OccupableStack* curstack, BaseTaskInfo* context)
 			if (ou>0 && err == VE_OK)
 			{
 				if (sel->IsCluster())
-					sel->SetSelAddr(ou);
+					sel->ChangeAddr(ou, bd, context);
 				else
 					sel->TransformIntoCluster(ou);
 				sel->ChangeAddr(ou, bd, context);
@@ -8202,13 +8202,14 @@ void IndexInfoFromField::AwakeIndex(VDB4DProgressIndicator* inProgress)
 		if (fDelayRequestCount == 0)
 		{
 			SetInvalidOnDisk();
+			SetInvalid();
 			AddRebuildIndex(this, inProgress, nil);
 		}
 	}
 	else
 	{
 		sLONG xbreak = 1; // put a break here
-		assert(false);
+		//assert(false);
 	}
 	//Close();
 }
@@ -10322,6 +10323,7 @@ void IndexInfoFromMultipleField::AwakeIndex(VDB4DProgressIndicator* inProgress)
 		if (fDelayRequestCount == 0)
 		{
 			SetInvalidOnDisk();
+			SetInvalid();
 			AddRebuildIndex(this, inProgress, nil);
 		}
 	}

@@ -167,8 +167,11 @@ extern const XBOX::VString STRING_ERROR_PARAMETER_NAME;
 
 extern const XBOX::VTime TIME_EMPTY_DATE;
 
-
-extern const IP4		DEFAULT_LISTENING_ADDRESS;
+#if WITH_DEPRECATED_IPV4_API
+extern const IP4 /*done*/		DEFAULT_LISTENING_ADDRESS;
+#else
+extern const XBOX::VString	DEFAULT_LISTENING_ADDRESS;
+#endif
 extern const PortNumber	DEFAULT_LISTENING_PORT;
 extern const PortNumber	DEFAULT_LISTENING_SSL_PORT;
 
@@ -295,14 +298,20 @@ void	GetIPv4FromString (const XBOX::VString& inIPv4String, IP4& outIPv4);
 		 *	@function MakeHostString
 		 *	@brief Make an host string such as "127.0.0.1:8080"
 		 */
-void	MakeHostString (IP4 inIPv4, PortNumber inPort, XBOX::VString& outHostString);
+#if WITH_DEPRECATED_IPV4_API
+void	MakeHostString (IP4 /*done*/ inIPv4, PortNumber inPort, XBOX::VString& outHostString);
+#endif
+	
 void	MakeHostString (const XBOX::VString& inHost, PortNumber inPort, XBOX::VString& outHostString);
 
 		/**
 		 *	@function ParseHostString
 		 */
-void	ParseHostString (const XBOX::VString& inHostString, IP4& outIPv4, PortNumber& outPort);
-void	ParseHostString (const XBOX::VString& inHostString, XBOX::VString& outIPv4String, PortNumber& outPort);
+#if WITH_DEPRECATED_IPV4_API	
+void	ParseHostString (const XBOX::VString& inHostString, IP4& /*done*/ outIPv4, PortNumber& outPort);
+#endif
+	
+void	ParseHostString (const XBOX::VString& inHostString, XBOX::VString& outIPString, PortNumber& outPort);
 
 		/**
 		 *	@function GetLogFormatName
@@ -388,6 +397,12 @@ void	ExtractContentTypeAndCharset (const XBOX::VString& inString, XBOX::VString&
 		 *	Try to determine mime-type kind (may be MIMETYPE_BINARY, MIMETYPE_TEXT or MIMETYPE_IMAGE)
 		 */
 MimeTypeKind GetMimeTypeKind (const XBOX::VString& inContentType);
+
+		/**
+		 *	@function GetLocalIPAddresses
+		 */
+sLONG GetLocalIPAddresses (XBOX::VectorOfVString& outIPAddresses, bool  bClearFirst = false);
+
 }
 
 

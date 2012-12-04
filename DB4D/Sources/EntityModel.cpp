@@ -539,6 +539,27 @@ VError AttributeType::SaveToBag(VValueBag& CatalogBag, bool forJSON) const
 }
 
 
+bool AttributeType::NeedValidation() const
+{
+	bool needvalidate = false;
+
+	if (fMin != nil)
+		needvalidate = true;
+	if (fMax != nil)
+		needvalidate = true;
+	if (!fPattern.IsEmpty())
+		needvalidate = true;
+	if (fFixedLength > 0)
+		needvalidate = true;
+	if (fMinLength > 0)
+		needvalidate = true;
+	if (fMaxLength > 0)
+		needvalidate = true;
+	return needvalidate;
+}
+
+
+
 
 
 // ----------------------------------------------------------------------------------------
@@ -654,6 +675,26 @@ void EntityRelation::RecalcPath()
 			}
 		}
 	}
+}
+
+
+bool EntityRelation::MatchesBeginingOf(const EntityRelation* otherRel) const
+{
+	bool res = true;
+	if (fPath.size() > otherRel->fPath.size())
+		res = false;
+	else
+	{
+		for (EntityRelationCollection::const_iterator cur = fPath.begin(), end = fPath.end(), curOther = otherRel->fPath.begin(); cur != end; ++cur, ++curOther)
+		{
+			if ((*cur)->fSource != (*curOther)->fSource || (*cur)->fDest != (*curOther)->fDest)
+			{
+				res = false;
+				break;
+			}
+		}
+	}
+	return res;
 }
 
 /*
@@ -1073,15 +1114,16 @@ bool EntityMethod::permissionMatch(DB4D_EM_Perm inPerm, CUAGSession* inSession) 
 void EntityMethod::ResolvePermissionsInheritance()
 {
 	VUUID xid;
-	fOwner->GetPermission(DB4D_EM_Execute_Perm, xid);
-	if (fExecutePerm.IsNull() && !xid.IsNull())
+	bool forced = false;
+	fOwner->GetPermission(DB4D_EM_Execute_Perm, xid, forced);
+	if ((fExecutePerm.IsNull() || forced) && !xid.IsNull())
 	{
 		fExecutePerm = xid;
 	}
 
 	VUUID pid;
-	fOwner->GetPermission(DB4D_EM_Promote_Perm, pid);
-	if (fPromotePerm.IsNull() && !pid.IsNull())
+	fOwner->GetPermission(DB4D_EM_Promote_Perm, pid, forced);
+	if ((fPromotePerm.IsNull() || forced) && !pid.IsNull())
 	{
 		fPromotePerm = pid;
 	}
@@ -2270,14 +2312,34 @@ VError EntityAttribute::FromBag(const VValueBag* bag, EntityModelCatalog* catalo
 
 	if (err == VE_OK)
 	{
-		VJSContext jscontext(*(catalog->getLoadingContext()));
-		VJSValue result(jscontext);
-		VString path = "model."+fOwner->GetName()+"."+fName;
+		VJSContext	jscontext(*(catalog->getLoadingContext()));
+		VJSObject	result(jscontext);
+		VString		path	= "model."+fOwner->GetName()+"."+fName;
+
+		/*
 		jscontext.DisableDebugger();
 		jscontext.EvaluateScript(path, nil, &result, nil, nil);
-		if (result.IsObject())
+		*/
+
+		bool				isOk		= false;
+		JS4D::ExceptionRef	exception	= NULL;
+		
+		result = jscontext.GetGlobalObject().GetPropertyAsObject("model", &exception);
+		if (exception == NULL && result.IsObject()) {
+
+			result = result.GetPropertyAsObject(fOwner->GetName(), &exception);
+			if (exception == NULL && result.IsObject()) {
+
+				result = result.GetPropertyAsObject(fName, &exception);
+				isOk = exception == NULL && result.IsObject();
+
+			}
+
+		}
+
+		if (isOk /*result.IsObject() */)
 		{
-			VJSObject attObj(result.GetObject());
+			VJSObject attObj(result);
 			VJSPropertyIterator curprop(attObj);
 			while (curprop.IsValid())
 			{
@@ -2347,7 +2409,7 @@ VError EntityAttribute::FromBag(const VValueBag* bag, EntityModelCatalog* catalo
 	return err;
 }
 
-VError EntityAttribute::ResolveRelatedEntities(EntityModelCatalog* catalog, bool devMode)
+VError EntityAttribute::ResolveRelatedEntities(SubPathRefSet& already, EntityModelCatalog* catalog, bool devMode, BaseTaskInfo* context)
 {
 	VError err = VE_OK;
 
@@ -2355,7 +2417,7 @@ VError EntityAttribute::ResolveRelatedEntities(EntityModelCatalog* catalog, bool
 	{
 		if (fFrom != nil)
 		{
-			((EntityAttribute*)fFrom)->ResolveRelatedEntities(catalog, devMode);
+			((EntityAttribute*)fFrom)->ResolveRelatedEntities(already, catalog, devMode, context);
 			fRelation = RetainRefCountable(fFrom->fRelation);
 			if (fSubEntity == nil)
 				fSubEntity = RetainRefCountable(fFrom->fSubEntity);
@@ -2478,7 +2540,7 @@ VError EntityAttribute::ResolveRelatedEntities(EntityModelCatalog* catalog, bool
 							VString lastpart;
 							bool allNto1 = true;
 							EntityModel* lastDest = nil;
-							err = fOwner->BuildRelPath(catalog, path, relpath, lastpart, allNto1, devMode, lastDest);
+							err = fOwner->BuildRelPath(already, catalog, path, relpath, lastpart, allNto1, devMode, lastDest);
 
 							if (err == VE_OK)
 							{
@@ -2531,9 +2593,9 @@ VError EntityAttribute::ResolveRelatedEntities(EntityModelCatalog* catalog, bool
 							bool allNto1 = true;
 							EntityModel* lastDest = nil;
 							if (fReversePath)
-								err = fSubEntity->BuildRelPath(catalog, path, relpath, lastpart, allNto1, devMode, lastDest);
+								err = fSubEntity->BuildRelPath(already, catalog, path, relpath, lastpart, allNto1, devMode, lastDest);
 							else
-								err = fOwner->BuildRelPath(catalog, path, relpath, lastpart, allNto1, devMode, lastDest);
+								err = fOwner->BuildRelPath(already, catalog, path, relpath, lastpart, allNto1, devMode, lastDest);
 							if (err == VE_OK)
 							{
 								if (lastpart.IsEmpty())
@@ -2588,7 +2650,7 @@ VError EntityAttribute::ResolveRelatedEntities(EntityModelCatalog* catalog, bool
 					EntityRelationCollection relpath;
 					VString lastpart;
 					bool allNto1 = true;
-					err = fOwner->BuildRelPath(catalog, path, relpath, lastpart, allNto1, devMode, lastDest);
+					err = fOwner->BuildRelPath(already, catalog, path, relpath, lastpart, allNto1, devMode, lastDest);
 					if (allNto1)
 					{
 						if (lastpart.IsEmpty())
@@ -2699,7 +2761,7 @@ VError EntityAttribute::ResolveRelatedEntities(EntityModelCatalog* catalog, bool
 }
 
 
-VError EntityAttribute::ResolveQueryStatements(EntityModelCatalog* catalog, bool devMode)
+VError EntityAttribute::ResolveQueryStatements(EntityModelCatalog* catalog, bool devMode, BaseTaskInfo* context)
 {
 	VError err = VE_OK;
 	VString ss;
@@ -2714,13 +2776,13 @@ VError EntityAttribute::ResolveQueryStatements(EntityModelCatalog* catalog, bool
 				if (devMode)
 				{
 					StErrorContextInstaller errs(false);
-					err = fScriptDB4D->BuildFromString(fScriptStatement[script_attr_get], ss, nil, fOwner, true);
+					err = fScriptDB4D->BuildFromString(fScriptStatement[script_attr_get], ss, context, fOwner, true);
 					if (err != VE_OK)
 						catalog->AddError();
 					err = VE_OK;
 				}
 				else
-					err = fScriptDB4D->BuildFromString(fScriptStatement[script_attr_get], ss, nil, fOwner, true);
+					err = fScriptDB4D->BuildFromString(fScriptStatement[script_attr_get], ss, context, fOwner, true);
 			}
 
 			if (fScriptQuery == nil && err == VE_OK)
@@ -2731,9 +2793,9 @@ VError EntityAttribute::ResolveQueryStatements(EntityModelCatalog* catalog, bool
 				{
 					StErrorContextInstaller errs(false);
 					if (fScriptStatement[script_attr_query].IsEmpty())
-						err = fScriptQuery->BuildFromString(fScriptStatement[script_attr_get], ss, nil, fOwner, false);
+						err = fScriptQuery->BuildFromString(fScriptStatement[script_attr_get], ss, context, fOwner, false);
 					else
-						err = fScriptQuery->BuildFromString(fScriptStatement[script_attr_query], ss, nil, fOwner, false);
+						err = fScriptQuery->BuildFromString(fScriptStatement[script_attr_query], ss, context, fOwner, false);
 					if (err != VE_OK)
 						catalog->AddError();
 					err = VE_OK;
@@ -2741,9 +2803,9 @@ VError EntityAttribute::ResolveQueryStatements(EntityModelCatalog* catalog, bool
 				else
 				{
 					if (fScriptStatement[script_attr_query].IsEmpty())
-						err = fScriptQuery->BuildFromString(fScriptStatement[script_attr_get], ss, nil, fOwner, false);
+						err = fScriptQuery->BuildFromString(fScriptStatement[script_attr_get], ss, context, fOwner, false);
 					else
-						err = fScriptQuery->BuildFromString(fScriptStatement[script_attr_query], ss, nil, fOwner, false);
+						err = fScriptQuery->BuildFromString(fScriptStatement[script_attr_query], ss, context, fOwner, false);
 				}
 			}
 		}
@@ -2873,6 +2935,28 @@ bool EntityAttribute::IsSummable() const
 
 
 
+bool EntityAttribute::NeedValidation() const
+{
+	bool needvalidate = false;
+	if (fType != nil)
+	{
+		needvalidate = needvalidate || fType->NeedValidation();
+	}
+
+	if (fLocalType != nil)
+	{
+		needvalidate = needvalidate || fLocalType->NeedValidation();
+	}
+
+	if (fEvents[dbev_validate].IsValid())
+		needvalidate = true;
+
+	return needvalidate;
+}
+
+
+
+
 
 // ----------------------------------------------------------------------------------------
 
@@ -2880,6 +2964,21 @@ bool EntityAttribute::IsSummable() const
 AttributeStringPath::AttributeStringPath(const VString& inPath)
 {
 	inPath.GetSubStrings('.', fParts);
+}
+
+
+void AttributeStringPath::GetString(VString& outString) const
+{
+	outString.Clear();
+	bool first = true;
+	for (VectorOfVString::const_iterator cur = fParts.begin(), end = fParts.end(); cur != end; cur++)
+	{
+		if (first)
+			first = false;
+		else
+			outString += L".";
+		outString += *cur;
+	}
 }
 
 
@@ -2892,9 +2991,9 @@ AttributePath::AttributePath(EntityModel* model, const VString& inPath)
 }
 
 
-AttributePath::AttributePath(EntityModel* model, const AttributeStringPath& inPath)
+AttributePath::AttributePath(EntityModel* model, const AttributeStringPath& inPath, bool fromstart)
 {
-	fIsValid = FromPath(model, inPath);
+	fIsValid = FromPath(model, inPath, false, fromstart);
 }
 
 
@@ -2905,15 +3004,18 @@ bool AttributePath::FromPath(EntityModel* model, const VString& inPath, bool exp
 }
 
 
-bool AttributePath::FromPath(EntityModel* model, const AttributeStringPath& inPath, bool expandAliases)
+bool AttributePath::FromPath(EntityModel* model, const AttributeStringPath& inPath, bool expandAliases, bool fromstart)
 {
 	bool result = true;
 	EntityModel* curmodel = model;
 	fParts.clear();
 	fParts.reserve(inPath.Count());
-	const VString* s = inPath.FirstPart();
+	const VString* s = fromstart ? inPath.FirstPart() : inPath.CurPart();
+
+	/* cela permettait d'avoir une syntaxe model.attribute, mais ou etait ce utilise
 	if (s != nil && curmodel != nil && *s == curmodel->GetName())
 		s = inPath.NextPart();
+		*/
 
 	while (s != nil && curmodel != nil)
 	{
@@ -3236,6 +3338,22 @@ EntityAttributeSortedSelection* EntityAttributeSortedSelection::FindSubSelection
 }
 
 
+void EntityAttributeSortedSelection::ToString(VString& outString)
+{
+	bool first = true;
+	for (iterator cur = begin(), last = end(); cur != last; cur++)
+	{
+		const EntityAttribute* att = cur->fAttribute;
+		VString name = att->GetName();
+		if (first)
+			first = false;
+		else
+			outString += ",";
+		outString += name;
+	}
+}
+
+
 bool EntityAttributeSortedSelection::AddAttribute(EntityAttribute* att, RestTools* req)
 {
 	if (req == nil || att->getScope() == escope_public)
@@ -3259,41 +3377,73 @@ bool EntityAttributeSortedSelection::AddAttribute(const AttributeStringPath& inA
 		{
 			if (req == nil || att->getScope() == escope_public)
 			{
-				EntityAttributeSortedItem* eai = nil;
-				for (iterator cur = begin(), last = end(); cur != last && eai == nil; cur++)
+				if (forSorting && att->GetKind() == eattr_relation_Nto1)
 				{
-					if (cur->fAttribute == att)
+					AttributePath* attpath = new AttributePath(fModel, inAttributePath, false);
+					if (attpath->IsValid())
 					{
+						const EntityAttribute* lastpartatt = attpath->LastPart()->fAtt;
 						if (forSorting)
 						{
-							if (att->GetKind() == eattr_relation_1toN || att->GetKind() == eattr_composition)
-								eai = &(*cur);
+							if (lastpartatt->IsSortable())
+							{
+								attpath->Retain();
+								push_back(EntityAttributeSortedItem(attpath, ascent));
+							}
+							else
+							{
+								VString ss;
+								attpath->GetString(ss);
+								fModel->ThrowError(VE_DB4D_WRONG_ATTRIBUTE_KIND, &ss);
+							}
 						}
-						else
-							eai = &(*cur);
-					}
-				}
-				if (eai == nil)
-				{
-					push_back(EntityAttributeSortedItem(att, ascent));
-					eai = &((*this)[size()-1]);
-				}
-				s = inAttributePath.NextPart();
-				EntityModel* sousmodel = att->GetSubEntityModel();
-				if (sousmodel != nil)
-				{
-					if (s != nil)
-					{
-						if (eai->fSousSelection == nil)
-						{
-							eai->fSousSelection = new EntityAttributeSortedSelection(sousmodel);
-						}
-						result = eai->fSousSelection->AddAttribute(inAttributePath, ascent, forSorting, req);
 					}
 					else
 					{
-						if (forSorting)
-							att->ThrowError(VE_DB4D_WRONG_ATTRIBUTE_KIND);
+						VString ss;
+						attpath->GetString(ss);
+						fModel->ThrowError(VE_DB4D_ENTITY_ATTRIBUTE_NOT_FOUND, &ss);
+					}
+						QuickReleaseRefCountable(attpath);
+				}
+				else
+				{
+					EntityAttributeSortedItem* eai = nil;
+					for (iterator cur = begin(), last = end(); cur != last && eai == nil; cur++)
+					{
+						if (cur->fAttribute == att)
+						{
+							if (forSorting)
+							{
+								if (att->GetKind() == eattr_relation_1toN || att->GetKind() == eattr_composition)
+									eai = &(*cur);
+							}
+							else
+								eai = &(*cur);
+						}
+					}
+					if (eai == nil)
+					{
+						push_back(EntityAttributeSortedItem(att, ascent));
+						eai = &((*this)[size()-1]);
+					}
+					s = inAttributePath.NextPart();
+					EntityModel* sousmodel = att->GetSubEntityModel();
+					if (sousmodel != nil)
+					{
+						if (s != nil)
+						{
+							if (eai->fSousSelection == nil)
+							{
+								eai->fSousSelection = new EntityAttributeSortedSelection(sousmodel);
+							}
+							result = eai->fSousSelection->AddAttribute(inAttributePath, ascent, forSorting, req);
+						}
+						else
+						{
+							if (forSorting)
+								att->ThrowError(VE_DB4D_WRONG_ATTRIBUTE_KIND);
+						}
 					}
 				}
 			}
@@ -3323,6 +3473,10 @@ void EntityAttributeSortedSelection::Dispose()
 		if (attitem->fSousSelection != nil)
 		{
 			delete attitem->fSousSelection;
+		}
+		if (attitem->fAttPath != nil)
+		{
+			QuickReleaseRefCountable(attitem->fAttPath);
 		}
 	}
 }
@@ -3694,6 +3848,7 @@ EntityModel::EntityModel(Base4D* inOwner, Table* inMainTable)
 	fPublishAsGlobal = false;
 	fPublishAsGlobalDefined = false;
 	fAllowOverrideStamp = false;
+	fill(&fForced[DB4D_EM_None_Perm], &fForced[DB4D_EM_Promote_Perm+1], 0);
 }
 
 
@@ -3943,7 +4098,7 @@ Selection* EntityModel::projectSelection(Selection* sel, EntityAttribute* att, V
 			err = xquery.AnalyseSearch(&query, context);
 			if (err == VE_OK)
 			{
-				if (okperm(context, att->GetSubEntityModel(), DB4D_EM_Read_Perm))
+				if (okperm(context, att->GetSubEntityModel(), DB4D_EM_Read_Perm) || okperm(context, att->GetSubEntityModel(), DB4D_EM_Update_Perm) || okperm(context, att->GetSubEntityModel(), DB4D_EM_Delete_Perm))
 				{
 					result = xquery.Perform((Bittab*)nil, nil, context, err, DB4D_Do_Not_Lock);
 				}
@@ -4045,7 +4200,7 @@ VError EntityModel::ActivatePath(EntityRecord* erec, sLONG inPathID, SubEntityCa
 					err = xquery.AnalyseSearch(&query, context);
 					if (err == VE_OK)
 					{
-						if (okperm(context, subEntityModel, DB4D_EM_Read_Perm))
+						if (okperm(context, subEntityModel, DB4D_EM_Read_Perm) || okperm(context, subEntityModel, DB4D_EM_Update_Perm) || okperm(context, subEntityModel, DB4D_EM_Delete_Perm))
 						{
 							Selection* sel = xquery.Perform((Bittab*)nil, nil, context, err, DB4D_Do_Not_Lock);
 							if (sel != nil)
@@ -4079,7 +4234,7 @@ VError EntityModel::ActivatePath(EntityRecord* erec, sLONG inPathID, SubEntityCa
 }
 
 
-VError EntityModel::BuildRelPath(EntityModelCatalog* catalog, const VectorOfVString& path, EntityRelationCollection& outRelPath, VString& outLastpart, bool& outAllNto1, bool devMode, EntityModel* &outLastDest)
+VError EntityModel::BuildRelPath(SubPathRefSet& already, EntityModelCatalog* catalog, const VectorOfVString& path, EntityRelationCollection& outRelPath, VString& outLastpart, bool& outAllNto1, bool devMode, EntityModel* &outLastDest)
 {
 	VError err = VE_OK;
 
@@ -4095,27 +4250,46 @@ VError EntityModel::BuildRelPath(EntityModelCatalog* catalog, const VectorOfVStr
 	}
 	else
 	{
-		EntityAttributeKind what = att->GetKind();
-		if (what == eattr_relation_Nto1 || what == eattr_relation_1toN || what == eattr_composition)
+		SubPathRef part(this, attname);
+		if (already.find(part) != already.end())
 		{
-			if (what != eattr_relation_Nto1)
-				outAllNto1 = false;
-			err = att->ResolveRelatedEntities(catalog, devMode);
-			if (err == VE_OK)
+			if (!devMode)
+				err = ThrowError(VE_DB4D_RELATION_PATH_IS_RECURSIVE, &attname);
+			else
+				catalog->AddError();
+		}
+		else
+		{
+			already.insert(part);
+			EntityAttributeKind what = att->GetKind();
+			if (what == eattr_relation_Nto1 || what == eattr_relation_1toN || what == eattr_composition)
 			{
-				EntityRelation* rel = att->GetRelPath();
-				if (rel != nil)
+				if (what != eattr_relation_Nto1)
+					outAllNto1 = false;
+				err = att->ResolveRelatedEntities(already, catalog, devMode, nil);
+				if (err == VE_OK)
 				{
-					outRelPath.push_back(rel);
-					EntityModel* dest = att->GetSubEntityModel();
-					if (dest != nil)
+					EntityRelation* rel = att->GetRelPath();
+					if (rel != nil)
 					{
-						outLastDest = dest;
-						if (path.size() != 1)
+						outRelPath.push_back(rel);
+						EntityModel* dest = att->GetSubEntityModel();
+						if (dest != nil)
 						{
-							VectorOfVString subpath = path;
-							subpath.erase(subpath.begin());
-							err = dest->BuildRelPath(catalog, subpath, outRelPath, outLastpart, outAllNto1, devMode, outLastDest);
+							outLastDest = dest;
+							if (path.size() != 1)
+							{
+								VectorOfVString subpath = path;
+								subpath.erase(subpath.begin());
+								err = dest->BuildRelPath(already, catalog, subpath, outRelPath, outLastpart, outAllNto1, devMode, outLastDest);
+							}
+						}
+						else
+						{
+							if (!devMode)
+								err = ThrowError(VE_DB4D_ENTITY_RELATION_DOES_NOT_EXIST, &attname);
+							else
+								catalog->AddError();
 						}
 					}
 					else
@@ -4124,30 +4298,23 @@ VError EntityModel::BuildRelPath(EntityModelCatalog* catalog, const VectorOfVStr
 							err = ThrowError(VE_DB4D_ENTITY_RELATION_DOES_NOT_EXIST, &attname);
 						else
 							catalog->AddError();
+
 					}
 				}
-				else
-				{
-					if (!devMode)
-						err = ThrowError(VE_DB4D_ENTITY_RELATION_DOES_NOT_EXIST, &attname);
-					else
-						catalog->AddError();
-
-				}
-			}
-		}
-		else
-		{
-			if (path.size() != 1)
-			{
-				if (!devMode)
-					err = ThrowError(VE_DB4D_ENTITY_ATTRIBUTE_IS_NOT_NAVIGATION, &attname);
-				else
-					catalog->AddError();
 			}
 			else
 			{
-				outLastpart = attname;
+				if (path.size() != 1)
+				{
+					if (!devMode)
+						err = ThrowError(VE_DB4D_ENTITY_ATTRIBUTE_IS_NOT_NAVIGATION, &attname);
+					else
+						catalog->AddError();
+				}
+				else
+				{
+					outLastpart = attname;
+				}
 			}
 		}
 	}
@@ -4232,7 +4399,7 @@ VError EntityModel::ToBag(VValueBag& outBag, bool forDax, bool forSave, bool for
 		outBag.SetString(d4::dataURI, uri);
 	}
 
-	if (fDefaultTopSize != nil)
+	if (fDefaultTopSize != 0)
 	{
 		outBag.SetLong(d4::defaultTopSize, fDefaultTopSize);
 	}
@@ -5111,14 +5278,29 @@ VError EntityModel::FromBag(const VValueBag* inBag, EntityModelCatalog* catalog,
 
 	if (err == VE_OK)
 	{
-		VJSContext jscontext(*(catalog->getLoadingContext()));
-		VJSValue result(jscontext);
-		VString path = "model."+fName;
-		jscontext.DisableDebugger();
+		VJSContext	jscontext(*(catalog->getLoadingContext()));
+		VJSObject	result(jscontext);
+		VString		path	= "model."+fName;
+
+		/*		
+		jscontext.DisableDebugger();		
 		jscontext.EvaluateScript(path, nil, &result, nil, nil);
-		if (result.IsObject())
+		*/
+
+		bool				isOk		= false;
+		JS4D::ExceptionRef	exception	= NULL;
+		
+		result = jscontext.GetGlobalObject().GetPropertyAsObject("model", &exception);
+		if (exception == NULL && result.IsObject()) {
+
+			result = result.GetPropertyAsObject(fName, &exception);
+			isOk = exception == NULL && result.IsObject();
+
+		}
+
+		if (isOk /* result.IsObject() */)
 		{
-			VJSObject attObj(result.GetObject());
+			VJSObject attObj(result);
 			VJSPropertyIterator curprop(attObj);
 			while (curprop.IsValid())
 			{
@@ -5305,13 +5487,14 @@ sLONG EntityModel::AddRelationPath(EntityRelation* relpath)
 }
 
 
-VError EntityModel::ResolveRelatedEntities(EntityModelCatalog* catalog, bool devMode)
+VError EntityModel::ResolveRelatedEntities(SubPathRefSet& already, EntityModelCatalog* catalog, bool devMode, BaseTaskInfo* context)
 {
 	VError err = VE_OK;
 
 	for (EntityAttributeCollection::iterator cur = fAttributes.begin(), end = fAttributes.end(); cur != end && err == VE_OK; cur++)
 	{
-		err = (*cur)->ResolveRelatedEntities(catalog, devMode);
+		SubPathRefSet already2;
+		err = (*cur)->ResolveRelatedEntities(already2, catalog, devMode, context);
 	}
 
 	for (EntityMethodMap::iterator cur = fMethodsByName.begin(), end = fMethodsByName.end(); cur != end && err == VE_OK; cur++)
@@ -5337,7 +5520,7 @@ VError EntityModel::ResolveRelatedPath(EntityModelCatalog* catalog)
 }
 */
 
-VError EntityModel::ResolveQueryStatements(EntityModelCatalog* catalog, bool devMode)
+VError EntityModel::ResolveQueryStatements(EntityModelCatalog* catalog, bool devMode, BaseTaskInfo* context)
 {
 	VError err = VE_OK;
 
@@ -5348,7 +5531,7 @@ VError EntityModel::ResolveQueryStatements(EntityModelCatalog* catalog, bool dev
 
 		if (fBaseEm != nil)
 		{
-			err = fBaseEm->ResolveQueryStatements(catalog, devMode);
+			err = fBaseEm->ResolveQueryStatements(catalog, devMode, context);
 			if (fBaseEm->fRestrictingQuery != nil && err == VE_OK)
 			{
 				fRestrictingQuery = new SearchTab(fMainTable);
@@ -5364,7 +5547,7 @@ VError EntityModel::ResolveQueryStatements(EntityModelCatalog* catalog, bool dev
 				fRestrictingQuery = new SearchTab(fMainTable);
 				fRestrictingQuery->AllowJSCode(true);
 				StErrorContextInstaller errs(!devMode);
-				err = fRestrictingQuery->BuildFromString(fRestrictingQueryString, orderbystring, nil, fQueryApplyToEM ? this : nil);
+				err = fRestrictingQuery->BuildFromString(fRestrictingQueryString, orderbystring, context, fQueryApplyToEM ? this : nil);
 				if (err != VE_OK)
 					catalog->AddError();
 				if (devMode)
@@ -5375,7 +5558,7 @@ VError EntityModel::ResolveQueryStatements(EntityModelCatalog* catalog, bool dev
 				StErrorContextInstaller errs(!devMode);
 				SearchTab newquery(fMainTable);
 				newquery.AllowJSCode(true);
-				err = newquery.BuildFromString(fRestrictingQueryString, orderbystring, nil, fQueryApplyToEM ? this : nil);
+				err = newquery.BuildFromString(fRestrictingQueryString, orderbystring, context, fQueryApplyToEM ? this : nil);
 				if (err == VE_OK)
 					err = fRestrictingQuery->Add(newquery);
 				if (err != VE_OK)
@@ -5400,7 +5583,7 @@ VError EntityModel::ResolveQueryStatements(EntityModelCatalog* catalog, bool dev
 
 		for (EntityAttributeCollection::iterator cur = fAttributes.begin(), end = fAttributes.end(); cur != end && err == VE_OK; cur++)
 		{
-			err = (*cur)->ResolveQueryStatements(catalog, devMode);
+			err = (*cur)->ResolveQueryStatements(catalog, devMode, context);
 		}
 	}
 
@@ -5410,7 +5593,7 @@ VError EntityModel::ResolveQueryStatements(EntityModelCatalog* catalog, bool dev
 
 EntityRecord* EntityModel::LoadEntityRecord(sLONG n, VError& err, DB4D_Way_of_Locking HowToLock, BaseTaskInfo* context, bool autoexpand)
 {
-	if (okperm(context, fPerms[DB4D_EM_Read_Perm]))
+	if (okperm(context, fPerms[DB4D_EM_Read_Perm]) || okperm(context, fPerms[DB4D_EM_Update_Perm]) || okperm(context, fPerms[DB4D_EM_Delete_Perm]))
 	{
 		FicheInMem* rec = fMainTable->GetDF()->LoadRecord(n, err, HowToLock, context);
 		if (rec == nil)
@@ -5434,7 +5617,7 @@ EntityRecord* EntityModel::LoadEntityRecord(sLONG n, VError& err, DB4D_Way_of_Lo
 
 CDB4DEntityRecord* EntityModel::LoadEntity(sLONG n, VError& err, DB4D_Way_of_Locking HowToLock, CDB4DBaseContext* context, bool autoexpand)
 {
-	if (okperm(context, fPerms[DB4D_EM_Read_Perm]))
+	if (okperm(context, fPerms[DB4D_EM_Read_Perm]) || okperm(context, fPerms[DB4D_EM_Update_Perm]) || okperm(context, fPerms[DB4D_EM_Delete_Perm]))
 	{
 		BaseTaskInfo* xcontext = ConvertContext(context);
 		FicheInMem* rec = fMainTable->GetDF()->LoadRecord(n, err, HowToLock, xcontext);
@@ -5460,7 +5643,7 @@ CDB4DEntityRecord* EntityModel::LoadEntity(sLONG n, VError& err, DB4D_Way_of_Loc
 sLONG EntityModel::CountEntities(CDB4DBaseContext* inContext)
 {
 	sLONG result = 0;
-	if (okperm(inContext, fPerms[DB4D_EM_Read_Perm]))
+	if (okperm(inContext, fPerms[DB4D_EM_Read_Perm]) || okperm(inContext, fPerms[DB4D_EM_Update_Perm]) || okperm(inContext, fPerms[DB4D_EM_Delete_Perm]))
 	{
 		if (WithRestriction())
 		{
@@ -6019,7 +6202,7 @@ Selection* EntityModel::SelectAllEntities(BaseTaskInfo* context, VErrorDB4D* out
 {
 	VError err = VE_OK;
 	Selection* sel = nil;
-	if (okperm(context, fPerms[DB4D_EM_Read_Perm]))
+	if (okperm(context, fPerms[DB4D_EM_Read_Perm]) || okperm(context, fPerms[DB4D_EM_Update_Perm]) || okperm(context, fPerms[DB4D_EM_Delete_Perm]))
 	{
 		if (WithRestrictingQuery())
 		{
@@ -6113,7 +6296,7 @@ CDB4DQuery* EntityModel::NewQuery()
 Selection* EntityModel::query( const VString& inQuery, BaseTaskInfo* context, VErrorDB4D& err, const VValueSingle* param1, const VValueSingle* param2, const VValueSingle* param3)
 {
 	Selection* sel = nil;
-	if (okperm(context, fPerms[DB4D_EM_Read_Perm]))
+	if (okperm(context, fPerms[DB4D_EM_Read_Perm]) || okperm(context, fPerms[DB4D_EM_Update_Perm]) || okperm(context, fPerms[DB4D_EM_Delete_Perm]))
 	{
 		SearchTab laquery(fMainTable);
 		
@@ -6246,7 +6429,7 @@ Selection* EntityModel::ExecuteQuery( SearchTab* querysearch, BaseTaskInfo* cont
 {
 	VError err = VE_OK;
 	Selection *sel = nil;
-	if (okperm(context, fPerms[DB4D_EM_Read_Perm]))
+	if (okperm(context, fPerms[DB4D_EM_Read_Perm]) || okperm(context, fPerms[DB4D_EM_Update_Perm]) || okperm(context, fPerms[DB4D_EM_Delete_Perm]))
 	{
 		Base4D *db;
 		DataTable *DF;
@@ -6566,12 +6749,13 @@ void EntityModel::ClearCacheTableEM()
 
 
 
-VError EntityModel::SetPermission(DB4D_EM_Perm inPerm, const VUUID& inGroupID)
+VError EntityModel::SetPermission(DB4D_EM_Perm inPerm, const VUUID& inGroupID, bool forced)
 {
 	VError err = VE_OK;
 	if (inPerm >= DB4D_EM_Read_Perm && inPerm <= DB4D_EM_Promote_Perm)
 	{
 		fPerms[inPerm] = inGroupID;
+		fForced[inPerm] = forced ? 1 : 0;
 	}
 	else
 		err = ThrowError(VE_DB4D_WRONG_PERM_REF);
@@ -6579,12 +6763,13 @@ VError EntityModel::SetPermission(DB4D_EM_Perm inPerm, const VUUID& inGroupID)
 	return err;
 }
 
-VError EntityModel::GetPermission(DB4D_EM_Perm inPerm, VUUID& outGroupID) const
+VError EntityModel::GetPermission(DB4D_EM_Perm inPerm, VUUID& outGroupID, bool& forced) const
 {
 	VError err = VE_OK;
 	if (inPerm >= DB4D_EM_Read_Perm && inPerm <= DB4D_EM_Promote_Perm)
 	{
 		outGroupID = fPerms[inPerm];
+		forced = fForced[inPerm] == 1 ? true : false;
 	}
 	else
 		err = ThrowError(VE_DB4D_WRONG_PERM_REF);
@@ -6742,7 +6927,7 @@ VError EntityModel::compute(EntityAttributeSortedSelection& atts, Selection* sel
 	vector<computeResult> results;
 	results.resize(atts.size());
 	VError err = VE_OK;
-	if (okperm(context, fPerms[DB4D_EM_Read_Perm]))
+	if (okperm(context, fPerms[DB4D_EM_Read_Perm]) || okperm(context, fPerms[DB4D_EM_Update_Perm]) || okperm(context, fPerms[DB4D_EM_Delete_Perm]))
 	{
 		if (sel == nil)
 			sel = SelectAllEntities(context, &err);
@@ -6893,10 +7078,12 @@ void EntityModel::ResolvePermissionsInheritance(EntityModelCatalog* catalog)
 	for (DB4D_EM_Perm perm = DB4D_EM_Read_Perm; perm <= DB4D_EM_Promote_Perm; perm = (DB4D_EM_Perm)(perm+1))
 	{
 		VUUID xid;
-		catalog->GetPermission(perm, xid);
-		if (fPerms[perm].IsNull() && !xid.IsNull())
+		bool forced = false;
+		catalog->GetPermission(perm, xid, forced);
+		if ((fPerms[perm].IsNull() || forced) && !xid.IsNull())
 		{
 			fPerms[perm] = xid;
+			fForced[perm] = forced;
 		}
 	}
 
@@ -6922,6 +7109,16 @@ SubEntityCache::~SubEntityCache()
 }
 
 
+void SubEntityCache::Clear()
+{
+	ReleaseRefCountable(&fErec);
+	ReleaseRefCountable(&fSel);
+	ReleaseRefCountable(&fRec);
+	fAlreadyActivated = false;
+}
+
+
+
 EntityRecord* SubEntityCache::GetErec()
 {
 	if (fErec == nil && fRec != nil)
@@ -6935,6 +7132,19 @@ EntityRecord* SubEntityCache::GetErec()
 
 
 // ----------------------------------------------------------------------------------------------------
+
+
+#if debuglr
+CComponent* EntityAttributeValue::Retain(const char* DebugInfo)
+{
+	return VComponentImp<CDB4DEntityAttributeValue>::Retain(DebugInfo);
+}
+
+void EntityAttributeValue::Release(const char* DebugInfo)
+{
+	VComponentImp<CDB4DEntityAttributeValue>::Release(DebugInfo);
+}
+#endif
 
 
 EntityAttributeValue::EntityAttributeValue(EntityRecord* owner, const EntityAttribute* attribute, EntityAttributeValueKind kind, VValueSingle* inVal, bool isowned ):fJSObject(nil)
@@ -7189,45 +7399,76 @@ VError EntityAttributeValue::Validate(BaseTaskInfo* context)
 			{
 				if (fValue != nil)
 				{
-					if (!fValue->IsNull())
+					const VValueSingle* minval = nil;
+					const VValueSingle* maxval = nil;
+					if (fAttribute->getMinValue(minval))
 					{
-						const VValueSingle* minval = nil;
-						const VValueSingle* maxval = nil;
-						if (fAttribute->getMinValue(minval))
-						{
-							if (fValue->CompareTo(*minval) == CR_SMALLER)
-							{
-								VString s;
-								minval->GetString(s);
-								err = fAttribute->ThrowError(VE_DB4D_ENTITY_VALUE_LESS_THAN_MIN,&s);
-							}
-						}
-						if (fAttribute->getMaxValue(maxval))
-						{
-							if (fValue->CompareTo(*maxval) == CR_BIGGER)
-							{
-								VString s;
-								maxval->GetString(s);
-								err = fAttribute->ThrowError(VE_DB4D_ENTITY_VALUE_MORE_THAN_MAX,&s);
-							}
-						}
-						const VRegexMatcher* pattern;
-						if (fAttribute->getPatternReg(pattern))
+						if (fValue->IsNull() || fValue->CompareTo(*minval) == CR_SMALLER)
 						{
 							VString s;
-							fValue->GetString(s);
-							if (! ((VRegexMatcher*)pattern)->Find(s,1,false, &err))  // attention il faudra changer cela, les pattern ne sont pas thread safe
-							{
-								VString patternString;
-								fAttribute->getPattern(patternString);
-								err = fAttribute->ThrowError(VE_DB4D_ENTITY_VALUE_DOES_NOT_MATCH_PATTERN,&patternString);
-							}
+							minval->GetString(s);
+							err = fAttribute->ThrowError(VE_DB4D_ENTITY_VALUE_LESS_THAN_MIN,&s);
 						}
 					}
-					else
+					if (fAttribute->getMaxValue(maxval))
 					{
-						// si la valeur est nulle on ne verifie pas les differentes contraintes
+						if (fValue->IsNull() || fValue->CompareTo(*maxval) == CR_BIGGER)
+						{
+							VString s;
+							maxval->GetString(s);
+							err = fAttribute->ThrowError(VE_DB4D_ENTITY_VALUE_MORE_THAN_MAX,&s);
+						}
 					}
+					const VRegexMatcher* pattern;
+					if (fAttribute->getPatternReg(pattern))
+					{
+						VString s;
+						fValue->GetString(s);
+						if (fValue->IsNull() || !((VRegexMatcher*)pattern)->Find(s,1,false, &err))  // attention il faudra changer cela, les pattern ne sont pas thread safe
+						{
+							VString patternString;
+							fAttribute->getPattern(patternString);
+							err = fAttribute->ThrowError(VE_DB4D_ENTITY_VALUE_DOES_NOT_MATCH_PATTERN,&patternString);
+						}
+					}
+
+					sLONG minlength,maxlength,fixedlength;
+					if (fAttribute->getMinLength(minlength))
+					{
+						VString s;
+						fValue->GetString(s);
+						if (fValue->IsNull() || s.GetLength() < minlength)
+						{
+							VString s2;
+							s2.FromLong(minlength);
+							err = fAttribute->ThrowError(VE_DB4D_ENTITY_STRING_LESS_THAN_MIN,&s2);
+						}
+					}
+
+					if (fAttribute->getMaxLength(maxlength))
+					{
+						VString s;
+						fValue->GetString(s);
+						if (s.GetLength() > maxlength)
+						{
+							VString s2;
+							s2.FromLong(maxlength);
+							err = fAttribute->ThrowError(VE_DB4D_ENTITY_STRING_GREATER_THAN_MAX,&s2);
+						}
+					}
+
+					if (fAttribute->getFixedLength(fixedlength))
+					{
+						VString s;
+						fValue->GetString(s);
+						if (fValue->IsNull() || s.GetLength() != fixedlength)
+						{
+							VString s2;
+							s2.FromLong(fixedlength);
+							err = fAttribute->ThrowError(VE_DB4D_ENTITY_STRING_LENGTH_EQUAL,&s2);
+						}
+					}
+
 				}
 			}
 			break;
@@ -7510,6 +7751,7 @@ VError EntityAttributeValue::SetRelatedEntity(EntityRecord* relatedEntity, BaseT
 			fSubEntity = RetainRefCountable(relatedEntity);
 			if (fSubEntity != nil)
 				fSubModificationStamp = fSubEntity->GetModificationStamp();
+			fOwner->ClearSubEntityCache(fAttribute->GetPathID());
 		}
 		Touch(context);
 	}
@@ -7522,6 +7764,18 @@ VError EntityAttributeValue::SetRelatedEntity(EntityRecord* relatedEntity, BaseT
 
 // -----------------------------------------------
 
+
+#if debuglr
+CComponent* EntityRecord::Retain(const char* DebugInfo)
+{
+	return VComponentImp<CDB4DEntityRecord>::Retain(DebugInfo);
+}
+
+void EntityRecord::Release(const char* DebugInfo)
+{
+	VComponentImp<CDB4DEntityRecord>::Release(DebugInfo);
+}
+#endif
 
 
 
@@ -7554,6 +7808,8 @@ EntityRecord::EntityRecord(EntityModel* inModel, FicheInMem* inMainRec, CDB4DBas
 	sLONG nbpaths = fModel->CountRelationPaths();
 	fSubEntitiesCache.resize(nbpaths);
 	std::fill(&fAlreadyCallEvent[0], &fAlreadyCallEvent[dbev_lastEvent+1], 0);
+	fAlreadySaving = false;
+	fAlreadyDeleting = false;
 }
 
 
@@ -7601,6 +7857,39 @@ SubEntityCache* EntityRecord::GetSubEntityCache(sLONG inPathID, VError& err, boo
 }
 
 
+bool EntityRecord::SubEntityCacheNeedsActivation(sLONG inPathID)
+{
+	bool res = false;
+	if (testAssert(inPathID >= 0 && inPathID < fSubEntitiesCache.size()))
+	{
+		SubEntityCache* cache = &fSubEntitiesCache[inPathID];
+		res = !cache->AlreadyActivated();
+	}
+	return res;
+}
+
+
+void EntityRecord::ClearSubEntityCache(sLONG inPathID)
+{
+	if (testAssert(inPathID >= 0 && inPathID < fSubEntitiesCache.size()))
+	{
+		EntityRelation* relPath = fModel->GetPath(inPathID);
+		if (relPath != nil)
+		{
+			for (sLONG i = 0, nbpath = fSubEntitiesCache.size(); i < nbpath; ++i)
+			{
+				EntityRelation* relPath2 = fModel->GetPath(i);
+				if (relPath->MatchesBeginingOf(relPath2))
+				{
+					SubEntityCache* cache = &fSubEntitiesCache[i];
+					cache->Clear();
+				}
+			}
+		}
+	}
+}
+
+
 FicheInMem* EntityRecord::GetRecordForAttribute(const EntityAttribute* inAttribute)
 {
 	FicheInMem* result = nil;
@@ -7644,7 +7933,7 @@ EntityAttributeValue* EntityRecord::getAttributeValue(const EntityAttribute* inA
 	result = fValues[pos-1];
 	EntityAttributeKind kind = inAttribute->GetKind();
 
-	if (result == nil || kind == eattr_computedField)
+	if (result == nil || kind == eattr_computedField || kind == eattr_alias)
 	{
 		bool mustCallEvent = (result == nil);
 
@@ -7653,16 +7942,30 @@ EntityAttributeValue* EntityRecord::getAttributeValue(const EntityAttribute* inA
 			case eattr_storage:
 			case eattr_alias:
 				{
-					if (kind == eattr_alias && !inAttribute->isFlattenedFromField())
+					if (kind == eattr_alias/* && !inAttribute->isFlattenedFromField()*/)
 					{
-						SubEntityCache* cache = GetSubEntityCache(inAttribute->GetPathID(), err, true, inAttribute->GetSubEntityModel(), context);
-						if (cache != nil)
+						bool needReload = true /*SubEntityCacheNeedsActivation(inAttribute->GetPathID()) ||  result == nil */;
+						if (needReload)
 						{
-							EntityRecord* erec = cache->GetErec();
-							if (erec != nil)
+							VValueSingle* cv3 = nil;
+							if (result == nil)
+								result = new EntityAttributeValue(this, inAttribute, eav_vvalue, nil, true);
+							SubEntityCache* cache = GetSubEntityCache(inAttribute->GetPathID(), err, true, inAttribute->GetSubEntityModel(), context);
+							if (cache != nil)
 							{
-								result = erec->getAttributeValue(inAttribute->getFlattenAttributeName(), err, context, restrictValue);
+								EntityRecord* erec = cache->GetErec();
+								if (erec != nil)
+								{
+									EntityAttributeValue* result2 = erec->getAttributeValue(inAttribute->getFlattenAttributeName(), err, context, restrictValue);
+									if (result2 != nil)
+									{
+										VValueSingle* cv2 = result2->getVValue();
+										if (cv2 != nil)
+											cv3 = cv2->Clone();
+									}
+								}
 							}
+							result->setVValue(cv3);
 						}
 					}
 					else
@@ -8124,6 +8427,7 @@ VError EntityRecord::setAttributeValue(const EntityAttribute* inAttribute, const
 				key.push_back(inValue);
 				err = setAttributeValue(inAttribute, key);
 			}
+			ClearSubEntityCache(inAttribute->GetPathID());
 		}
 		else if (val->GetAttributeKind() == eav_composition)
 		{
@@ -8264,14 +8568,13 @@ bool EntityRecord::ContainsBlobData(const EntityAttribute* inAttribute, BaseTask
 	EntityAttributeKind kind = inAttribute->GetKind();
 	if (kind == eattr_storage || kind == eattr_alias)
 	{
-		FicheInMem* rec;
+		FicheInMem* rec = nil;
 		if (kind == eattr_storage)
 			rec = fMainRec;
 		else
 		{
 			VError err;
 			SubEntityCache* cache = GetSubEntityCache(inAttribute->GetPathID(), err, true, inAttribute->GetSubEntityModel(), context);
-			FicheInMem* rec = nil;
 			if (cache != nil)
 				rec = cache->GetRecord();
 		}
@@ -8304,6 +8607,22 @@ VError EntityRecord::Validate(BaseTaskInfo* context)
 	VError err = VE_OK;
 	bool validFail = false;
 
+	for (EntityAttributeCollection::const_iterator cur = fModel->getAllAttributes().begin(), end = fModel->getAllAttributes().end(); cur != end; ++cur)
+	{
+		const EntityAttribute* att = *cur;
+		if (att->NeedValidation())
+		{
+			EntityAttributeValue* val = getAttributeValue(att, err, context, false);
+			if (err == VE_OK)
+			{
+				err = val->Validate(context);
+			}
+			if (err != VE_OK)
+				validFail = true;
+		}
+	}
+
+	/*
 	for (EntityAttributeValueCollection::iterator cur = fValues.begin(), end = fValues.end(); cur != end && err == VE_OK; cur++)
 	{
 		EntityAttributeValue* val = *cur;
@@ -8314,6 +8633,7 @@ VError EntityRecord::Validate(BaseTaskInfo* context)
 				validFail = true;
 		}
 	}
+	*/
 
 	if (!validFail)
 	{
@@ -8337,120 +8657,127 @@ VError EntityRecord::Validate()
 VError EntityRecord::Save(Transaction* *trans, BaseTaskInfo* context, uLONG stamp, bool allowOverrideStamp)
 {
 	VError err = VE_OK;
-	VUUID xGroupID;
-	bool isnew = false;
-	if (fMainRec == nil || fMainRec->IsNew())
+
+	if (!fAlreadySaving)
 	{
-		fModel->GetPermission(DB4D_EM_Create_Perm, xGroupID);
-		isnew = true;
-	}
-	else
-		fModel->GetPermission(DB4D_EM_Update_Perm, xGroupID);
-
-	if (okperm(context, xGroupID))
-	{
-		bool firstlevel = false;
-		Transaction* localtrans = nil;
-		if (trans == nil)
+		fAlreadySaving = true;
+		VUUID xGroupID;
+		bool forced;
+		bool isnew = false;
+		if (fMainRec == nil || fMainRec->IsNew())
 		{
-			firstlevel = true;
-			trans = &localtrans;
+			fModel->GetPermission(DB4D_EM_Create_Perm, xGroupID, forced);
+			isnew = true;
 		}
+		else
+			fModel->GetPermission(DB4D_EM_Update_Perm, xGroupID, forced);
 
-		err = Validate(context);
-
-		if (err == VE_OK)
+		if (okperm(context, xGroupID))
 		{
-			err = CallDBEvent(dbev_save, context);
-		}
-
-		if (err == VE_OK)
-		{
-			for (EntityAttributeValueCollection::iterator cur = fValues.begin(), end = fValues.end(); cur != end && err == VE_OK; cur++)
+			bool firstlevel = false;
+			Transaction* localtrans = nil;
+			if (trans == nil)
 			{
-				EntityAttributeValue* val = *cur;
-				if (val != nil)
+				firstlevel = true;
+				trans = &localtrans;
+			}
+
+			err = Validate(context);
+
+			if (err == VE_OK)
+			{
+				err = CallDBEvent(dbev_save, context);
+			}
+
+			if (err == VE_OK)
+			{
+				for (EntityAttributeValueCollection::iterator cur = fValues.begin(), end = fValues.end(); cur != end && err == VE_OK; cur++)
 				{
-					err = val->Save(*trans, context);
+					EntityAttributeValue* val = *cur;
+					if (val != nil)
+					{
+						err = val->Save(*trans, context);
+					}
 				}
 			}
-		}
 
-		if (err == VE_OK)
-		{
-			if (fModel->HasPrimKey() && !fModel->MatchPrimKeyWithDataSource())
+			if (err == VE_OK)
 			{
-				const IdentifyingAttributeCollection* primkey = fModel->GetPrimaryAtts();
-				VValueBag keyval;
-				for (IdentifyingAttributeCollection::const_iterator cur = primkey->begin(), end = primkey->end(); cur != end && err == VE_OK; cur++)
+				if (fModel->HasPrimKey() && !fModel->MatchPrimKeyWithDataSource())
 				{
-					EntityAttributeValue* val = getAttributeValue(cur->fAtt, err, context);
+					const IdentifyingAttributeCollection* primkey = fModel->GetPrimaryAtts();
+					VValueBag keyval;
+					for (IdentifyingAttributeCollection::const_iterator cur = primkey->begin(), end = primkey->end(); cur != end && err == VE_OK; cur++)
+					{
+						EntityAttributeValue* val = getAttributeValue(cur->fAtt, err, context);
+						if (err == VE_OK)
+						{
+							if (val == nil || val->getVValue() == nil || val->GetVValue()->IsNull())
+							{
+								if (GetNum() >= 0)
+									err = ThrowError(VE_DB4D_PRIMKEY_IS_NULL);
+								else
+									err = ThrowError(VE_DB4D_PRIMKEY_IS_NULL_2);
+							}
+							else
+							{
+								keyval.SetAttribute(cur->fAtt->GetName(), val->getVValue()->Clone());
+							}
+						}
+					}
 					if (err == VE_OK)
 					{
-						if (val == nil || val->getVValue() == nil || val->GetVValue()->IsNull())
+						sLONG otherrecid = fModel->getEntityNumWithPrimKey(keyval, context, err);
+						if (otherrecid != -1 && otherrecid != GetNum())
 						{
-							if (GetNum() >= 0)
-								err = ThrowError(VE_DB4D_PRIMKEY_IS_NULL);
-							else
-								err = ThrowError(VE_DB4D_PRIMKEY_IS_NULL_2);
-						}
-						else
-						{
-							keyval.SetAttribute(cur->fAtt->GetName(), val->getVValue()->Clone());
+							VString skey;
+							bool first = true;
+							for (IdentifyingAttributeCollection::const_iterator cur = primkey->begin(), end = primkey->end(); cur != end && err == VE_OK; cur++)
+							{
+								EntityAttributeValue* val = getAttributeValue(cur->fAtt, err, context);
+								VString s;
+								val->getVValue()->GetString(s);
+								if (first)
+									first = false;
+								else
+									skey += L";";
+								skey += s;
+							}
+							err = ThrowError(VE_DB4D_PRIMKEY_IS_NOT_UNIQUE, &skey);
 						}
 					}
 				}
 				if (err == VE_OK)
+					err = fMainRec->GetDF()->SaveRecord(fMainRec, context, stamp, allowOverrideStamp);
+				if (err == VE_OK)
 				{
-					sLONG otherrecid = fModel->getEntityNumWithPrimKey(keyval, context, err);
-					if (otherrecid != -1 && otherrecid != GetNum())
+					fStamp = 0;
+					for (EntityAttributeValueCollection::iterator cur = fValues.begin(), end = fValues.end(); cur != end; cur++)
 					{
-						VString skey;
-						bool first = true;
-						for (IdentifyingAttributeCollection::const_iterator cur = primkey->begin(), end = primkey->end(); cur != end && err == VE_OK; cur++)
-						{
-							EntityAttributeValue* val = getAttributeValue(cur->fAtt, err, context);
-							VString s;
-							val->getVValue()->GetString(s);
-							if (first)
-								first = false;
-							else
-								skey += L";";
-							skey += s;
-						}
-						err = ThrowError(VE_DB4D_PRIMKEY_IS_NOT_UNIQUE, &skey);
+						EntityAttributeValue* val = *cur;
+						if (val != nil)
+							val->UnTouch();
 					}
 				}
 			}
-			if (err == VE_OK)
-				err = fMainRec->GetDF()->SaveRecord(fMainRec, context, stamp, allowOverrideStamp);
-			if (err == VE_OK)
+
+			if (*trans != nil && firstlevel)
 			{
-				fStamp = 0;
-				for (EntityAttributeValueCollection::iterator cur = fValues.begin(), end = fValues.end(); cur != end; cur++)
-				{
-					EntityAttributeValue* val = *cur;
-					if (val != nil)
-						val->UnTouch();
-				}
+				if (err == VE_OK)
+					err = context->CommitTransaction();
+				else
+					context->RollBackTransaction();
 			}
 		}
-
-		if (*trans != nil && firstlevel)
-		{
-			if (err == VE_OK)
-				err = context->CommitTransaction();
-			else
-				context->RollBackTransaction();
-		}
-	}
-	else
-	{
-		context->SetPermError();
-		if (isnew)
-			err = ThrowError(VE_DB4D_NO_PERM_TO_CREATE);
 		else
-			err = ThrowError(VE_DB4D_NO_PERM_TO_UPDATE);
+		{
+			context->SetPermError();
+			if (isnew)
+				err = ThrowError(VE_DB4D_NO_PERM_TO_CREATE);
+			else
+				err = ThrowError(VE_DB4D_NO_PERM_TO_UPDATE);
+		}
+		fAlreadySaving = false;
 	}
 
 	if (err != VE_OK)
@@ -8492,22 +8819,27 @@ void EntityRecord::GetTimeStamp(VTime& outValue)
 VErrorDB4D EntityRecord::Drop()
 {
 	BaseTaskInfo* context = ConvertContext(fContext);
-	VError err;
-	if (okperm(context, fModel, DB4D_EM_Delete_Perm))
+	VError err = VE_OK;
+	if (!fAlreadyDeleting)
 	{
-		err = CallDBEvent(dbev_remove, context);
-		if (err == VE_OK)
+		fAlreadyDeleting = true;
+		if (okperm(context, fModel, DB4D_EM_Delete_Perm))
 		{
-			if (fModel->HasDeleteEvent(true))
-				err = fModel->CallAttributesDBEvent(dbev_remove, this, context);
+			err = CallDBEvent(dbev_remove, context);
 			if (err == VE_OK)
-				err = fMainRec->GetDF()->DelRecord(fMainRec, context, fModificationStamp);
+			{
+				if (fModel->HasDeleteEvent(true))
+					err = fModel->CallAttributesDBEvent(dbev_remove, this, context);
+				if (err == VE_OK)
+					err = fMainRec->GetDF()->DelRecord(fMainRec, context, fModificationStamp);
+			}
 		}
-	}
-	else
-	{
-		err =  ThrowError(VE_DB4D_NO_PERM_TO_DELETE);
-		context->SetPermError();
+		else
+		{
+			err =  ThrowError(VE_DB4D_NO_PERM_TO_DELETE);
+			context->SetPermError();
+		}
+		fAlreadyDeleting = false;
 	}
 	return err;
 }
@@ -9481,204 +9813,221 @@ VError EntityModelCatalog::LoadEntityModels(const VValueBag& bagEntities, bool d
 	VError err = VE_OK;
 	ClearErrors();
 
-	// on essaye de charger les methods a partir des .js
-	CDB4DBaseContext* xcontext;
-	BaseTaskInfo* context;
-	DB4DJSRuntimeDelegate* xJSDelegate;
-	VJSGlobalContext* xJSContext;
-
-	context = new BaseTaskInfo(fOwner, nil, nil, nil);
-	xJSDelegate = new DB4DJSRuntimeDelegate(context);
-	xJSContext = VJSGlobalContext::Create( xJSDelegate);
-
-	context->SetJSContext(xJSContext);
-
-
-	VJSContext jscontext( xJSContext);
-	VJSObject globalObject( jscontext.GetGlobalObject());
-
-	fLoadingContext = &jscontext;
-	fLoadingGlobalObject = &globalObject;
-	//		VJSGlobalClass::CreateGlobalClasses();
-
-	bool allowGlobalPublish = false;
-	if (bagEntities.GetBool(d4::publishAsJSGlobal, allowGlobalPublish))
-	{
-		fPublishDataClassesAsGlobals = allowGlobalPublish;
-		fPublishDataClassesAsGlobalsDefined = true;
-	}
-	else
-	{
-		fPublishDataClassesAsGlobals = false;
-		fPublishDataClassesAsGlobalsDefined = false;
-	}
-
-	VFile* fileJs = context->GetBase()->RetainCatalogJSFile();
-	if (fileJs != nil)
-	{
-		if (fileJs->Exists())
-		{
-			StErrorContextInstaller errs(false);
-			VJSValue result(jscontext);
-			JS4D::ExceptionRef e = nil;
-			jscontext.EvaluateScript(fileJs, &result, &e, nil);
-			if (e != nil)
-			{
-				if (devMode)
-				{
-					VJSValue ev(jscontext, e);
-#if debuglr
-					VJSJSON json(jscontext);
-					VString s;
-					json.Stringify(ev, s);
-					sLONG xdebug = 1; // put a break here
+#if withGlobalContext
+	IDB4D_ApplicationIntf *applicationIntf = VDBMgr::GetManager()->GetApplicationInterface();
+	VJSGlobalContext *globalJSContext = applicationIntf->RetainJSContext( fApplicationRef, err, false, nil);
+	if (globalJSContext != NULL &&  err == VE_OK)
 #endif
-					fParseUserDefined = true;
-					fSomeErrorsInCatalog = true;
-					VJSObject eo(ev.GetObject());
-					fParseLineError = eo.GetPropertyAsLong("line", nil, nil);
-					eo.GetPropertyAsString("message", nil, fParseMessageError);
-					VString path;
-					eo.GetPropertyAsString("sourceURL", nil, path);
-					VString spath;
-					path.GetSubString(1,8, spath);
-					if (spath.EqualToString_Like("file:///"))
-						path.Remove(1, 8);
-					fParseFileError = new VFile(path, FPS_POSIX);
-				}
-				else
-				{
-					err = ThrowBaseError(VE_DB4D_JS_ERR);
-				}
-			}
-			if (outIncludedFiles != nil)
-			{
-				VJSGlobalObject* globobj = globalObject.GetPrivateData<VJSGlobalClass>();
-				if (globobj != nil)
-				{
-					*outIncludedFiles = globobj->GetIncludedFiles();
-				}
-			}
-		}
-		fileJs->Release();
-	}
-
-	if (err == VE_OK)
 	{
-		QuickReleaseRefCountable(fExtraProperties);
-		fExtraProperties = bagEntities.RetainUniqueElement(d4::extraProperties);
-		const VBagArray* enums = bagEntities.GetElements(d4::enumeration);
-		if (enums != nil)
+#if withGlobalContext
+		VJSContext jscontext( globalJSContext);
+		VJSObject globalObject( jscontext.GetGlobalObject());
+#endif
+
+		CDB4DBaseContext* xcontext;
+		BaseTaskInfo* context;
+		DB4DJSRuntimeDelegate* xJSDelegate;
+		VJSGlobalContext* xJSContext;
+
+		context = new BaseTaskInfo(fOwner, nil, nil, nil);
+		xJSDelegate = new DB4DJSRuntimeDelegate(context);
+		xJSContext = VJSGlobalContext::Create( xJSDelegate);
+
+		context->SetJSContext(xJSContext);
+
+		VJSContext jscontext( xJSContext);
+		VJSObject globalObject( jscontext.GetGlobalObject());
+
+		fLoadingContext = &jscontext;
+		fLoadingGlobalObject = &globalObject;
+		//		VJSGlobalClass::CreateGlobalClasses();
+
+		bool allowGlobalPublish = false;
+		if (bagEntities.GetBool(d4::publishAsJSGlobal, allowGlobalPublish))
 		{
-			VIndex nbenums = enums->GetCount();
-			for (VIndex i = 1; i <= nbenums && err == VE_OK; i++)
+			fPublishDataClassesAsGlobals = allowGlobalPublish;
+			fPublishDataClassesAsGlobalsDefined = true;
+		}
+		else
+		{
+			fPublishDataClassesAsGlobals = false;
+			fPublishDataClassesAsGlobalsDefined = false;
+		}
+
+		//VFile* fileJs = context->GetBase()->RetainCatalogJSFile();
+		VFile* fileJs = fOwner->RetainCatalogJSFile();
+		if (fileJs != nil)
+		{
+			if (fileJs->Exists())
 			{
-				const VValueBag* OneEnum = enums->GetNth(i);
-				if (OneEnum != nil)
+				StErrorContextInstaller errs(false);
+				VJSValue result(jscontext);
+				JS4D::ExceptionRef e = nil;
+				jscontext.EvaluateScript(fileJs, &result, &e, nil);
+				if (e != nil)
 				{
-					EmEnum* newEnum = BuildEnumeration(OneEnum, err, devMode);
-					if (newEnum != nil)
-						err = AddOneEnumeration(newEnum, devMode);
-					QuickReleaseRefCountable(newEnum);
+					if (devMode)
+					{
+						VJSValue ev(jscontext, e);
+	#if debuglr
+						VJSJSON json(jscontext);
+						VString s;
+						json.Stringify(ev, s);
+						sLONG xdebug = 1; // put a break here
+	#endif
+						fParseUserDefined = true;
+						fSomeErrorsInCatalog = true;
+						VJSObject eo(ev.GetObject());
+						fParseLineError = eo.GetPropertyAsLong("line", nil, nil);
+						eo.GetPropertyAsString("message", nil, fParseMessageError);
+						VString path;
+						eo.GetPropertyAsString("sourceURL", nil, path);
+						VString spath;
+						path.GetSubString(1,8, spath);
+						if (spath.EqualToString_Like("file:///"))
+							path.Remove(1, 8);
+						fParseFileError = new VFile(path, FPS_POSIX);
+					}
+					else
+					{
+						err = ThrowBaseError(VE_DB4D_JS_ERR);
+					}
+				}
+				if (outIncludedFiles != nil)
+				{
+					VJSGlobalObject* globobj = globalObject.GetPrivateData<VJSGlobalClass>();
+					if (globobj != nil)
+					{
+						*outIncludedFiles = globobj->GetIncludedFiles();
+					}
+				}
+			}
+			fileJs->Release();
+		}
+
+		if (err == VE_OK)
+		{
+			QuickReleaseRefCountable(fExtraProperties);
+			fExtraProperties = bagEntities.RetainUniqueElement(d4::extraProperties);
+			const VBagArray* enums = bagEntities.GetElements(d4::enumeration);
+			if (enums != nil)
+			{
+				VIndex nbenums = enums->GetCount();
+				for (VIndex i = 1; i <= nbenums && err == VE_OK; i++)
+				{
+					const VValueBag* OneEnum = enums->GetNth(i);
+					if (OneEnum != nil)
+					{
+						EmEnum* newEnum = BuildEnumeration(OneEnum, err, devMode);
+						if (newEnum != nil)
+							err = AddOneEnumeration(newEnum, devMode);
+						QuickReleaseRefCountable(newEnum);
+					}
 				}
 			}
 		}
-	}
 
-	if (err == VE_OK)
-	{
-		const VBagArray* types = bagEntities.GetElements(d4::type);
-		if (types != nil)
+		if (err == VE_OK)
 		{
-			VIndex nbtypes = types->GetCount();
-			for (VIndex i = 1; i <= nbtypes && err == VE_OK; i++)
+			const VBagArray* types = bagEntities.GetElements(d4::type);
+			if (types != nil)
 			{
-				const VValueBag* OneType = types->GetNth(i);
-				if (OneType != nil)
+				VIndex nbtypes = types->GetCount();
+				for (VIndex i = 1; i <= nbtypes && err == VE_OK; i++)
 				{
-					AttributeType* newType = BuildType(OneType, err, devMode);
-					if (newType != nil)
-						err = AddOneType(newType, devMode);
-					QuickReleaseRefCountable(newType);
+					const VValueBag* OneType = types->GetNth(i);
+					if (OneType != nil)
+					{
+						AttributeType* newType = BuildType(OneType, err, devMode);
+						if (newType != nil)
+							err = AddOneType(newType, devMode);
+						QuickReleaseRefCountable(newType);
+					}
 				}
 			}
 		}
-	}
-/*
-	if (err == VE_OK)
-	{
-		const VBagArray* relations = bagEntities.GetElements(d4::relationship);
-		if (relations != nil)
+	/*
+		if (err == VE_OK)
 		{
-			VIndex nbrelations = relations->GetCount();
-			for (VIndex i = 1; i <= nbrelations && err == VE_OK; i++)
+			const VBagArray* relations = bagEntities.GetElements(d4::relationship);
+			if (relations != nil)
 			{
-				const VValueBag* OneRelation = relations->GetNth(i);
-				if (OneRelation != nil)
+				VIndex nbrelations = relations->GetCount();
+				for (VIndex i = 1; i <= nbrelations && err == VE_OK; i++)
 				{
-					EntityRelation* newRel = BuildEntityRelation(OneRelation, err);
-					if (newRel != nil)
-						err = AddOneEntityRelation(newRel, false);
-					QuickReleaseRefCountable(newRel);
+					const VValueBag* OneRelation = relations->GetNth(i);
+					if (OneRelation != nil)
+					{
+						EntityRelation* newRel = BuildEntityRelation(OneRelation, err);
+						if (newRel != nil)
+							err = AddOneEntityRelation(newRel, false);
+						QuickReleaseRefCountable(newRel);
+					}
 				}
 			}
 		}
-	}
-*/
-	if (err == VE_OK)
-	{
-		const VBagArray* entities = bagEntities.GetElements(d4::dataClasses);
-		if (entities != nil)
+	*/
+		if (err == VE_OK)
 		{
-			VIndex nbentities = entities->GetCount();
-			for (VIndex i = 1; i <= nbentities && err == VE_OK; i++)
+			const VBagArray* entities = bagEntities.GetElements(d4::dataClasses);
+			if (entities != nil)
 			{
-				const VValueBag* OneEntity = entities->GetNth(i);
-				if (OneEntity != nil)
+				VIndex nbentities = entities->GetCount();
+				for (VIndex i = 1; i <= nbentities && err == VE_OK; i++)
 				{
-					EntityModel* newEntity = BuildEntityModel(OneEntity, err, devMode);
-					if (newEntity != nil && newEntity->GetMainTable() != nil)
-						err = AddOneEntityModel(newEntity, false);
-					QuickReleaseRefCountable(newEntity);
+					const VValueBag* OneEntity = entities->GetNth(i);
+					if (OneEntity != nil)
+					{
+						EntityModel* newEntity = BuildEntityModel(OneEntity, err, devMode);
+						if (newEntity != nil && newEntity->GetMainTable() != nil)
+							err = AddOneEntityModel(newEntity, false);
+						QuickReleaseRefCountable(newEntity);
+					}
 				}
 			}
 		}
+
+
+		if (err == VE_OK)
+		{
+			VTaskLock lock(&fEntityModelMutex);
+			/*
+			for (EntityRelationMap::iterator cur = fEntityRelations.begin(), end = fEntityRelations.end(); cur != end && err == VE_OK; cur++)
+			{
+				err =cur->second->ResolveMissingTables(this);
+			}
+			*/
+
+			for (EntityModelMap::iterator cur = fEntityModels.begin(), end = fEntityModels.end(); cur != end && err == VE_OK; cur++)
+			{
+				SubPathRefSet already;
+				err =cur->second->ResolveRelatedEntities(already, this, devMode, context);
+			}
+
+			/*
+			for (EntityModelMap::iterator cur = fEntityModels.begin(), end = fEntityModels.end(); cur != end && err == VE_OK; cur++)
+			{
+				err =cur->second->ResolveRelatedPath(this);
+			}
+			*/
+
+			for (EntityModelMap::iterator cur = fEntityModels.begin(), end = fEntityModels.end(); cur != end && err == VE_OK; cur++)
+			{
+				err =cur->second->ResolveQueryStatements(this, devMode, context);
+			}
+		}
+
+		fLoadingContext = nil;
+		fLoadingGlobalObject = nil;
+
+		QuickReleaseRefCountable(xJSContext);
+		delete xJSDelegate;
 	}
 
-
-	if (err == VE_OK)
-	{
-		VTaskLock lock(&fEntityModelMutex);
-		/*
-		for (EntityRelationMap::iterator cur = fEntityRelations.begin(), end = fEntityRelations.end(); cur != end && err == VE_OK; cur++)
-		{
-			err =cur->second->ResolveMissingTables(this);
-		}
-		*/
-
-		for (EntityModelMap::iterator cur = fEntityModels.begin(), end = fEntityModels.end(); cur != end && err == VE_OK; cur++)
-		{
-			err =cur->second->ResolveRelatedEntities(this, devMode);
-		}
-
-		/*
-		for (EntityModelMap::iterator cur = fEntityModels.begin(), end = fEntityModels.end(); cur != end && err == VE_OK; cur++)
-		{
-			err =cur->second->ResolveRelatedPath(this);
-		}
-		*/
-
-		for (EntityModelMap::iterator cur = fEntityModels.begin(), end = fEntityModels.end(); cur != end && err == VE_OK; cur++)
-		{
-			err =cur->second->ResolveQueryStatements(this, devMode);
-		}
-	}
-
-	fLoadingContext = nil;
-	fLoadingGlobalObject = nil;
-
-	QuickReleaseRefCountable(xJSContext);
-	delete xJSDelegate;
+	// sc 28/05/2012, ensure the VJSContext object is destroyed before release the context
+#if withGlobalContext
+	applicationIntf->ReleaseJSContext( fApplicationRef, globalJSContext, nil);
+#endif
 
 	return err;
 }
@@ -9920,7 +10269,7 @@ VError EntityModelCatalog::xSetEntityPerm(CUAGDirectory* uagdir, const VValueBag
 		}
 
 		if (err == VE_OK)
-			err = em->SetPermission(perm, gid);
+			err = em->SetPermission(perm, gid, false);
 
 	}
 	return err;
@@ -9948,11 +10297,13 @@ VError EntityModelCatalog::LoadEntityPermissions(const VValueBag& bagEntities, C
 				if (OnePerm != nil)
 				{
 					VString sAction, sGroup, sType, sResource, sGroupID;
+					bool forced = false;
 					OnePerm->GetString(d4::action, sAction);
 					OnePerm->GetString(d4::group, sGroup);
 					OnePerm->GetString(d4::groupID, sGroupID);
 					OnePerm->GetString(d4::type, sType);
 					OnePerm->GetString(d4::resource, sResource);
+					OnePerm->GetBool(d4::temporaryForcePermissions, forced);
 					PermResourceType rType = (PermResourceType)EPermResourceType[sType];
 					DB4D_EM_Perm action = (DB4D_EM_Perm)EPermAction[sAction];
 
@@ -9975,7 +10326,7 @@ VError EntityModelCatalog::LoadEntityPermissions(const VValueBag& bagEntities, C
 						switch (rType)
 						{
 							case perm_model:
-								SetPermission(action, groupID);
+								SetPermission(action, groupID, forced);
 								break;
 							case perm_dataClass:
 								{
@@ -9986,7 +10337,7 @@ VError EntityModelCatalog::LoadEntityPermissions(const VValueBag& bagEntities, C
 										EntityModel* em = RetainEntity(parts[1]);
 										if (em != nil)
 										{
-											err = em->SetPermission(action, groupID);
+											err = em->SetPermission(action, groupID, forced);
 											QuickReleaseRefCountable(em);
 										}
 									}
@@ -10202,12 +10553,13 @@ void EntityModelCatalog::ReversePath(const EntityRelationCollection& relpath, En
 
 
 
-VError EntityModelCatalog::SetPermission(DB4D_EM_Perm inPerm, const VUUID& inGroupID)
+VError EntityModelCatalog::SetPermission(DB4D_EM_Perm inPerm, const VUUID& inGroupID, bool forced)
 {
 	VError err = VE_OK;
 	if (inPerm >= DB4D_EM_Read_Perm && inPerm <= DB4D_EM_Promote_Perm)
 	{
 		fPerms[inPerm] = inGroupID;
+		fForced[inPerm] = forced ? 1 : 0;
 	}
 	else
 		err = ThrowBaseError(VE_DB4D_WRONG_PERM_REF);
@@ -10215,12 +10567,13 @@ VError EntityModelCatalog::SetPermission(DB4D_EM_Perm inPerm, const VUUID& inGro
 	return err;
 }
 
-VError EntityModelCatalog::GetPermission(DB4D_EM_Perm inPerm, VUUID& outGroupID) const
+VError EntityModelCatalog::GetPermission(DB4D_EM_Perm inPerm, VUUID& outGroupID, bool& forced) const
 {
 	VError err = VE_OK;
 	if (inPerm >= DB4D_EM_Read_Perm && inPerm <= DB4D_EM_Promote_Perm)
 	{
 		outGroupID = fPerms[inPerm];
+		forced = fForced[inPerm] == 1 ? true : false;
 	}
 	else
 		err = ThrowBaseError(VE_DB4D_WRONG_PERM_REF);

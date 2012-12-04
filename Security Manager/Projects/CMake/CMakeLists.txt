@@ -11,9 +11,9 @@ add_library(SecurityManager SHARED ${Sources})
 
 include_directories(${ComponentsRoot}
   ${IcuIncludeDir}
+  ${JsCoreIncludeDir}
   ${SecurityManagerRoot}/Headers
   ${SecurityManagerRoot}/Interfaces
   ${XBoxRoot})
 
-
-#add_dependencies(SecurityManager Icu Kernel KernelIPC)
+#add_dependencies(SecurityManager Icu Kernel KernelIPC )

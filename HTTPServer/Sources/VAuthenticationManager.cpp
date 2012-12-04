@@ -171,7 +171,7 @@ void VAuthenticationInfos::GetHTTPRequestMethodName (XBOX::VString& outValue) co
 
 
 VAuthenticationManager::VAuthenticationManager (const XBOX::VValueBag *inSettings)
-: fSecurityManager (NULL)
+: fSecurityManager (NULL), fAuthenticationDelegate(NULL)
 {
 	fAuthenticationReferee = new VAuthenticationReferee (inSettings);
 }
@@ -181,6 +181,7 @@ VAuthenticationManager::~VAuthenticationManager()
 {
 	XBOX::ReleaseRefCountable (&fSecurityManager);
 	XBOX::ReleaseRefCountable (&fAuthenticationReferee);
+	XBOX::ReleaseRefCountable( &fAuthenticationDelegate);
 }
 
 
@@ -282,7 +283,7 @@ VAuthenticationInfos *VAuthenticationManager::CreateAuthenticationInfosFromHeade
 			_PopulateAuthenticationParameters (headerValue, *result);
 			result->SetAuthenticationMethod (AUTH_DIGEST);
 			result->GetNonce (nonceString);
-			bool isValid = VNonce::ValidNonceAndCleanPile (nonceString);
+			VNonce::ValidNonceAndCleanPile (nonceString);
 		}
 	}
 
@@ -322,7 +323,22 @@ bool VAuthenticationManager::_ValidateAuthentication (IAuthenticationInfos *ioAu
 				authenticationInfos->GetUserName (userName);
 				authenticationInfos->GetPassword (password);
 
-				error = fSecurityManager->ValidateBasicAuthentication (userName, password, &isOK, uagSession);
+				CUAGDirectory *directory = fSecurityManager->GetUserDirectory();
+				if ((directory != NULL) && directory->HasLoginListener())
+				{
+					if (testAssert(fAuthenticationDelegate != NULL))
+					{
+						// sc 22/06/2012, custom JavaScript authentication support
+						XBOX::VJSGlobalContext *globalContext = fAuthenticationDelegate->RetainJSContext( NULL, true);
+						assert(globalContext != NULL);
+						error = fSecurityManager->ValidateBasicAuthentication (userName, password, &isOK, uagSession, globalContext);
+						fAuthenticationDelegate->ReleaseJSContext( globalContext);
+					}
+				}
+				else
+				{
+					error = fSecurityManager->ValidateBasicAuthentication (userName, password, &isOK, uagSession, NULL);
+				}
 			}
 			break;
 
@@ -355,7 +371,22 @@ bool VAuthenticationManager::_ValidateAuthentication (IAuthenticationInfos *ioAu
 					authenticationInfos->GetHTTPRequestMethodName (method);
 					authenticationInfos->GetResponse (response);
 
-					error = fSecurityManager->ValidateDigestAuthentication (user, algorithm, realm, nonce, cnonce, qop, nonceCount, uri, method, response, &isOK, uagSession);
+					CUAGDirectory *directory = fSecurityManager->GetUserDirectory();
+					if ((directory != NULL) && directory->HasLoginListener())
+					{
+						if (testAssert(fAuthenticationDelegate != NULL))
+						{
+							// sc 22/06/2012, custom JavaScript authentication support
+							XBOX::VJSGlobalContext *globalContext = fAuthenticationDelegate->RetainJSContext( NULL, true);
+							assert(globalContext != NULL);
+							error = fSecurityManager->ValidateDigestAuthentication (user, algorithm, realm, nonce, cnonce, qop, nonceCount, uri, method, response, &isOK, uagSession, globalContext);
+							fAuthenticationDelegate->ReleaseJSContext( globalContext);
+						}
+					}
+					else
+					{
+						error = fSecurityManager->ValidateDigestAuthentication (user, algorithm, realm, nonce, cnonce, qop, nonceCount, uri, method, response, &isOK, uagSession, NULL);
+					}
 				}
 				else
 				{
@@ -391,12 +422,12 @@ bool VAuthenticationManager::_ValidateAuthentication (IAuthenticationInfos *ioAu
 				}
 			}
 
-			if (!isOK)
+/*			if (!isOK)
 			{
 				// dois je remettre l'uag session a null ?
 				sLONG xdebug = 1; // put a break here
 			}
-
+*/
 		}
 
 		XBOX::QuickReleaseRefCountable(uagSession);
@@ -431,7 +462,7 @@ XBOX::VError VAuthenticationManager::CheckAndValidateAuthentication (IHTTPRespon
 			if (wantedAuthRealm.IsEmpty())
 				wantedAuthRealm.FromString (virtualHost->GetProject()->GetSettings()->GetDefaultRealm());
 
-			if (foundAuthMethod != wantedAuthMethod)
+			if ((wantedAuthMethod != AUTH_NONE) && (foundAuthMethod != wantedAuthMethod))
 			{
 				error = VE_HTTP_PROTOCOL_UNAUTHORIZED;
 				ioResponse->SetWantedAuthMethod (wantedAuthMethod);
@@ -472,7 +503,7 @@ XBOX::VError VAuthenticationManager::CheckAndValidateAuthentication (IHTTPRespon
 			wantedAuthMethod = virtualHost->GetProject()->GetSettings()->GetDefaultAuthType();
 			wantedAuthRealm.FromString (virtualHost->GetProject()->GetSettings()->GetDefaultRealm());
 
-			if (foundAuthMethod != wantedAuthMethod)
+			if ((wantedAuthMethod != AUTH_NONE) && (foundAuthMethod != wantedAuthMethod))
 			{
 				error = VE_HTTP_PROTOCOL_UNAUTHORIZED;
 				ioResponse->SetWantedAuthMethod (wantedAuthMethod);
@@ -498,6 +529,45 @@ XBOX::VError VAuthenticationManager::CheckAndValidateAuthentication (IHTTPRespon
 				}
 			}
 		}
+	}
+
+	return error;
+}
+
+
+XBOX::VError VAuthenticationManager::CheckAdminAccessGranted (IHTTPResponse *ioResponse)
+{
+	XBOX::VError				error = XBOX::VE_OK;
+	HTTPAuthenticationMethod	wantedAuthMethod = AUTH_NONE;
+	XBOX::VString				wantedAuthRealm;
+
+	if (NULL != fSecurityManager)
+	{
+		VHTTPResponse *		response = dynamic_cast<VHTTPResponse *>(ioResponse);
+		CUAGDirectory *		uagDirectory = fSecurityManager->GetUserDirectory();
+		CUAGGroup *			adminGroup = (uagDirectory) ? uagDirectory->RetainSpecialGroup (CUAGDirectory::AdminGroup) : NULL;
+		CUAGSession *		uagSession = (NULL != response) ? ioResponse->GetRequest().GetAuthenticationInfos()->GetUAGSession() : NULL;
+
+		if ((NULL != uagDirectory) && (NULL != adminGroup) && ((NULL == uagSession) || !uagSession->BelongsTo (adminGroup)))
+		{
+			VVirtualHost *	virtualHost = dynamic_cast<VVirtualHost *>(ioResponse->GetVirtualHost());
+
+			wantedAuthMethod = virtualHost->GetProject()->GetSettings()->GetDefaultAuthType();
+			wantedAuthRealm.FromString (virtualHost->GetProject()->GetSettings()->GetDefaultRealm());
+
+			if (wantedAuthMethod == AUTH_NONE)
+				wantedAuthMethod = AUTH_BASIC;
+
+			if (wantedAuthRealm.IsEmpty())
+				wantedAuthRealm.FromCString ("Wakanda");
+
+			ioResponse->SetWantedAuthMethod (wantedAuthMethod);
+			ioResponse->SetWantedAuthRealm (wantedAuthRealm);
+
+			error = VE_HTTP_PROTOCOL_UNAUTHORIZED;
+		}
+
+		XBOX::ReleaseRefCountable (&adminGroup);
 	}
 
 	return error;
@@ -548,6 +618,12 @@ void VAuthenticationManager::SetSecurityManager (CSecurityManager *inSecurityMan
 		XBOX::QuickReleaseRefCountable (fSecurityManager);
 
 	fSecurityManager = XBOX::RetainRefCountable (inSecurityManager);
+}
+
+
+void VAuthenticationManager::SetAuthenticationDelegate( IAuthenticationDelegate *inAuthenticationDelegate)
+{
+	CopyRefCountable( &fAuthenticationDelegate, inAuthenticationDelegate);
 }
 
 

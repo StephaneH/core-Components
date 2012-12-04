@@ -28,6 +28,8 @@ const VString kWaStructIndexExt = L".waIndy";
 const VString kWaSyncDataExt = L".4DSyncData";
 const VString kWaSyncHeaderExt = L".4DSyncHeader";
 
+const VString kWaDataExtraExt = L"waExtra";	// no dot, used with VFilePath
+
 // extensions pour 4D
 const VString k4DDataFileExt = L".4DD";
 const VString k4DDataFileBlobExt = L".4DBlobs";
@@ -37,6 +39,8 @@ const VString k4DStructIndexExt = L".4DIndy";
 
 const VString k4DSyncDataExt = L".4DSyncData";
 const VString k4DSyncHeaderExt = L".4DSyncHeader";
+
+const VString k4DDataExtraExt = L"4DExtra";	// no dot, used with VFilePath
 
 // les extensions a utiliser selon le mode de chargement de db4d
 const VString kDataFileExt;
@@ -49,6 +53,8 @@ const VString kDataMatchExt = L".Match"; // le meme pour 4D et Wakanda
 
 const VString kSyncDataExt;
 const VString kSyncHeaderExt;
+
+const VString kDataExtraExt;
 
 
 VStr4 ext_Struct("4XB");
@@ -134,6 +140,7 @@ void InitFileExtensions( DB4D_Running_Mode inRunningMode)
 		const_cast<VString&>( kStructIndexExt) = kWaStructIndexExt;
 		const_cast<VString&>( kSyncDataExt) = kWaSyncDataExt;
 		const_cast<VString&>( kSyncHeaderExt) = kWaSyncHeaderExt;
+		const_cast<VString&>( kDataExtraExt) = kWaDataExtraExt;
 	}
 	else if (testAssert( inRunningMode == DB4D_Running4D))
 	{
@@ -143,6 +150,7 @@ void InitFileExtensions( DB4D_Running_Mode inRunningMode)
 		const_cast<VString&>( kStructIndexExt) = k4DStructIndexExt;
 		const_cast<VString&>( kSyncDataExt) = k4DSyncDataExt;
 		const_cast<VString&>( kSyncHeaderExt) = k4DSyncHeaderExt;
+		const_cast<VString&>( kDataExtraExt) = k4DDataExtraExt;
 	}
 }
 
@@ -2966,9 +2974,67 @@ sLONG xMultiFieldDataOffset::Set(sLONG xoffset, EntityAttribute* inAtt, Boolean 
 	}
 	ascent = xascent; 
 	att = inAtt;
-	expression = nil;
 	return size;
 };
+
+
+
+sLONG xMultiFieldDataOffset::Set(sLONG xoffset, AttributePath* inAttPath, Boolean xascent) 
+{ 
+	const EntityAttribute* att = inAttPath->LastPart()->fAtt;
+
+	offset = xoffset; 
+	typ = att->ComputeScalarType();
+	numcrit = -1; 
+	size = 0; 
+	switch (typ)
+	{
+	case VK_TEXT:
+	case VK_STRING:
+		size = 30 + xString::NoDataSize();
+		break;
+
+	case VK_BOOLEAN:
+	case VK_BYTE:
+		size = 1;
+		break;
+
+	case VK_WORD:
+		size = 2;
+		break;
+
+	case VK_LONG:
+		size = 4;
+		break;
+
+	case VK_LONG8:
+	case VK_DURATION:
+		size = 8;
+		break;
+
+	case VK_TIME:
+		size = sizeof(xTime);
+		break;
+
+	case VK_UUID:
+		size = sizeof(VUUIDBuffer);
+		break;
+
+	case VK_REAL:
+		size = sizeof(Real);
+		break;
+	}
+	ascent = xascent; 
+	fAttPath = RetainRefCountable(inAttPath);
+	return size;
+};
+
+void xMultiFieldDataOffset::Release()
+{
+	QuickReleaseRefCountable(fNulls);
+	QuickReleaseRefCountable(fAttPath);
+}
+
 
 
 															/* ----------------------- */
@@ -3022,7 +3088,7 @@ xMultiFieldDataOffsets::xMultiFieldDataOffsets(EntityAttribute* att, Boolean asc
 	fLen = AddOffset(0, att, ascent);
 }
 
-/*
+
 xMultiFieldDataOffsets::~xMultiFieldDataOffsets()
 {
 	for (sLONG i = 0; i < kMaxMultiFieldData; ++i)
@@ -3030,7 +3096,7 @@ xMultiFieldDataOffsets::~xMultiFieldDataOffsets()
 		offsets[i].Release();
 	}
 }
-*/
+
 
 
 
@@ -3076,6 +3142,19 @@ sLONG xMultiFieldDataOffsets::AddOffset(sLONG offset, EntityAttribute* inAtt, Bo
 		return -1;
 }
 
+
+sLONG xMultiFieldDataOffsets::AddOffset(sLONG offset, AttributePath* inAttPath, Boolean ascent)
+{
+	if (count<kMaxMultiFieldData)
+	{
+		sLONG result = offsets[count].Set(offset, inAttPath, ascent);
+		count++;
+		fWithAttributes = true;
+		return result;
+	}
+	else
+		return -1;
+}
 
 
 
@@ -3493,7 +3572,6 @@ VValueBag* ExtraPropertiesHeader::RetainExtraProperties(VError &err)
 	else
 	{
 		occupe();
-
 		if (fExtra == nil)
 		{
 			if (*fExtraAddr != 0 && *fExtraLen != 0 && !db->StoredAsXML())
@@ -3542,6 +3620,44 @@ VValueBag* ExtraPropertiesHeader::RetainExtraProperties(VError &err)
 					{
 						err = ThrowBaseError(VE_DB4D_CANNOT_GET_EXTRAPROPERTY, DBaction_AccessingExtraProperty);
 					}
+				}
+			}
+			else if (db->StoredAsXML())
+			{
+				VFilePath path; 
+				db->GetDataSegPath(1,path);//First seg is 1 not 0 :)
+				path.SetExtension( kDataExtraExt);
+
+				if (!path.IsFile() || !path.IsValid())
+				{
+					err = VE_DB4D_CANNOT_GET_EXTRAPROPERTY;
+				}
+				else
+				{
+					VFile *extraFile = new VFile( path);
+					if (extraFile && extraFile->Exists())
+					{
+						VFileStream stream(extraFile,FO_Default);
+						err = stream.OpenReading();
+						if (err == VE_OK)
+						{
+							VString json;
+							stream.SetCharSet(VTC_UTF_8);
+							stream.GetText( json);
+							if(err == VE_OK)
+							{
+								fExtra = new VValueBag();
+								err =  fExtra->FromJSONString(json);
+								if(err != VE_OK)
+								{
+									delete fExtra;
+									fExtra = nil;
+								}
+							}
+						}
+						stream.CloseReading();
+					}
+					XBOX::ReleaseRefCountable(&extraFile);
 				}
 			}
 		}
@@ -3600,7 +3716,6 @@ VError ExtraPropertiesHeader::SetExtraProperties(VValueBag* inExtraProperties, b
 						*fExtraAddr = 0;
 						*fExtraLen = 0;
 					}
-
 				}
 				else
 				{
@@ -3699,7 +3814,43 @@ VError ExtraPropertiesHeader::SetExtraProperties(VValueBag* inExtraProperties, b
 					}
 				}
 			}
-
+			else
+			{
+				// write bag as json file next the first data segment
+				VFilePath path; 
+				db->GetDataSegPath(1,path);//First seg is 1 not 0 :)
+				path.SetExtension( kDataExtraExt);
+				if (!path.IsFile() || !path.IsValid())
+				{
+					err = VE_DB4D_CANNOT_SET_EXTRAPROPERTY;
+				}
+				else
+				{
+					VFile *extraFile = new VFile( path);
+					if (fExtra == nil)
+					{
+						err = extraFile->Delete();
+					}
+					else
+					{
+						VString json;
+						fExtra->GetJSONString( json,JSON_PrettyFormatting);
+						
+						VFileStream stream(extraFile,FO_CreateIfNotFound|FO_Overwrite);
+						err = stream.OpenWriting();
+						if (err == VE_OK)
+						{
+							err = stream.SetCharSet(VTC_UTF_8);
+							if(err == VE_OK)
+							{
+								err = stream.PutText(json);
+							}
+							stream.CloseWriting();
+						}
+					}
+					extraFile->Release();
+				}
+			}
 			libere();
 			db->ClearUpdating();
 		}
@@ -6774,11 +6925,22 @@ bool OccupableStack::FindObjectInStack(const IOccupable* inObject) // used for d
 
 			// -------------------------
 
+void RemoveOccupableStackFromThread ( void *inData)
+{
+	OccupableStack* stack = (OccupableStack*)inData;
+	if (stack != nil)
+	{
+		gOccPool.RemoveStack(stack->GetTaskId());
+	}
+}
+
 
 OccupablePool::OccupablePool()
 {
 	fWaitForMemMgr = 0;
 	fWaitMemMgrSync = nil;
+
+	fTaskDataKey = VTask::CreateDataKey( RemoveOccupableStackFromThread);
 	//fGlobalStamp = 0;
 }
 
@@ -6787,9 +6949,18 @@ OccupablePool::~OccupablePool()
 {
 	for (OccupableStackCollection::iterator cur = fAllStacks.begin(), end = fAllStacks.end(); cur != end; cur++)
 	{
-		if (*cur != nil)
-			delete (*cur);
+		OccupableStack* stack = cur->second;
+		if (stack != nil)
+			delete stack;
 	}
+	VTask::DeleteDataKey(fTaskDataKey);
+}
+
+
+void OccupablePool::RemoveStack(sLONG threadID)
+{
+	VTaskLock lock(&fMutex);
+	fAllStacks.erase(threadID);
 }
 
 
@@ -6797,12 +6968,15 @@ OccupableStack* OccupablePool::GetStackForCurrentThread()
 {
 	VTaskID curthreadid = VTask::GetCurrentID();
 	VTaskLock lock(&fMutex);
+	/*
 	if (curthreadid+1 > fAllStacks.size())
 		fAllStacks.resize(curthreadid+1, nil);
+		*/
 	OccupableStack** cur = &fAllStacks[curthreadid];
 	if (*cur == nil)
 	{
 		*cur = new OccupableStack(curthreadid);
+		VTask::SetCurrentData(fTaskDataKey, *cur);
 	}
 	return *cur;
 }
@@ -6878,7 +7052,7 @@ bool OccupablePool::FindObjectInStack(const IOccupable* inObject) // used for de
 	VTaskLock lock(&fMutex);
 	for (OccupableStackCollection::iterator cur = fAllStacks.begin(), end = fAllStacks.end(); cur != end && !found; cur++)
 	{
-		OccupableStack* stack = *cur;
+		OccupableStack* stack = cur->second;
 		if (stack != nil)
 		{
 			if (stack->FindObjectInStack(inObject))
@@ -6914,7 +7088,7 @@ void OccupablePool::StartGarbageCollection()
 				fOccupiedObjects.clear();
 				for (OccupableStackCollection::iterator cur = fAllStacks.begin(), end = fAllStacks.end(); cur != end; cur++)
 				{
-					OccupableStack* stack = *cur;
+					OccupableStack* stack = cur->second;
 					if (stack != nil)
 					{
 						stack->SaveStamp();
@@ -6923,7 +7097,7 @@ void OccupablePool::StartGarbageCollection()
 
 				for (OccupableStackCollection::iterator cur = fAllStacks.begin(), end = fAllStacks.end(); cur != end; cur++)
 				{
-					OccupableStack* stack = *cur;
+					OccupableStack* stack = cur->second;
 					if (stack != nil)
 					{
 						sLONG newlock = VInterlocked::CompareExchange(&(stack->fLocker), 0, currentTaskID);
@@ -6944,7 +7118,7 @@ void OccupablePool::StartGarbageCollection()
 
 					for (OccupableStackCollection::iterator cur = fAllStacks.begin(), end = fAllStacks.end(); cur != end; cur++)
 					{
-						OccupableStack* stack = *cur;
+						OccupableStack* stack = cur->second;
 						if (stack != nil)
 						{
 #if debuglr
@@ -6970,7 +7144,7 @@ void OccupablePool::StartGarbageCollection()
 				
 				for (OccupableStackCollection::iterator cur = fAllStacks.begin(), end = fAllStacks.end(); cur != end; cur++)
 				{
-					OccupableStack* stack = *cur;
+					OccupableStack* stack = cur->second;
 					if (stack != nil)
 					{
 						VInterlocked::CompareExchange(&(stack->fLocker), currentTaskID, 0);
@@ -7488,7 +7662,8 @@ bool okperm(BaseTaskInfo* context, const EntityModel* model, DB4D_EM_Perm perm)
 	VUUID groupID;
 	if (model != nil)
 	{
-		model->GetPermission(perm, groupID);
+		bool forced;
+		model->GetPermission(perm, groupID, forced);
 		return okperm(context, groupID);
 	}
 	else

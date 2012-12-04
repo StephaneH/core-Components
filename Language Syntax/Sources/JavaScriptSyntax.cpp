@@ -32,6 +32,7 @@ VJavaScriptSyntax::VJavaScriptSyntax() : fSymTable( NULL ), fDeclarationParsingC
 	fAutoInsertBlock = false;
 	fAutoInsertClosingChar = false;
 	fAutoInsertTabs = false;
+	fInsertSpaces = false;
 	fTabWidth = 4;
 }
 
@@ -474,42 +475,52 @@ void VJavaScriptSyntax::ComputeFolding( ICodeEditorDocument *inDocument )
 	for (sLONG i = 0; i < inDocument->GetNbLines(); i++) {
 		// Reset the line's indent information, since we're recalculating it on the fly
 		inDocument->SetLineIndent( i, 0 );
+		inDocument->SetFoldable( i, false );
 
 		// Then, get the line kind so that we can determine how to handle it
 		sLONG kind = inDocument->GetLineKind( i );
 		JavaScriptSyntaxLineKind lineKind = *( (JavaScriptSyntaxLineKind*)&kind );
+
+		if ( lineKind.fLineKindEndsBlocks )
+		{
+			// Now we go back an indentation level for each end block on the current line
+			for (int count = 0; count < lineKind.fLineKindEndsBlocks; count++)
+			{
+				if (indentStack.empty())
+					break;		// Sanity check
+
+				// Get the last block opener from the stack
+				sLONG opener = indentStack.back();
+				indentStack.pop_back();
+
+				// The opener and the closer are on the same level, but everything between them
+				// is actually set to the current indent level
+				for (sLONG j = opener + 1; j < i; j++) { if (j < inDocument->GetNbLines()) {
+						inDocument->SetLineIndent( j, inDocument->GetLineIndent( j ) + 1);
+					}
+				}
+
+				if (opener < inDocument->GetNbLines()) {
+
+					sLONG toFold = i - opener - ( lineKind.fLineKindStartBlocks ? 1 : 0 );
+
+					if ( toFold > 0 )
+					{
+						// The opener is the foldable line
+						inDocument->SetFoldable( opener, true );
+
+						// Tell the document how many lines are foldable into this group
+						inDocument->SetNbFoldedLines( opener, toFold );
+					}
+				}
+			}
+		}
 
 		if ( lineKind.fLineKindStartBlocks )
 		{
 			for (int count = 0; count < lineKind.fLineKindStartBlocks; count++)
 				indentStack.push_back( i );
 		} 
-		else if ( lineKind.fLineKindEndsBlocks )
-		{
-			if (indentStack.empty())	continue;		// Sanity check
-
-			// Get the last block opener from the stack
-			sLONG opener = indentStack.back();
-
-			// The opener and the closer are on the same level, but everything between them
-			// is actually set to the current indent level
-			for (sLONG j = opener + 1; j < i; j++) { if (j < inDocument->GetNbLines()) {
-					inDocument->SetLineIndent( j, inDocument->GetLineIndent( j ) + 1);
-				}
-			}
-
-			if (opener < inDocument->GetNbLines()) {
-				// The opener is the foldable line
-				inDocument->SetFoldable( opener, true );
-
-				// Tell the document how many lines are foldable into this group
-				inDocument->SetNbFoldedLines( opener, i - opener );
-			}
-
-			// Now we go back an indentation level for each end block on the current line
-			for (int count = 0; count < lineKind.fLineKindEndsBlocks; count++)
-				indentStack.pop_back();
-		}
 	}
 }
 

@@ -382,6 +382,7 @@ class FicheInMem : public VObject, public IRefCountable
 		virtual FicheInMem* Clone(BaseTaskInfo* Context, VError& err, Boolean ForPush = false) const;
 		virtual VError Detach(BaseTaskInfo* Context, Boolean BlobFieldsCanBeEmptied = false);
 		virtual void ClearSeqNumToken(BaseTaskInfo* context);
+		virtual	void TransferSeqNumToken( BaseTaskInfo* context, FicheInMem *inDestination);
 
 		void WhoLockedIt(DB4D_KindOfLock& outLockType, const VValueBag **outLockingContextRetainedExtraData) const;
 		VError FillAllFieldsEmpty();
@@ -635,6 +636,7 @@ class FicheInMemSystem : public FicheInMem
 		virtual VError Detach(BaseTaskInfo* Context, Boolean BlobFieldsCanBeEmptied = false) { return VE_DB4D_TABLEISLOCKED; };
 		virtual VError ReservedRecordNumber(BaseTaskInfo* context) { return VE_DB4D_TABLEISLOCKED; };
 		virtual void ClearSeqNumToken(BaseTaskInfo* context) { ; };
+		virtual	void TransferSeqNumToken( BaseTaskInfo* context, FicheInMem *inDestination) {}
 
 		virtual FicheInMem* CloneForPush(BaseTaskInfo* Context, VError& err) const  { err = VE_DB4D_TABLEISLOCKED; return nil; };
 		virtual void RestoreFromPop()  { ; };

@@ -35,6 +35,12 @@ class CUAGDirectory;
 
 class CUAGSession;
 
+namespace xbox
+{
+	class VJSGlobalContext;
+};
+
+
 class CSecurityManager : public XBOX::CComponent
 {
 public:
@@ -46,7 +52,8 @@ public:
 	virtual XBOX::VError ValidateBasicAuthentication(	const XBOX::VString& inName, 
 														const XBOX::VString& inPassword,
 														bool* outAuthOk,
-														CUAGSession* &outUAGSession) = 0;
+														CUAGSession* &outUAGSession,
+														XBOX::VJSGlobalContext* inContext) = 0;
 
 	virtual XBOX::VError ValidateDigestAuthentication (	const XBOX::VString& inUserName,
 														const XBOX::VString& inAlgorithm,
@@ -59,7 +66,8 @@ public:
 														const XBOX::VString& inMethod,
 														const XBOX::VString& inChallenge,
 														bool *outAuthOk,
-														CUAGSession* &outUAGSession) = 0;
+														CUAGSession* &outUAGSession,
+														XBOX::VJSGlobalContext* inContext) = 0;
 	
 	virtual XBOX::VString ComputeDigestHA1(	const XBOX::VString& inUserName,
 											const XBOX::VString& inPassword, 

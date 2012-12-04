@@ -5,7 +5,7 @@
 	Name="Component - DB4D"
 	ProjectGUID="{C5B99565-524C-4D34-B6EA-4FEE9BD64266}"
 	RootNamespace="Component - DB4D"
-	SccProjectName="&quot;//depot/Components/WAK2/DB4D&quot;"
+	SccProjectName="&quot;//depot/Components/Main/DB4D&quot;"
 	SccLocalPath="..\.."
 	SccProvider="MSSCCI:Perforce SCM"
 	Keyword="Win32Proj"
@@ -526,6 +526,14 @@
 				</FileConfiguration>
 			</File>
 			<File
+				RelativePath="..\..\Sources\Backup.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\Sources\Backup.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\Sources\Base4D.cpp"
 				>
 			</File>
@@ -770,6 +778,14 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\Sources\LocalModel.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\Sources\LocalModel.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\Sources\Rech4D.cpp"
 				>
 			</File>
@@ -791,6 +807,14 @@
 			</File>
 			<File
 				RelativePath="..\..\Sources\Relation.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\Sources\RemoteModel.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\Sources\RemoteModel.h"
 				>
 			</File>
 			<File
@@ -920,6 +944,14 @@
 			</File>
 			<File
 				RelativePath="..\..\Resources\methodCall.js"
+				>
+			</File>
+			<File
+				RelativePath="..\..\Resources\ModelLoadTime.js"
+				>
+			</File>
+			<File
+				RelativePath="..\..\Resources\reporting.js"
 				>
 			</File>
 		</Filter>

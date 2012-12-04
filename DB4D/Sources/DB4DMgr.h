@@ -153,11 +153,15 @@ public:
 	static void PutObjectInFlush( IObjToFlush *obj, Boolean inSetCacheDirty = false, Boolean inForDelete = false, Boolean NoWait = false);
 	static void RemoveObjectFromFlush( IObjToFlush *obj);
 
+	static IBackupSettings* CreateBackupSettings();
+	static IBackupTool*		CreateBackupTool();
+	static XBOX::VError GetJournalInfo(const XBOX::VFilePath& inDataFilePath,XBOX::VFilePath& journalPath,XBOX::VUUID& journalDataLink);
+
 	CDB4DBase* OpenBase( const VFile& inStructureFile, sLONG inParameters, VError* outErr = nil, FileAccess inAccess = FA_READ_WRITE, VString* EntityFileExt = nil, 
-							CUAGDirectory* inUAGDirectory = nil, const VString* inHtmlContent = nil, unordered_map_VString<VRefPtr<VFile> >* outIncludedFiles = nil);
+							CUAGDirectory* inUAGDirectory = nil, const VString* inHtmlContent = nil, unordered_map_VString<VRefPtr<VFile> >* outIncludedFiles = nil, const VFile* inPermissions = nil);
 
 	CDB4DBase* CreateBase( const VFile& inStructureFile, sLONG inParameters, VIntlMgr* inIntlMgr, VError* outErr = nil, FileAccess inAccess = FA_READ_WRITE, 
-							const VUUID* inChosenID = nil, VString* EntityFileExt = nil, CUAGDirectory* inUAGDirectory = nil);
+							const VUUID* inChosenID = nil, VString* EntityFileExt = nil, CUAGDirectory* inUAGDirectory = nil, const VFile* inPermissions = nil);
 
 	CDB4DBase* RetainNthBase( sLONG inBaseIndex);
 	CDB4DBase* RetainBaseByUUID(const VUUID& inBaseID);
@@ -513,7 +517,7 @@ private:
 	
 	CDB4DBase* xOpenCreateBase( const VFile& inStructureFile, Boolean inCreate, sLONG inParameters, VIntlMgr* inIntlMgr, VError* outErr = nil, 
 								FileAccess inAccess = FA_READ_WRITE, const VUUID* inChosenID = nil, VString* EntityFileExt = nil, 
-								CUAGDirectory* inUAGDirectory = nil, const VString* inXmlContent = nil, unordered_map_VString<VRefPtr<VFile> >* outIncludedFiles = nil);
+								CUAGDirectory* inUAGDirectory = nil, const VString* inXmlContent = nil, unordered_map_VString<VRefPtr<VFile> >* outIncludedFiles = nil, const VFile* inPermissionsFile = nil);
 	
 //	CDB4D_Lang* lang4D;
 //	CLanguage* sLanguage;

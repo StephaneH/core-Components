@@ -21,20 +21,22 @@
 //--------------------------------------------------------------------------------------------------
 
 
-const XBOX::VString CONST_FORM_PART_NAME			= CVSTR ("name");
-const XBOX::VString CONST_FORM_PART_FILENAME		= CVSTR ("filename");
-const XBOX::VString CONST_FORM_ENCODING_URL			= CVSTR ("application/x-www-form-urlencoded");
-const XBOX::VString CONST_FORM_ENCODING_MULTIPART	= CVSTR ("multipart/form-data");
-const XBOX::VString CONST_FORM_BOUNDARY				= CVSTR ("boundary");
-const XBOX::VString CONST_FORM_BOUNDARY_DELIMITER	= CVSTR ("--");
-const XBOX::VString CONST_TEXT_PLAIN				= CVSTR ("text/plain");
-const XBOX::VString CONST_TEXT_PLAIN_UTF_8			= CVSTR ("text/plain; charset=utf-8");
+const XBOX::VString CONST_MIME_PART_NAME					= CVSTR ("name");
+const XBOX::VString CONST_MIME_PART_FILENAME				= CVSTR ("filename");
+const XBOX::VString CONST_MIME_MESSAGE_ENCODING_URL			= CVSTR ("application/x-www-form-urlencoded");
+const XBOX::VString CONST_MIME_MESSAGE_ENCODING_MULTIPART	= CVSTR ("multipart/form-data");
+const XBOX::VString CONST_MIME_MESSAGE_BOUNDARY				= CVSTR ("boundary");
+const XBOX::VString CONST_MIME_MESSAGE_BOUNDARY_DELIMITER	= CVSTR ("--");
+const XBOX::VString CONST_MIME_MESSAGE_DEFAULT_CONTENT_TYPE	= CVSTR ("multipart/mixed");
+
+const XBOX::VString CONST_TEXT_PLAIN						= CVSTR ("text/plain");
+const XBOX::VString CONST_TEXT_PLAIN_UTF_8					= CVSTR ("text/plain; charset=utf-8");
 
 
 //--------------------------------------------------------------------------------------------------
 
-
-VHTMLFormPart::VHTMLFormPart()
+#if 0
+VMIMEMessagePart::VMIMEMessagePart()
 : fName()
 , fFileName()
 , fMediaType()
@@ -44,13 +46,13 @@ VHTMLFormPart::VHTMLFormPart()
 {
 }
 
-VHTMLFormPart::~VHTMLFormPart()
+VMIMEMessagePart::~VMIMEMessagePart()
 {
 	fStream.Clear();
 }
 
 
-XBOX::VError VHTMLFormPart::SetData (void *inDataPtr, XBOX::VSize inSize)
+XBOX::VError VMIMEMessagePart::SetData (void *inDataPtr, XBOX::VSize inSize)
 {
 	if ((NULL == inDataPtr) || (0 == inSize))
 		return XBOX::VE_INVALID_PARAMETER;
@@ -62,7 +64,7 @@ XBOX::VError VHTMLFormPart::SetData (void *inDataPtr, XBOX::VSize inSize)
 }
 
 
-XBOX::VError VHTMLFormPart::PutData (void *inDataPtr, XBOX::VSize inSize)
+XBOX::VError VMIMEMessagePart::PutData (void *inDataPtr, XBOX::VSize inSize)
 {
 	if ((NULL == inDataPtr) || (0 == inSize))
 		return XBOX::VE_INVALID_PARAMETER;
@@ -77,55 +79,46 @@ XBOX::VError VHTMLFormPart::PutData (void *inDataPtr, XBOX::VSize inSize)
 }
 
 
-void VHTMLFormPart::SetMediaType (const XBOX::VString& inMediaType)
+void VMIMEMessagePart::SetMediaType (const XBOX::VString& inMediaType)
 {
 	HTTPServerTools::ExtractContentTypeAndCharset (inMediaType, fMediaType, fMediaTypeCharSet);
 	fMediaTypeKind = HTTPServerTools::GetMimeTypeKind (fMediaType);
 }
-
+#endif
 
 //--------------------------------------------------------------------------------------------------
 
-
-VHTMLForm::VHTMLForm()
-: fEncoding (CONST_FORM_ENCODING_URL)
+#if 0
+VMIMEMessage::VMIMEMessage()
+: fEncoding (CONST_MIME_MESSAGE_ENCODING_URL)
 {
 }
 
 
-VHTMLForm::~VHTMLForm()
+VMIMEMessage::~VMIMEMessage()
 {
 	Clear();
 }
 
 
-void VHTMLForm::Clear()
+void VMIMEMessage::Clear()
 {
-	for (PartVector::iterator it = fParts.begin(); it != fParts.end(); ++it)
-	{
-		(*it)->Release();
-	}
-
-	fParts.clear();
+	fMIMEParts.clear();
 }
 
 
-void VHTMLForm::GetFormPartsList (std::vector<IHTMLFormPart *> &outFormPartsList) const
+void VMIMEMessage::GetMIMEParts (XBOX::VectorOfMIMEPart& outMIMEPartsList) const
 {
-	outFormPartsList.clear();
-//	std::copy (fParts.begin(), fParts.end(), outFormPartsList.begin());
+	outMIMEPartsList.clear();
 
-	for (PartVector::const_iterator it = fParts.begin(); it != fParts.end(); ++it)
-	{
-		IHTMLFormPart *source = XBOX::RetainRefCountable ((*it));
-		outFormPartsList.push_back (source);
-	}
+	for (XBOX::VectorOfMIMEPart::const_iterator it = fMIMEParts.begin(); it != fMIMEParts.end(); ++it)
+		outMIMEPartsList.push_back ((*it));
 }
 
 
-void VHTMLForm::_AddFilePart (const XBOX::VString& inName, const XBOX::VString& inFileName, const XBOX::VString& inContentType, XBOX::VPtrStream& inStream)
+void VMIMEMessage::_AddFilePart (const XBOX::VString& inName, const XBOX::VString& inFileName, const XBOX::VString& inContentType, XBOX::VPtrStream& inStream)
 {
-	VHTMLFormPart *partSource = new VHTMLFormPart();
+	VMIMEMessagePart *partSource = new VMIMEMessagePart();
 	if (NULL != partSource)
 	{
 		partSource->SetName (inName);
@@ -135,60 +128,55 @@ void VHTMLForm::_AddFilePart (const XBOX::VString& inName, const XBOX::VString& 
 			partSource->SetData (inStream.GetDataPtr(), inStream.GetDataSize());
 		inStream.CloseReading();
 
-		fParts.push_back (partSource);
+		fMIMEParts.push_back (partSource);
+		partSource->Release();
 	}
 }
 
 
-void VHTMLForm::_AddValuePair (const XBOX::VString& inName, const XBOX::VString& inContentType, void *inData, const XBOX::VSize inDataSize)
+void VMIMEMessage::_AddValuePair (const XBOX::VString& inName, const XBOX::VString& inContentType, void *inData, const XBOX::VSize inDataSize)
 {
-	VHTMLFormPart *partSource = new VHTMLFormPart();
+	VMIMEMessagePart *partSource = new VMIMEMessagePart();
 	if (NULL != partSource)
 	{
 		partSource->SetName (inName);
 		partSource->SetMediaType (inContentType);
 		partSource->PutData (inData, inDataSize);
 
-		fParts.push_back (partSource);
+		fMIMEParts.push_back (partSource);
+		partSource->Release();
 	}
 }
 
 
-void VHTMLForm::Load (const IHTTPRequest& inRequest)
+void VMIMEMessage::Load (const HTTPRequestMethod inRequestMethod, const XBOX::VString& inContentType, const XBOX::VString& inURLQuery, const XBOX::VStream& inStream)
 {
 	Clear();
 
-	if (inRequest.GetRequestMethod() == HTTP_POST)
+	if (HTTP_POST == inRequestMethod)
 	{
-		XBOX::VString	mediaType;
-		XBOX::VString	contentType;
-		NameValueCollection params;
+		XBOX::VNameValueCollection	params;
 
-		inRequest.GetHTTPHeaders().GetHeaderValue (STRING_HEADER_CONTENT_TYPE, contentType);
+		VHTTPHeader::SplitParameters (inContentType, fEncoding, params);
 
-		VHTTPHeader::SplitParameters (contentType, mediaType, params);
-
-		fEncoding = mediaType;
-		if (HTTPServerTools::EqualASCIIVString (fEncoding, CONST_FORM_ENCODING_MULTIPART))
+		if (HTTPServerTools::EqualASCIIVString (fEncoding, CONST_MIME_MESSAGE_ENCODING_MULTIPART))
 		{
-			fBoundary = params.get (CONST_FORM_BOUNDARY);
-			_ReadMultipart (inRequest.GetRequestBody());
+			fBoundary = params.Get (CONST_MIME_MESSAGE_BOUNDARY);
+			_ReadMultipart (inStream);
 		}
 		else
 		{
-			_ReadUrl (inRequest.GetRequestBody());
+			_ReadUrl (inStream);
 		}
 	}
 	else
 	{
-		XBOX::VString urlString;
-		urlString.FromString (inRequest.GetURLQuery());
-		_ReadUrl (urlString);
+		_ReadUrl (inURLQuery);
 	}
 }
 
 
-void VHTMLForm::_ReadUrl (const XBOX::VStream& inStream)
+void VMIMEMessage::_ReadUrl (const XBOX::VStream& inStream)
 {
 	XBOX::VStream& stream = const_cast<XBOX::VStream&>(inStream);
 
@@ -202,7 +190,7 @@ void VHTMLForm::_ReadUrl (const XBOX::VStream& inStream)
 }
 
 
-void VHTMLForm::_ReadUrl (const XBOX::VString& inString)
+void VMIMEMessage::_ReadUrl (const XBOX::VString& inString)
 {
 	if (!inString.IsEmpty())
 	{
@@ -246,18 +234,18 @@ void VHTMLForm::_ReadUrl (const XBOX::VString& inString)
 }
 
 
-void VHTMLForm::_ReadMultipart (const XBOX::VStream& inStream)
+void VMIMEMessage::_ReadMultipart (const XBOX::VStream& inStream)
 {
 	XBOX::VStream& stream = const_cast<XBOX::VStream&>(inStream);
 
-	VMultipartReader reader (stream, fBoundary);
+	VMIMEReader reader (fBoundary, stream);
 	while (reader.HasNextPart())
 	{
 		VHTTPMessage message;
 		reader.GetNextPart (message);
 
 		XBOX::VString dispositionValue;
-		NameValueCollection params;
+		XBOX::VNameValueCollection params;
 		if (message.GetHeaders().IsHeaderSet (STRING_HEADER_CONTENT_DISPOSITION))
 		{
 			XBOX::VString contentDispositionHeaderValue;
@@ -265,22 +253,22 @@ void VHTMLForm::_ReadMultipart (const XBOX::VStream& inStream)
 			VHTTPHeader::SplitParameters (contentDispositionHeaderValue, dispositionValue, params, true); // YT 25-Jan-2012 - ACI0075142
 		}
 
-		if (params.has (CONST_FORM_PART_FILENAME))
+		if (params.Has (CONST_MIME_PART_FILENAME))
 		{
 			XBOX::VString fileName;
 			XBOX::VString name;
 			XBOX::VString contentType;
 
 			message.GetHeaders().GetHeaderValue (STRING_HEADER_CONTENT_TYPE, contentType);
-			fileName = params.get (CONST_FORM_PART_FILENAME);
-			name = params.get (CONST_FORM_PART_NAME);
+			fileName = params.Get (CONST_MIME_PART_FILENAME);
+			name = params.Get (CONST_MIME_PART_NAME);
 
 			_AddFilePart (name, fileName, contentType, message.GetBody());
-			message.SetDisposeBody (false); // Data ownership is transfered to VHTMLFormPart object
+			message.SetDisposeBody (false); // Data ownership is transfered to VMIMEMessagePart object
 		}
 		else
 		{
-			XBOX::VString		nameString = params.get (CONST_FORM_PART_NAME);
+			XBOX::VString		nameString = params.Get (CONST_MIME_PART_NAME);
 			XBOX::VURL::Decode (nameString);
 			_AddValuePair (nameString, CONST_TEXT_PLAIN, message.GetBody().GetDataPtr(), message.GetBody().GetDataSize());
 		}
@@ -288,10 +276,85 @@ void VHTMLForm::_ReadMultipart (const XBOX::VStream& inStream)
 }
 
 
+XBOX::VError VMIMEMessage::ToStream (XBOX::VStream& outStream)
+{
+	XBOX::VError error = XBOX::VE_OK;
+
+	if (XBOX::VE_OK == outStream.OpenWriting())
+	{
+		if (fMIMEParts.size() > 0)
+		{
+			XBOX::VString	string;
+			XBOX::VString	charsetName;
+			bool			bEncodeBody = false;
+
+			for (XBOX::VectorOfMIMEPart::const_iterator it = fMIMEParts.begin(); it != fMIMEParts.end(); ++it)
+			{
+				outStream.PutPrintf ("\r\n--%S\r\n", &fBoundary);
+
+				string.FromCString ("Content-Type: ");
+				string.AppendString ((*it)->GetMediaType());
+
+				if (!(*it)->GetFileName().IsEmpty())
+				{
+					string.AppendCString ("; name=\"");
+					if (!(*it)->GetName().IsEmpty())
+						string.AppendString ((*it)->GetName());
+					else
+						string.AppendString ((*it)->GetFileName());
+					string.AppendCString ("\"\r\nContent-Disposition: attachment; filename=\"");
+					string.AppendString ((*it)->GetFileName());
+					string.AppendCString ("\"\r\n");
+					string.AppendCString ("Content-Transfer-Encoding: base64\r\n");
+
+					bEncodeBody = true;
+				}
+				else
+				{
+					if ((*it)->GetMediaTypeCharSet() != XBOX::VTC_UNKNOWN)
+					{
+						string.AppendCString ("; charset=\"");
+						XBOX::VTextConverters::Get()->GetNameFromCharSet ((*it)->GetMediaTypeCharSet(), charsetName);
+						string.AppendString (charsetName);
+						string.AppendCString ("\"");
+					}
+					string.AppendCString ("\r\n");
+					bEncodeBody = false;
+				}
+
+				string.AppendCString ("\r\n");
+
+				outStream.PutText (string);
+
+				if (bEncodeBody)
+				{
+					XBOX::VMemoryBuffer<> buffer;
+					if (XBOX::Base64Coder::Encode ((*it)->GetData().GetDataPtr(), (*it)->GetData().GetDataSize(), buffer))
+					{
+						outStream.PutData (buffer.GetDataPtr(), buffer.GetDataSize());
+					}
+				}
+				else
+				{
+					outStream.PutData ((*it)->GetData().GetDataPtr(), (*it)->GetData().GetDataSize());
+				}
+			}
+
+			outStream.PutPrintf ("\r\n--%S--\r\n", &fBoundary);
+		}
+
+		outStream.CloseWriting();
+	}
+
+	return error;
+}
+#endif
+
 //--------------------------------------------------------------------------------------------------
 
 
-VMultipartReader::VMultipartReader (XBOX::VStream& inStream, const XBOX::VString& inBoundary)
+#if 0
+VMIMEReader::VMIMEReader (const XBOX::VString& inBoundary, XBOX::VStream& inStream)
 : fStream (inStream)
 , fBoundary (inBoundary)
 , fFirstBoundaryDelimiter()
@@ -301,13 +364,13 @@ VMultipartReader::VMultipartReader (XBOX::VStream& inStream, const XBOX::VString
 }
 
 
-VMultipartReader::~VMultipartReader()
+VMIMEReader::~VMIMEReader()
 {
 	fStream.CloseReading ();
 }
 
 
-void VMultipartReader::GetNextPart (VHTTPMessage& ioMessage)
+void VMIMEReader::GetNextPart (VHTTPMessage& ioMessage)
 {
 	if (fBoundary.IsEmpty())
 		_GuessBoundary();
@@ -318,22 +381,22 @@ void VMultipartReader::GetNextPart (VHTTPMessage& ioMessage)
 }
 
 
-bool VMultipartReader::HasNextPart()
+bool VMIMEReader::HasNextPart()
 {
 	return (!_LastPart());
 }
 
 
-bool VMultipartReader::_LastPart()
+bool VMIMEReader::_LastPart()
 {
 	XBOX::VString	lineString;
 	XBOX::VError	error = XBOX::VE_OK;
 
 	if (fLastBoundaryDelimiter.IsEmpty())
 	{
-		fLastBoundaryDelimiter.FromString (CONST_FORM_BOUNDARY_DELIMITER);
+		fLastBoundaryDelimiter.FromString (CONST_MIME_MESSAGE_BOUNDARY_DELIMITER);
 		fLastBoundaryDelimiter.AppendString (fBoundary);
-		fLastBoundaryDelimiter.AppendString (CONST_FORM_BOUNDARY_DELIMITER);
+		fLastBoundaryDelimiter.AppendString (CONST_MIME_MESSAGE_BOUNDARY_DELIMITER);
 	}
 
 	sLONG8 lastPos = fStream.GetPos();
@@ -343,20 +406,20 @@ bool VMultipartReader::_LastPart()
 }
 
 
-const XBOX::VString& VMultipartReader::GetBoundary() const
+const XBOX::VString& VMIMEReader::GetBoundary() const
 {
 	return fBoundary;
 }
 
 
-void VMultipartReader::_FindFirstBoundary()
+void VMIMEReader::_FindFirstBoundary()
 {
 	XBOX::VString	lineString;
 	XBOX::VError	error = XBOX::VE_OK;
 
 	if (fFirstBoundaryDelimiter.IsEmpty())
 	{
-		fFirstBoundaryDelimiter.FromString (CONST_FORM_BOUNDARY_DELIMITER);
+		fFirstBoundaryDelimiter.FromString (CONST_MIME_MESSAGE_BOUNDARY_DELIMITER);
 		fFirstBoundaryDelimiter.AppendString (fBoundary);
 	}
 
@@ -368,7 +431,7 @@ void VMultipartReader::_FindFirstBoundary()
 }
 
 
-void VMultipartReader::_GuessBoundary()
+void VMIMEReader::_GuessBoundary()
 {
 	XBOX::VString lineString;
 
@@ -387,10 +450,37 @@ void VMultipartReader::_GuessBoundary()
 }
 
 
-void VMultipartReader::_ParseMessage (VHTTPMessage& ioMessage)
+void VMIMEReader::_ParseMessage (VHTTPMessage& ioMessage)
 {
 	ioMessage.Clear();
 	ioMessage.ReadFromStream (fStream, fBoundary);
 }
+#endif
+
+//--------------------------------------------------------------------------------------------------
 
 
+// VMIMEWriter::VMIMEWriter (const XBOX::VString& inBoundary)
+// : fBoundary (inBoundary)
+// , fMIMEMessage()
+// {
+// 	if (fBoundary.IsEmpty())
+// 	{
+// 		XBOX::VUUID		uuid (true);
+// 		XBOX::VString	uuidString;
+// 		uuid.GetString (uuidString);
+// 
+// 		fBoundary.Printf ("----=NextPart_%S=----", &uuidString);
+// 	}
+// }
+// 
+// 
+// VMIMEWriter::~VMIMEWriter()
+// {
+// }
+// 
+// 
+// void VMIMEWriter::AddPart (const XBOX::VString& inName, const XBOX::VString& inFileName, const XBOX::VString& inMIMEType, XBOX::VPtrStream& inStream)
+// {
+// 	fMIMEMessage._AddFilePart (inName, inFileName, inMIMEType, inStream);
+// }

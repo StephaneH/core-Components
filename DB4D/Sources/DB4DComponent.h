@@ -35,6 +35,12 @@ public:
 
 	virtual DB4DNetworkManager* CreateRemoteTCPSession(const VString& inServerName, sWORD inPortNum, VError& outerr, bool inSSL = false);
 
+	virtual IBackupSettings* CreateBackupSettings();
+
+	virtual IBackupTool* CreateBackupTool();
+	virtual XBOX::VError GetJournalInfos(const XBOX::VFilePath& inDataFilePath,XBOX::VFilePath& outJournalPath,XBOX::VUUID& outJournalDataLink);
+	
+
 	virtual CDB4DBase* OpenRemoteBase( CDB4DBase* inLocalDB, const XBOX::VUUID& inBaseID, VErrorDB4D& outErr, DB4DNetworkManager *inLegacyNetworkManager,CUAGDirectory* inUAGDirectory = nil);
 	virtual CDB4DBase* OpenRemoteBase( CDB4DBase* inLocalDB, const VString& inBaseName, const VString& inFullBasePath, VErrorDB4D& outErr, 
 										Boolean inCreateIfNotExist, DB4DNetworkManager* inNetworkManager = nil, CUAGDirectory* inUAGDirectory = nil);
@@ -42,11 +48,11 @@ public:
 
 	virtual void* GetComponentLibrary() const;
 
-	virtual CDB4DBase* OpenBase( const VString& inXMLContent, sLONG inParameters, VError* outErr, const VFilePath& inXMLPath, unordered_map_VString<VRefPtr<VFile> >* outIncludedFiles  = nil);
+	virtual CDB4DBase* OpenBase( const VString& inXMLContent, sLONG inParameters, VError* outErr, const VFilePath& inXMLPath, unordered_map_VString<VRefPtr<VFile> >* outIncludedFiles  = nil, const VFile* inPermissionsFile = nil);
 	// one structure file and one datafile whose name is structurename.data
-	virtual CDB4DBase* OpenBase( const VFile& inStructureFile, sLONG inParameters, VError* outErr = nil, FileAccess inAccess = FA_READ_WRITE, VString* EntityFileExt = nil, CUAGDirectory* inUAGDirectory = nil);
+	virtual CDB4DBase* OpenBase( const VFile& inStructureFile, sLONG inParameters, VError* outErr = nil, FileAccess inAccess = FA_READ_WRITE, VString* EntityFileExt = nil, CUAGDirectory* inUAGDirectory = nil, const VFile* inPermissionsFile = nil);
 	virtual CDB4DBase* CreateBase( const VFile& inStructureFile, sLONG inParameters, VIntlMgr* inIntlMgr, 
-									VError* outErr = nil, FileAccess inAccess = FA_READ_WRITE, const VUUID* inChosenID = nil, VString* EntityFileExt = nil, CUAGDirectory* inUAGDirectory = nil);
+									VError* outErr = nil, FileAccess inAccess = FA_READ_WRITE, const VUUID* inChosenID = nil, VString* EntityFileExt = nil, CUAGDirectory* inUAGDirectory = nil, const VFile* inPermissionsFile = nil);
 
 
 	// virtual VError CloseBase( DB4D_BaseID inBaseID);
@@ -167,6 +173,7 @@ public:
 
 	virtual	VJSObject			CreateJSDatabaseObject( const VJSContext& inContext, CDB4DBaseContext *inBaseContext);
 	virtual	VJSObject			CreateJSEMObject( const VString& emName, const VJSContext& inContext, CDB4DBaseContext *inBaseContext);
+	virtual VJSObject			CreateJSBackupSettings(const VJSContext& inContext,IBackupSettings* retainedBackupSettings);
 	virtual	void				PutAllEmsInGlobalObject(VJSObject& globalObject, CDB4DBaseContext *inBaseContext);
 
 	virtual void SetLimitPerSort(VSize inLimit);
@@ -228,6 +235,8 @@ public:
 
 	virtual VError EraseDataStore(VFile* dataDS);
 
+	virtual IHTTPRequestHandler*	AddRestRequestHandler( VErrorDB4D& outError, CDB4DBase *inBase, IHTTPServerProject *inHTTPServerProject, RIApplicationRef inApplicationRef, const XBOX::VString& inPattern, bool inEnabled);
+
 protected:
 	VDBMgr *fManager;
 };
@@ -243,6 +252,9 @@ public:
 
 	// virtual void DoOnRefCountZero();
 
+	virtual const IBackupSettings* RetainBackupSettings();
+	virtual void  SetRetainedBackupSettings(IBackupSettings* inSettings);
+	
 	virtual Boolean MatchBase(CDB4DBase* InBaseToCompare) const; 
 	virtual CDB4DBaseContextPtr NewContext(CUAGSession* inUserSession, VJSGlobalContext* inJSContext, bool isLocalOnly = false); 
 	virtual void GetName( VString& outName, CDB4DBaseContextPtr inContext = NULL) const;
@@ -389,6 +401,11 @@ public:
 	virtual VFile* RetainJournalFile(CDB4DBaseContextPtr inContext = NULL);
 	virtual bool GetJournalUUIDLink( VUUID &outLink );
 	virtual void GetJournalInfos( const VFilePath &inDataFilePath, VFilePath &outFilePath, VUUID &outDataLink);
+	
+	///create and sets the journal and optionally logs the data opening event
+	virtual  VError CreateJournal( VFile *inFile, VUUID *inDataLink, bool inWriteOpenDataOperation = true );
+
+	///opens an existing journal and optionally logs the data opening event
 	virtual VError OpenJournal( VFile *inFile, VUUID &inDataLink, bool inWriteOpenDataOperation = true);
 
 	virtual const VValueBag* RetainExtraProperties(VError &err, CDB4DBaseContextPtr inContext = NULL);
@@ -556,6 +573,7 @@ public:
 private:
 	VDBMgr	*fManager;
 	Base4D*	fBase;
+	IBackupSettings* fBackupSettings;
 	VCriticalSection fSyncMutex;
 	//Base4DRemote* fBaseRemote;
 	Boolean fMustRetain;
@@ -1657,6 +1675,8 @@ public:
 	virtual void WhoLockedIt(DB4D_KindOfLock& outLockType, const VValueBag **outLockingContextRetainedExtraData) const;
 
 	virtual sLONG8 GetSequenceNumber();
+	
+	virtual	void	TransferSequenceNumber( CDB4DRecord *inDestination);
 
 	virtual VError FillAllFieldsEmpty();
 

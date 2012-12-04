@@ -45,12 +45,7 @@ public:
 	virtual XBOX::VError					SetListeningSSLSocketDescriptor (sLONG inSSLSocketDescriptor) { fSSLSocketDescriptor = inSSLSocketDescriptor; return XBOX::VE_OK; }
 
 	virtual IHTTPServerProjectSettings *	GetSettings() const;
-#if HTTP_SERVER_GLOBAL_SETTINGS
-	virtual IHTTPServerSettings *			GetHTTPServerSettings() const;
-#endif
-#if HTTP_SERVER_GLOBAL_CACHE
 	VHTTPServer *							GetHTTPServer() const { return fHTTPServer; }
-#endif
 
 	/* Deal with custom HTTP Request Handlers */
 	virtual XBOX::VError					AddHTTPRequestHandler (IHTTPRequestHandler *inRequestHandler);
@@ -110,6 +105,12 @@ public:
 
 	virtual void							SetSecurityManager (CSecurityManager* inSecurityManager);
 	virtual CSecurityManager *				GetSecurityManager() const { return fSecurityManager; }
+
+	/*	Check Project sanity:
+	 *	May throw an VE_HTTP_SERVER_PROJECT_ALREADY_EXIST error when Project already exists 
+	 *	or when 2 or many projects use the same hostname with the same port (or SSLPort)
+	 */
+	virtual XBOX::VError					Validate();
 
 private:
 	IHTTPRequestHandler *					fDefaultRequestHandler;

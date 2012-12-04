@@ -199,7 +199,24 @@ public:
 
 };
 
+class VJSBackupSettings : public XBOX::VJSClass<VJSBackupSettings, IBackupSettings>
+{
+public:
+	typedef XBOX::VJSClass<VJSBackupSettings, IBackupSettings> inherited;
 
+	static	VJSObject		CreateInstance( JS4D::ContextRef inContext, IBackupSettings *inSettings);
+
+
+	static	void			CallAsConstructor(VJSParms_callAsConstructor& ioParms);
+	static	void			Initialize( const XBOX::VJSParms_initialize& inParms, IBackupSettings* inSettings);
+	static	void			Finalize( const XBOX::VJSParms_finalize& inParms, IBackupSettings* inSettings);
+	static	void			GetDefinition( ClassDefinition& outDefinition);
+
+	static void	_setDestination(XBOX::VJSParms_callStaticFunction& ioParms, IBackupSettings* inBackupSettings);  // SetDestination(String) SetDestination(Folder) or SetDestination(URL)
+	static void	_isValid(XBOX::VJSParms_callStaticFunction& ioParms, IBackupSettings* inBackupSettings);  // Bool : IsValid()
+	static void	_getDestination(XBOX::VJSParms_getProperty& ioParms, IBackupSettings* inBackupSettings);  // String : GetDestination()
+
+};
 
 
 //======================================================
@@ -221,6 +238,49 @@ public:
 	static	VJSObject		CreateInstance( JS4D::ContextRef inContext, CDB4DBase *inDatabase);
 	static IDB4D_DataToolsIntf* CreateJSDataToolsIntf(VJSContext& jscontext, VJSObject& paramObj);
 
+	/**
+	 * \brief Performs a backup using the given parameters.
+	 * \return NULL if an error occured
+	 * \return a File object leading to the backup manifest file for this backup
+	 */
+	static void	_Backup(XBOX::VJSParms_callStaticFunction& ioParms, CDB4DBase* inDatabase);
+	
+	/**
+	 * \brief Returns the journal file as a File object or NULL if no journal is available
+	 */
+	static void	_GetJournalFile(XBOX::VJSParms_callStaticFunction& ioParms, CDB4DBase* inDatabase);
+
+	/**
+	 * \brief Indicates whether journal is enabled
+	 * \return true if journaling is enabled
+	 * \return false otherwise
+	 */
+	static void	_IsJournalEnabled(XBOX::VJSParms_callStaticFunction& ioParms, CDB4DBase* inDatabase);
+
+	/**
+	 * \brief disables journaling for the current database
+	 * \return true if the journal was disabled
+	 * \return false if an error occured
+	 */
+	static void	_DisableJournal(XBOX::VJSParms_callStaticFunction& ioParms, CDB4DBase* inDatabase);
+
+	/**
+	 * \brief Queries the datastore backup settings
+	 * \return an object containing the backup settings
+	 * \return a NULL value if the backup settings are not available
+	 */
+	static void	_GetBackupSettings(XBOX::VJSParms_callStaticFunction& ioParms, CDB4DBase* inDatabase);
+
+	
+	
+	/**
+	 * \brief Performs a backup and then configures the journal.
+	 * \return NULL if an error occured
+	 * \return a File object leading to the backup manifest file for this backup
+	 */
+	static void	_BackupAndChangeJournal(XBOX::VJSParms_callStaticFunction& ioParms, CDB4DBase* inDatabase);
+	
+	
 	static void _GetName(XBOX::VJSParms_callStaticFunction& ioParms, CDB4DBase* inDatabase);  // String : GetName()
 	static void _SetName(XBOX::VJSParms_callStaticFunction& ioParms, CDB4DBase* inDatabase);  // SetName(String)
 	static void _CountTables(XBOX::VJSParms_callStaticFunction& ioParms, CDB4DBase* inDatabase);  // Number : CountTables()
@@ -237,7 +297,6 @@ public:
 	static void _ExportAsSQL(XBOX::VJSParms_callStaticFunction& ioParms, CDB4DBase* inDatabase);  // _ExportAsSQL(Folder | StringURL, number : nbBlobsPerLevel, number : maxExportFileSize)
 	static void _clearErrs(XBOX::VJSParms_callStaticFunction& ioParms, CDB4DBase* inDatabase);  // clearErrs() // temporaire
 	static void _GetSyncInfo(XBOX::VJSParms_callStaticFunction& ioParms, CDB4DBase* inDatabase);  		
-	static void _CreateSQLStatement(XBOX::VJSParms_callStaticFunction& ioParms, CDB4DBase* inDatabase);  
 	static void _loadModelsDefinition(XBOX::VJSParms_callStaticFunction& ioParms, CDB4DBase* inDatabase);  // loadModelsDefinition(File : XMLDefinitionFile)
 	static void _setCacheSize(XBOX::VJSParms_callStaticFunction& ioParms, CDB4DBase* inDatabase);  // setCacheSize(number : newCacheSize, {bool inPhysicalMemOnly})
 	static void _getCacheSize(XBOX::VJSParms_callStaticFunction& ioParms, CDB4DBase* inDatabase);  // number : getCacheSize()
@@ -342,6 +401,7 @@ public:
 	static void _fromArray(XBOX::VJSParms_callStaticFunction& ioParms, CDB4DEntityModel* inModel); // selection : fromArray(array)
 
 	static void _setAutoSequenceNumber(XBOX::VJSParms_callStaticFunction& ioParms, CDB4DEntityModel* inModel); // setAutoSequenceNumber(number)
+	static void _getFragmentation(XBOX::VJSParms_callStaticFunction& ioParms, CDB4DEntityModel* inModel); // getFragmentation()
 
 	static void _sum(XBOX::VJSParms_callStaticFunction& ioParms, CDB4DEntityModel* inModel);  // number : sum(attribute)
 	static void _min(XBOX::VJSParms_callStaticFunction& ioParms, CDB4DEntityModel* inModel);  // number : min(attribute)
@@ -429,6 +489,7 @@ public:
 	static void _Valid(XBOX::VJSParms_callStaticFunction& ioParms, EntitySelectionIterator* inSelIter);  // bool : Valid()
 	static void _Loaded(XBOX::VJSParms_callStaticFunction& ioParms, EntitySelectionIterator* inSelIter);  // bool : Loaded()
 	static void _Save(XBOX::VJSParms_callStaticFunction& ioParms, EntitySelectionIterator* inSelIter);  // bool ok : Save(bool : silent)
+	static void _validate(XBOX::VJSParms_callStaticFunction& ioParms, EntitySelectionIterator* inSelIter);  // bool ok : validate()
 	static void _Reload(XBOX::VJSParms_callStaticFunction& ioParms, EntitySelectionIterator* inSelIter);  // Reload(bool | string : "ReadOnly")
 	static void _IsModified(XBOX::VJSParms_callStaticFunction& ioParms, EntitySelectionIterator* inSelIter);  // bool : IsModified()
 	static void _IsNew(XBOX::VJSParms_callStaticFunction& ioParms, EntitySelectionIterator* inSelIter);  // bool : IsNew()

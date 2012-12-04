@@ -26,7 +26,7 @@
 //--------------------------------------------------------------------------------------------------
 
 
-const XBOX::VString STRING_REQUEST_VALIDATION_PATTERN	= CVSTR ("([A-Za-z]{3,7}) .* HTTP/.*");
+const XBOX::VString STRING_REQUEST_VALIDATION_PATTERN	= CVSTR ("^([A-Za-z]{1,})( |\t).*( |\t)HTTP/[0-9]{1,}.[0-9]{1,}$");
 
 
 typedef std::vector <std::pair<XBOX::VString, Real> > VectorOfHeadersWithQFactors;
@@ -144,6 +144,7 @@ void _MakeServerString (const XBOX::VString& inProductName, const XBOX::VString&
 
 
 XBOX::VRefPtr<XBOX::VRegexMatcher>	HTTPProtocol::fRequestRegexMatcher;
+XBOX::VCriticalSection				HTTPProtocol::fRequestRegexMatcherMutex;
 
 
 /* static */
@@ -324,138 +325,124 @@ HTTPRequestMethod HTTPProtocol::GetMethodFromRequestLine (const UniChar *inBuffe
 		resource identified by the Request-URI. The method is case-sensitive.
 	*/
 #if RFC2616_COMPLIANT
-	if ((inBufferLen >= 4)
+	if ((inBufferLen >= 3)
 		&& (inBuffer[0] == 'G')
 		&& (inBuffer[1] == 'E')
-		&& (inBuffer[2] == 'T')
-		&& (inBuffer[3] == ' '))
+		&& (inBuffer[2] == 'T'))
 	{
 		return HTTP_GET;
 	}
-	else if ((inBufferLen >= 4)
+	else if ((inBufferLen >= 3)
 		&& (inBuffer[0] == 'P')
 		&& (inBuffer[1] == 'U')
-		&& (inBuffer[2] == 'T')
-		&& (inBuffer[3] == ' '))
+		&& (inBuffer[2] == 'T'))
 	{
 		return HTTP_PUT;
 	}
-	else if ((inBufferLen >= 5)
+	else if ((inBufferLen >= 4)
 		&& (inBuffer[0] == 'P')
 		&& (inBuffer[1] == 'O')
 		&& (inBuffer[2] == 'S')
-		&& (inBuffer[3] == 'T')
-		&& (inBuffer[4] == ' '))
+		&& (inBuffer[3] == 'T'))
 	{
 		return HTTP_POST;
 	}
-	else if ((inBufferLen >= 5)
+	else if ((inBufferLen >= 4)
 		&& (inBuffer[0] == 'H')
 		&& (inBuffer[1] == 'E')
 		&& (inBuffer[2] == 'A')
-		&& (inBuffer[3] == 'D')
-		&& (inBuffer[4] == ' '))
+		&& (inBuffer[3] == 'D'))
 	{
 		return HTTP_HEAD;
 	}
-	else if ((inBufferLen >= 6)
+	else if ((inBufferLen >= 5)
 		&& (inBuffer[0] == 'T')
 		&& (inBuffer[1] == 'R')
 		&& (inBuffer[2] == 'A')
 		&& (inBuffer[3] == 'C')
-		&& (inBuffer[4] == 'E')
-		&& (inBuffer[5] == ' '))
+		&& (inBuffer[4] == 'E'))
 	{
 		return HTTP_TRACE;
 	}
-	else if ((inBufferLen >= 7)
+	else if ((inBufferLen >= 6)
 		&& (inBuffer[0] == 'D')
 		&& (inBuffer[1] == 'E')
 		&& (inBuffer[2] == 'L')
 		&& (inBuffer[3] == 'E')
 		&& (inBuffer[4] == 'T')
-		&& (inBuffer[5] == 'E')
-		&& (inBuffer[6] == ' '))
+		&& (inBuffer[5] == 'E'))
 	{
 		return HTTP_DELETE;
 	}
-	else if ((inBufferLen >= 8)
+	else if ((inBufferLen >= 7)
 		&& (inBuffer[0] == 'O')
 		&& (inBuffer[1] == 'P')
 		&& (inBuffer[2] == 'T')
 		&& (inBuffer[3] == 'I')
 		&& (inBuffer[4] == 'O')
 		&& (inBuffer[5] == 'N')
-		&& (inBuffer[6] == 'S')
-		&& (inBuffer[7] == ' '))
+		&& (inBuffer[6] == 'S'))
 	{
 		return HTTP_OPTIONS;
 	}
 #else
-	if ((inBufferLen >= 4)
+	if ((inBufferLen >= 3)
 		&& ((inBuffer[0] == 'G') || (inBuffer[0] == 'g'))
 		&& ((inBuffer[1] == 'E') || (inBuffer[1] == 'e'))
-		&& ((inBuffer[2] == 'T') || (inBuffer[2] == 't'))
-		&& (inBuffer[3] == ' '))
+		&& ((inBuffer[2] == 'T') || (inBuffer[2] == 't')))
 	{
 		return HTTP_GET;
 	}
-	else if ((inBufferLen >= 4)
+	else if ((inBufferLen >= 3)
 		&& ((inBuffer[0] == 'P') || (inBuffer[0] == 'p'))
 		&& ((inBuffer[1] == 'U') || (inBuffer[1] == 'u'))
-		&& ((inBuffer[2] == 'T') || (inBuffer[2] == 't'))
-		&& (inBuffer[3] == ' '))
+		&& ((inBuffer[2] == 'T') || (inBuffer[2] == 't')))
 	{
 		return HTTP_PUT;
 	}
-	else if ((inBufferLen >= 5)
+	else if ((inBufferLen >= 4)
 		&& ((inBuffer[0] == 'P') || (inBuffer[0] == 'p'))
 		&& ((inBuffer[1] == 'O') || (inBuffer[1] == 'o'))
 		&& ((inBuffer[2] == 'S') || (inBuffer[2] == 's'))
-		&& ((inBuffer[3] == 'T') || (inBuffer[3] == 't'))
-		&& (inBuffer[4] == ' '))
+		&& ((inBuffer[3] == 'T') || (inBuffer[3] == 't')))
 	{
 		return HTTP_POST;
 	}
-	else if ((inBufferLen >= 5)
+	else if ((inBufferLen >= 4)
 		&& ((inBuffer[0] == 'H') || (inBuffer[0] == 'h'))
 		&& ((inBuffer[1] == 'E') || (inBuffer[1] == 'e'))
 		&& ((inBuffer[2] == 'A') || (inBuffer[2] == 'a'))
-		&& ((inBuffer[3] == 'D') || (inBuffer[3] == 'd'))
-		&& (inBuffer[4] == ' '))
+		&& ((inBuffer[3] == 'D') || (inBuffer[3] == 'd')))
 	{
 		return HTTP_HEAD;
 	}
-	else if ((inBufferLen >= 6)
+	else if ((inBufferLen >= 5)
 		&& ((inBuffer[0] == 'T') || (inBuffer[0] == 't'))
 		&& ((inBuffer[1] == 'R') || (inBuffer[1] == 'r'))
 		&& ((inBuffer[2] == 'A') || (inBuffer[2] == 'a'))
 		&& ((inBuffer[3] == 'C') || (inBuffer[3] == 'c'))
-		&& ((inBuffer[4] == 'E') || (inBuffer[4] == 'e'))
-		&& (inBuffer[5] == ' '))
+		&& ((inBuffer[4] == 'E') || (inBuffer[4] == 'e')))
 	{
 		return HTTP_TRACE;
 	}
-	else if ((inBufferLen >= 7)
+	else if ((inBufferLen >= 6)
 		&& ((inBuffer[0] == 'D') || (inBuffer[0] == 'd'))
 		&& ((inBuffer[1] == 'E') || (inBuffer[1] == 'e'))
 		&& ((inBuffer[2] == 'L') || (inBuffer[2] == 'l'))
 		&& ((inBuffer[3] == 'E') || (inBuffer[3] == 'e'))
 		&& ((inBuffer[4] == 'T') || (inBuffer[4] == 't'))
-		&& ((inBuffer[5] == 'E') || (inBuffer[5] == 'e'))
-		&& (inBuffer[6] == ' '))
+		&& ((inBuffer[5] == 'E') || (inBuffer[5] == 'e')))
 	{
 		return HTTP_DELETE;
 	}
-	else if ((inBufferLen >= 8)
+	else if ((inBufferLen >= 7)
 		&& ((inBuffer[0] == 'O') || (inBuffer[0] == 'o'))
 		&& ((inBuffer[1] == 'P') || (inBuffer[1] == 'p'))
 		&& ((inBuffer[2] == 'T') || (inBuffer[2] == 't'))
 		&& ((inBuffer[3] == 'I') || (inBuffer[3] == 'i'))
 		&& ((inBuffer[4] == 'O') || (inBuffer[4] == 'o'))
 		&& ((inBuffer[5] == 'N') || (inBuffer[5] == 'n'))
-		&& ((inBuffer[6] == 'S') || (inBuffer[5] == 's'))
-		&& (inBuffer[7] == ' '))
+		&& ((inBuffer[6] == 'S') || (inBuffer[5] == 's')))
 	{
 		return HTTP_OPTIONS;
 	}
@@ -614,6 +601,85 @@ bool HTTPProtocol::GetRequestURIFromRequestLine (const UniChar *inBuffer, sLONG 
 	}
 
 	return true;
+}
+
+
+XBOX::VError HTTPProtocol::ReadRequestLine (const XBOX::VString& inRequestLine, HTTPRequestMethod& outMethod, XBOX::VString& outURI, HTTPVersion& outVersion, bool inCheckValidity)
+{
+	if (inRequestLine.IsEmpty())
+		return VHTTPServer::ThrowError (VE_HTTP_PROTOCOL_BAD_REQUEST, CVSTR ("Request Line is empty !!:<br />"));
+
+	if (inCheckValidity && !HTTPProtocol::IsValidRequestLine (inRequestLine))
+	{
+		XBOX::VString errorString (CVSTR ("Request Line validation failed !!:<br />"));
+		errorString.AppendString (inRequestLine);
+		return VHTTPServer::ThrowError (VE_HTTP_PROTOCOL_BAD_REQUEST, errorString);
+	}
+
+	const UniChar *	bufferPtr = inRequestLine.GetCPointer();
+	XBOX::VString	methodString;
+	XBOX::VString	versionString;
+
+	outMethod = HTTP_UNKNOWN;
+	outVersion = VERSION_UNKNOWN;
+	outURI.Clear();
+
+	while ((*bufferPtr) && std::isspace (*bufferPtr)) { ++bufferPtr; }
+	while ((*bufferPtr) && !std::isspace (*bufferPtr)) { methodString.AppendUniChar (*bufferPtr); ++bufferPtr; }
+	outMethod = GetMethodFromRequestLine (methodString.GetCPointer(), methodString.GetLength());
+	if (outMethod == HTTP_UNKNOWN)
+		return VE_HTTP_PROTOCOL_NOT_IMPLEMENTED; // VHTTPServer::ThrowError (VE_HTTP_PROTOCOL_NOT_IMPLEMENTED, STRING_EMPTY);
+	while ((*bufferPtr) && std::isspace (*bufferPtr)) { ++bufferPtr; }
+	while ((*bufferPtr) && !std::isspace (*bufferPtr)) { outURI.AppendUniChar (*bufferPtr); ++bufferPtr; }
+	if (outURI.IsEmpty())
+		return VE_HTTP_PROTOCOL_BAD_REQUEST;	// VHTTPServer::ThrowError (VE_HTTP_PROTOCOL_BAD_REQUEST, STRING_EMPTY);
+	while ((*bufferPtr) && std::isspace (*bufferPtr)) { ++bufferPtr; }
+	while ((*bufferPtr) && !std::isspace (*bufferPtr)) { versionString.AppendUniChar (*bufferPtr); ++bufferPtr; }
+	outVersion = GetVersionFromRequestLine (versionString.GetCPointer(), versionString.GetLength());
+	if (outVersion == VERSION_UNSUPPORTED)
+		return VE_HTTP_PROTOCOL_HTTP_VERSION_NOT_SUPPORTED; // VHTTPServer::ThrowError (VE_HTTP_PROTOCOL_HTTP_VERSION_NOT_SUPPORTED, STRING_EMPTY);
+
+	return XBOX::VE_OK;
+}
+
+
+void HTTPProtocol::ParseURL (const XBOX::VString& inRawURL, XBOX::VString& outDecodedURL, XBOX::VString& outURLPath, XBOX::VString& outURLQuery)
+{
+	outDecodedURL.FromString (inRawURL);
+	XBOX::VURL::Decode (outDecodedURL);
+
+	sLONG questionMarkPos = outDecodedURL.FindUniChar (CHAR_QUESTION_MARK);
+	if (questionMarkPos > 0)
+	{
+		outDecodedURL.GetSubString (1, questionMarkPos - 1, outURLPath);
+		outDecodedURL.GetSubString (questionMarkPos + 1, outDecodedURL.GetLength() - questionMarkPos, outURLQuery);
+	}
+	else
+	{
+		outURLPath.FromString (outDecodedURL);
+		outURLQuery.Clear();
+	}
+}
+
+
+/* static */
+XBOX::VError HTTPProtocol::ReadHeaderLine (const XBOX::VString& inLineString, XBOX::VString& outHeaderName, XBOX::VString& outHeaderValue)
+{
+	if (inLineString.IsEmpty())
+		return XBOX::VE_OK;
+
+	const UniChar *	bufferPtr = inLineString.GetCPointer();
+	const UniChar *	startPtr = bufferPtr;
+
+	while ((*bufferPtr) && std::isspace (*bufferPtr)) { ++startPtr; ++bufferPtr; }
+	while ((*bufferPtr) && !std::isspace (*bufferPtr) && (*bufferPtr != ':')) { ++bufferPtr; }
+	outHeaderName.FromBlock (startPtr, (bufferPtr - startPtr) * sizeof(UniChar), VTC_UTF_16);
+
+	startPtr = bufferPtr;
+	while ((*bufferPtr) && (std::isspace (*bufferPtr) || (*bufferPtr == ':'))) { ++startPtr; ++bufferPtr; }
+	outHeaderValue.FromUniCString (startPtr);
+
+	return XBOX::VE_OK;
 }
 
 
@@ -863,8 +929,6 @@ void HTTPProtocol::GetEncodingMethodName (HTTPCompressionMethod inMethod, XBOX::
 
 HTTPCompressionMethod HTTPProtocol::NegotiateEncodingMethod (XBOX::VString& inEncodingHeaderValue)
 {
-#if HTTP_SERVER_USE_QUALITY_FACTOR
-
 	if (inEncodingHeaderValue.IsEmpty())
 		return COMPRESSION_NONE;
 
@@ -889,54 +953,32 @@ HTTPCompressionMethod HTTPProtocol::NegotiateEncodingMethod (XBOX::VString& inEn
 			HTTPServerTools::EqualASCIIVString (preferedEncodingValue, STRING_STAR))
 		return COMPRESSION_NONE;
 
-#else
-	if (inEncodingHeaderValue.IsEmpty() || HTTPServerTools::EqualASCIICString (inEncodingHeaderValue, "*")) // YT 06-Jul-2011 - TestCase ContentCoding06 (See RFC2616 14.3)
-		return COMPRESSION_NONE;
-
-	/* gzip & x-gzip */
-	if (HTTPServerTools::FindASCIIVString (inEncodingHeaderValue, STRING_HEADER_VALUE_X_GZIP))
-		return COMPRESSION_X_GZIP;
-	else if (HTTPServerTools::FindASCIIVString (inEncodingHeaderValue, STRING_HEADER_VALUE_GZIP))
-		return COMPRESSION_GZIP;
-	/* deflate */
-	else if (HTTPServerTools::FindASCIIVString (inEncodingHeaderValue, STRING_HEADER_VALUE_DEFLATE))
-		return COMPRESSION_DEFLATE;
-	/* compress & x-compress */
-	else if (HTTPServerTools::FindASCIIVString (inEncodingHeaderValue, STRING_HEADER_VALUE_X_COMPRESS))
-		return COMPRESSION_X_COMPRESS;
-	else if (HTTPServerTools::FindASCIIVString (inEncodingHeaderValue, STRING_HEADER_VALUE_COMPRESS))
-		return COMPRESSION_COMPRESS;
-	/* identity (RFC2616 compliance - see Chapter 3.5 Content Codings)*/
-	else if (HTTPServerTools::FindASCIIVString (inEncodingHeaderValue, STRING_HEADER_VALUE_IDENTITY))
-		return COMPRESSION_NONE;
-#endif
-
 	return COMPRESSION_UNKNOWN;
 }
 
 
-bool HTTPProtocol::AcceptEncodingMethod (const XBOX::VString& inEncodingHeaderValue, HTTPCompressionMethod inEncodingMethod)
+bool HTTPProtocol::AcceptEncodingMethod (const XBOX::VString& inEncodingHeaderValue, HTTPCompressionMethod inWantedEncodingMethod)
 {
-	// "Content-Encoding" required & cached data not compressed --> Accept encoding
-	if (!inEncodingHeaderValue.IsEmpty() && (COMPRESSION_NONE == inEncodingMethod))
-		return true;
-	// No "Content-Encoding" required & cached data compressed --> Refuse encoding
-	else if (inEncodingHeaderValue.IsEmpty() && (COMPRESSION_NONE != inEncodingMethod))
-		return false;
-
-	VectorOfHeadersWithQFactors	valuesWithQFactors;
-	_ExtractValuesWithQFactors (inEncodingHeaderValue, valuesWithQFactors);
-
-	if (valuesWithQFactors.size() > 0)
+	if (inEncodingHeaderValue.IsEmpty() || (inWantedEncodingMethod == COMPRESSION_NONE))
 	{
-		XBOX::VString encodingMethodString;
-		HTTPProtocol::GetEncodingMethodName (inEncodingMethod, encodingMethodString);
+		return (inWantedEncodingMethod == COMPRESSION_NONE) ? true : false;
+	}
+	else
+	{
+		VectorOfHeadersWithQFactors	valuesWithQFactors;
+		_ExtractValuesWithQFactors (inEncodingHeaderValue, valuesWithQFactors);
 
-		std::sort (valuesWithQFactors.begin(), valuesWithQFactors.end(), _QFactorComparator);
-		for (VectorOfHeadersWithQFactors::const_iterator it = valuesWithQFactors.begin(); it != valuesWithQFactors.end(); ++it)
+		if (valuesWithQFactors.size() > 0)
 		{
-			if (HTTPServerTools::EqualASCIIVString ((*it).first, encodingMethodString) && ((*it).second > 0.0))
-				return true;
+			XBOX::VString wantedEncodingMethodString;
+			HTTPProtocol::GetEncodingMethodName (inWantedEncodingMethod, wantedEncodingMethodString);
+
+			std::sort (valuesWithQFactors.begin(), valuesWithQFactors.end(), _QFactorComparator);
+			for (VectorOfHeadersWithQFactors::const_iterator it = valuesWithQFactors.begin(); it != valuesWithQFactors.end(); ++it)
+			{
+				if (HTTPServerTools::EqualASCIIVString ((*it).first, wantedEncodingMethodString) && ((*it).second > 0.0))
+					return true;
+			}
 		}
 	}
 
@@ -1122,7 +1164,10 @@ bool HTTPProtocol::IsValidRequestLine (const XBOX::VString& inRequestLine)
 		fRequestRegexMatcher = XBOX::VRegexMatcher::Create (STRING_REQUEST_VALIDATION_PATTERN, &error);
 
 	if ((!fRequestRegexMatcher.IsNull()) && (XBOX::VE_OK == error))
-		isOK = (MatchRegex (fRequestRegexMatcher, inRequestLine));
+	{
+		XBOX::VTaskLock	lock (&fRequestRegexMatcherMutex);
+		isOK = (MatchRegex (fRequestRegexMatcher, inRequestLine, false));
+	}
 
 	return isOK;
 }

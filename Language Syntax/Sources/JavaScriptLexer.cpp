@@ -597,11 +597,46 @@ static bool isASCII( UniChar c )
 	return !(c & ~0x7F);
 }
 
-bool JavaScriptLexer::IsRegularExpressionStart( UniChar inChar )
+bool JavaScriptLexer::IsRegularExpressionStart( TokenList* inTokens, UniChar inChar )
 {
+	bool ret = false;
 	if (CHAR_SOLIDUS == inChar)
-		return true;
-	return false;
+	{
+		if ( inTokens )
+		{
+			sLONG i = inTokens->size() - 1;
+			ret = true;
+
+			while ( i >= 0 )
+			{
+				ILexerToken* lastToken = (*inTokens)[ i ];
+				ILexerToken::TYPE type = lastToken->GetType();
+				VString str = lastToken->GetText();
+
+				if (    type == ILexerToken::TT_PUNCTUATION
+					 && (    str == "="
+					      || str == "("
+						  || str == "["
+						  || str == ","
+						  || str == "*"
+						  || str == "+"
+						  || str == "-" ) )
+				{
+					break;
+				}
+				else if ( type == ILexerToken::TT_WHITESPACE )
+				{
+					i--;
+				}
+				else
+				{
+					ret = false;
+					break;
+				}
+			}
+		}
+	}
+	return ret;
 }
 
 bool JavaScriptLexer::IsIdentifierStart( UniChar inChar )
@@ -1214,7 +1249,7 @@ bool JavaScriptLexer::AdvanceOneToken( int &outToken, TokenList *outTokens, bool
 
 	VString body, flags;
 
-	if ( IsRegularExpressionStart(uChar) && ConsumePossibleRegularExpression(body, flags) ) {
+	if ( IsRegularExpressionStart(outTokens, uChar) && ConsumePossibleRegularExpression(body, flags) ) {
 		ILexerToken::TYPE	tokenType;
 		VString				regExp = CVSTR("/") + body + CVSTR("/") + flags;
 
@@ -1323,7 +1358,7 @@ bool JavaScriptLexer::GetNextRegularExpressionLiteral( VString *ioRegExBody, VSt
 		uChar = fLexerInput->MoveToNextChar();
 
 		// If we got a new line, we've failed to parse a legal regular expression
-		if (U_GET_GC_MASK( uChar ) & U_GC_ZL_MASK)	return false;
+		if ( (U_GET_GC_MASK( uChar ) & U_GC_ZL_MASK) || (CHAR_CONTROL_000D == uChar) )	return false;
 		
 		// If we get a /, then we're on to the start of the flags
 		if (CHAR_SOLIDUS == uChar)
