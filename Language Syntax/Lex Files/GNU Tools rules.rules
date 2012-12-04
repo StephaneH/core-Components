@@ -1,0 +1,30 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<VisualStudioToolFile
+	Name="GNU Tools"
+	Version="8,00"
+	>
+	<Rules>
+		<CustomBuildRule
+			Name="Bison"
+			DisplayName="Bison"
+			CommandLine="bison -d [inputs] -o $(InputName).parser.c"
+			Outputs="$(InputName).parser.cpp;$(InputName).parser.h"
+			FileExtensions="*.y"
+			ExecutionDescription="Generating parser"
+			>
+			<Properties>
+			</Properties>
+		</CustomBuildRule>
+		<CustomBuildRule
+			Name="Flex"
+			DisplayName="Flex"
+			CommandLine="flex -o$(InputName).lexer.c [inputs]"
+			Outputs="$(InputName).lexer.cpp"
+			FileExtensions="*.lex"
+			ExecutionDescription="Generating lexer"
+			>
+			<Properties>
+			</Properties>
+		</CustomBuildRule>
+	</Rules>
+</VisualStudioToolFile>

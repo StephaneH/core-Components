@@ -1,0 +1,13 @@
+#include "components_base.xcconfig"
+#include "../../XToolbox/WAK3/weak_icu_coverage.xcconfig"
+PRODUCT_NAME = $(PROJECT_NAME)Debug
+
+
+
+
+
+
+
+
+
+

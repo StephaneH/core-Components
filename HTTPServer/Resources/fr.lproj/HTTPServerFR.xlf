@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+   Translation file for 4D products.
+   Copyright (C) 2007-2012 4D SAS.
+   This file is distributed under the same license as the 4D product package.
+-->
+
+<!DOCTYPE xliff PUBLIC "-//XLIFF//DTD XLIFF//EN"
+"http://www.oasis-open.org/committees/xliff/documents/xliff.dtd">
+
+<xliff version="1.0">
+  <file datatype="x-STR#" original="undefined" source-language="en-US" target-language="en-US" product-version="1.0">
+    <header>
+      <note>The character &quot;%&quot; (out of a numerical context) is a meta-character that will be replaced (often by a numeric value) before the string is displayed</note>
+      <note>Text between less than (&lt;) and greater than (&gt;) symbols is a variable&apos;s name and must not be localised</note>
+      <note>\r, \t and \n are meta-characters.</note>
+    </header>
+    <body>
+      <group resname="HTTP_Errors">
+        <trans-unit id="x" resname="ERR_HTTP_1000">
+          <source>Error description is not available.</source>
+          <target>Error description is not available.</target>
+        </trans-unit>
+        <trans-unit id="x" resname="ERR_HTTP_1001">
+          <source>Access denied.</source>
+          <target>Access denied.</target>
+        </trans-unit>
+        <trans-unit id="x" resname="ERR_HTTP_1002">
+          <source>Invalid internal state.</source>
+          <target>Invalid internal state.</target>
+        </trans-unit>
+        <trans-unit id="x" resname="ERR_HTTP_1003">
+          <source>Memory error.</source>
+          <target>Memory error.</target>
+        </trans-unit>
+        <trans-unit id="x" resname="ERR_HTTP_1004">
+          <source>Invalid argument.</source>
+          <target>Invalid argument.</target>
+        </trans-unit>
+        <trans-unit id="x" resname="ERR_HTTP_1005">
+          <source>HTTP request handler already exists.</source>
+          <target>HTTP request handler already exists.</target>
+        </trans-unit>
+        <trans-unit id="x" resname="ERR_HTTP_1006">
+          <source>Base64 decoding failed.</source>
+          <target>Base64 decoding failed.</target>
+        </trans-unit>
+        <trans-unit id="x" resname="ERR_HTTP_1007">
+          <source>Base64 encoding failed.</source>
+          <target>Base64 encoding failed.</target>
+        </trans-unit>
+        <trans-unit id="x" resname="ERR_HTTP_1008">
+          <source>HTTP request handler does not exists.</source>
+          <target>HTTP request handler does not exists.</target>
+        </trans-unit>
+        <trans-unit id="x" resname="ERR_HTTP_1009">
+          <source>HTTP Server is being turned off.</source>
+          <target>HTTP Server is being turned off.</target>
+        </trans-unit>
+        <trans-unit id="x" resname="ERR_HTTP_1010">
+          <source>HTTP Server Project does not exist.</source>
+          <target>HTTP Server Project does not exist.</target>
+        </trans-unit>
+        <trans-unit id="x" resname="ERR_HTTP_1011">
+          <source>Virtual Host already exists.</source>
+          <target>Virtual Host already exists.</target>
+        </trans-unit>
+        <trans-unit id="x" resname="ERR_HTTP_1012">
+          <source>String not found.</source>
+          <target>String not found.</target>
+        </trans-unit>
+        <trans-unit id="x" resname="ERR_HTTP_1013">
+          <source>Authentication referee already exists.</source>
+          <target>Authentication referee already exists.</target>
+        </trans-unit>
+        <trans-unit id="x" resname="ERR_HTTP_1014">
+          <source>Cache rule already exists.</source>
+          <target>Cache rule already exists.</target>
+        </trans-unit>
+        <trans-unit id="x" resname="ERR_HTTP_1015">
+          <source>Cache rule expires.</source>
+          <target>Cache rule expires.</target>
+        </trans-unit>
+        <trans-unit id="x" resname="ERR_HTTP_1023">
+          <source>Some HTTP Server Project Settings are already used. Check Port, SSLPort or Hostname Settings.</source>
+          <target>Some HTTP Server Project Settings are already used. Check Port, SSLPort or Hostname Settings.</target>
+        </trans-unit>
+        <trans-unit id="x" resname="ERR_HTTP_1024">
+          <source>Virtual Folder already exists.</source>
+          <target>Virtual Folder already exists.</target>
+        </trans-unit>
+        <trans-unit id="x" resname="ERR_HTTP_1025">
+          <source>Hostname is missing in Project Settings.</source>
+          <target>Hostname is missing in Project Settings.</target>
+        </trans-unit>
+      </group>
+
+      <group resname="HTTP_Messages">
+        <trans-unit id="x" resname="HTTP_WORKER_THREAD">
+          <source>HTTP connection handler</source>
+          <target>HTTP connection handler</target>
+        </trans-unit>
+        <trans-unit id="x" resname="HTTP_SPARE_THREAD">
+          <source>Spare task</source>
+          <target>Spare task</target>
+        </trans-unit>
+        <trans-unit id="x" resname="SNET_CONNECTION_LISTENER">
+          <source>ServerNet Connection Listener</source>
+          <target>ServerNet Connection Listener</target>
+        </trans-unit>
+        <trans-unit id="x" resname="SNET_SELECT_IO_HANDLER">
+          <source>ServerNet select I/O handler</source>
+          <target>ServerNet select I/O handler</target>
+        </trans-unit>
+        <trans-unit id="x" resname="SNET_SHARED_WORKER">
+          <source>Shared pool worker</source>
+          <target>Shared pool worker</target>
+        </trans-unit>
+        <trans-unit id="x" resname="SNET_EXCLUSIVE_WORKER">
+          <source>Exclusive pool worker</source>
+          <target>Exclusive pool worker</target>
+        </trans-unit>
+        <trans-unit id="x" resname="SNET_SHARED_LOAD_BALANCER">
+          <source>ServerNet shared load balancer</source>
+          <target>ServerNet shared load balancer</target>
+        </trans-unit>
+      </group>
+    </body>
+  </file>
+</xliff>
