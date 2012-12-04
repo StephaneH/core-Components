@@ -86,9 +86,34 @@ public:
 	inline TypeSortElem<Type>& operator =( const TypeSortElem<Type>& other) { recnum = other.recnum; value = other.value; return *this;};
 	inline bool operator <( const TypeSortElem<Type>& other) const { return value < other.value;};
 
+	inline void GetString(VString& s)
+	{
+		s.Clear();
+	}
+
 	sLONG recnum;
 	Type value;
 };
+
+
+template <>
+inline void TypeSortElem<uLONG8>::GetString(VString& s)
+{
+	s = "U8  "+ToString(value);
+}
+
+template <>
+inline void TypeSortElem<sLONG8>::GetString(VString& s)
+{
+	s = "S8  "+ToString(value);
+}
+
+
+template <>
+inline void TypeSortElem<sLONG>::GetString(VString& s)
+{
+	s = "S  "+ToString(value);
+}
 
 
 #if COMPIL_GCC

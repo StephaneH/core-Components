@@ -162,7 +162,7 @@ VError FillQueryWithParams(CDB4DQuery* query, VJSParms_callStaticFunction& ioPar
 		{
 			const VString& s = *curname;
 			bool isAParam = false;
-			if (s.GetLength() == 1)
+			if (s.GetLength() >= 1)
 			{
 				UniChar c = s[0];
 				if (c >= '1' && c <= '9')
@@ -188,6 +188,10 @@ VError FillQueryWithParams(CDB4DQuery* query, VJSParms_callStaticFunction& ioPar
 							}
 						}
 					}
+				}
+				else if (c == '$')
+				{
+					isAParam = true;
 				}
 			}
 			if (!isAParam)
@@ -4135,6 +4139,24 @@ void VJSEntitySelectionIterator::_getStamp(XBOX::VJSParms_callStaticFunction& io
 }
 
 
+void VJSEntitySelectionIterator::_getModifiedAttributes(XBOX::VJSParms_callStaticFunction& ioParms, EntitySelectionIterator* inSelIter)
+{
+	VError err = VE_OK;
+	CDB4DEntityRecord* inRecord = inSelIter->GetCurRec(GetDB4DBaseContextFromJSContext(ioParms, inSelIter->GetModel()));
+	VJSArray arr(ioParms.GetContextRef());
+	if (inRecord != nil)
+	{
+		EntityAttributeCollection result;
+		VImpCreator<EntityRecord>::GetImpObject(inRecord)->GetModifiedAttributes(result);
+		for (EntityAttributeCollection::iterator cur = result.begin(), end = result.end(); cur != end; ++cur)
+		{
+			arr.PushString((*cur)->GetName());
+		}
+	}
+	ioParms.ReturnValue(arr);
+}
+
+
 void EntityRecToString(CDB4DEntityRecord* inRecord, CDB4DBaseContext* context, VString& result)
 {
 	result.Clear();
@@ -4291,6 +4313,7 @@ void VJSEntitySelectionIterator::GetDefinition( ClassDefinition& outDefinition)
 		{ "toObject", js_callStaticFunction<_toObject>, JS4D::PropertyAttributeReadOnly | JS4D::PropertyAttributeDontEnum | JS4D::PropertyAttributeDontDelete },
 		{ "getKey", js_callStaticFunction<_getKey>, JS4D::PropertyAttributeReadOnly | JS4D::PropertyAttributeDontEnum | JS4D::PropertyAttributeDontDelete },
 		{ "getStamp", js_callStaticFunction<_getStamp>, JS4D::PropertyAttributeReadOnly | JS4D::PropertyAttributeDontEnum | JS4D::PropertyAttributeDontDelete },
+		{ "getModifiedAttributes", js_callStaticFunction<_getModifiedAttributes>, JS4D::PropertyAttributeReadOnly | JS4D::PropertyAttributeDontEnum | JS4D::PropertyAttributeDontDelete },
 		{ 0, 0, 0}
 	};
 	

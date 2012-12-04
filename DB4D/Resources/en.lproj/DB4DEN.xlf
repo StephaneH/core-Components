@@ -1505,6 +1505,18 @@
           <source>String length must be {Param1}</source>
           <target>String length must be {Param1}</target>
         </trans-unit>
+         <trans-unit resname="ERR_dbmg_1600" id="600">
+          <source>This entity does not belong to the datastore class {Param1}</source>
+          <target>This entity does not belong to the datastore class {Param1}</target>
+        </trans-unit>
+           <trans-unit resname="ERR_dbmg_1601" id="601">
+          <source>This query is not valid for this datastore class</source>
+          <target>This query is not valid for this datastore class</target>
+        </trans-unit>
+           <trans-unit resname="ERR_dbmg_1602" id="602">
+          <source>Invalid collection returned by restricting query event for the datastore class {Param1}</source>
+          <target>Invalid collection returned by restricting query event for the datastore class {Param1}</target>
+        </trans-unit>
         <trans-unit resname="ERR_dbmg_1800" id="800">
           <source>datastore class "{Param1}" cannot be found</source>
           <target>datastore class "{Param1}" cannot be found</target>

@@ -1598,6 +1598,34 @@ Boolean TypeSortElemArray<Type>::TryToSort(Selection* From, Selection* &into, VE
 										std::sort(First, Last, sortpred);
 								}
 							}
+
+#if debuglr
+							sLONG gdebug = 0;
+							sLONG xdebug = 1;
+
+							if (gdebug)
+							{
+								DebugMsg("sorted elems \n");
+								TypeSortElemIterator<Type> curelem(GetDataElem(0, TypeSize), TypeSize+4);
+								while (curelem != Last)
+								{
+									DebugMsg("value : ");
+									VString s;
+									curelem->GetString(s);
+									DebugMsg(s);
+									DebugMsg("  ,  recnum : ");
+									DebugMsg(ToString(curelem->recnum));
+									DebugMsg("\n");
+									++curelem;
+								}
+
+								DebugMsg("\n");
+								DebugMsg("\n");
+							}
+
+#endif
+
+
 						}
 
 						if (err == VE_OK)

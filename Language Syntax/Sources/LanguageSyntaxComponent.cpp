@@ -571,11 +571,14 @@ void WorkerThread::ParseDocument( VDocumentParserManager::WorkItem *inWorkItem )
 	if ( inWorkItem->fFilePath.IsFolder() )
 		return;
 
+	VFile file( inWorkItem->fFilePath );
+	if ( ! file.Exists() )
+		return;
+
 	// First, open up the file and gather all of its contents.  If we can't open the document, then there
 	// is little point to trying to figure out what parser to use.
 	VTime modTime;
 	if (inWorkItem->fFileContents.IsEmpty()) {
-		VFile file( inWorkItem->fFilePath );
 		file.GetTimeAttributes( &modTime );
 	} else {
 		VTime::Now( modTime );
@@ -591,14 +594,18 @@ void WorkerThread::ParseDocument( VDocumentParserManager::WorkItem *inWorkItem )
 		VString contents;
 		if (inWorkItem->fFileContents.IsEmpty())
 		{
-			VFile file( inWorkItem->fFilePath );
-			VFileStream stream( &file );
-			if (VE_OK == stream.OpenReading())
+			fManager->fTaskLock->Lock();
+			if ( file.Exists() )
 			{
-				stream.GuessCharSetFromLeadingBytes( VTC_DefaultTextExport );
-				stream.GetText( contents );
-				stream.CloseReading();
+				VFileStream stream( &file );
+				if (VE_OK == stream.OpenReading())
+				{
+					stream.GuessCharSetFromLeadingBytes( VTC_DefaultTextExport );
+					stream.GetText( contents );
+					stream.CloseReading();
+				}
 			}
+			fManager->fTaskLock->Unlock();
 		} else {
 			contents = inWorkItem->fFileContents;
 		}

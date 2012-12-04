@@ -599,13 +599,14 @@ static bool isASCII( UniChar c )
 
 bool JavaScriptLexer::IsRegularExpressionStart( TokenList* inTokens, UniChar inChar )
 {
-	bool ret = false;
+    bool ret = false;
 	if (CHAR_SOLIDUS == inChar)
 	{
+        ret = true;
+        
 		if ( inTokens )
 		{
 			sLONG i = inTokens->size() - 1;
-			ret = true;
 
 			while ( i >= 0 )
 			{

@@ -501,6 +501,7 @@ public:
 	static void _toJSON(XBOX::VJSParms_callStaticFunction& ioParms, EntitySelectionIterator* inSelIter);   // string : _toJSON
 	static void _getKey(XBOX::VJSParms_callStaticFunction& ioParms, EntitySelectionIterator* inSelIter);   // value : getKey()
 	static void _getStamp(XBOX::VJSParms_callStaticFunction& ioParms, EntitySelectionIterator* inSelIter);   // long : getStamp()
+	static void _getModifiedAttributes(XBOX::VJSParms_callStaticFunction& ioParms, EntitySelectionIterator* inSelIter);  // Array of string : getModifiedAttributes()
 	
 };
 

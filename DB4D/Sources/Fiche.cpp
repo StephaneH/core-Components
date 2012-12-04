@@ -2083,7 +2083,6 @@ ValPtr FicheInMem::GetNthField(sLONG n, VError& err, bool pictAsRaw, bool forQue
 
 				if (chp==nil && !fIsRemote)
 				{
-				
 					cri=asscrit->RetainField(n);
 					if (cri != nil) {
 						if (cri->GetOutsideData())
@@ -2231,6 +2230,39 @@ ValPtr FicheInMem::GetNthField(sLONG n, VError& err, bool pictAsRaw, bool forQue
 					}
 					{
 						// faut il remvoyer une vvalue empty si le champ est detruit ou bien nil comme maintenant ?
+					}
+				}
+				else
+				{
+					if (chp != nil)
+					{
+						if (chp->IsNull())
+						{
+							cri=asscrit->RetainField(n);
+							if (cri != nil)
+							{
+								if (cri->GetAutoSeq() && IsNew() && !fAllAlwaysNull)
+								{
+									StErrorContextInstaller errs(true);
+									AutoSeqNumber* seq = asscrit->GetSeqNum(nil);
+									if (seq != nil)
+									{
+										sLONG8 val = seq->GetNewValue(fToken);
+										if (val != -1)
+											chp->FromLong8(val);
+									}
+									else
+										errs.Flush();
+								}
+								if (cri->GetTyp() == VK_UUID && cri->GetAutoGenerate() && !fAllAlwaysNull)
+								{
+									((VUUID*)chp)->Regenerate();
+									Touch(n);
+								}
+								cri->Release();
+							}
+
+						}
 					}
 				}
 

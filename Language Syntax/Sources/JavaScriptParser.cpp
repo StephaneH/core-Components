@@ -547,6 +547,8 @@ JavaScriptAST::Node *JavaScriptParser::ParseLiteral( int &tk )
 		} break;
 		case JavaScriptTokenValues::REGEXP: {
 			VString	body, flags; // Aren't used for now
+            
+            VString szRegExpValue = fLexer->GetTokenText();
 
 			ret = new JavaScriptAST::RegExLiteralNode( body, flags, fLexer->GetCurrentLineNumber() );
 			tk = fLexer->GetNextTokenForParser();
@@ -1939,7 +1941,8 @@ JavaScriptAST::Node *JavaScriptParser::ParseMultiplicativeExpression( int &tk )
 			case '*': {
 				HANDLE_CASE( MultiplicationExpressionNode );
 			} break;
-			case '/': {
+			case '/':
+            case JavaScriptTokenValues::REGEXP: {
 				HANDLE_CASE( DivisionExpressionNode );
 			} break;
 			case '%': {

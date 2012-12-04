@@ -3801,7 +3801,19 @@ VError DBEvent::Call(EntityRecord* inRec, BaseTaskInfo* context, const EntityAtt
 									}
 									err = vThrowUserGeneratedError(MAKE_VERROR('dbev', errnum), errorMessage);
 								}
+								else if (fKind == dbev_restrict)
+								{
+									err = ThrowBaseError(VE_DB4D_INVALID_COLLECTION_IN_RESTRICTING_EVENT, fOwner->GetName());
+								}
 							}
+							else if (fKind == dbev_restrict)
+							{
+								err = ThrowBaseError(VE_DB4D_INVALID_COLLECTION_IN_RESTRICTING_EVENT, fOwner->GetName());
+							}
+						}
+						else if (fKind == dbev_restrict)
+						{
+							err = ThrowBaseError(VE_DB4D_INVALID_COLLECTION_IN_RESTRICTING_EVENT, fOwner->GetName());
 						}
 					}
 
@@ -8392,16 +8404,30 @@ VError EntityRecord::setAttributeValue(const EntityAttribute* inAttribute, const
 								cv->SetNull(true);
 							else
 							{
-								if (cv->GetValueKind() == VK_IMAGE && inValue->GetValueKind() == VK_STRING)
+								ValueKind existingType = cv->GetValueKind();
+								ValueKind importingType = inValue->GetValueKind();
+								if (importingType == VK_STRING || importingType == VK_TEXT)
 								{
-									VString path;
-									inValue->GetString(path);
-									cv->SetOutsidePath(path);
-									VString computedPath;
-									cv->GetOutsidePath(computedPath);
-									VFile xfile(computedPath, FPS_POSIX);
-									if (xfile.Exists())
-										cv->ReloadFromOutsidePath();
+									if (existingType == VK_IMAGE)
+									{
+										VString path;
+										inValue->GetString(path);
+										cv->SetOutsidePath(path);
+										VString computedPath;
+										cv->GetOutsidePath(computedPath);
+										VFile xfile(computedPath, FPS_POSIX);
+										if (xfile.Exists())
+											cv->ReloadFromOutsidePath();
+									}
+									else if (existingType !=  VK_STRING && existingType != VK_TEXT)
+									{
+										if (((VString*)inValue)->GetLength() == 0)
+											cv->SetNull(true);
+										else
+											cv->FromValue(*inValue);
+									}
+									else
+										cv->FromValue(*inValue);
 								}
 								else
 									cv->FromValue(*inValue);
@@ -9587,6 +9613,22 @@ void EntityRecord::ReleaseCallEvent(DBEventKind kind)
 	fAlreadyCallEvent[kind] = 0;
 }
 
+
+VError EntityRecord::GetModifiedAttributes(EntityAttributeCollection& outatts)
+{
+	for (EntityAttributeValueCollection::iterator cur = fValues.begin(), end = fValues.end(); cur != end; cur++)
+	{
+		EntityAttributeValue* val = *cur;
+		if (val != nil)
+		{
+			if (val->GetStamp() != 0)
+			{
+				outatts.push_back(const_cast<EntityAttribute*>(val->GetAttribute()));
+			}
+		}
+	}
+	return VE_OK;
+}
 
 
 

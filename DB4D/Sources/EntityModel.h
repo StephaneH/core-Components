@@ -148,6 +148,8 @@ const VErrorDB4D	VE_DB4D_ENTITY_STRING_GREATER_THAN_MAX = MAKE_VERROR(CDB4DManag
 const VErrorDB4D	VE_DB4D_ENTITY_STRING_LENGTH_EQUAL = MAKE_VERROR(CDB4DManager::Component_Type, 1593);
 
 
+const VErrorDB4D	VE_DB4D_INVALID_COLLECTION_IN_RESTRICTING_EVENT = MAKE_VERROR(CDB4DManager::Component_Type, 1602);
+
 const sLONG kDefaultTopSize = 100;
 
 const UniChar kEntityTablePrefixChar = '$';
@@ -2323,6 +2325,11 @@ class EntityAttributeValue : public VComponentImp<CDB4DEntityAttributeValue>
 
 		EntityAttributeValue* Clone(EntityRecord* newOwner);
 
+		inline const EntityAttribute* GetAttribute() const
+		{
+			return fAttribute;
+		}
+
 
 	protected:
 
@@ -2604,6 +2611,8 @@ class EntityRecord : public VComponentImp<CDB4DEntityRecord>
 		bool OKToCallEvent(DBEventKind kind);
 
 		void ReleaseCallEvent(DBEventKind kind);
+
+		VError GetModifiedAttributes(EntityAttributeCollection& outatts);
 
 
 	protected:

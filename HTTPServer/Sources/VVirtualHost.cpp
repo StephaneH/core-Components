@@ -663,6 +663,9 @@ bool VVirtualHost::AcceptConnectionsOnAddress (const IP4 /*done*/ inIPAddress) c
 #else
 bool VVirtualHost::AcceptConnectionsOnAddress (const VString& inIPAddress) const	
 {
+	if (inIPAddress.IsEmpty())
+		return false;
+
 	return (HTTPServerTools::EqualASCIIVString (GetSettings()->GetListeningAddress(), VNetAddress::GetAnyIP()) ||
 			HTTPServerTools::EqualASCIIVString (GetSettings()->GetListeningAddress(), inIPAddress));
 }

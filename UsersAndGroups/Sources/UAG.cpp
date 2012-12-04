@@ -110,7 +110,7 @@ CUAGDirectory* VUAGManager::RetainDirectory(const VFile& inXMLFile, FileAccess i
 
 	if (err == VE_OK)
 	{
-		for (sLONG i = (sLONG)CUAGDirectory::AdminGroup; i <= (sLONG)CUAGDirectory::DebuggerGroup; ++i)
+		for (sLONG i = (sLONG)CUAGDirectory::AdminGroup; i <= (sLONG)CUAGDirectory::AdminGroup; ++i)
 		{
 			CUAGDirectory::SpecialGroupEnum groupref = (CUAGDirectory::SpecialGroupEnum)i;
 			VError err2;

@@ -281,7 +281,8 @@ VVirtualHost *VVirtualHostManager::_FindMatchingVirtualHost (const VVirtualHostM
 #if WITH_DEPRECATED_IPV4_API
 	else if ((inIPAddress != 0) && (std::count_if (inMap.begin(), inMap.end(), VVirtualHostAcceptAddressFunctor (inPort)) == 1))
 #else
-	else if (!HTTPServerTools::EqualASCIIVString (inIPAddress, VNetAddress::GetAnyIP()) &&
+	else if (!inIPAddress.IsEmpty() &&	// YT 08-Oct-2012 - WAK0078200
+			!HTTPServerTools::EqualASCIIVString (inIPAddress, VNetAddress::GetAnyIP()) &&
 			(std::count_if (inMap.begin(), inMap.end(), VVirtualHostAcceptAddressFunctor (inIPAddress)) == 1))
 #endif		
 	{
