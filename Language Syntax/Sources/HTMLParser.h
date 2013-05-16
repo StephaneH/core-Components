@@ -112,11 +112,6 @@ private:
 
 	bool ExpectValue( TokenList::iterator &ioStart, TokenList::iterator end, int inValue );
 	bool ExpectType( TokenList::iterator &ioStart, TokenList::iterator end, ILexerToken::TYPE inType );
-
-	#if _DEBUG
-		friend class VJavaScriptSyntax;
-		static void Test();
-	#endif
 };
 
 #endif // _HTMLPARSER_H_

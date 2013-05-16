@@ -11,7 +11,7 @@
 		Name="VCCLCompilerTool"
 		AdditionalOptions="/MP"
 		Optimization="2"
-		PreprocessorDefinitions="_WIN64;WIN64;NDEBUG;WITH_DEBUGMSG;WITH_ASSERT"
+		PreprocessorDefinitions="_WIN64;WIN64;NDEBUG;WITH_DEBUGMSG;WITH_ASSERT;_WINDOWS"
 		MinimalRebuild="false"
 		ExceptionHandling="2"
 		RuntimeLibrary="2"

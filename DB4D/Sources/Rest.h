@@ -91,6 +91,20 @@ class WafSelection
 		VString fMode;
 };
 
+class User4DSession
+{
+	public:
+		VTime fExpiresAt;
+		VString fName;
+		VString fPassword;
+		sLONG fHowManyMinutes;
+};
+
+typedef map<VUUID, User4DSession> UserSessionMap;
+
+const sLONG kUser4DSessionDefaultExpire = 60; // 60 min
+const sLONG kUser4DSessionCheckInterval = 5; // 5 min
+
 class RestRequestHandler : public IHTTPRequestHandler
 {
 	public:
@@ -100,8 +114,9 @@ class RestRequestHandler : public IHTTPRequestHandler
 			if (inBase != nil)
 			{
 				fxBase = RetainRefCountable(inBase);
-				fBase = VImpCreator<VDB4DBase>::GetImpObject(inBase)->GetBase();
+				fBase = dynamic_cast<VDB4DBase*>(inBase)->GetBase();
 			}
+			VTime::Now(fLastExpireCheck);
 		}
 
 		virtual ~RestRequestHandler()
@@ -117,6 +132,11 @@ class RestRequestHandler : public IHTTPRequestHandler
 		virtual void			SetEnable( bool inEnable);
 		virtual	void*			GetPrivateData() const { return fxBase; }
 
+		bool GetUserSession(const VUUID& inSessionID, User4DSession& outUserSession);
+		bool ExistsUserSession(const VUUID& inSessionID);
+		VUUID CreateUserSession(const VString& userName, const VString& password, sLONG howManyMinutes);
+		void CheckUserSessionExpirations();
+
 
 	private:
 		CDB4DBase* fxBase;
@@ -124,6 +144,9 @@ class RestRequestHandler : public IHTTPRequestHandler
 		bool fEnable;
 		VString fPattern;
 		RIApplicationRef fApplicationRef;
+		UserSessionMap fUserMap;
+		VCriticalSection fUserMapMutex;
+		VTime fLastExpireCheck;
 
 		mutable	VCriticalSection fMutex;
 };

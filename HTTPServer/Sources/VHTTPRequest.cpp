@@ -62,29 +62,36 @@ VHTTPRequest::~VHTTPRequest()
 
 void VHTTPRequest::Reset()
 {
-	inherited::Clear();
-
-	fRequestMethod = HTTP_UNKNOWN;
-	fHTTPVersion = VERSION_UNKNOWN;
-	fParsingState = PS_Undefined;
 	fParsingError = XBOX::VE_OK;
-	fRequestLine.Clear();
-	fURL.Clear();
-	fRawURL.Clear();
-	fURLPath.Clear();
-	fURLQuery.Clear();
-	fHost.Clear();
 
-	if (NULL != fAuthenticationInfos)
+	/*
+	 *	For Keep-Alive reset previous request's infos except when Server sent 100-Continue.
+	 *	In that case keep headers and just prepare to receive message's body
+	 */
+	if (fParsingState != PS_WaitingForBody)
 	{
-		delete fAuthenticationInfos;
-		fAuthenticationInfos = NULL;
-	}
+		inherited::Clear();
 
-	if (NULL != fHTMLForm)
-	{
-		delete fHTMLForm;
-		fHTMLForm = NULL;
+		fRequestMethod = HTTP_UNKNOWN;
+		fHTTPVersion = VERSION_UNKNOWN;
+		fRequestLine.Clear();
+		fURL.Clear();
+		fRawURL.Clear();
+		fURLPath.Clear();
+		fURLQuery.Clear();
+		fHost.Clear();
+
+		if (NULL != fAuthenticationInfos)
+		{
+			delete fAuthenticationInfos;
+			fAuthenticationInfos = NULL;
+		}
+
+		if (NULL != fHTMLForm)
+		{
+			delete fHTMLForm;
+			fHTMLForm = NULL;
+		}
 	}
 }
 
@@ -92,7 +99,7 @@ void VHTTPRequest::Reset()
 XBOX::VError VHTTPRequest::ReadFromEndPoint (XBOX::VTCPEndPoint& inEndPoint, uLONG inTimeout)
 {
 	// Read Request-Line and extract Method, URL and HTTP version
-#define	MAX_BUFFER_LENGTH					8192
+#define	MAX_BUFFER_LENGTH					16384
 
 	sLONG			bufferSize = MAX_BUFFER_LENGTH;
 	char *			buffer = (char *)XBOX::vMalloc (bufferSize + 1, 0);
@@ -105,6 +112,8 @@ XBOX::VError VHTTPRequest::ReadFromEndPoint (XBOX::VTCPEndPoint& inEndPoint, uLO
 	sLONG			unreadBytes = 0;
 	sLONG			lineLen = 0;
 	bool			hostHeaderFound = false;
+	bool			expectContinueFound = false;
+	XBOX::VString	expectValueString;
 	XBOX::VString	header;
 	XBOX::VString	value;
 	char *			startLinePtr = NULL;
@@ -112,7 +121,7 @@ XBOX::VError VHTTPRequest::ReadFromEndPoint (XBOX::VTCPEndPoint& inEndPoint, uLO
 	char *			endHeaderPtr = NULL;
 	const sLONG		endLineSize = sizeof (HTTP_CRLF) - 1;
 	const sLONG		endHeaderSize = sizeof (HTTP_CRLFCRLF) - 1;
-	sLONG			contentLength = 0;
+	XBOX::VSize		contentLength = 0;
 	bool			contentLengthFound = false;
 	void *			bodyContentBuffer = NULL;
 	XBOX::VSize		bodyContentSize = 0;
@@ -120,13 +129,26 @@ XBOX::VError VHTTPRequest::ReadFromEndPoint (XBOX::VTCPEndPoint& inEndPoint, uLO
 	bool			stopReadingSocket = false;
 	bool			wasCRLF = false;
 	bool			requestEntityTooLarge = false;
+	bool			skipRequestLineAndHeader = false;
 
-	fParsingState = PS_Undefined;
-	fRequestLine.Clear();
+	if (fParsingState != PS_WaitingForBody)
+	{
+		fParsingState = PS_Undefined;
+		fRequestLine.Clear();
 
-	fLocalAddress.FromLocalAddr (inEndPoint.GetRawSocket());
-	fPeerAddress.FromPeerAddr (inEndPoint.GetRawSocket());
-	fIsSSL = inEndPoint.IsSSL();
+		fLocalAddress.FromLocalAddr (inEndPoint.GetRawSocket());
+		fPeerAddress.FromPeerAddr (inEndPoint.GetRawSocket());
+		fIsSSL = inEndPoint.IsSSL();
+	}
+	/*
+	 *	Server previously sent 100 - Continue status code, let's now read request body
+	 */
+	else
+	{
+		skipRequestLineAndHeader = true;
+		fParsingState = PS_ReadingBody;
+		contentLengthFound = GetHeaders().GetContentLength (contentLength);
+	}
 
 	XBOX::StErrorContextInstaller errorContext (VE_SRVR_TOO_MANY_SOCKETS_FOR_SELECT_IO,
 												VE_SRVR_READ_FAILED,
@@ -147,7 +169,7 @@ XBOX::VError VHTTPRequest::ReadFromEndPoint (XBOX::VTCPEndPoint& inEndPoint, uLO
 	readExactlyTimer.DebugMsg ("***VHTTPRequest::ReadFromEndPoint\n\tVTCPEndPoint::ReadExactly()");
 #endif
 
-	if (XBOX::VE_OK == endPointError)
+	if (XBOX::VE_OK == endPointError && !skipRequestLineAndHeader)
 		fParsingState = PS_ReadingRequestLine;
 
 	while ((XBOX::VE_OK == endPointError) && !stopReadingSocket)
@@ -315,6 +337,25 @@ XBOX::VError VHTTPRequest::ReadFromEndPoint (XBOX::VTCPEndPoint& inEndPoint, uLO
 										fHost.FromString(value);
 										hostHeaderFound = true;
 									}
+									/*
+									 *	YT 09-Nov-2012 - WAK0079099
+									 *	If Expect header explicitly contains "100-Continue" then check later message body size
+									 *	other else send 417 - Expectation Failed and exit now.
+									 */
+									else if (!expectContinueFound && HTTPServerTools::EqualASCIIVString (header, STRING_HEADER_EXPECT))
+									{
+										XBOX::VString expectValueString (value);
+
+										if (!expectValueString.IsEmpty() && HTTPServerTools::EqualASCIIVString (expectValueString, STRING_HEADER_VALUE_100_CONTINUE))
+										{
+											expectContinueFound = true;
+										}
+										else
+										{
+											fParsingError = VE_HTTP_PROTOCOL_EXPECTATION_FAILED;
+											break;
+										}
+									}
 								}
 							}
 						}
@@ -325,7 +366,7 @@ XBOX::VError VHTTPRequest::ReadFromEndPoint (XBOX::VTCPEndPoint& inEndPoint, uLO
 								Do not read socket anymore when header is complete for GET, HEAD, TRACE & OPTIONS requests. Body is not allowed in theses cases.
 							*/
 							 
-							if ((HTTP_GET == fRequestMethod) || (HTTP_HEAD == fRequestMethod) || (HTTP_TRACE == fRequestMethod) || (HTTP_OPTIONS == fRequestMethod))
+							if ((HTTP_GET == fRequestMethod) || (HTTP_HEAD == fRequestMethod) || (HTTP_TRACE == fRequestMethod) || (HTTP_OPTIONS == fRequestMethod) || (HTTP_DELETE == fRequestMethod))
 							{
 								fParsingState = PS_ParsingFinished;
 								stopReadingSocket = true;
@@ -334,10 +375,23 @@ XBOX::VError VHTTPRequest::ReadFromEndPoint (XBOX::VTCPEndPoint& inEndPoint, uLO
 							{
 								fParsingState = PS_ReadingBody;
 								
-								XBOX::VString contentLengthString;
-								if ((contentLengthFound = GetHeaders().GetHeaderValue (STRING_HEADER_CONTENT_LENGTH, contentLengthString)))
+								contentLengthFound = GetHeaders().GetContentLength (contentLength);
+
+								/*
+								 *	Check "Expect: 100-Continue" request header and properly respond according to Content-Length limit
+								 */
+								if ((expectContinueFound) && (fHTTPVersion == VERSION_1_1) && ((fRequestMethod == HTTP_POST) || (fRequestMethod == HTTP_PUT)))
 								{
-									contentLength = HTTPServerTools::GetLongFromString (contentLengthString);	
+									if (contentLengthFound && _AcceptIncomingDataSize (contentLength))
+									{
+										fParsingState = PS_WaitingForBody;
+										fParsingError = VE_HTTP_PROTOCOL_CONTINUE;
+									}
+									else
+									{
+										requestEntityTooLarge = true;
+										stopReadingSocket = true;
+									}
 								}
 							}
 						}
@@ -406,7 +460,7 @@ XBOX::VError VHTTPRequest::ReadFromEndPoint (XBOX::VTCPEndPoint& inEndPoint, uLO
 						bodyContentSize += unreadBytes;
 						bufferOffset = unreadBytes = 0;
 
-						if (contentLength > 0 && bodyContentSize == contentLength)
+						if ((contentLength > 0) && (bodyContentSize == contentLength))
 							stopReadingSocket = true;
 
 						if (NULL != bodyContentBuffer)
@@ -443,7 +497,8 @@ XBOX::VError VHTTPRequest::ReadFromEndPoint (XBOX::VTCPEndPoint& inEndPoint, uLO
 
 				if (PS_ReadingBody == fParsingState)
 				{
-					if ((fRequestMethod != HTTP_GET) && (fRequestMethod != HTTP_HEAD) && (fRequestMethod != HTTP_TRACE) && (!contentLengthFound)) // YT 03-Oct-2011 - WAK0073323 - Test if Content-Length was found (even if equals 0) - YT 06-Jul-2011 - TestCase MessageLength02 (RFC2616 4.4)
+					if ((!contentLengthFound) && (fRequestMethod != HTTP_UNKNOWN) &&
+						((fRequestMethod == HTTP_PUT) || (fRequestMethod == HTTP_POST))) // YT 03-Oct-2012 - WAK0073323 & WAK0072822 - Test if Content-Length was found (even if equals 0) - YT 06-Jul-2011 - TestCase MessageLength02 (RFC2616 4.4)
 					{
 						fParsingError = VE_HTTP_PROTOCOL_LENGTH_REQUIRED; 
 						stopReadingSocket = true;
@@ -479,58 +534,98 @@ XBOX::VError VHTTPRequest::ReadFromEndPoint (XBOX::VTCPEndPoint& inEndPoint, uLO
 	if (requestEntityTooLarge)
 		fParsingError = VE_HTTP_PROTOCOL_REQUEST_ENTITY_TOO_LARGE;
 
-	if ((XBOX::VE_OK == fParsingError) && (XBOX::VE_OK == endPointError))
+	if (((XBOX::VE_OK == fParsingError) || (VE_HTTP_PROTOCOL_CONTINUE == fParsingError)) && (XBOX::VE_OK == endPointError))
 	{
 		XBOX::VString	headerValue;
 		XBOX::CharSet	charSet = XBOX::VTC_UNKNOWN;
 
 		if (NULL != bodyContentBuffer)
 		{
-			if ((fRequestMethod != HTTP_GET) && (fRequestMethod != HTTP_HEAD) && (fRequestMethod != HTTP_TRACE) && (!contentLengthFound)) // YT 03-Oct-2011 - WAK0073323 - Test if Content-Length was found (even if equals 0) - YT 06-Jul-2011 - TestCase MessageLength02 (RFC2616 4.4)
+			if ((!contentLengthFound) && (fRequestMethod != HTTP_UNKNOWN) &&
+				((fRequestMethod == HTTP_PUT) || (fRequestMethod == HTTP_POST))) // YT 03-Oct-2012 - WAK0073323 & WAK0072822 - Test if Content-Length was found (even if equals 0) - YT 06-Jul-2011 - TestCase MessageLength02 (RFC2616 4.4)
 			{
 				fParsingError = VE_HTTP_PROTOCOL_LENGTH_REQUIRED; 
 			}
 			else
 			{
-				//assert (bodyContentSize == contentLength);
-				GetBody().SetDataPtr (bodyContentBuffer, bodyContentSize);
-
-				// YT 16-Feb-2012 - ACI0075553 - Automatically decompress body (when applicable)
-				if (GetHeaders().GetHeaderValue (STRING_HEADER_CONTENT_ENCODING, headerValue))
+				/*
+				 *	YT 05-Oct-2012 - WAK0072934 & WAK0072913
+				 *		[HTTP-RFC] Server must use the content-length header when the request includes an identity transfer-encoding.
+				 *		[HTTP-RFC] Server should reply with 501 when receives a request with a transfer-encoding it does not understand. 
+				 */
+				if (GetHeaders().GetHeaderValue (STRING_HEADER_TRANSFER_ENCODING, headerValue))
 				{
-					HTTPCompressionMethod compressionMethod = HTTPProtocol::NegotiateEncodingMethod (headerValue);
-					if ((compressionMethod > COMPRESSION_NONE) && (compressionMethod <= COMPRESSION_X_COMPRESS))
-					{
-							fParsingError = HTTPServerTools::DecompressStream (GetBody());
-					}
-					else if (compressionMethod != COMPRESSION_IDENTITY)
-					{
-						fParsingError = VE_HTTP_PROTOCOL_UNSUPPORTED_MEDIA_TYPE; // YT 06-Jul-2011 - TestCase ContentCoding10 (see RFC2616 Section 14.11)
-					}
+					HTTPCompressionMethod	transferEncodingMethod = HTTPProtocol::NegotiateEncodingMethod (headerValue);
+					if ((bodyContentSize > contentLength) && (COMPRESSION_IDENTITY == transferEncodingMethod))
+						bodyContentSize = contentLength;
+					else if (COMPRESSION_UNKNOWN == transferEncodingMethod)
+						fParsingError = VE_HTTP_PROTOCOL_NOT_IMPLEMENTED; 
 				}
 
-				/* Set VStream charset according to content-type header other else set default charset to UTF-8 */
-				if ((!GetHeaders().GetContentType (headerValue, &charSet)) || (XBOX::VTC_UNKNOWN == charSet))
-					charSet = XBOX::VTC_UTF_8;
-				GetBody().SetCharSet (charSet);
+				if ((XBOX::VE_OK == fParsingError) || (VE_HTTP_PROTOCOL_CONTINUE == fParsingError))
+				{
+					GetBody().SetDataPtr (bodyContentBuffer, bodyContentSize);
+
+					// YT 16-Feb-2012 - ACI0075553 - Automatically decompress body (when applicable)
+					if (GetHeaders().GetHeaderValue (STRING_HEADER_CONTENT_ENCODING, headerValue))
+					{
+						HTTPCompressionMethod	compressionMethod = HTTPProtocol::NegotiateEncodingMethod (headerValue);
+						if ((compressionMethod > COMPRESSION_NONE) && (compressionMethod <= COMPRESSION_X_COMPRESS))
+						{
+							fParsingError = HTTPServerTools::DecompressStream (GetBody());
+						}
+						else if (compressionMethod != COMPRESSION_IDENTITY)
+						{
+							fParsingError = VE_HTTP_PROTOCOL_UNSUPPORTED_MEDIA_TYPE; // YT 06-Jul-2011 - TestCase ContentCoding10 (see RFC2616 Section 14.11)
+						}
+					}
+
+					/* Set VStream charset according to content-type header other else set default charset to UTF-8 */
+					if ((!GetHeaders().GetContentType (headerValue, &charSet)) || (XBOX::VTC_UNKNOWN == charSet))
+						charSet = XBOX::VTC_UTF_8;
+					GetBody().SetCharSet (charSet);
+				}
 			}
 		}
 
-		fParsingState = PS_ParsingFinished;
+		if (PS_WaitingForBody != fParsingState)
+			fParsingState = PS_ParsingFinished;
 
-		// HTTP/1.1 requests must include Host header
+		/*
+		 *	HTTP/1.1 requests must include Host header
+		 */
 		if ((fHTTPVersion == VERSION_1_1) && fHost.IsEmpty())
 		{
 			if (!GetHeaders().GetHeaderValue (STRING_HEADER_HOST, fHost))
 				fParsingError = VHTTPServer::ThrowError (VE_HTTP_PROTOCOL_BAD_REQUEST, CVSTR ("HTTP/1.1 requests must include Host header"));
 		}
+		/*
+		 *	YT 05-Oct-2012 - WAK0076702
+		 *	Because HTTP/1.0 proxies do not understand the Connection header, 
+		 *	however, HTTP/1.1 imposes an additional rule. If a Connection header 
+		 *	is received in an HTTP/1.0 message, then it must have been incorrectly 
+		 *	forwarded by an HTTP/1.0 proxy. Therefore, all of the headers it lists 
+		 *	were also incorrectly forwarded, and must be ignored.
+		 */
+		else if ((fHTTPVersion == VERSION_1_0) && GetHeaders().GetHeaderValue (STRING_HEADER_CONNECTION, headerValue))
+		{
+			XBOX::VectorOfVString	values;
+			headerValue.GetSubStrings (CHAR_COMMA, values, false, true);
+			for (XBOX::VectorOfVString::const_iterator it = values.begin(); it != values.end(); ++it)
+			{
+				if (!HTTPServerTools::EqualASCIIVString (*it, STRING_HEADER_VALUE_CLOSE) &&
+					!HTTPServerTools::EqualASCIIVString (*it, STRING_HEADER_VALUE_KEEP_ALIVE) &&
+					GetHeaders().IsHeaderSet (*it))
+					GetHeaders().RemoveHeader (*it);
+			}
+		}
 
 		// YT 12-Oct-2009 - ACI0063558 - Request MUST include CRLF+CRLF at the end of header
-		if ((XBOX::VE_OK == fParsingError) && (NULL == endHeaderPtr))
+		if (!skipRequestLineAndHeader && ((XBOX::VE_OK == fParsingError) || (VE_HTTP_PROTOCOL_CONTINUE == fParsingError)) && (NULL == endHeaderPtr))
 			fParsingError = VHTTPServer::ThrowError (VE_HTTP_PROTOCOL_BAD_REQUEST, CVSTR ("Request header is not followed by CRLF+CRLF !!"));
 
 		// YT 08-Jul-2011 - TestCase CharSet01 (RFC2616 14.2)
-		if ((XBOX::VE_OK == fParsingError) && (GetHeaders().IsHeaderSet (STRING_HEADER_ACCEPT_CHARSET)))
+		if (((XBOX::VE_OK == fParsingError) || (VE_HTTP_PROTOCOL_CONTINUE == fParsingError)) && (GetHeaders().IsHeaderSet (STRING_HEADER_ACCEPT_CHARSET)))
 		{
 			XBOX::VString acceptCharsetValues;
 
@@ -541,7 +636,7 @@ XBOX::VError VHTTPRequest::ReadFromEndPoint (XBOX::VTCPEndPoint& inEndPoint, uLO
 		}
 
 		// Check if body is compressed and if compression method is supported
-		if ((XBOX::VE_OK == fParsingError) && (GetHeaders().IsHeaderSet (STRING_HEADER_ACCEPT_ENCODING)))
+		if (((XBOX::VE_OK == fParsingError) || (VE_HTTP_PROTOCOL_CONTINUE == fParsingError)) && (GetHeaders().IsHeaderSet (STRING_HEADER_ACCEPT_ENCODING)))
 		{
 			if (GetHeaders().GetHeaderValue (STRING_HEADER_ACCEPT_ENCODING, headerValue))
 			{
@@ -567,25 +662,6 @@ XBOX::VError VHTTPRequest::ReadFromEndPoint (XBOX::VTCPEndPoint& inEndPoint, uLO
 	return endPointError;
 
 #undef MAX_BUFFER_LENGTH
-}
-
-
-XBOX::VError VHTTPRequest::ReadFromStream (XBOX::VStream& inStream)
-{
-	assert (false); // TODO: Cleanup, Dead Code, should never be called
-// 	return inherited::_ReadFromStream ( inStream,
-// 										CVSTR (""),
-// 										&fRequestLine,
-// 										&fRequestMethod,
-// 										&fHTTPVersion,
-// 										&fHost,
-// 										&fRawURL,
-// 										&fURL,
-// 										&fURLPath,
-// 										&fURLQuery,
-// 										&fParsingState,
-// 										&fParsingError);
-	return XBOX::VE_OK;
 }
 
 
@@ -686,11 +762,18 @@ const XBOX::VMIMEMessage *VHTTPRequest::GetHTMLForm() const
 {
 	if (NULL == fHTMLForm)
 	{
-		XBOX::VString contentType;
+		XBOX::VString	contentType;
+		XBOX::VString	rawQueryString;
 
 		fHTMLForm = new XBOX::VMIMEMessage();
 		GetHeaders().GetHeaderValue (STRING_HEADER_CONTENT_TYPE, contentType);
-		fHTMLForm->Load ((fRequestMethod == HTTP_POST), contentType, fURLQuery, GetBody());
+
+		// YT 17-Dec-2012 - ACI0079673 - Use RawQueryURL (names & values will be individually decoded in VMIMEMessage::_ReadUrl())
+		sLONG questionMarkPos = fRawURL.FindUniChar (CHAR_QUESTION_MARK);
+		if (questionMarkPos > 0)
+			fRawURL.GetSubString (questionMarkPos + 1, fRawURL.GetLength() - questionMarkPos, rawQueryString);
+
+		fHTMLForm->Load (((fRequestMethod == HTTP_POST) || (fRequestMethod == HTTP_PUT)), contentType, rawQueryString, GetBody());
 	}
 
 	return fHTMLForm;

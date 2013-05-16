@@ -1402,14 +1402,14 @@ Boolean TypeSortElemArray<Type>::TryToSort(Selection* From, Selection* &into, VE
 											xMultiFieldDataOffset_constiterator cur = criterias.Begin(), end = criterias.End();
 											for (; cur != end; cur++)
 											{
-												EntityAttribute* att = cur->GetAttribute();
+												db4dEntityAttribute* att = cur->GetAttribute();
 												AttributePath* attpath = cur->GetAttributePath();
 												VValueSingle* cv = nil;
 												if (attpath != nil)
 												{
-													const EntityAttribute* firstpart = attpath->FirstPart()->fAtt;
+													const db4dEntityAttribute* firstpart = (db4dEntityAttribute*)(attpath->FirstPart()->fAtt);
 													if (erec == nil)
-														erec = new EntityRecord(firstpart->GetOwner(), fic, context->GetEncapsuleur(), DB4D_Do_Not_Lock);
+														erec = new LocalEntityRecord(firstpart->GetLocalModel(), fic, context);
 													EntityAttributeValue* val = erec->getAttributeValue(*attpath, err, context);
 													if (val != nil)
 														cv = val->getVValue();
@@ -1419,7 +1419,7 @@ Boolean TypeSortElemArray<Type>::TryToSort(Selection* From, Selection* &into, VE
 												else
 												{
 													if (erec == nil)
-														erec = new EntityRecord(att->GetOwner(), fic, context->GetEncapsuleur(), DB4D_Do_Not_Lock);
+														erec = new LocalEntityRecord(att->GetLocalModel(), fic, context);
 													EntityAttributeValue* val = erec->getAttributeValue(att, err, context);
 													if (val != nil)
 														cv = val->getVValue();
@@ -1598,6 +1598,34 @@ Boolean TypeSortElemArray<Type>::TryToSort(Selection* From, Selection* &into, VE
 										std::sort(First, Last, sortpred);
 								}
 							}
+
+#if debuglr
+							sLONG gdebug = 0;
+							sLONG xdebug = 1;
+
+							if (gdebug)
+							{
+								DebugMsg("sorted elems \n");
+								TypeSortElemIterator<Type> curelem(GetDataElem(0, TypeSize), TypeSize+4);
+								while (curelem != Last)
+								{
+									DebugMsg("value : ");
+									VString s;
+									curelem->GetString(s);
+									DebugMsg(s);
+									DebugMsg("  ,  recnum : ");
+									DebugMsg(ToString(curelem->recnum));
+									DebugMsg("\n");
+									++curelem;
+								}
+
+								DebugMsg("\n");
+								DebugMsg("\n");
+							}
+
+#endif
+
+
 						}
 
 						if (err == VE_OK)
@@ -1624,7 +1652,7 @@ Boolean TypeSortElemArray<Type>::TryToSort(Selection* From, Selection* &into, VE
 									sLONG startfrom = 0;
 									if (fNulls != nil)
 									{
-										if (nbnulls != 0 && criterias.IsAscent())
+										if (nbnulls != 0 && !criterias.IsAllDescent())
 										{
 											if (!into->FixFic(nbnulls))
 												err = ThrowBaseError(memfull);
@@ -1656,7 +1684,7 @@ Boolean TypeSortElemArray<Type>::TryToSort(Selection* From, Selection* &into, VE
 
 									if (okgo)
 									{
-										if (nbnulls != 0 && !criterias.IsAscent())
+										if (nbnulls != 0 && criterias.IsAllDescent())
 										{
 											sLONG curqtfic = count;
 											if (!into->FixFic(count+nbnulls))
@@ -1969,7 +1997,7 @@ Boolean TypeSortElemArray<Type>::TryToSort(Selection* From, Selection* &into, VE
 													err = remotecache->RetainCacheRecord(i, xfic, relatedrecs);
 													if (xfic != nil)
 													{
-														fic = VImpCreator<VDB4DRecord>::GetImpObject(xfic)->GetRec();
+														fic = dynamic_cast<VDB4DRecord*>(xfic)->GetRec();
 														if (fic != nil)
 														{
 															fic->Retain();
@@ -2116,14 +2144,14 @@ Boolean TypeSortElemArray<Type>::TryToSort(Selection* From, Selection* &into, VE
 																	}
 																	else
 																	{
-																		EntityAttribute* att = cur->GetAttribute();
+																		db4dEntityAttribute* att = cur->GetAttribute();
 																		if (att != nil)
 																		{
 																			cv = nil;
 																			if (erec == nil)
 																			{
 																				em = att->GetOwner();
-																				erec = new EntityRecord(em, fic, context->GetEncapsuleur(), DB4D_Do_Not_Lock);
+																				erec = new LocalEntityRecord(att->GetLocalModel(), fic, context);
 																			}
 																			EntityAttributeValue* val = erec->getAttributeValue(att, err, context);
 																			if (val != nil)
@@ -2251,7 +2279,7 @@ Boolean TypeSortElemArray<Type>::TryToSort(Selection* From, Selection* &into, VE
 																		}
 																		else
 																		{
-																			EntityAttribute* att = cur->GetAttribute();
+																			db4dEntityAttribute* att = cur->GetAttribute();
 																			if (att != nil)
 																			{
 																				cv = nil;
@@ -2693,7 +2721,7 @@ Boolean TypeSortElemArray<Type>::TryToSort(Selection* From, Selection* &into, VE
 														else
 														{
 															sLONG startsel = 0;
-															if (nbnulls != 0 && criterias.IsAscent())
+															if (nbnulls != 0 && !criterias.IsAllDescent())
 															{
 																startsel = nbnulls;
 																sLONG curinsel = 0;
@@ -2772,7 +2800,7 @@ Boolean TypeSortElemArray<Type>::TryToSort(Selection* From, Selection* &into, VE
 																		}
 
 																		sLONG startsel = 0;
-																		if (nbnulls != 0 && criterias.IsAscent())
+																		if (nbnulls != 0 && !criterias.IsAllDescent())
 																		{
 																			startsel = nbnulls;
 																			sLONG curinsel = 0;
@@ -2804,7 +2832,7 @@ Boolean TypeSortElemArray<Type>::TryToSort(Selection* From, Selection* &into, VE
 																				err = VE_DB4D_ACTIONCANCELEDBYUSER;
 																		}
 
-																		if (err == VE_OK && nbnulls != 0 && !criterias.IsAscent())
+																		if (err == VE_OK && nbnulls != 0 && criterias.IsAllDescent())
 																		{
 																			sLONG curqtfic = qt;
 																			sLONG n = fNulls->FindNextBit(0);
@@ -4865,7 +4893,7 @@ Boolean Selection::TryToSortMulti(VError& err, const SortTab* tabs, BaseTaskInfo
 			}
 			else if (li->att != nil)
 			{
-				totlen += off.AddOffset(totlen, li->att, li->ascendant);
+				totlen += off.AddOffset(totlen, (db4dEntityAttribute*)(li->att), li->ascendant);
 			}
 			else
 			{
@@ -5366,7 +5394,7 @@ void Selection::FreeSortMem(SortContext& tri)
 }
 
 
-Selection* Selection::SortSel(VError& err, EntityModel* em, EntityAttributeSortedSelection* sortingAtt, BaseTaskInfo* context, VDB4DProgressIndicator* InProgress, WafSelection* inWafSel, WafSelection* outWafSel)
+Selection* Selection::SortSel(VError& err, LocalEntityModel* em, EntityAttributeSortedSelection* sortingAtt, BaseTaskInfo* context, VDB4DProgressIndicator* InProgress, WafSelection* inWafSel, WafSelection* outWafSel)
 {
 	Selection* result = nil;
 	err = VE_OK;
@@ -5377,13 +5405,13 @@ Selection* Selection::SortSel(VError& err, EntityModel* em, EntityAttributeSorte
 	}
 	else
 	{
-		SortTab criterias(em->GetOwner());
+		SortTab criterias(em->GetDB());
 		for (EntityAttributeSortedSelection::iterator cur = sortingAtt->begin(), end = sortingAtt->end(); cur != end && err == VE_OK; cur++)
 		{
 			AttributePath* attpath = cur->fAttPath;
 			if (attpath == nil)
 			{
-				EntityAttribute* att = cur->fAttribute;
+				db4dEntityAttribute* att = (db4dEntityAttribute*)(cur->fAttribute);
 				if (att->IsSortable())
 				{
 					switch(att->GetKind())
@@ -5392,7 +5420,7 @@ Selection* Selection::SortSel(VError& err, EntityModel* em, EntityAttributeSorte
 							if (att->HasEvent(dbev_load))
 								criterias.AddAttribute(att,cur->fAscent);
 							else
-								criterias.AddTriLineField(att->GetOwner()->GetMainTable()->GetNum(), att->GetFieldPos(), cur->fAscent);
+								criterias.AddTriLineField(att->GetTable()->GetNum(), att->GetFieldPos(), cur->fAscent);
 							break;
 
 						case eattr_alias:
@@ -6325,7 +6353,7 @@ Boolean Selection::TryToFastGetDistinctValues(VError& err, Field* cri, DB4DColle
 
 
 
-Boolean Selection::TryToFastGetDistinctValues(VError& err, EntityAttribute* att, DB4DCollectionManager& outCollection, BaseTaskInfo* context, VDB4DProgressIndicator* InProgress, const VCompareOptions& inOptions)
+Boolean Selection::TryToFastGetDistinctValues(VError& err, db4dEntityAttribute* att, DB4DCollectionManager& outCollection, BaseTaskInfo* context, VDB4DProgressIndicator* InProgress, const VCompareOptions& inOptions)
 {
 	Boolean ok = false;
 	err = VE_OK;
@@ -6413,7 +6441,7 @@ Boolean Selection::TryToFastGetDistinctValuesAlpha(VError& err, Field* cri, DB4D
 
 
 
-Boolean Selection::TryToFastGetDistinctValuesAlpha(VError& err, EntityAttribute* att, DB4DCollectionManager& outCollection, BaseTaskInfo* context, 
+Boolean Selection::TryToFastGetDistinctValuesAlpha(VError& err, db4dEntityAttribute* att, DB4DCollectionManager& outCollection, BaseTaskInfo* context, 
 												   VDB4DProgressIndicator* InProgress, sLONG typ, const VCompareOptions& inOptions)
 {
 	Boolean result = false;
@@ -6481,7 +6509,7 @@ Boolean Selection::TryToFastGetDistinctValuesTime(VError& err, Field* cri, DB4DC
 
 
 
-Boolean Selection::TryToFastGetDistinctValuesTime(VError& err, EntityAttribute* att, DB4DCollectionManager& outCollection, BaseTaskInfo* context, 
+Boolean Selection::TryToFastGetDistinctValuesTime(VError& err, db4dEntityAttribute* att, DB4DCollectionManager& outCollection, BaseTaskInfo* context, 
 												  VDB4DProgressIndicator* InProgress, sLONG typ, const VCompareOptions& inOptions)
 {
 	Boolean result = false;
@@ -6524,7 +6552,7 @@ Boolean Selection::TryToFastGetDistinctValuesLong8(VError& err, Field* cri, DB4D
 
 
 
-Boolean Selection::TryToFastGetDistinctValuesLong8(VError& err, EntityAttribute* att, DB4DCollectionManager& outCollection, BaseTaskInfo* context, 
+Boolean Selection::TryToFastGetDistinctValuesLong8(VError& err, db4dEntityAttribute* att, DB4DCollectionManager& outCollection, BaseTaskInfo* context, 
 												   VDB4DProgressIndicator* InProgress, sLONG typ, const VCompareOptions& inOptions)
 {
 	Boolean result = false;
@@ -6567,7 +6595,7 @@ Boolean Selection::TryToFastGetDistinctValuesLong(VError& err, Field* cri, DB4DC
 
 
 
-Boolean Selection::TryToFastGetDistinctValuesLong(VError& err, EntityAttribute* att, DB4DCollectionManager& outCollection, BaseTaskInfo* context, 
+Boolean Selection::TryToFastGetDistinctValuesLong(VError& err, db4dEntityAttribute* att, DB4DCollectionManager& outCollection, BaseTaskInfo* context, 
 												  VDB4DProgressIndicator* InProgress, sLONG typ, const VCompareOptions& inOptions)
 {
 	Boolean result = false;
@@ -6610,7 +6638,7 @@ Boolean Selection::TryToFastGetDistinctValuesShort(VError& err, Field* cri, DB4D
 
 
 
-Boolean Selection::TryToFastGetDistinctValuesShort(VError& err, EntityAttribute* att, DB4DCollectionManager& outCollection, BaseTaskInfo* context, 
+Boolean Selection::TryToFastGetDistinctValuesShort(VError& err, db4dEntityAttribute* att, DB4DCollectionManager& outCollection, BaseTaskInfo* context, 
 												   VDB4DProgressIndicator* InProgress, sLONG typ, const VCompareOptions& inOptions)
 {
 	Boolean result = false;
@@ -6651,7 +6679,7 @@ Boolean Selection::TryToFastGetDistinctValuesBoolean(VError& err, Field* cri, DB
 }
 
 
-Boolean Selection::TryToFastGetDistinctValuesBoolean(VError& err, EntityAttribute* att, DB4DCollectionManager& outCollection, BaseTaskInfo* context, 
+Boolean Selection::TryToFastGetDistinctValuesBoolean(VError& err, db4dEntityAttribute* att, DB4DCollectionManager& outCollection, BaseTaskInfo* context, 
 													 VDB4DProgressIndicator* InProgress, sLONG typ, const VCompareOptions& inOptions)
 {
 	Boolean result = false;
@@ -6694,7 +6722,7 @@ Boolean Selection::TryToFastGetDistinctValuesByte(VError& err, Field* cri, DB4DC
 
 
 
-Boolean Selection::TryToFastGetDistinctValuesByte(VError& err, EntityAttribute* att, DB4DCollectionManager& outCollection, BaseTaskInfo* context, 
+Boolean Selection::TryToFastGetDistinctValuesByte(VError& err, db4dEntityAttribute* att, DB4DCollectionManager& outCollection, BaseTaskInfo* context, 
 												  VDB4DProgressIndicator* InProgress, sLONG typ, const VCompareOptions& inOptions)
 {
 	Boolean result = false;
@@ -6736,7 +6764,7 @@ Boolean Selection::TryToFastGetDistinctValuesReal(VError& err, Field* cri, DB4DC
 }
 
 
-Boolean Selection::TryToFastGetDistinctValuesReal(VError& err, EntityAttribute* att, DB4DCollectionManager& outCollection, BaseTaskInfo* context, 
+Boolean Selection::TryToFastGetDistinctValuesReal(VError& err, db4dEntityAttribute* att, DB4DCollectionManager& outCollection, BaseTaskInfo* context, 
 												  VDB4DProgressIndicator* InProgress, sLONG typ, const VCompareOptions& inOptions)
 {
 	Boolean result = false;
@@ -6779,7 +6807,7 @@ Boolean Selection::TryToFastGetDistinctValuesUUID(VError& err, Field* cri, DB4DC
 
 
 
-Boolean Selection::TryToFastGetDistinctValuesUUID(VError& err, EntityAttribute* att, DB4DCollectionManager& outCollection, BaseTaskInfo* context, 
+Boolean Selection::TryToFastGetDistinctValuesUUID(VError& err, db4dEntityAttribute* att, DB4DCollectionManager& outCollection, BaseTaskInfo* context, 
 												  VDB4DProgressIndicator* InProgress, sLONG typ, const VCompareOptions& inOptions)
 {
 	Boolean result = false;

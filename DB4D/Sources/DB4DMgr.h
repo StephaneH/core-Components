@@ -23,6 +23,7 @@ class Bittab;
 class ClientProgressTask;
 class ServerProgressTask;
 class VDB4DSignaler;
+class VDB4DContext;
 class DataSet;
 
 class base4dinfo
@@ -121,10 +122,14 @@ class DataSetPurger : public ObjInCacheMem, public IObjToFree
 
 class VGarbageTask;
 
-class VDBMgr : public VObject, public IRefCountable
+class ENTITY_API VDBMgr : public VObject, public IRefCountable
 {
 public:
+#if DB4DasDLL
+	static VDBMgr *RetainManager(VLocalizationManager* inLocalizationManager); // retain it, initialize it if not allready inited
+#else
 	static VDBMgr *RetainManager(VComponentLibrary* DB4DCompLib); // retain it, initialize it if not allready inited
+#endif
 	static VDBMgr *GetManager(); // no retain, no init
 	
 	//static CLanguage *GetLanguage();
@@ -155,6 +160,8 @@ public:
 
 	static IBackupSettings* CreateBackupSettings();
 	static IBackupTool*		CreateBackupTool();
+	static IJournalTool*	CreateJournalTool();
+
 	static XBOX::VError GetJournalInfo(const XBOX::VFilePath& inDataFilePath,XBOX::VFilePath& journalPath,XBOX::VUUID& journalDataLink);
 
 	CDB4DBase* OpenBase( const VFile& inStructureFile, sLONG inParameters, VError* outErr = nil, FileAccess inAccess = FA_READ_WRITE, VString* EntityFileExt = nil, 
@@ -243,6 +250,10 @@ public:
 	VDB4DProgressIndicator* RetainDefaultProgressIndicator_For_DataCacheFlushing();
 
 	inline VLocalizationManager* GetDefaultLocalization() const { return fDefaultLocalization; };
+	inline void SetDefaultLocalization(VLocalizationManager* inLocalizationManager) 
+	{ 
+		 CopyRefCountable(&fDefaultLocalization, inLocalizationManager);
+	};
 
 	inline void Register_GetCurrentSelectionFromContextMethod(GetCurrentSelectionFromContextMethod inMethod) { fGetCurrentSelectionFromContextMethod = inMethod; };
 	inline void Register_GetCurrentRecordFromContextMethod(GetCurrentRecordFromContextMethod inMethod) { fGetCurrentRecordFromContextMethod = inMethod; };
@@ -266,12 +277,14 @@ public:
 	void ExecSetTableKeepStamp( IRequestReply *inRequest, CDB4DBaseContext *inContext);
 	void ExecSetTableKeepRecordSyncInfo( IRequestReply *inRequest, CDB4DBaseContext *inContext);
 	void ExecSetTablePrimaryKey( IRequestReply *inRequest, CDB4DBaseContext *inContext);
+	void ExecSetTableHideInRest( IRequestReply *inRequest, CDB4DBaseContext *inContext);
 
 	void ExecSetFieldName( IRequestReply *inRequest, CDB4DBaseContext *inContext);
 	void ExecSetFieldAttributes( IRequestReply *inRequest, CDB4DBaseContext *inContext);
 	void ExecSetFieldTextSwitchSize( IRequestReply *inRequest, CDB4DBaseContext *inContext);
 	void ExecSetFieldNeverNull( IRequestReply *inRequest, CDB4DBaseContext *inContext);
 	void ExecSetFieldStyledText( IRequestReply *inRequest, CDB4DBaseContext *inContext);
+	void ExecSetFieldHideInRest( IRequestReply *inRequest, CDB4DBaseContext *inContext);
 	void ExecSetFieldOutsideData( IRequestReply *inRequest, CDB4DBaseContext *inContext);
 	void ExecSetFieldExtraProperties( IRequestReply *inRequest, CDB4DBaseContext *inContext);
 	void ExecAddFieldsWithBagArray( IRequestReply *inRequest, CDB4DBaseContext *inContext);
@@ -413,6 +426,7 @@ public:
 	CDB4DContext* NewContext(CUAGSession* inUserSession, VJSGlobalContext* inJSContext, bool islocal);
 	CDB4DContext* RetainOrCreateContext(const VUUID& inID, CUAGSession* inUserSession, VJSGlobalContext* inJSContext, bool islocal);
 
+	void RegisterContext( VDB4DContext *inContext);
 	void UnRegisterContext(const VUUID& inID);
 
 	inline void SetRequestLogger(IRequestLogger* inLogger)
@@ -467,16 +481,24 @@ public:
 	{
 		return fLimitPerSort;
 	}
-
+/*
 	inline VFolder* RetainComponentFolder()
 	{
 		return RetainRefCountable(fComponentFolder);
 	}
+*/
 
 	inline VFolder* RetainResourceFolder()
 	{
+#if DB4DasComponent
 		return fDB4DCompLib->GetLibrary()->RetainFolder(kBF_RESOURCES_FOLDER);
+#else
+		return RetainRefCountable(fResourceFolder);
+#endif
 	}
+
+	VFolder* RetainInsideResourceFolder();
+	VFolder* RetainJSCodeResourceFolder();
 
 	VError RebuildStructure( const VFile& inStructureFile, const VFile& inDataFile);
 
@@ -500,6 +522,9 @@ public:
 	void					SetGraphicsInterface( IDB4D_GraphicsIntf *inGraphics)			{ fGraphicsIntf = inGraphics;}
 	IDB4D_GraphicsIntf*		GetGraphicsInterface() const									{ return fGraphicsIntf;}
 
+	void					SetSQLInterface (IDB4D_SQLIntf *inSQLIntf)						{ fSQLIntf = inSQLIntf; }
+	IDB4D_SQLIntf			*GetSQLInterface () const										{ return fSQLIntf; }
+
 	void GetStaticRequiredJSFiles(vector<VFilePath>& outFiles);
 
 	VGarbageTask* GetGarbageTask()
@@ -507,13 +532,27 @@ public:
 		return fGarbageTask;
 	}
 
+	inline void SetRestPrefix(const VString& inPrefix)
+	{
+		fRestPrefix = inPrefix;
+	}
+
+	inline const VString& GetRestPrefix() const
+	{
+		return fRestPrefix;
+	}
+
 protected:
 	virtual void DoOnRefCountZero();
 
 private:
-	VDBMgr();
+	VDBMgr(VLocalizationManager* inLocalizationManager);
 	virtual ~VDBMgr();
+#if DB4DasDLL
+	Boolean Init();
+#else
 	Boolean Init(VComponentLibrary* DB4DCompLib);
+#endif
 	
 	CDB4DBase* xOpenCreateBase( const VFile& inStructureFile, Boolean inCreate, sLONG inParameters, VIntlMgr* inIntlMgr, VError* outErr = nil, 
 								FileAccess inAccess = FA_READ_WRITE, const VUUID* inChosenID = nil, VString* EntityFileExt = nil, 
@@ -545,11 +584,19 @@ private:
 
 	VDB4DProgressIndicator* fProgress_Indexes;
 	VDB4DProgressIndicator* fProgress_Flush;
-
+#if DB4DasComponent
 	VComponentLibrary* fDB4DCompLib;
+#endif
 	VLocalizationManager* fDefaultLocalization;
-	VFolder* fComponentFolder;
 
+#if DB4DasComponent
+	VFolder* fComponentFolder;
+#else
+	VFolder* fResourceFolder;
+#endif
+
+	VFolder* fInsideResourceFolder;
+	VFolder* fJSCodeResourceFolder;
 	//static UniChar sWildChar;
 
 	GetCurrentSelectionFromContextMethod fGetCurrentSelectionFromContextMethod;
@@ -601,10 +648,13 @@ private:
 
 	DB4D_Running_Mode	fRunningMode;
 
-	IDB4D_ApplicationIntf*	fApplicationIntf;
-	IDB4D_GraphicsIntf*	fGraphicsIntf;
+	IDB4D_ApplicationIntf	*fApplicationIntf;
+	IDB4D_GraphicsIntf		*fGraphicsIntf;
+	IDB4D_SQLIntf			*fSQLIntf;
 
 	VGarbageTask* fGarbageTask;
+
+	VString fRestPrefix;
 };
 
 

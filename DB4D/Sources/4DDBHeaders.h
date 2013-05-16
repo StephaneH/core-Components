@@ -16,10 +16,7 @@
 #ifndef __4DDBHEADERS__
 #define __4DDBHEADERS__
 
-#define OldWayPageIndex 0
 #define oldtempmem 0
-#define ObsoleteOccupe 0
-#define UseIObjCacheInTree 0
 #define AllowDefaultEMBasedOnTables 0
 #define AllowSyncOnRecID 0
 #define BuildEmFromTable 1
@@ -40,7 +37,7 @@
 #include "KernelIPC/VKernelIPC.h"
 #include "ServerNet/VServerNet.h"
 #include "../Headers/DB4D.h"
-#include "XML/Sources/VSpanText.h"
+#include "XML/VXML.h"
 #endif
 
 #if OLDNAMESTODELETE
@@ -107,13 +104,16 @@ const sLONG kMaxSegDataSpeciaux = 64;
 	#define debugServer_Streams 0
 	#define debugObjInTree_Strong 0
 	#define debugLeakCheck_Strong 0
-	#define debugLeakCheck_BitSel 1
-	#define debugLeakCheck_PetiteSel 1
-	#define debugLeakCheck_TreeMem 1
-	#define debugLeakCheck_Bittab 1
+	#define debugLeakCheck_BitSel 0
+	#define debugLeakCheck_PetiteSel 0
+	#define debugLeakCheck_TreeMem 0
+	#define debugLeakCheck_Bittab 0
 	#define debugLeakCheck_IndexValid 0
 	#define debugLeakCheck_NbLoadedRecords 0
 	#define debugLeakCheck_KeptSelections 0
+	
+	#define debugLeaksAll 1
+
 	#define debugrws 0
 	#define debugrws2 0
 	#define debugTreeMem_Strong 0
@@ -137,6 +137,10 @@ const sLONG kMaxSegDataSpeciaux = 64;
 	#define trackIndex 0
 
 	#define debug_checkRelaseIndexPage 0
+
+	#define trackRemoteModel 0
+
+	#define debug_checkIndexFourche 1
 
 #else
 	#ifdef debug
@@ -162,10 +166,10 @@ const sLONG kMaxSegDataSpeciaux = 64;
 	#define debugObjInTree_Strong 0
 	#define debugLeakCheck_Strong 0
 #if WITH_ASSERT
-	#define debugLeakCheck_BitSel 1
-	#define debugLeakCheck_PetiteSel 1
-	#define debugLeakCheck_Bittab 1
-	#define debugLeakCheck_TreeMem 1
+	#define debugLeakCheck_BitSel 0
+	#define debugLeakCheck_PetiteSel 0
+	#define debugLeakCheck_Bittab 0
+	#define debugLeakCheck_TreeMem 0
 	#define debugLeakCheck_IndexValid 0
 	#define debugLeakCheck_NbLoadedRecords 0
 	#define debugLeakCheck_KeptSelections 0
@@ -178,6 +182,9 @@ const sLONG kMaxSegDataSpeciaux = 64;
 	#define debugLeakCheck_NbLoadedRecords 0
 	#define debugLeakCheck_KeptSelections 0
 #endif
+
+	#define debugLeaksAll 0
+
 	#define debugrws 0
 	#define debugrws2 0
 	#define debugTreeMem_Strong 0
@@ -201,6 +208,10 @@ const sLONG kMaxSegDataSpeciaux = 64;
 	#define trackIndex 0
 
 	#define debug_checkRelaseIndexPage 0
+
+	#define trackRemoteModel 0
+
+	#define debug_checkIndexFourche 0
 
 
 #endif
@@ -404,6 +415,7 @@ struct select2nd : public unary_function<PairType, typename PairType::second_typ
 #include "IndexTemplate.h"
 #include "index4D.h"
 #include "EntityModel.h"
+#include "LocalModel.h"
 #include "InfoTask.h"
 #include "Rech4D.h"
 #include "RechComplex.h"
@@ -424,6 +436,5 @@ struct select2nd : public unary_function<PairType, typename PairType::second_typ
 #include "IndexTemplatePart2.h"
 #include "javascript_db4d.h"
 #include "VCacheLog.h"
-#include "RemoteModel.h"
 
 #endif

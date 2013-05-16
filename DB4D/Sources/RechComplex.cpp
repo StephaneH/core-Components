@@ -725,7 +725,7 @@ VError ComplexSelection::RetainColumns(QueryTargetVector& outColumns)
 		for (CQTableDefVector::iterator cur = fTargets.begin(), end = fTargets.end(); cur != end; cur++)
 		{
 			CDB4DBase* base = cur->GetTable()->GetOwner()->RetainBaseX();
-			CDB4DTable* theTable = new VDB4DTable( VDBMgr::GetManager(), VImpCreator<VDB4DBase>::GetImpObject(base), cur->GetTable());
+			CDB4DTable* theTable = new VDB4DTable( VDBMgr::GetManager(), dynamic_cast<VDB4DBase*>(base), cur->GetTable());
 			base->Release();
 			QueryTarget xx;
 			xx.first = theTable;
@@ -1271,7 +1271,7 @@ ComplexRechTokenComplexSQLScriptComp::ComplexRechTokenComplexSQLScriptComp(DB4DS
 	for (QueryTargetVector::const_iterator cur = inTargets.begin(), end = inTargets.end(); cur != end; cur++)
 	{
 		CDB4DTable* xtable = cur->first;
-		Table* tt = VImpCreator<VDB4DTable>::GetImpObject(xtable)->GetTable();
+		Table* tt = dynamic_cast<VDB4DTable*>(xtable)->GetTable();
 		CQTableDef cqt(tt, cur->second);
 		fTargets.Add(cqt);
 	}
@@ -1620,6 +1620,7 @@ static void removeextraspace(VString& s)
 	s.Truncate(len);
 }
 
+/*
 static void GetNextWord(const VString& input, sLONG& curpos, VString& result)
 {
 	UniChar c;
@@ -1713,7 +1714,7 @@ static void GetNextWord(const VString& input, sLONG& curpos, VString& result)
 
 	} while(c != 0);
 }
-
+*/
 
 VError ComplexRech::BuildTargetsFromString(const VString& inTargetsText)
 {
@@ -3229,7 +3230,7 @@ VError SimpleQueryNodeIndex::Describe(VString& result)
 	s += s2;
 	s += L"]";
 
-	if (rt->fCheckForNull)
+	if (rt != NULL && rt->fCheckForNull)
 	{
 		if (inverse)
 			s+=L" is not <Null>";
@@ -7519,7 +7520,7 @@ Boolean CQNodesContent::Add(QueryNode* node)
 
 CQTableDef::CQTableDef(const QueryTarget& other)
 {
-	fTable = VImpCreator<VDB4DTable>::GetImpObject(other.first)->GetTable();
+	fTable = dynamic_cast<VDB4DTable*>(other.first)->GetTable();
 	if (fTable != nil)
 		fTable->Retain();
 	fNumInstance = other.second;
@@ -7528,7 +7529,7 @@ CQTableDef::CQTableDef(const QueryTarget& other)
 
 CQTableDef& CQTableDef::operator = ( const QueryTarget& inOther)
 {
-	CopyRefCountable( &fTable, VImpCreator<VDB4DTable>::GetImpObject(inOther.first)->GetTable());
+	CopyRefCountable( &fTable, dynamic_cast<VDB4DTable*>(inOther.first)->GetTable());
 	fNumInstance = inOther.second;
 	return *this;
 }
@@ -9162,7 +9163,8 @@ QueryNode* ComplexOptimizedQuery::xTransformIndex(QueryNode* root, VError& err, 
 												{
 													lastfield = rt->cri->GetPosInRec();
 													lastcomp = rt->comparaison;
-													found = true;
+													if (indm->AskForValid(context))
+														found = true;
 												}
 											}
 										}
@@ -9262,6 +9264,7 @@ QueryNode* ComplexOptimizedQuery::xTransformIndex(QueryNode* root, VError& err, 
 								Nodes.erase(newend, Nodes.end());
 
 								qnop->AddNode(qnind);
+								qnind->Release();
 							}
 
 						}

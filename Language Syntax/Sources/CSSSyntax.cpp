@@ -165,7 +165,6 @@ std::map< int, bool > *VCSSSyntax::GetCommentMap( ICodeEditorDocument *inDocumen
 
 void VCSSSyntax::GetColoringForTesting( const XBOX::VString &inSourceLine, std::vector< size_t > &outOffsets, std::vector< size_t > &outLengths, std::vector< sLONG > &outStyles )
 {
-	sLONG styleOffset = 0;
 	VCSSLexParser lexer;
 	lexer.SetTabSize( 1 );
 	lexer.Start( inSourceLine.GetCPointer() );
@@ -212,7 +211,7 @@ void VCSSSyntax::GetColoringForTesting( const XBOX::VString &inSourceLine, std::
 			case CSSToken::IMPORTANT_SYMBOL: style = eNormal; break;
 		}
 
-		int pos = lexer.GetCurColumn() + styleOffset - 1;	// We subtract one because column counts are 1 based, but the code editor is 0 based
+		int pos = lexer.GetCurColumn() - 1;	// We subtract one because column counts are 1 based, but the code editor is 0 based
 		if (bIsOpenString || bIsOpenComment) {
 			// Open strings and comments cannot rely on the token being correct, but we are able to
 			// make assumptions about them.  When you reach one of these states, you know that the state
@@ -319,10 +318,10 @@ void VCSSSyntax::SetLine( ICodeEditorDocument *inDocument, sLONG inLineNumber, b
 			// holds until the end of the line.
 			if (bIsOpenString)	style = eString;
 			if (bIsOpenComment)	style = eComment;
-			inDocument->SetLineStyle( inLineNumber, pos, xstr.GetLength(), style );	// Set the style to the end of the line
+			inDocument->SetLineStyle( inLineNumber, Max( 0, pos ), xstr.GetLength() + styleOffset, style );	// Set the style to the end of the line
 			break;
 		} else {
-			inDocument->SetLineStyle( inLineNumber, pos, pos + tokenValue.GetLength() + lengthAdjustment, style );
+			inDocument->SetLineStyle( inLineNumber, Max( 0, pos ), pos + tokenValue.GetLength() + lengthAdjustment, style );
 		}
 	}
 

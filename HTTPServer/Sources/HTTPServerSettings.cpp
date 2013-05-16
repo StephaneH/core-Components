@@ -358,7 +358,7 @@ VHTTPServerProjectSettings::VHTTPServerProjectSettings (const XBOX::VValueBag *i
 , fKeepAliveTimeout (DEFAULT_KEEP_ALIVE_TIMEOUT)
 , fKeepAliveMaxConnections (DEFAULT_KEEP_ALIVE_MAX_CONNECTIONS)
 , fMaxIncomingDataSize (XBOX::MaxLongInt)
-, fSignal_SettingsChanged()
+, fSignal_SettingsChanged (XBOX::VSignal::ESM_Asynchonous)
 {
 	LoadFromBag (inBag);
 }

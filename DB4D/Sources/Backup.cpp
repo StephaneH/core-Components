@@ -1,4 +1,4 @@
-/*
+﻿/*
 * This file is part of Wakanda software, licensed by 4D under
 *  (i) the GNU General Public License version 3 (GNU GPL v3), or
 *  (ii) the Affero General Public License version 3 (AGPL v3) or
@@ -44,13 +44,22 @@ namespace Helpers
 	 */
 	VError InstallNewDatabaseJournal(Base4D& inBase,VFile& inNextJournal,XBOX::VUUID& ioDataLink);
 
+	enum
+	{
+		JournalOperationsGroupID = 1011,
+		JournalToolStringsGroupID = 1012
+		
+	};
+
+	void LocalizeString(sLONG inID, uLONG inStringID, XBOX::VString &sout);
+
+	void LocalizeJournalOperation(uLONG inOpType,XBOX::VString& caption);
 }
 
 
 //////////////////////////////////////////////////////////////////////////
 //////////////////////  J O U R N A L    U T I L S  //////////////////////
 //////////////////////////////////////////////////////////////////////////
-
 namespace JournalUtils
 {
 	VError DisableJournal(Base4D* inBase,CDB4DBaseContext* inContext)
@@ -60,9 +69,53 @@ namespace JournalUtils
 		inBase->SetJournalFile(NULL);
 		return error;
 	}
+
+
+	class VProgressWrapperToIDB4DToolInterface: public XBOX::VProgressIndicator
+	{
+	public:
+		VProgressWrapperToIDB4DToolInterface(IDB4D_DataToolsIntf* inToolInterface):
+		XBOX::VProgressIndicator(),
+		fToolInterface(inToolInterface)
+		{
+
+		}
+		virtual ~VProgressWrapperToIDB4DToolInterface(){}
+		virtual void	DoBeginSession(sLONG inSessionNumber)
+		{
+			if (fToolInterface)
+			{
+				VString msg;
+				fCurrent.GetMessage(msg);
+				fToolInterface->OpenProgression(msg,fCurrent.GetMax());
+			}
+		}
+
+		virtual void	DoEndSession(sLONG inSessionNumber)
+		{
+			 if(fToolInterface)
+			 {
+				 fToolInterface->CloseProgression();
+			 }
+		}
+		virtual bool	DoProgress ()
+		{
+				 if(fToolInterface)
+			 {
+				fToolInterface->Progress(fCurrent.GetValue(),fCurrent.GetMax());
+			 }
+			 return true;
+		}
+
+
+	private:
+		VProgressWrapperToIDB4DToolInterface();
+		VProgressWrapperToIDB4DToolInterface(const VProgressWrapperToIDB4DToolInterface&);
+
+	private:
+		IDB4D_DataToolsIntf* fToolInterface;
+	};
 }
-
-
 
 //////////////////////////////////////////////////////////////////////////
 //////////////////////  V B A C K U P  M A N I F E S T  //////////////////
@@ -94,7 +147,7 @@ XBOX::VError VBackupManifest::FromStream(XBOX::VStream& inStream)
 
 XBOX::VError VBackupManifest::FromJSONString(const XBOX::VString& inJsonString)
 {
-	XBOX::VJSONImporter parser(inJsonString);
+	XBOX::VJSONImporter parser(inJsonString, XBOX::VJSONImporter::EJSI_Strict);
 	XBOX::VError error = VE_OK;
 	VJSONValue value;
 
@@ -220,7 +273,7 @@ void VBackupManifest::ToJSONString(XBOX::VString& outJsonString)const
 	}
 	if(string.IsEmpty())
 		string.FromCString("none");
-	jsonWriter.AddMember(CVSTR("version"),string),jsonOpts;
+	jsonWriter.AddMember(CVSTR("version"),string,jsonOpts);
 
 	outJsonString.Clear();
 	jsonWriter.GetObject(outJsonString);
@@ -460,9 +513,16 @@ void VBackupSettings::ToJSObject(XBOX::VJSObject& outObject)const
 	VFilePath filePath;
 
 	GetDestination(filePath);
-	filePath.GetPosixPath(string);
-	outObject.SetProperty(CVSTR("destination"),string);
-
+	{
+		VFolder* f = new VFolder(filePath);
+		if (f)
+		{
+			VJSValue val(outObject.GetContextRef());
+			val.SetFolder(f);
+			outObject.SetProperty(CVSTR("destination"),val);
+		}
+		XBOX::ReleaseRefCountable(&f);
+	}
 	if (GetUseUniqueNames())
 	{
 		outObject.SetProperty(CVSTR("useUniqueNames"),true);
@@ -472,9 +532,18 @@ void VBackupSettings::ToJSObject(XBOX::VJSObject& outObject)const
 		outObject.SetProperty(CVSTR("useUniqueNames"),false);
 	}
 
+	filePath.Clear();
 	GetBackupRegistryFolder(filePath);
-	filePath.GetPosixPath(string);
-	outObject.SetProperty(CVSTR("backupRegistryFolder"),string);
+	{
+		VFolder* f = new VFolder(filePath);
+		if(f)
+		{
+			VJSValue val(outObject.GetContextRef());
+			val.SetFolder(f);
+			outObject.SetProperty(CVSTR("backupRegistryFolder"),val);
+		}
+		XBOX::ReleaseRefCountable(&f);
+	}
 }
 
 
@@ -584,7 +653,7 @@ bool VBackupTool::BackupDatabaseAndDontResetJournal(CDB4DBase* inBase,const XBOX
 	Base4D* base = NULL;
 	CDB4DBaseContext* context = NULL;
 	bool ok = false;
-	base = VImpCreator<VDB4DBase>::GetImpObject(inBase)->GetBase();
+	base = dynamic_cast<VDB4DBase*>(inBase)->GetBase();
 
 	context = inBase->NewContext(nil, kJSContextCreator);
 	ok = _DoBackup(base,context,inJournalToArchive,inBackupSettings,outManifestFilePath,inBackupEventLog);
@@ -639,7 +708,7 @@ bool VBackupTool::BackupDatabaseAndChangeJournal(CDB4DBase* inBase,CDB4DBaseCont
 	XBOX::VError error = VE_OK;
 	bool ok = false;
 	CDB4DBaseContext* context = NULL;
-	theBase4D = VImpCreator<VDB4DBase>::GetImpObject(inBase)->GetBase();
+	theBase4D = dynamic_cast<VDB4DBase*>(inBase)->GetBase();
 	XBOX::VFilePath nextJournalPath;
 
 	context = inContext; 
@@ -694,10 +763,10 @@ bool VBackupTool::BackupClosedDatabase(XBOX::VFile& inModelFile,XBOX::VFile& inD
 	VBackupManifest backupManifest;
 	XBOX::VFilePath currentJournalPath,manifestFilePath;
 
+	StErrorContextInstaller errorContext(true);
 	
 	//Retrieve journal infos from the extra properties
 	backupErr = dbMgr->GetJournalInfo(inDataFile.GetPath(),currentJournalPath,dataLink);
-	
 	if(backupErr == VE_OK)
 	{
 		if(!currentJournalPath.IsEmpty() && currentJournalPath.IsValid() && currentJournalPath.IsFile())
@@ -706,6 +775,19 @@ bool VBackupTool::BackupClosedDatabase(XBOX::VFile& inModelFile,XBOX::VFile& inD
 			xbox_assert(journalFile && journalFile->Exists());
 		}
 	}
+	//WAK0078901: Mask VE_FILE_NOT_FOUND, implies there is no journal to backup, so carry on with the rest
+	else if (backupErr == VE_FILE_NOT_FOUND)
+	{
+		//No journal information is available so there is no journal, this error can be flushed away
+		errorContext.Flush();
+		backupErr = VE_OK;
+		journalFile = NULL;
+	}
+	else
+	{
+		//TODO: throw an error telling we failed to locate journal thingies
+	}
+
 	//Determine where everything will be backed up
 	VFilePath dataFolderPath,backupFolderPath,backupFolderPathForDataFolder;
 	inDataFile.GetPath(dataFolderPath);
@@ -1339,6 +1421,83 @@ XBOX::VError VBackupTool::_WriteManifestToRegistry(const IBackupSettings& inBack
 	return error;
 }
 
+
+bool VBackupTool::_RestoreFile(const XBOX::VFilePath& inPathOfFileToRestore,const XBOX::VFilePath& inRestoreFolderPath,XBOX::VFilePath& outFormerFilePath,IDB4D_DataToolsIntf* inProgress)
+{
+	VError error = VE_OK;
+	//const VFilePath& sourcePath =  inPathOfFileToRestore;
+	
+	if ( (error == VE_OK) && testAssert(inPathOfFileToRestore.IsValid() && inPathOfFileToRestore.IsFile()))
+	{
+		VFile* destFile = NULL;
+		VFilePath destFilePath;
+		VString suffix,name;
+		
+		destFilePath = inRestoreFolderPath;
+		
+		inPathOfFileToRestore.GetFileName(name);
+		destFilePath.ToSubFile(name);
+		
+		//Check if file exists in destination folder
+		destFile = new VFile(destFilePath);
+		if (destFile->Exists())
+		{
+			//It does, rename it
+			VFile* renamedFile = NULL;
+			VString ext;
+			
+			//Generate rename prefix.
+			destFilePath.GetFileName(name,false);
+			destFilePath.GetExtension(ext);
+			Helpers::ComputeTimeStamp(NULL,suffix,false);
+			name.AppendPrintf("_REPLACED_%S",&suffix);
+			if (!ext.IsEmpty())
+			{
+				name.AppendPrintf(".%S",&ext);
+			}
+			error = destFile->Rename(name,&renamedFile);
+			if (error == VE_OK)
+			{
+				renamedFile->GetPath(outFormerFilePath);
+			}
+			XBOX::ReleaseRefCountable(&renamedFile);
+		}
+		XBOX::ReleaseRefCountable(&destFile);
+				
+		if(error == VE_OK)
+		{
+			VFile* sourceFile = new VFile(inPathOfFileToRestore);
+			VFolder* destFolder = new VFolder(inRestoreFolderPath);
+			
+			if (!destFolder->Exists())
+			{
+				error = destFolder->CreateRecursive();
+			}
+			
+			if( error == VE_OK)
+			{
+				sLONG8 totalBytesToCopy = 0;
+				if(inProgress)
+				{
+					sourceFile->GetSize(&totalBytesToCopy);
+					inProgress->OpenProgression(CVSTR("Copying file"),totalBytesToCopy);
+				}
+				error = sourceFile->CopyTo(*destFolder,NULL,FCP_Default);
+				if(inProgress)
+				{
+					inProgress->Progress(totalBytesToCopy,totalBytesToCopy);
+					inProgress->CloseProgression();
+				}
+			}
+			XBOX::ReleaseRefCountable(&destFolder);
+			XBOX::ReleaseRefCountable(&sourceFile);
+			error = vThrowError(error);
+		}
+	}
+	return (error == VE_OK);
+	
+}
+
 bool  VBackupTool::_RestoreFolder(const VFilePath& inPathOfFolderToRestore,const XBOX::VFilePath& inRestoredFolderPath,XBOX::VFilePath& outFormerFolderPath,IDB4D_DataToolsIntf* inProgress)
 {
 	VError error = VE_OK;
@@ -1556,22 +1715,17 @@ XBOX::VError VBackupTool::_WriteManifest(const VFilePath& inManifestFolder,const
 	manifestPath.SetFileName(CVSTR("backupManifest.json"),true);
 
 
+	/* WAK0080369 O.R. Mar 1st 2013, let VFileStream handle creation and trunctation so 
+	   everything works smoothly on all platforms*/
 	XBOX::VFile file(manifestPath);
-	if (!file.Exists())
-	{
-		error = file.Create();
-	}
+	XBOX::VFileStream stream(&file,XBOX::FO_Overwrite| XBOX::FO_CreateIfNotFound);
+	error = stream.OpenWriting();
 	if(error == VE_OK)
 	{
-		XBOX::VFileStream stream(&file,XBOX::FO_Overwrite);
-		error = stream.OpenWriting();
-		if(error == VE_OK)
-		{	
-			stream.SetCharSet(XBOX::VTC_UTF_8);
-			error = inManifest.ToStream(stream);
-			stream.Flush();
-			stream.CloseWriting();
-		}
+		stream.SetCharSet(XBOX::VTC_UTF_8);
+		error = inManifest.ToStream(stream);
+		stream.Flush();
+		stream.CloseWriting();
 	}
 	if(error == VE_OK && outManifestFile)
 	{
@@ -1601,6 +1755,40 @@ XBOX::VError VBackupTool::GetLastBackupPath(const IBackupSettings& inBackupSetti
 		}
 	}
 	return error;
+}
+
+bool VBackupTool::RestoreJournal(const XBOX::VFilePath& inBackupManifestPath,const XBOX::VFilePath& inRestoreFolder,XBOX::VFilePath& outRenamedJournalPath,IDB4D_DataToolsIntf* inProgress)
+{
+	VBackupManifest manifest;
+	VFile manifFile(inBackupManifestPath);
+	VFileStream manifStream(&manifFile);
+	VError error = VE_OK;
+	StErrorContextInstaller errorContext; 
+	bool success = false;
+	
+	error = manifStream.OpenReading();
+	if( error != VE_OK) 
+	{
+		error = vThrowError(error);
+	}
+	else
+	{
+		error = manifest.FromStream(manifStream);
+	}
+	manifStream.CloseReading();
+	if(error == VE_OK)
+	{
+		const VFilePath& journalPath = manifest.GetJournal();
+		if(!journalPath.IsEmpty())
+		{
+			success = _RestoreFile(journalPath,inRestoreFolder,outRenamedJournalPath,inProgress);
+		}
+		else 
+		{
+			success = true;
+		}
+	}
+	return (success && error == VE_OK);
 }
 
 bool VBackupTool::RestoreDataFolder(const XBOX::VFilePath& inBackupManifestPath,const XBOX::VFilePath& inRestoredDataFolderPath,XBOX::VFilePath& outRenamedDataFolderPath,IDB4D_DataToolsIntf* inProgress)
@@ -1654,6 +1842,427 @@ bool VBackupTool::RestoreDataFile(const XBOX::VFilePath& inBackupManifestPath,co
 	}
 	return (success && error == VE_OK);
 }
+
+
+////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////
+
+/////
+///// Wrapper 
+
+class VProgressIndicatorBrigdeToIDB4DToolInterface: public XBOX::VProgressIndicator
+{
+private:
+	IDB4D_DataToolsIntf* fToolInterface;
+public:
+	 VProgressIndicatorBrigdeToIDB4DToolInterface(IDB4D_DataToolsIntf* inToolInterface):
+	  XBOX::VProgressIndicator(),
+		  fToolInterface(inToolInterface)
+	  {
+	  }
+	  virtual ~VProgressIndicatorBrigdeToIDB4DToolInterface(){}
+	  virtual void	DoBeginSession(sLONG inSessionNumber)
+	  {
+		  if (fToolInterface)
+		  {
+			  VString msg;
+			  fCurrent.GetMessage(msg);
+			  fToolInterface->OpenProgression(msg,fCurrent.GetMax());
+		  }
+	  }
+
+	  virtual void	DoEndSession(sLONG inSessionNumber)
+	  {
+		 if(fToolInterface)
+		 {
+			 fToolInterface->CloseProgression();
+		 }
+	  }
+	 virtual bool	DoProgress ()
+	 {
+		 if(fToolInterface)
+		 {
+			fToolInterface->Progress(fCurrent.GetValue(),fCurrent.GetMax());
+		 }
+		 return true;
+	 }
+	private:
+		VProgressIndicatorBrigdeToIDB4DToolInterface();
+		VProgressIndicatorBrigdeToIDB4DToolInterface(const VProgressIndicatorBrigdeToIDB4DToolInterface&);
+};
+
+
+
+
+VJournalTool::VJournalTool():XBOX::VObject(),
+	IJournalTool()
+{
+}
+
+VJournalTool::~VJournalTool()
+{
+}
+
+bool VJournalTool::ParseJournal(XBOX::VFile& inJournalFile,XBOX::VJSArray& outOperations,IDB4D_DataToolsIntf* inProgressLog)
+{
+	CDB4DManager* dbMgr = NULL;
+	CDB4DJournalParser* journalParser = NULL;
+	JournalUtils::VProgressWrapperToIDB4DToolInterface* progress = NULL;
+	XBOX::VError err = VE_OK;
+
+	XBOX::StErrorContextInstaller errContext(true,true);
+
+	dbMgr = CDB4DManager::RetainManager();
+	journalParser = dbMgr->NewJournalParser();
+	if(inProgressLog)
+	{
+		progress = new JournalUtils::VProgressWrapperToIDB4DToolInterface(inProgressLog);
+	}
+
+	if( journalParser)
+	{
+		uLONG8 totalOperations = 0;
+		err  = journalParser->Init(&inJournalFile,totalOperations, progress );
+		if(err == VE_OK)
+		{
+			uLONG8 total = journalParser->CountOperations();
+			CDB4DJournalData* journalOp = NULL;
+
+			for(uLONG8 current = 0; (current < total) && (err == VE_OK); current++)
+			{
+				err = journalParser->SetCurrentOperation(current,&journalOp);
+				if (journalOp)
+				{
+					VJSObject obj(outOperations.GetContextRef());
+					obj.MakeEmpty();
+					_ConvertJournalOperationToJSObject(*journalOp,obj);
+					outOperations.PushValue(obj);
+				}
+				XBOX::ReleaseRefCountable(&journalOp);
+			}
+		}
+	}
+	XBOX::ReleaseRefCountable(&progress);
+	XBOX::ReleaseRefCountable(&journalParser);
+	XBOX::ReleaseRefCountable(&dbMgr);
+	
+	return (errContext.GetLastError() == VE_OK);
+}
+
+bool VJournalTool::ParseJournalToText(XBOX::VFile& inJournalFile,XBOX::VFile& inDestinationFile,IDB4D_DataToolsIntf* inProgressLog)
+{
+	CDB4DManager* dbMgr = NULL;
+	CDB4DJournalParser* journalParser = NULL;
+	JournalUtils::VProgressWrapperToIDB4DToolInterface* progress = NULL;
+	XBOX::VError err = VE_OK;
+
+	XBOX::StErrorContextInstaller errContext(true,true);
+
+	dbMgr = CDB4DManager::RetainManager();
+	journalParser = dbMgr->NewJournalParser();
+	if(inProgressLog)
+	{
+		progress = new JournalUtils::VProgressWrapperToIDB4DToolInterface(inProgressLog);
+	}
+
+	if( journalParser)
+	{
+		uLONG8 totalOperations = 0;
+		err  = journalParser->Init(&inJournalFile,totalOperations, progress );
+		if(err == VE_OK)
+		{
+			uLONG8 total = journalParser->CountOperations();
+			CDB4DJournalData* journalOp = NULL;
+			VJSONWriter writer(JSON_PrettyFormatting);
+
+			XBOX::VFileStream str(&inDestinationFile,FO_Overwrite | FO_CreateIfNotFound);
+			str.SetCharSet(VTC_UTF_8);
+			str.OpenWriting();
+			XBOX::VString line, temp;
+			inJournalFile.GetPath().GetPosixPath(temp);
+			line.Clear();
+			line.AppendPrintf("{\r\n\"journal\": \"%S\",\r\n\"operations\": [\r\n",&temp);
+			str.PutText(line);
+			str.Flush();
+
+			if (inProgressLog)
+			{
+				XBOX::VString title;
+				LocalizeString(Helpers::JournalToolStringsGroupID, 1, title); 
+				inProgressLog->OpenProgression(title,total);
+			}
+
+			for(uLONG8 current = 0; (current < total) && (err == VE_OK); current++)
+			{
+				err = journalParser->SetCurrentOperation(current,&journalOp);
+				if (journalOp)
+				{
+					VJSONValue theObjValue(JSON_object);
+					VString dump;
+
+					VJSONObject* obj = theObjValue.GetObject();
+					
+					_ConvertJournalOperationToJSONObject(*journalOp,*obj);
+				
+					writer.StringifyObject(obj,dump);
+					line.Clear();
+					if (current < (total-1))
+					{
+						line.AppendPrintf("%S,\r\n",&dump);
+					}
+					else
+					{
+						line.AppendPrintf("%S\r\n",&dump);
+					}
+					str.PutText(line);
+				}
+				XBOX::ReleaseRefCountable(&journalOp);
+				if (inProgressLog)
+				{
+					inProgressLog->Progress(current,total);
+				}
+			}
+			if (inProgressLog)
+			{
+				inProgressLog->CloseProgression();
+			}
+			line.Clear();
+			line.AppendPrintf("]\r\n}\r\n");
+			str.PutText(line);
+			str.Flush();
+			str.CloseWriting();
+		}
+	}
+	XBOX::ReleaseRefCountable(&progress);
+	XBOX::ReleaseRefCountable(&journalParser);
+	XBOX::ReleaseRefCountable(&dbMgr);
+	
+	return (errContext.GetLastError() == VE_OK);
+	return false;
+}
+
+void VJournalTool::_ConvertJournalOperationToJSObject(CDB4DJournalData& inOp,XBOX::VJSObject& ioObject)
+{
+	sLONG8 opProcess = 0;
+	sLONG opSize = 0;
+	
+	ioObject.SetProperty(CVSTR("globalIndex"),inOp.GetGlobalOperationNumber());
+	{
+		VJSValue v(ioObject.GetContextRef());
+		XBOX::VString action;
+		Helpers::LocalizeJournalOperation(inOp.GetActionType(),action);
+		ioObject.SetProperty(CVSTR("action"),action);
+	}
+	
+	//table
+	{
+		XBOX::VUUID tableId;
+		VJSValue v(ioObject.GetContextRef());
+		XBOX::VString action;
+		if ( inOp.GetTableID(tableId) )
+		{
+			ioObject.SetProperty(CVSTR("table"),&tableId);
+		}
+	}
+
+	{
+		sLONG recordNumber = 0;
+		if ( inOp.GetRecordNumber(recordNumber) )
+		{
+			ioObject.SetProperty(CVSTR("recordNumber"),recordNumber);
+		}
+	}
+
+	{
+		sLONG8 processId = 0;
+		if ( inOp.GetContextID(processId) && (processId > 0) )
+		{
+			ioObject.SetProperty(CVSTR("processID"),processId);
+		}
+	}
+
+	{
+		sLONG dataSize = 0;		
+		if ( inOp.GetDataLen(dataSize) )
+		{
+			ioObject.SetProperty(CVSTR("dataLength"),dataSize);
+		}
+	}
+	
+	
+	{
+		uLONG8 ts = 0;
+		VTime theTime;
+		
+		ts = inOp.GetTimeStamp();
+		theTime.FromStamp(ts);
+		ioObject.SetProperty(CVSTR("date"),&theTime);
+	}
+
+	//Parse user
+
+	{
+		VUUID userId;
+		if (inOp.GetUserID(userId))
+		{
+			ioObject.SetProperty(CVSTR("userID"),&userId);
+#if 0
+			const XBOX::VValueBag* bag = inOp.GetExtraData();
+
+			if (bag != NULL)
+			{
+				XBOX::VString userName;
+				DB4DBagKeys::user_name.Get( bag, outOperation.fUserName /*opUser*/);
+				//DB4DBagKeys::host_name( bag, hostName);
+				//DB4DBagKeys::task_name( bag, taskName);
+				//sLONG taskID = DB4DBagKeys::task_id( bag);
+			}
+#endif
+		}
+	}
+
+	//Parse value of operation
+	{
+		sLONG8 seqnum;
+		if (inOp.GetSequenceNumber(seqnum))
+		{
+			ioObject.SetProperty(CVSTR("sequenceNumber"),seqnum);
+		}
+	}
+	{
+		sLONG nbfields = 0;
+		if (inOp.GetCountFields(nbfields) && nbfields > 1)
+		{
+			VJSArray opFields(ioObject.GetContextRef());
+			for (sLONG i = 1; i <= nbfields; i++)
+			{
+				XBOX::VValueSingle* cv = inOp.GetNthFieldValue(i, nil, nil);
+				if (cv != nil)
+				{
+					opFields.PushValue(*cv);
+				}
+				delete cv;
+			}
+			ioObject.SetProperty(CVSTR("fields"),opFields);
+		}
+	}
+}
+
+void VJournalTool::_ConvertJournalOperationToJSONObject(CDB4DJournalData& inOp,XBOX::VJSONObject& ioObject)
+{
+	sLONG8 opProcess = 0;
+	sLONG opSize = 0;
+	
+	ioObject.SetPropertyAsNumber(CVSTR("globalIndex"),inOp.GetGlobalOperationNumber());
+	{
+		XBOX::VString action;
+		Helpers::LocalizeJournalOperation(inOp.GetActionType(),action);
+		ioObject.SetPropertyAsString(CVSTR("action"),action);
+	}
+	
+	//table
+	{
+		XBOX::VUUID tableId;
+		if ( inOp.GetTableID(tableId) )
+		{
+			VJSONValue val;
+			tableId.GetJSONValue(val);
+			ioObject.SetProperty(CVSTR("table"),val);
+		}
+	}
+
+	{
+		sLONG recordNumber = 0;
+		if ( inOp.GetRecordNumber(recordNumber) )
+		{
+			ioObject.SetPropertyAsNumber(CVSTR("recordNumber"),recordNumber);
+		}
+	}
+
+	{
+		sLONG8 processId = 0;
+		if ( inOp.GetContextID(processId) && (processId > 0) )
+		{
+			ioObject.SetPropertyAsNumber(CVSTR("processID"),processId);
+		}
+	}
+
+	{
+		sLONG dataSize = 0;		
+		if ( inOp.GetDataLen(dataSize) )
+		{
+			ioObject.SetPropertyAsNumber(CVSTR("dataLength"),dataSize);
+		}
+	}
+	
+	
+	{
+		uLONG8 ts = 0;
+		VTime theTime;
+		
+		ts = inOp.GetTimeStamp();
+		theTime.FromStamp(ts);
+		VJSONValue val;
+		theTime.GetJSONValue(val);
+		ioObject.SetProperty(CVSTR("date"),val);
+	}
+
+	//Parse user
+
+	{
+		VUUID userId;
+		if (inOp.GetUserID(userId))
+		{
+			VJSONValue val;
+			userId.GetJSONValue(val);
+
+			ioObject.SetProperty(CVSTR("userID"),val);
+#if 0
+			const XBOX::VValueBag* bag = inOp.GetExtraData();
+
+			if (bag != NULL)
+			{
+				XBOX::VString userName;
+				DB4DBagKeys::user_name.Get( bag, outOperation.fUserName /*opUser*/);
+				//DB4DBagKeys::host_name( bag, hostName);
+				//DB4DBagKeys::task_name( bag, taskName);
+				//sLONG taskID = DB4DBagKeys::task_id( bag);
+			}
+#endif
+		}
+	}
+
+	//Parse value of operation
+	{
+		sLONG8 seqnum;
+		if (inOp.GetSequenceNumber(seqnum))
+		{
+			ioObject.SetPropertyAsNumber(CVSTR("sequenceNumber"),seqnum);
+		}
+	}
+	{
+		sLONG nbfields = 0;
+		if (inOp.GetCountFields(nbfields) && nbfields > 1)
+		{
+			VJSONValue val(JSON_array);
+			VJSONArray* opFields = val.GetArray();
+			for (sLONG i = 1; i <= nbfields; i++)
+			{
+				XBOX::VValueSingle* cv = inOp.GetNthFieldValue(i, nil, nil);
+				if (cv != nil)
+				{
+					VJSONValue vv;
+					cv->GetJSONValue(vv);
+					opFields->Push(vv);
+				}
+				delete cv;
+			}
+			ioObject.SetProperty(CVSTR("fields"),val);
+		}
+	}
+}
+
 
 
 namespace Helpers{
@@ -1867,6 +2476,89 @@ VError SwapDatabaseJournal(Base4D& inBase,const VFile* inPreviousJournal,VFile& 
 	/* connect new one */
 	error = InstallNewDatabaseJournal(inBase,inNextJournal,ioDataLink);
 	return error;
+}
+
+void LocalizeString(sLONG inID, uLONG inStringID, XBOX::VString &sout)
+{
+	VDBMgr* manager = VDBMgr::GetManager();
+	VLocalizationManager* local = manager->GetDefaultLocalization();
+
+	sout.Clear();
+
+	if (local != NULL)
+	{
+		STRSharpCodes sc(inID,inStringID);
+		local->LocalizeStringWithSTRSharpCodes(sc,sout);
+	}
+}
+
+void LocalizeJournalOperation(uLONG inOpType,XBOX::VString& caption)
+{
+	uLONG strId = 0;
+	switch ( inOpType )
+	{
+		case DB4D_Log_CreateRecord: 
+			strId = 1;
+			
+			break;
+		case DB4D_Log_ModifyRecord: 
+			strId = 2;
+			break;
+		case DB4D_Log_DeleteRecord: 
+			strId = 3;
+			break;
+		case DB4D_Log_StartTrans: 
+			strId = 4;
+			break;
+		case DB4D_Log_Commit: 
+			strId = 5;
+			break;
+		case DB4D_Log_RollBack: 
+			strId = 6;
+			break;
+		case DB4D_Log_OpenData: 
+			strId = 7;
+			break;
+		case DB4D_Log_CloseData: 
+			strId = 8;
+			break;
+		case DB4D_Log_CreateContextWithUserUUID:
+			strId = 9;
+			break;
+		case DB4D_Log_CreateContextWithExtra: 
+			strId = 10;
+			break;
+		case DB4D_Log_CloseContext: 
+			strId = 11;
+			break;
+		case DB4D_Log_CreateBlob: 
+			strId = 12;
+			break;
+		case DB4D_Log_ModifyBlob: 
+			strId = 13;
+			break;
+		case DB4D_Log_DeleteBlob: 
+			strId = 14;
+			break;
+		case DB4D_Log_StartBackup:
+			strId = 15;
+			break;
+		case DB4D_Log_TruncateTable: 
+			strId = 16;
+			break;
+		case DB4D_Log_SaveSeqNum: 
+			strId = 17;
+			break;
+		default: 
+			strId = 0;
+			break;
+	}
+	caption.Clear();
+	LocalizeString(JournalOperationsGroupID,strId,caption);
+	if(caption.IsEmpty())
+	{
+		caption.AppendPrintf("??? 0x%04x",inOpType);
+	}
 }
 	
 }//namespace Helpers

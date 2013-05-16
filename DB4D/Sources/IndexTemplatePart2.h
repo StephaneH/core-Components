@@ -1437,6 +1437,54 @@ void BtreePage<Type, MaxCles>::DelFromFlush(OccupableStack* curstack)
 	//InvalidateNbElemTab();
 }							
 
+template <class Type, sLONG MaxCles>
+VError BtreePage<Type, MaxCles>::SelectAllKeys(OccupableStack* curstack, Bittab* b, BaseTaskInfo* context, ProgressEncapsuleur* InProgress, FullCleIndex<Type, MaxCles>* outVal)
+{
+	VError err = VE_OK;
+	VTask::Yield();
+	if (!InProgress->Increment())
+		err = ThrowError(VE_DB4D_ACTIONCANCELEDBYUSER, noaction);
+	if (err == VE_OK)
+	{
+		bool canCont = true;
+		sLONG nb = btp.nkeys;
+		assert(nb>=0 && nb<= MaxCles);
+		for (sLONG i = 0; i < nb && canCont && err == VE_OK; ++i)
+		{
+			BtreePage<Type, MaxCles>* sousBT=GetSousPage(curstack, i, err, context);
+			if (sousBT!=nil)
+			{
+				err = sousBT->SelectAllKeys(curstack, b, context, InProgress, outVal);
+				sousBT->Free(curstack, true);
+			}
+
+			if (IsCluster)
+			{
+				entete->GetClusterSel(curstack)->AddSelToBittab(curstack, GetQui(i), b, context, err);
+			}
+			else
+			{
+				err = b->Set(GetQui(i), false);
+			}
+			if (outVal != nil)
+			{
+				canCont = false;
+				GetItem(curstack, i, *outVal, false, context, err);	
+			}
+		}
+		if (canCont && err == VE_OK)
+		{
+			BtreePage<Type, MaxCles>* sousBT=GetSousPage(curstack, nb, err, context);
+			if (sousBT!=nil)
+			{
+				err = sousBT->SelectAllKeys(curstack, b, context, InProgress, outVal);
+				sousBT->Free(curstack, true);
+			}
+		}
+
+	}
+	return err;
+}
 
 template <class Type, sLONG MaxCles>
 VError BtreePage<Type, MaxCles>::FourcheScalar(OccupableStack* curstack, Bittab* b, const FullCleIndex<Type, MaxCles>& val1, uBOOL xstrict1, const FullCleIndex<Type, MaxCles>& val2, 
@@ -1457,74 +1505,294 @@ VError BtreePage<Type, MaxCles>::FourcheScalar(OccupableStack* curstack, Bittab*
 		nb=btp.nkeys;
 		
 		assert(nb>=0 && nb<= MaxCles);
- 		for (i=0;i<nb && canCont;i++)
+
+		if (gTempNewIndexFourche) // new algorithm
 		{
-			if (val1.IsNull())
+			sLONG mostleft = 0, mostright = 0;
+			bool mostleftIsEqual = false, mostrightIsEqual = false;
+
+			if (!val1.IsNull())
 			{
-				rescomp=CR_BIGGER;
+				bool cont = true;
+				sLONG left = 0;
+				sLONG right = nb;
+				sLONG lastequal = -2;
+				while (cont)
+				{
+					if ((right-left) <= 1)
+					{
+						cont = false;
+						rescomp = CompareKeys(mostleft, val1, inOptions);
+
+						if (rescomp == CR_BIGGER)
+						{
+							--mostleft;
+							if (mostleft == 0)
+							{
+								rescomp = CompareKeys(mostleft, val1, inOptions);
+
+								if (rescomp == CR_BIGGER)
+									--mostleft;
+								else if ((rescomp == CR_EQUAL) && !xstrict1)
+									mostleftIsEqual= true;
+							}
+
+						}
+						else if (rescomp == CR_SMALLER || ((rescomp == CR_EQUAL) && xstrict1))
+						{
+							if (lastequal != -2)
+							{
+								mostleft = lastequal;
+								mostleftIsEqual = true;
+							}
+						}
+						else
+						{
+							mostleftIsEqual = true;
+							if (mostleft > 0)
+							{
+								rescomp = CompareKeys(mostleft-1, val1, inOptions);
+
+								if (rescomp == CR_EQUAL)
+									--mostleft;
+							}
+						}
+					}
+					else
+					{
+						mostleft = left + ((right - left + 1) / 2);
+						rescomp = CompareKeys( mostleft, val1, inOptions);
+
+						if (((rescomp == CR_EQUAL) && !xstrict1) || rescomp == CR_BIGGER)
+						{
+							right = mostleft;
+							if (rescomp == CR_EQUAL)
+								lastequal = mostleft;
+						}
+						else
+						{
+							left = mostleft;
+						}
+					}
+				}
+
 			}
 			else
 			{
-				rescomp = CompareKeys(i, val1, inOptions);
+				mostleft = -1;
+				mostleftIsEqual = false;
 			}
-			
-			egal=((rescomp==CR_EQUAL) && !xstrict1) || (rescomp==CR_BIGGER);
-			if ( (rescomp==CR_BIGGER) || ( (rescomp==CR_EQUAL) && !xstrict1) )
+
+
+			if (!val2.IsNull())
 			{
+				bool cont = true;
+				sLONG left = 0;
+				sLONG right = nb;
+				sLONG lastequal = -2;
+				while (cont)
+				{
+					if ((right-left) <= 1)
+					{
+						cont = false;
+						rescomp = CompareKeys(mostright, val2, inOptions);
+
+						if (rescomp == CR_SMALLER)
+						{
+							++mostright;
+							if (mostright == (nb-1))
+							{
+								rescomp = CompareKeys(mostright, val2, inOptions);
+
+								if (rescomp == CR_SMALLER)
+									++mostright;
+								else if ((rescomp == CR_EQUAL) && !xstrict2)
+									mostrightIsEqual= true;
+							}
+
+						}
+						else if (rescomp == CR_BIGGER || ((rescomp == CR_EQUAL) && xstrict2))
+						{
+							if (mostright == 1)
+							{
+								rescomp = CompareKeys(mostright-1, val2, inOptions);
+								if (rescomp == CR_BIGGER || rescomp == CR_EQUAL)
+								{
+									--mostright;
+									if (rescomp == CR_EQUAL)
+										mostrightIsEqual = true;
+								}
+							}
+							else if (lastequal != -2)
+							{
+								mostright = lastequal;
+								mostrightIsEqual = true;
+							}
+						}
+						else
+						{
+							mostrightIsEqual = true;
+							if (mostright < (nb-1))
+							{
+								rescomp = CompareKeys(mostright+1, val2, inOptions);
+
+								if (rescomp == CR_EQUAL)
+									++mostright;
+							}
+						}
+					}
+					else
+					{
+						mostright = left + ((right - left + 1) / 2);
+						rescomp = CompareKeys(mostright, val2, inOptions);
+
+						if ( ((rescomp == CR_EQUAL) && !xstrict2) || rescomp == CR_SMALLER)
+						{
+							if (rescomp == CR_EQUAL)
+								lastequal = mostright;
+							left = mostright;
+						}
+						else
+						{
+							right = mostright;
+						}
+					}
+				}			
+			}
+			else
+			{
+				mostright = nb;
+				mostrightIsEqual = false;
+			}
+
+			sLONG needFourcheRight = -2;
+			sLONG begin = mostleft, end = mostright;
+
+			if (!mostleftIsEqual)
+				++begin;
+
+			if (mostrightIsEqual)
+				++end;
+
+			for (i = begin; i <=  mostright && canCont && err == VE_OK; ++i)
+			{
+				if ((i != mostright) || mostrightIsEqual)
+				{
+					if (IsCluster)
+					{
+						entete->GetClusterSel(curstack)->AddSelToBittab(curstack, GetQui(i), b, context, err);
+					}
+					else
+					{
+						err = b->Set(GetQui(i), false);
+					}
+					if (outVal != nil)
+					{
+						canCont = false;
+						GetItem(curstack, i, *outVal, false, context, err);	
+					}
+				}
 				sousBT=GetSousPage(curstack, i, err, context);
 				if (sousBT!=nil)
 				{
-					err = sousBT->FourcheScalar(curstack, b, val1, xstrict1, val2, xstrict2, context, InProgress, inOptions, outVal);
+					if (i > begin && i < end)
+					{
+						err = sousBT->SelectAllKeys(curstack, b, context, InProgress, outVal);
+					}
+					else
+					{
+						err = sousBT->FourcheScalar(curstack, b, val1, xstrict1, val2, xstrict2, context, InProgress, inOptions, outVal);
+					}
 					sousBT->Free(curstack, true);
 				}
 			}
-			
-			if (err != VE_OK)
-				break;
 
-			if (val2.IsNull())
+			if (mostrightIsEqual && canCont && err == VE_OK)
 			{
-				rescomp=CR_SMALLER;
-			}
-			else
-			{
-				rescomp = CompareKeys(i, val2, inOptions);
-			}
-			
-			if ( (((rescomp==CR_EQUAL) && !xstrict2) || (rescomp==CR_SMALLER)) && egal )
-			{
-				if (IsCluster)
+				if (testAssert(mostright < nb))
 				{
-					entete->GetClusterSel(curstack)->AddSelToBittab(curstack, GetQui(i), b, context, err);
+					sousBT=GetSousPage(curstack, mostright+1, err, context);
+					if (sousBT!=nil)
+					{
+						err = sousBT->FourcheScalar(curstack, b, val1, xstrict1, val2, xstrict2, context, InProgress, inOptions, outVal);
+						sousBT->Free(curstack, true);
+					}
+
+				}
+			}
+
+		}
+		else // old algorithm
+		{
+ 			for (i=0;i<nb && canCont;i++)
+			{
+				if (val1.IsNull())
+				{
+					rescomp=CR_BIGGER;
 				}
 				else
 				{
-					err = b->Set(GetQui(i), false);
+					rescomp = CompareKeys(i, val1, inOptions);
 				}
-				if (outVal != nil)
+				
+				egal=((rescomp==CR_EQUAL) && !xstrict1) || (rescomp==CR_BIGGER);
+				if ( (rescomp==CR_BIGGER) || ( (rescomp==CR_EQUAL) && !xstrict1) )
 				{
-					canCont = false;
-					GetItem(curstack, i, *outVal, false, context, err);
-				}
-			}
-			
-			if (i==(nb-1) && err == VE_OK && canCont)
-			{
-				if ( ((rescomp==CR_EQUAL) && !xstrict2) || (rescomp==CR_SMALLER) )
-				{
-					sousBT=GetSousPage(curstack, i+1, err, context);
+					sousBT=GetSousPage(curstack, i, err, context);
 					if (sousBT!=nil)
 					{
 						err = sousBT->FourcheScalar(curstack, b, val1, xstrict1, val2, xstrict2, context, InProgress, inOptions, outVal);
 						sousBT->Free(curstack, true);
 					}
 				}
+				
+				if (err != VE_OK)
+					break;
+
+				if (val2.IsNull())
+				{
+					rescomp=CR_SMALLER;
+				}
+				else
+				{
+					rescomp = CompareKeys(i, val2, inOptions);
+				}
+				
+				if ( (((rescomp==CR_EQUAL) && !xstrict2) || (rescomp==CR_SMALLER)) && egal )
+				{
+					if (IsCluster)
+					{
+						entete->GetClusterSel(curstack)->AddSelToBittab(curstack, GetQui(i), b, context, err);
+					}
+					else
+					{
+						err = b->Set(GetQui(i), false);
+					}
+					if (outVal != nil)
+					{
+						canCont = false;
+						GetItem(curstack, i, *outVal, false, context, err);
+					}
+				}
+				
+				if (i==(nb-1) && err == VE_OK && canCont)
+				{
+					if ( ((rescomp==CR_EQUAL) && !xstrict2) || (rescomp==CR_SMALLER) )
+					{
+						sousBT=GetSousPage(curstack, i+1, err, context);
+						if (sousBT!=nil)
+						{
+							err = sousBT->FourcheScalar(curstack, b, val1, xstrict1, val2, xstrict2, context, InProgress, inOptions, outVal);
+							sousBT->Free(curstack, true);
+						}
+					}
+				}
+				
+				if (err != VE_OK)
+					break;
+				if (rescomp==CR_BIGGER) 
+					break; // sort de la boucle
 			}
-			
-			if (err != VE_OK)
-				break;
-			if (rescomp==CR_BIGGER) 
-				break; // sort de la boucle
 		}
 	}
 
@@ -2940,9 +3208,19 @@ Bittab* IndexHeaderBTreeScalar<Type,MaxCles>::FourcheScalar(OccupableStack* curs
 									VDB4DProgressIndicator* InProgress, const VCompareOptions& inOptions, Bittab* dejasel, FullCleIndex<Type, MaxCles>* outVal)
 {
 	Bittab* b;
-	err = VE_OK;
 	sLONG nb;
-	
+
+#if debug_checkIndexFourche
+	bool checktwice = true;
+	if (err == -3)
+	{
+		err = VE_OK;
+		checktwice = false;
+	}
+#endif
+
+	err = VE_OK;
+
 	Occupy(curstack, true);
 
 	b = new Bittab;
@@ -2980,6 +3258,41 @@ Bittab* IndexHeaderBTreeScalar<Type,MaxCles>::FourcheScalar(OccupableStack* curs
 
 	if (err != VE_OK)
 		err = ThrowError(VE_DB4D_CANNOTCOMPLETESCANOFINDEX, DBaction_SearchingInIndex);
+
+#if debug_checkIndexFourche
+	if (checktwice && err == 0 && b != nil && outVal == nil)
+	{
+		bool oldTempNewIndexFourche = gTempNewIndexFourche;
+		gTempNewIndexFourche = !gTempNewIndexFourche;
+		err = -3;
+
+		Bittab* b2 = FourcheScalar(curstack, val1, xstrict1, val2, xstrict2, context, err, InProgress, inOptions, dejasel, outVal);
+
+		if (b2 != nil)
+		{
+			Bittab* b3 = b->Clone(err);
+			b3->moins(b2);
+			if (!b3->IsEmpty())
+			{
+				sLONG xdebug = 1; // put a break here
+				assert(b3->IsEmpty());
+			}
+
+			b2->moins(b);
+			if (!b2->IsEmpty())
+			{
+				sLONG xdebug = 1; // put a break here
+				assert(b2->IsEmpty());
+			}
+
+			QuickReleaseRefCountable(b3);
+			QuickReleaseRefCountable(b2);
+		}
+
+		gTempNewIndexFourche = oldTempNewIndexFourche;
+	}
+#endif
+
 	return(b);
 }
 

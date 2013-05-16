@@ -310,6 +310,11 @@ Base4D::Base4D(Base4D* localdb, const VUUID& BaseID, DB4DNetworkManager* netacce
 	typobj = t_Base4D;
 #endif
 
+#if debugLeaksAll
+	if (debug_canRegisterLeaksAll)
+		RegisterStackCrawl(this);
+#endif
+
 	fIsRemote = true;
 	fFlushInfo = nil;
 	fNetAccess = netacces;
@@ -331,6 +336,11 @@ Base4D::Base4D(VDBFlushMgr* Flusher, bool inNeedFlushInfo):ObjCache(BaseAccess),
 {
 #if debuglrWithTypObj
 	typobj = t_Base4D;
+#endif
+
+#if debugLeaksAll
+	if (debug_canRegisterLeaksAll)
+		RegisterStackCrawl(this);
 #endif
 	
 	fFlushInfo = inNeedFlushInfo ? Flusher->NewBaseFlushInfo(this) : nil;
@@ -385,6 +395,23 @@ Base4D::~Base4D()
 		fLocalDB->Release();
 	}
 
+	ReleaseOutsideCatalogs();
+
+	fTableOfFields->ReleaseAllFields();
+	fTableOfTables->ReleaseAllFields();
+
+	fTableOfIndexes->ReleaseAllFields();
+
+	fTableOfIndexCols->ReleaseAllFields();
+
+	fTableOfSchemas->ReleaseAllFields();
+
+	fTableOfConstraints->ReleaseAllFields();
+	fTableOfConstraintCols->ReleaseAllFields();
+
+	fTableOfViews->ReleaseAllFields();
+	fTableOfViewFields->ReleaseAllFields();
+
 	fTableOfFields->Release();
 	fTableOfTables->Release();
 	fDataTableOfTables->Release();
@@ -396,8 +423,21 @@ Base4D::~Base4D()
 	fTableOfIndexCols->Release();
 	fDataTableOfIndexCols->Release();
 
+	fTableOfConstraints->Release();
+	fDataFileOfConstraints->Release();
+
+	fTableOfConstraintCols->Release();
+	fDataFileOfConstraintCols->Release();
+
 	fTableOfSchemas->Release();
 	fDataTableOfSchemas->Release();
+
+	fTableOfViews->Release();
+	fDataTableOfViews->Release();
+	fTableOfViewFields->Release();
+	fDataTableOfViewFields->Release();
+
+	DisposeSeqNums();
 
 	assert(fBuffers.GetFirst() == nil);
 
@@ -437,12 +477,12 @@ Base4D::~Base4D()
 #if debuglr
 sLONG Base4D::Retain(const char* DebugInfo) const
 {
-	return IRefCountable::Retain(DebugInfo);
+	return IDebugRefCountable::Retain(DebugInfo);
 }
 
 sLONG Base4D::Release(const char* DebugInfo) const
 {
-	return IRefCountable::Release(DebugInfo);
+	return IDebugRefCountable::Release(DebugInfo);
 }
 #endif
 
@@ -982,6 +1022,8 @@ VError Base4D::CloseBase()
 	occupe();
 	SetNotifyState(false);
 	libere();
+
+	XBOX::ReleaseRefCountable(&fBackupSettings);
 
 
 	if (err != VE_OK)
@@ -1682,7 +1724,14 @@ VError Base4D::CreateData( const VFile& inFile, sLONG inParameters, VIntlMgr* in
 				WriteLog(DB4D_Log_OpenData, nil);
 			}
 		}
-		
+
+		if (err == VE_OK)
+		{
+			//fIsParsingStruct = true;
+			err = SecondPassLoadEntityModels();
+			//fIsParsingStruct = false;
+		}
+
 		if (err == VE_OK && (inParameters & DB4D_Open_DelayLoadIndex) == 0)
 		{
 			err = LoadIndexes((inParameters & DB4D_Open_DO_NOT_Build_Index) != 0);
@@ -1972,6 +2021,7 @@ void Base4D::DisposeSeqNums()
 		x->SetInvalid();
 		x->Release();
 	}
+	fSeqNums.clear();
 }
 
 
@@ -2341,7 +2391,6 @@ VError Base4D::CreateJournal( VFile *inFile, VUUID *inDataLink, bool inWriteOpen
 	{
 		if(inWriteOpenDataOperation)
 		{
-			fCurrentLogOperation = hbbloc.lastaction;
 			WriteLog(DB4D_Log_OpenData, nil);
 		}
 	}
@@ -2723,6 +2772,16 @@ VError Base4D::OpenData( const VFile& inFile, sLONG inParameters, Boolean BuildR
 						fWriteProtected = true;
 			}
 			
+		}
+
+		if (err == VE_OK)
+		{
+			fIsDataOpened = true;
+			//fIsParsingStruct = true;
+			err = SecondPassLoadEntityModels();
+			if (err != VE_OK)
+				fIsDataOpened = false;
+			//fIsParsingStruct = false;
 		}
 		if (err == VE_OK)
 			err = LoadIndexesDef();
@@ -3718,6 +3777,7 @@ void Base4D::xInit(Boolean FromConstructor)
 		fRemoteStructureStampExtraProp = 1;
 		fRemoteStructureExtraProp = nil;
 		fClientID.Clear();
+		fBackupSettings = nil;
 	}
 
 	fSyncHelper = nil;
@@ -3828,10 +3888,20 @@ void Base4D::xInit(Boolean FromConstructor)
 		fDataTableOfSchemas->Retain();
 		fSystemTables.Add(fTableOfSchemas);
 
+		fTableOfViews = new TableOfViews(this);
+		fDataTableOfViews = new DataTableOfViews(this, fTableOfViews);
+		fDataTableOfViews->Retain();
+		fSystemTables.Add(fTableOfViews);
+
+		fTableOfViewFields = new TableOfViewFields(this);
+		fDataTableOfViewFields = new DataTableOfViewFields(this, fTableOfViewFields);
+		fDataTableOfViewFields->Retain();
+		fSystemTables.Add(fTableOfViewFields);
+
 		fCloseSyncEvent = nil;
 
-		fEntityCatalog = new EntityModelCatalog(this);
-		fAutoEntityCatalog = new EntityModelCatalog(this);
+		fEntityCatalog = new LocalEntityModelCatalog(this);
+		fAutoEntityCatalog = new LocalEntityModelCatalog(this);
 		fAutoEntityCatalogBuilt = false;
 #if debuglog
 		fDebugLog = nil;
@@ -4339,7 +4409,28 @@ sLONG Base4D::AddTable( const VString& name, const CritereDISK* from, sLONG nbcr
 }
 */
 
-VError Base4D::AddTable( Table *inTable, bool inWithNamesCheck, CDB4DBaseContext* inContext, bool inKeepUUID, bool inGenerateName, bool BuildDataTable, sLONG inPos, bool cantouch)
+
+Table* Base4D::FindOrCreateTableRef(const VString& tablename, VError& err, const VUUID& xid)
+{
+	occupe();
+	Table* result = FindAndRetainTableRef(tablename);
+	if (result == nil)
+	{
+		result = new TableRegular(this);
+		result->SetName(tablename, nil, false, false);
+		if (!xid.IsNull())
+		{
+			result->SetUUID(xid);
+		}
+		err = AddTable(result, false, nil, !xid.IsNull(), false, true, 0, true, &xid);
+	}
+	QuickReleaseRefCountable(result);
+	libere();
+	return result;
+}
+
+
+VError Base4D::AddTable( Table *inTable, bool inWithNamesCheck, CDB4DBaseContext* inContext, bool inKeepUUID, bool inGenerateName, bool BuildDataTable, sLONG inPos, bool cantouch, const VUUID *inUUID)
 {
 	VError err = VE_OK;
 	Boolean increasesize = false;
@@ -4486,12 +4577,23 @@ VError Base4D::AddTable( Table *inTable, bool inWithNamesCheck, CDB4DBaseContext
 			// a-t-on le droit d'echouer ?
 			if ( (err == VE_OK) && fIsDataOpened && fStructure != nil && BuildDataTable)
 			{
-				// a verifier
-				DataTable* df = CreateDataTable(inTable, err, 0, nil, -1);
-				if (df != nil)
+				DataTable* df = nil;
+				if (inUUID != nil)
 				{
-					//df->RemoveFromCache();
-					df->Release();
+					df = FindDataTableWithTableUUID(*inUUID);
+					if (df != nil)
+					{
+						df->SetAssociatedTable(inTable, df->GetTableDefNumInData());
+					}
+				}
+				if (df == nil)
+				{
+					df = CreateDataTable(inTable, err, 0, nil, -1);
+					if (df != nil)
+					{
+						//df->RemoveFromCache();
+						df->Release();
+					}
 				}
 
 				if (err != VE_OK)
@@ -4781,6 +4883,26 @@ uBOOL Base4D::okdel(void)
 	return(false);
 }
 
+
+DataTable* Base4D::FindDataTableWithTableUUID(const VUUID& inTableID)
+{
+	DataTable* result = nil;
+	for (DataTableVector::iterator cur = fDataTables.begin(), end = fDataTables.end(); cur != end; cur++)
+	{
+		DataTableRegular* df = *cur;
+		if (df != nil)
+		{
+			VUUID xid;
+			df->GetAssociatedTableUUID(xid);
+			if (xid == inTableID)
+			{
+				result = df;
+				break;
+			}
+		}
+	}
+	return result;
+}
 
 
 DataTable* Base4D::CreateDataTable(Table* Associate, VError& err, sLONG prefseg, DataTableDISK* dejaDFD, sLONG dejapos)
@@ -6182,6 +6304,24 @@ Boolean Base4D::DeleteTable(Table* inFileToDelete, CDB4DBaseContext* inContext, 
 	return ok;
 }
 
+void Base4D::SetRetainedBackupSettings(IBackupSettings* inSettings)
+{
+	if (inSettings == NULL)
+	{
+		XBOX::ReleaseRefCountable(&fBackupSettings);
+	}
+	else
+	{
+		XBOX::CopyRefCountable(&fBackupSettings,inSettings);
+	}
+}
+
+const IBackupSettings* Base4D::RetainBackupSettings()const
+{	
+	if (fBackupSettings)
+		fBackupSettings->Retain();
+	return fBackupSettings;
+}
 
 VError Base4D::LoadFromBag( const VValueBag& inBag, VBagLoader *inLoader)
 {
@@ -9027,7 +9167,7 @@ VError Base4D::LoadAllTableDefs()
 }
 
 
-VError Base4D::SetEntityCatalog(EntityModelCatalog* newcat)
+VError Base4D::SetEntityCatalog(LocalEntityModelCatalog* newcat)
 {
 	VTaskLock lock(&fEntityCatalogMutex);
 	QuickReleaseRefCountable(fEntityCatalog);
@@ -9041,15 +9181,26 @@ VError Base4D::ReLoadEntityModels(const VFile* inFile)
 	VTaskLock lock(&fEntityCatalogMutex);
 	QuickReleaseRefCountable(fAutoEntityCatalog);
 	QuickReleaseRefCountable(fEntityCatalog);
-	fEntityCatalog = new EntityModelCatalog(this);
-	fAutoEntityCatalog = new EntityModelCatalog(this);
+	fEntityCatalog = new LocalEntityModelCatalog(this);
+	fAutoEntityCatalog = new LocalEntityModelCatalog(this);
 	fAutoEntityCatalogBuilt = false;
 	VError err = LoadEntityModels(inFile);
 	if (err != VE_OK)
 	{
 		QuickReleaseRefCountable(fEntityCatalog);
-		fEntityCatalog = new EntityModelCatalog(this);
+		fEntityCatalog = new LocalEntityModelCatalog(this);
 	}
+	return err;
+}
+
+
+VError Base4D::SecondPassLoadEntityModels()
+{
+	VTaskLock lock(&fEntityCatalogMutex);
+	bool oldparse = fIsParsingStruct;
+	fIsParsingStruct = true;
+	VError err = fEntityCatalog->SecondPassLoadEntityModels();
+	fIsParsingStruct = oldparse;
 	return err;
 }
 
@@ -9119,26 +9270,6 @@ VError Base4D::LoadEntityModels(const VFile* inFile, bool devMode, const VString
 			if (entityFile2.Exists())
 			{
 				err = fEntityCatalog->LoadEntityModels(entityFile2, true, devMode);
-			}
-			else
-			{
-#if 0
-				for (TableArray::Iterator cur = fich.First(), end = fich.End(); cur != end && err == VE_OK; cur++)
-				{
-					Table* tt = *cur;
-					if (tt != nil)
-					{
-						EntityModel* em = EntityModel::BuildEntityModel(tt, fAutoEntityCatalog);
-						/*
-						if (em != nil)
-						{
-							fAutoEntityCatalog->AddOneEntityModel(em, true);
-							em->Release();
-						}
-						*/
-					}
-				}
-#endif
 			}
 			if (err == VE_OK)
 			{
@@ -9211,7 +9342,18 @@ EntityModel* Base4D::FindEntity(const VString& entityName, bool onlyRealOnes) co
 	VTaskLock lock(&fEntityCatalogMutex);
 	EntityModelCatalog* catalog = GetGoodEntityCatalog(onlyRealOnes);
 
-	return catalog->FindEntity(entityName);;
+	EntityModel* em = catalog->FindEntity(entityName);
+	if (em == nil)
+	{
+		for (EntityModelCatalogCollection::const_iterator cur = fOutsideCatalogs.begin(), end = fOutsideCatalogs.end(); cur != end; ++cur)
+		{
+			em = (*cur)->FindEntity(entityName);
+			if (em != nil)
+				break;
+		}
+	}
+
+	return em;
 }
 
 
@@ -9222,6 +9364,16 @@ EntityModel* Base4D::RetainEntityModelByCollectionName(const VString& entityName
 	EntityModelCatalog* catalog = GetGoodEntityCatalog(true);
 
 	EntityModel* em = catalog->FindEntityByCollectionName(entityName);
+	if (em == nil)
+	{
+		for (EntityModelCatalogCollection::const_iterator cur = fOutsideCatalogs.begin(), end = fOutsideCatalogs.end(); cur != end; ++cur)
+		{
+			em = (*cur)->FindEntityByCollectionName(entityName);
+			if (em != nil)
+				break;
+		}
+	}
+
 	if (em != nil)
 		em->Retain();
 	return em;
@@ -9231,9 +9383,8 @@ EntityModel* Base4D::RetainEntityModelByCollectionName(const VString& entityName
 EntityModel* Base4D::RetainEntity(const VString& entityName, bool onlyRealOnes) const
 {
 	VTaskLock lock(&fEntityCatalogMutex);
-	EntityModelCatalog* catalog = GetGoodEntityCatalog(onlyRealOnes);
 
-	EntityModel* em = catalog->FindEntity(entityName);
+	EntityModel* em = FindEntity(entityName, onlyRealOnes);
 	if (em == nil)
 	{
 #if AllowDefaultEMBasedOnTables
@@ -9244,7 +9395,8 @@ EntityModel* Base4D::RetainEntity(const VString& entityName, bool onlyRealOnes) 
 			Table* tt = FindAndRetainTableRef(tablename);
 			if (tt != nil)
 			{
-				em = EntityModel::BuildEntityModel(tt);
+				if (!tt->GetHideInRest())
+					em = EntityModel::BuildLocalEntityModel(tt);
 				tt->Release();
 			}
 		}
@@ -9255,18 +9407,166 @@ EntityModel* Base4D::RetainEntity(const VString& entityName, bool onlyRealOnes) 
 	return em;
 }
 
+
+VError Base4D::ReleaseOutsideCatalogs()
+{
+	VTaskLock lock(&fEntityCatalogMutex);
+	VError err = VE_OK;
+	for (EntityModelCatalogCollection::iterator cur = fOutsideCatalogs.begin(), end = fOutsideCatalogs.end(); cur != end; ++cur)
+	{
+		(*cur)->Release();
+	}
+	fOutsideCatalogs.clear();
+	return err;
+}
+
+
+
+VError Base4D::AddOutsideCatalog(const VValueBag* catref)
+{
+	VError err = VE_OK;
+	VString path;
+	VString username, password;
+	VString ss;
+	VJSONObject* params = new VJSONObject();
+
+	catref->GetString(d4::path, path);
+	if (path.IsEmpty())
+		catref->GetString("hostname", path);
+	params->SetPropertyAsString("hostname", path);
+
+	if (catref->GetString(d4::user, ss))
+		params->SetPropertyAsString("user", ss);
+
+	if (catref->GetString(d4::password, ss))
+		params->SetPropertyAsString("password", ss);
+
+	if (catref->GetString("restPrefix", ss))
+		params->SetPropertyAsString("restPrefix", ss);
+
+	sLONG ll;
+	if (catref->GetLong("timeout", ll))
+		params->SetPropertyAsNumber("timeout", ll);
+
+	bool ssl;
+	if (catref->GetBool("ssl", ssl))
+		params->SetPropertyAsBool("ssl", ssl);
+
+	EntityModelCatalog* cat = EntityModelCatalog::NewCatalog(kRemoteCatalogFactory, this, params, err);
+	if (cat != nil)
+	{
+		AddOutsideCatalog(cat);
+		cat->Release();
+	}
+	QuickReleaseRefCountable(params);
+
+	return err;
+}
+
+
+VError Base4D::AddOutsideSQLCatalog(const VValueBag* catref)
+{
+	VError err = VE_OK;
+	VString hostname,user,database,password;
+	bool withssl = false;
+	sLONG port = 3306;
+
+	catref->GetString("hostname", hostname);
+	catref->GetString("user", user);
+	catref->GetString("database", database);
+	catref->GetString("password", password);
+	catref->GetLong("port", port);
+	catref->GetBool("ssl", withssl);
+
+	VJSONObject* params = new VJSONObject();
+
+	params->SetPropertyAsString("hostname", hostname);
+	params->SetPropertyAsString("user", user);
+	params->SetPropertyAsString("database", database);
+	params->SetPropertyAsString("password", password);
+	params->SetPropertyAsBool("ssl", withssl);
+	params->SetPropertyAsNumber("port", port);
+
+	EntityModelCatalog* cat = EntityModelCatalog::NewCatalog(kSQLCatalogFactory, this, params, err);
+	if (cat != nil)
+	{
+		AddOutsideCatalog(cat);
+		cat->Release();
+	}
+
+	QuickReleaseRefCountable(params);
+
+	return err;
+}
+
+
+VError Base4D::AddOutsideCatalog(EntityModelCatalog* catalog)
+{
+	VTaskLock lock(&fEntityCatalogMutex);
+	VError err = VE_OK;
+	bool found = false;
+	for (EntityModelCatalogCollection::iterator cur = fOutsideCatalogs.begin(), end = fOutsideCatalogs.end(); cur != end; ++cur)
+	{
+		if (*cur == catalog)
+		{
+			found = true;
+			break;
+		}
+	}
+	if (!found)
+		fOutsideCatalogs.push_back(RetainRefCountable(catalog));
+	return err;
+}
+
+VError Base4D::RemoveOutsideCatalog(EntityModelCatalog* catalog)
+{
+	VTaskLock lock(&fEntityCatalogMutex);
+	VError err = VE_OK;
+	bool found = false;
+	EntityModelCatalogCollection::iterator from;
+	for (EntityModelCatalogCollection::iterator cur = fOutsideCatalogs.begin(), end = fOutsideCatalogs.end(); cur != end; ++cur)
+	{
+		if (*cur == catalog)
+		{
+			found = true;
+			from = cur;
+			break;
+		}
+	}
+	if (found)
+	{
+		(*from)->Release();
+		fOutsideCatalogs.erase(from);
+	}
+	return err;
+}
+
+
+/*
 sLONG Base4D::CountEntityModels(bool onlyRealOnes) const
 {
 	VTaskLock lock(&fEntityCatalogMutex);
 	EntityModelCatalog* catalog = GetGoodEntityCatalog(onlyRealOnes);
 	return catalog->CountEntityModels();
 }
+*/
+
 
 VError Base4D::GetAllEntityModels(vector<CDB4DEntityModel*>& outList, CDB4DBaseContext* context, bool onlyRealOnes) const
 {
 	VTaskLock lock(&fEntityCatalogMutex);
 	EntityModelCatalog* catalog = GetGoodEntityCatalog(onlyRealOnes);
-	return catalog->GetAllEntityModels(outList, context);
+	VError err = catalog->GetAllEntityModels(outList);
+	if (err == VE_OK)
+	{
+		for (EntityModelCatalogCollection::const_iterator cur = fOutsideCatalogs.begin(), end = fOutsideCatalogs.end(); cur != end && err == VE_OK; ++cur)
+		{
+			vector<CDB4DEntityModel*> templist;
+			err = (*cur)->GetAllEntityModels(templist);
+			outList.insert(outList.end(), templist.begin(), templist.end());
+		}
+	}
+	return err;
 }
 
 VError Base4D::RetainAllEntityModels(vector<CDB4DEntityModel*>& outList, CDB4DBaseContext* context, bool withTables, bool onlyRealOnes) const
@@ -9274,7 +9574,6 @@ VError Base4D::RetainAllEntityModels(vector<CDB4DEntityModel*>& outList, CDB4DBa
 	VTaskLock lock(&fEntityCatalogMutex);
 	VError err = VE_OK;
 	outList.clear();
-	EntityModelCatalog* catalog = GetGoodEntityCatalog(onlyRealOnes);
 
 #if AllowDefaultEMBasedOnTables
 	if (withTables)
@@ -9284,7 +9583,8 @@ VError Base4D::RetainAllEntityModels(vector<CDB4DEntityModel*>& outList, CDB4DBa
 			Table* tt = (Table*)*cur;
 			if (tt != nil)
 			{
-				EntityModel* em = EntityModel::BuildEntityModel(tt);
+				if (!tt->GetHideInRest())
+					EntityModel* em = EntityModel::BuildLocalEntityModel(tt);
 				outList.push_back(em);
 			}
 		}
@@ -9292,7 +9592,7 @@ VError Base4D::RetainAllEntityModels(vector<CDB4DEntityModel*>& outList, CDB4DBa
 #endif
 
 	vector<CDB4DEntityModel*> templist;
-	err = catalog->GetAllEntityModels(templist, context);
+	err = GetAllEntityModels(templist, context, onlyRealOnes);
 	if (err == VE_OK)
 	{
 		for (vector<CDB4DEntityModel*>::iterator cur = templist.begin(), end = templist.end(); cur != end; cur++)
@@ -9300,6 +9600,32 @@ VError Base4D::RetainAllEntityModels(vector<CDB4DEntityModel*>& outList, CDB4DBa
 			CDB4DEntityModel* em = *cur;
 			em->Retain();
 			outList.push_back(em);
+		}
+	}
+
+	return err;
+}
+
+
+VError Base4D::RetainAllEntityModels(vector<VRefPtr<EntityModel> >& outList, bool onlyRealOnes) const
+{
+	VTaskLock lock(&fEntityCatalogMutex);
+	VError err = VE_OK;
+	outList.clear();
+	EntityModelCatalog* catalog = GetGoodEntityCatalog(onlyRealOnes);
+
+	err = catalog->RetainAllEntityModels(outList);
+	if (err == VE_OK)
+	{
+		for (EntityModelCatalogCollection::const_iterator cur = fOutsideCatalogs.begin(), end = fOutsideCatalogs.end(); cur != end && err == VE_OK; ++cur)
+		{
+			vector<EntityModel*> templist;
+			err = (*cur)->GetAllEntityModels(templist);
+			outList.reserve(outList.size()+templist.size());
+			for (vector<EntityModel*>::iterator curm = templist.begin(), endm = templist.end(); curm != endm; ++curm)
+			{
+				outList.push_back(*curm);
+			}
 		}
 	}
 
@@ -9392,8 +9718,10 @@ VError Base4D::OpenStructure( const VFile& inStructureFile, sLONG inParameters, 
 					err = LoadEntityModels(fStructXMLFile, (inParameters & DB4D_Open_StructOnly) != 0, inXmlContent, outIncludedFiles, inUAGDirectory, inPermissionsFile);
 					fIsParsingStruct = false;
 
+					/*
 					if (fEntityCatalog->IsXMLTouched() && !fEntityCatalog->someErrors())
 						TouchXML();
+						*/
 					fEntityCatalog->ClearTouchXML();
 				}
 
@@ -9436,24 +9764,13 @@ VError Base4D::OpenStructure( const VFile& inStructureFile, sLONG inParameters, 
 				err = LoadEntityModels(nil, false, nil, nil, inUAGDirectory, inPermissionsFile);
 				if (err == VE_OK && ((inParameters & DB4D_Open_BuildAutoEm) != 0))
 				{
-					BuildAutoModelCatalog();
+					BuildAutoModelCatalog(nil);
 					if (fAutoEntityCatalog != nil && ((fEntityCatalog != nil && fEntityCatalog->CountEntityModels() == 0) || fEntityCatalog == nil))
 					{
-						EntityModelCatalog* x = fEntityCatalog;
+						LocalEntityModelCatalog* x = fEntityCatalog;
 						fEntityCatalog = fAutoEntityCatalog;
 						fAutoEntityCatalog = x;
 					}
-					/*
-					for (TableArray::Iterator cur = fich.First(), end = fich.End(); cur != end && err == VE_OK; cur++)
-					{
-						Table* tt = *cur;
-						if (tt != nil)
-						{
-							EntityModel* em = EntityModel::BuildEntityModel(tt, fAutoEntityCatalog);
-							em->Release();
-						}
-					}
-					*/
 				}
 
 			}
@@ -9489,7 +9806,7 @@ VError Base4D::OpenStructure( const VFile& inStructureFile, sLONG inParameters, 
 }
 
 
-VError Base4D::BuildAutoModelCatalog()
+VError Base4D::BuildAutoModelCatalog(BaseTaskInfo* context)
 {
 	VError err = VE_OK;
 	VTaskLock lock(&fEntityCatalogMutex);
@@ -9500,11 +9817,17 @@ VError Base4D::BuildAutoModelCatalog()
 			Table* tt = *cur;
 			if (tt != nil)
 			{
-				EntityModel* em = EntityModel::BuildEntityModel(tt, fAutoEntityCatalog);
-				em->Release();
+				if (!tt->GetHideInRest())
+				{
+					EntityModel* em = EntityModel::BuildLocalEntityModel(tt, fAutoEntityCatalog);
+					QuickReleaseRefCountable(em);
+				}
 			}
 		}
-		fAutoEntityCatalogBuilt = true;
+		if (err == VE_OK)
+			err = fAutoEntityCatalog->ResolveRelatedEntities(context);
+		//if (err == VE_OK)
+			fAutoEntityCatalogBuilt = true;
 	}
 	return err;
 }
@@ -9513,7 +9836,7 @@ void Base4D::InvalidateAutoCatalog()
 {
 	VTaskLock lock(&fEntityCatalogMutex);
 	QuickReleaseRefCountable(fAutoEntityCatalog);
-	fAutoEntityCatalog = new EntityModelCatalog(this);
+	fAutoEntityCatalog = new LocalEntityModelCatalog(this);
 	fAutoEntityCatalogBuilt = false;
 }
 
@@ -9587,27 +9910,34 @@ VError Base4D::CreateStructure( const VFile& inStructureFile, sLONG inParameters
 				fStoreAsXML = true;
 				fStructXMLFile = new VFile(inStructureFile);
 
-				VFileDesc* ff = nil;
-				//if (inStructureFile.Exists())
-				err = inStructureFile.Open(FA_MAX, &ff);
-				if (ff != nil)
+				if ((inParameters & DB4D_Create_Empty_Catalog) != 0)
 				{
-					if (ff->GetMode() == FA_READ)
-						fWriteProtected = true;
-					delete ff;
+					// don't build a catalog based on XML file
 				}
-				
-				fEntityCatalog->ClearTouchXML();
-				fEntityCatalog->ClearErrors();
-				if (err == VE_OK)
+				else
 				{
-					fIsParsingStruct = true;
-					err = LoadEntityModels(fStructXMLFile, false, nil, nil, nil, inPermissionsFile);
-					fIsParsingStruct = false;
-
-					if (fEntityCatalog->IsXMLTouched() && !fEntityCatalog->someErrors())
-						TouchXML();
+					VFileDesc* ff = nil;
+					//if (inStructureFile.Exists())
+					err = inStructureFile.Open(FA_MAX, &ff);
+					if (ff != nil)
+					{
+						if (ff->GetMode() == FA_READ)
+							fWriteProtected = true;
+						delete ff;
+					}
+					
 					fEntityCatalog->ClearTouchXML();
+					fEntityCatalog->ClearErrors();
+					if (err == VE_OK)
+					{
+						fIsParsingStruct = true;
+						err = LoadEntityModels(fStructXMLFile, false, nil, nil, nil, inPermissionsFile);
+						fIsParsingStruct = false;
+
+						if (fEntityCatalog->IsXMLTouched() && !fEntityCatalog->someErrors())
+							TouchXML();
+						fEntityCatalog->ClearTouchXML();
+					}
 				}
 
 				if (err != VE_OK)
@@ -10978,6 +11308,7 @@ void Base4D::LoadAllTableDefsInData()
 						enoughmem = false;
 					}
 				}
+				tt->ReleaseAllFields();
 				tt->Release();
 			}
 		}
@@ -11104,6 +11435,39 @@ void Base4D::AssociateTableRefInDataWithDataTable(sLONG TableDefInDataNum, sLONG
 	if (TableDefInDataNum > fRealDataTableNums.size())
 		fRealDataTableNums.resize(TableDefInDataNum, -1);
 	fRealDataTableNums[TableDefInDataNum-1] = DataTableRealNum;
+}
+
+
+VError Base4D::BuildTablesFromDataTables()
+{
+	VError err = VE_OK;
+	for (DataTableVector::iterator cur = fDataTables.begin(), end = fDataTables.end(); cur != end && err == VE_OK; cur++)
+	{
+		DataTableRegular* df = *cur;
+		if (df != nil)
+		{
+			if (df->CanBeResurected())
+			{
+				sLONG TableDefNumInData = df->GetTableDefNumInData();
+				err = ResurectDataTable(TableDefNumInData, nil);
+			}
+		}
+	}
+	return err;
+}
+
+
+VError Base4D::_fixForWakandaV4()
+{
+	for (sLONG i = 0; i < fNbTable; ++i)
+	{
+		Table* tt = fich[i+1];
+		if (tt != nil)
+		{
+			tt->save(true);
+		}
+	}
+	return VE_OK;
 }
 
 
@@ -11749,8 +12113,8 @@ Relation* Base4D::CreateRelation(const VString &name, const VString &oppositenam
 
 	if (inSourceFields.GetCount() > 0 && inSourceFields.GetCount() == inDestinationFields.GetCount())
 	{
-		Field* source = VImpCreator<VDB4DField>::GetImpObject(inSourceFields[0])->GetField();
-		Field* dest = VImpCreator<VDB4DField>::GetImpObject(inDestinationFields[0])->GetField();
+		Field* source = dynamic_cast<const VDB4DField*>(inSourceFields[0])->GetField();
+		Field* dest = dynamic_cast<const VDB4DField*>(inDestinationFields[0])->GetField();
 
 		if (source == nil)
 		{
@@ -11996,7 +12360,7 @@ void Base4D::BeginClose(VSyncEvent* waitclose)
 
 	if (fBaseX != nil)
 	{
-		assert(VImpCreator<VDB4DBase>::GetImpObject(fBaseX)->GetRefCount() == 1);
+		assert(dynamic_cast<VDB4DBase*>(fBaseX)->GetRefCount() == 1);
 		fBaseX->Release();
 		fBaseX = nil;
 	}
@@ -14315,7 +14679,11 @@ VError Base4D::RelateManySelection(Table* StartingSelectionTable, Field* cri, Qu
 
 			Bittab* lockedset = nil;
 			if (options->GetWantsLockedSet())
+			{
 				lockedset = new Bittab;
+				if (lockedset != nil)
+					lockedset->SetOwner( db);
+			}
 			outResult.SetLockedSet(lockedset);
 
 			SearchTab xs(dest, true);
@@ -14430,7 +14798,11 @@ VError Base4D::RelateOneSelection(Table* StartingSelectionTable, sLONG TargetOne
 
 				Bittab* lockedset = nil;
 				if (options->GetWantsLockedSet())
+				{
 					lockedset = new Bittab;
+					if (lockedset != nil)
+						lockedset->SetOwner( db);
+				}
 				outResult.SetLockedSet(lockedset);
 
 				SearchTab xs(dest, true);
@@ -15243,7 +15615,7 @@ VErrorDB4D Base4D::RenameSchema(CDB4DSchema* inSchema, const VString& inNewName,
 							if (outError == VE_OK)
 							{
 								fSchemasByName.erase(inSchema->GetName());
-								VImpCreator<VDB4DSchema>::GetImpObject(inSchema)->SetName(inNewName);
+								dynamic_cast<VDB4DSchema*>(inSchema)->SetName(inNewName);
 								fSchemasByName[inSchema->GetName()] = inSchema;
 								Touch();
 								TouchSchemasCatalogStamp();
@@ -15636,9 +16008,9 @@ VError Base4D::ExportToSQL(BaseTaskInfo* context, VFolder* inBaseFolder, VProgre
 					if (fIsRemote)
 					{
 						CDB4DBase* xbase = RetainBaseX();
-						CDB4DTable* xtt = new VDB4DTable(VDBMgr::GetManager(), VImpCreator<VDB4DBase>::GetImpObject(xbase), t);
+						CDB4DTable* xtt = new VDB4DTable(VDBMgr::GetManager(), dynamic_cast<VDB4DBase*>(xbase), t);
 						xsel = xtt->SelectAllRecords(context->GetEncapsuleur(), &err, DB4D_Do_Not_Lock, nil);
-						sel = VImpCreator<VDB4DSelection>::GetImpObject(xsel)->GetSel();
+						sel = dynamic_cast<VDB4DSelection*>(xsel)->GetSel();
 						sel->Retain();
 						QuickReleaseRefCountable(xbase);
 						QuickReleaseRefCountable(xtt);

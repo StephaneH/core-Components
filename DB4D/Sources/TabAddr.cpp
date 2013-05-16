@@ -753,7 +753,7 @@ bool TreeMem::TryToFreeMem(sLONG allocationBlockNumber, sLONG nbelem, VSize comb
 
 
 VError TreeMem::PerformRech(Bittab* ReelFiltre, sLONG nbelem, RechNode* rn, Bittab *cursel, Bittab *filtre, VDB4DProgressIndicator* InProgress, BaseTaskInfo* context, 
-							  DB4D_Way_of_Locking HowToLock, Bittab *exceptions, sLONG limit, sLONG& nbfound, Bittab &Nulls, Bittab* dejalocked, OccupableStack* curstack, EntityModel* model)
+							  DB4D_Way_of_Locking HowToLock, Bittab *exceptions, sLONG limit, sLONG& nbfound, Bittab &Nulls, Bittab* dejalocked, OccupableStack* curstack, LocalEntityModel* model)
 {
 	VError err = VE_OK;
 	sLONG i,n,xn2;
@@ -2047,7 +2047,7 @@ bool TreeMemHeader::TryToFreeMem(sLONG allocationBlockNumber, VSize combien, VSi
 
 
 VError TreeMemHeader::PerformRech(Bittab* ReelFiltre, RechNode* rn, Bittab *cursel, Bittab *filtre, VDB4DProgressIndicator* InProgress, BaseTaskInfo* context, 
-									DB4D_Way_of_Locking HowToLock, Bittab *exceptions, sLONG limit, sLONG& nbfound, Bittab &Nulls, Bittab* dejalocked, OccupableStack* curstack, EntityModel* model)
+									DB4D_Way_of_Locking HowToLock, Bittab *exceptions, sLONG limit, sLONG& nbfound, Bittab &Nulls, Bittab* dejalocked, OccupableStack* curstack, LocalEntityModel* model)
 {
 	VError err = VE_OK;
 	Occupy(curstack, true);

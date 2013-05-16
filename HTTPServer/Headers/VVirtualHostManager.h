@@ -28,13 +28,6 @@ public:
 
 	VVirtualHost *				RetainMatchingVirtualHost (const VHTTPRequest& inRequest);
 
-	/** Signals */
-	XBOX::VSignalT_0 *			GetSignal_DidStart() { return &fSignal_DidStart; }
-	XBOX::VSignalT_0 *			GetSignal_DidStop() { return &fSignal_DidStop; }
-	
-	void						Notify_DidStart();
-	void						Notify_DidStop();
-
 	XBOX::VError				AddVirtualHost (const VVirtualHost *inVirtualHost);
 	XBOX::VError				RemoveVirtualHost (const VVirtualHost *inVirtualHost);
 
@@ -64,8 +57,6 @@ private:
 	VVirtualHostMap				fURLPatternsMap;
 	VVirtualHostVector			fVirtualHosts;	
 	VCriticalSection			fLock;
-	XBOX::VSignalT_0			fSignal_DidStart;
-	XBOX::VSignalT_0			fSignal_DidStop;
 };
 
 

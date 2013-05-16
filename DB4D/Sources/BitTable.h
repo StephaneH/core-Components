@@ -34,7 +34,7 @@ class Selection;
 class DataBaseObjectHeader;
 class LongSel;
 
-class Bittab : public ObjInCacheMemory, public IRefCountable
+class Bittab : public ObjInCacheMemory, public IDebugRefCountable
 {
 	friend class LongSel;
 	

@@ -88,18 +88,20 @@ VError UAGGroup::RetainOtherGroups(CUAGGroupVector& outgroups, bool oneLevelDeep
 	VError err = VE_OK;
 	if (oneLevelDeep)
 	{
+		fGroupRec->ResetAttributeValue(root);
+		fGroupRec->ResetAttributeValue("x"+root);
 		CDB4DEntityAttributeValue* xval = fGroupRec->GetAttributeValue(root, err);
 		if (xval != nil)
 		{
 			CDB4DBaseContext* context = fGroupRec->GetContext();
-			CDB4DSelection* sel = xval->GetRelatedSelection();
+			CDB4DEntityCollection* sel = xval->GetRelatedSelection();
 			if (sel != nil)
 			{
-				sLONG nb = sel->CountRecordsInSelection(context);
+				sLONG nb = sel->GetLength(context);
 				outgroups.reserve(outgroups.size() + nb);
 				for (sLONG i = 0; i < nb && err == VE_OK; i++)
 				{
-					CDB4DEntityRecord* subgroup = fDirectory->GetGroupModel()->LoadEntity(sel->GetSelectedRecordID(i+1, context), err, DB4D_Do_Not_Lock, context, false);
+					CDB4DEntityRecord* subgroup = sel->LoadEntityRecord(i, context, err, DB4D_Do_Not_Lock);
 					if (subgroup != nil)
 					{
 						CUAGGroup* group = new UAGGroup(fDirectory, subgroup);
@@ -184,18 +186,20 @@ XBOX::VError UAGGroup::RetainUsers(CUAGUserVector& outUsers, bool oneLevelDeep)
 	VError err = VE_OK;
 	if (oneLevelDeep)
 	{
+		fGroupRec->ResetAttributeValue("users");
+		fGroupRec->ResetAttributeValue("usergroups");
 		CDB4DEntityAttributeValue* xval = fGroupRec->GetAttributeValue(L"users", err);
 		if (xval != nil)
 		{
 			CDB4DBaseContext* context = fGroupRec->GetContext();
-			CDB4DSelection* sel = xval->GetRelatedSelection();
+			CDB4DEntityCollection* sel = xval->GetRelatedSelection();
 			if (sel != nil)
 			{
-				sLONG nb = sel->CountRecordsInSelection(context);
+				sLONG nb = sel->GetLength(context);
 				outUsers.reserve(outUsers.size() + nb);
 				for (sLONG i = 0; i < nb && err == VE_OK; i++)
 				{
-					CDB4DEntityRecord* userrec = fDirectory->GetUserModel()->LoadEntity(sel->GetSelectedRecordID(i+1, context), err, DB4D_Do_Not_Lock, context, false);
+					CDB4DEntityRecord* userrec = sel->LoadEntityRecord(i, context, err, DB4D_Do_Not_Lock);
 					if (userrec != nil)
 					{
 						UAGUser* user = new UAGUser(fDirectory, userrec);
@@ -300,7 +304,7 @@ VError UAGGroup::PutIntoGroup( CUAGGroup* group)
 		CDB4DEntityRecord* ggCouple = gg->Find("child.ID = :p1 and parent.ID = :p2", fDirectory->GetDBContext(), err, &thisGroupID, &groupID);
 		if (ggCouple == nil)
 		{
-			ggCouple = gg->NewEntity(fDirectory->GetDBContext(), DB4D_Do_Not_Lock);
+			ggCouple = gg->NewEntity(fDirectory->GetDBContext());
 			ggCouple->SetAttributeValue("child", fGroupRec);
 			ggCouple->SetAttributeValue("parent", grouprec);
 			ggCouple->Save(0);
@@ -326,12 +330,22 @@ VError UAGGroup::RemoveFromGroup( CUAGGroup* group)
 
 		fGroupRec->GetAttributeValue("ID", err)->GetVValue()->GetString(thisGroupID);
 
-		CDB4DSelection* ggCouples = gg->Query("child.ID = :p1 and parent.ID = :p2", fDirectory->GetDBContext(), err, &thisGroupID, &groupID);
+		CDB4DEntityCollection* ggCouples = gg->Query("child.ID = :p1 and parent.ID = :p2", fDirectory->GetDBContext(), err, &thisGroupID, &groupID);
 		if (ggCouples != nil)
 		{
-			err = ggCouples->DeleteRecords(fDirectory->GetDBContext());
+			err = ggCouples->DeleteEntities(fDirectory->GetDBContext());
 			ggCouples->Release();
 		}
+
+		/*
+		if (err == VE_OK)
+		{
+			fGroupRec->ResetAttributeValue("parents");
+			fGroupRec->ResetAttributeValue("xparents");
+			grouprec->ResetAttributeValue("children");
+			grouprec->ResetAttributeValue("xchildren");
+		}
+		*/
 	}
 	return err;
 }
@@ -345,17 +359,17 @@ VError UAGGroup::Drop()
 	VString thisGroupID;
 	fGroupRec->GetAttributeValue("ID", err)->GetVValue()->GetString(thisGroupID);
 
-	CDB4DSelection* ggCouples = gg->Query("child.ID = :p1", fDirectory->GetDBContext(), err, &thisGroupID);
+	CDB4DEntityCollection* ggCouples = gg->Query("child.ID = :p1", fDirectory->GetDBContext(), err, &thisGroupID);
 	if (ggCouples != nil)
 	{
-		err = ggCouples->DeleteRecords(fDirectory->GetDBContext());
+		err = ggCouples->DeleteEntities(fDirectory->GetDBContext());
 		ggCouples->Release();
 	}
 
 	ggCouples = gg->Query("parent.ID = :p1", fDirectory->GetDBContext(), err, &thisGroupID);
 	if (ggCouples != nil)
 	{
-		err = ggCouples->DeleteRecords(fDirectory->GetDBContext());
+		err = ggCouples->DeleteEntities(fDirectory->GetDBContext());
 		ggCouples->Release();
 	}
 

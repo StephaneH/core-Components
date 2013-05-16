@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
    Translation file for 4D products.
-   Copyright (C) 2007-2011 4D SAS.
+   Copyright (C) 2007-2013 4D SAS.
    This file is distributed under the same license as the 4D product package.
 -->
 
@@ -9,7 +9,7 @@
 "http://www.oasis-open.org/committees/xliff/documents/xliff.dtd">
 
 <xliff version="1.0">
-  <file datatype="x-STR#" original="undefined" source-language="en-US" target-language="de" product-version="1.0">
+  <file datatype="x-STR#" original="undefined" source-language="en-US" target-language="de" product-version="v14">
     <header>
       <note>The character &quot;%&quot; (out of a numerical context) is a meta-character that will be replaced (often by a numeric value) before the string is displayed</note>
       <note>Text between less than (&lt;) and greater than (&gt;) symbols is a variable&apos;s name and must not be localised</note>
@@ -80,6 +80,18 @@
         <trans-unit id="x" resname="ERR_HTTP_1015">
           <source>Cache rule expires.</source>
           <target>Cache-Regel läuft ab.</target>
+        </trans-unit>
+        <trans-unit id="x" resname="ERR_HTTP_1023">
+          <source>Some HTTP Server Project Settings are already used. Check Port, SSLPort or Hostname Settings.</source>
+          <target>Einige HTTP Server Projekt-Einstellungen werden bereits verwendet. Prüfen Sie Port, SSLPort und Hostname Einstellungen.</target>
+        </trans-unit>
+        <trans-unit id="x" resname="ERR_HTTP_1024">
+          <source>Virtual Folder already exists.</source>
+          <target>Der virtuelle Ordner existiert bereits.</target>
+        </trans-unit>
+        <trans-unit id="x" resname="ERR_HTTP_1025">
+          <source>Hostname is missing in Project Settings.</source>
+          <target>Hostname fehlt in Projekt-Einstellungen.</target>
         </trans-unit>
       </group>
 

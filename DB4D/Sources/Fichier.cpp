@@ -18,6 +18,7 @@
 //#include "DB4DLang/DB4DLang.h"
 #include <algorithm>
 
+
 // #include "..\db4dlang\CDB4D_Lang.h"
 
 #if debuglr 
@@ -70,7 +71,7 @@ void Field::xInit()
 	fCRD.unique = 0;
 	fCRD.fOuterData = 0;
 	fCRD.fTextIsWithStyle = 0;
-	fCRD.fUnusedChar3 = 0;
+	fCRD.fHideInRest = 0;
 	fCRD.fAutoSeq = 0;
 	fCRD.fAutoGenerate = 0;
 	fCRD.fStoreAsUTF8 = 0;
@@ -356,6 +357,50 @@ bool Field::IsPrimKey()
 			return true;
 	}
 	return false;
+}
+
+
+void Field::SetHideInRest(Boolean x, CDB4DBaseContext* inContext, VDB4DProgressIndicator* InProgress)
+{
+	if (fIsRemote)
+	{
+		IRequest *req = GetOwner()->GetOwner()->CreateRequest( inContext, Req_SetFieldHideInRest + kRangeReqDB4D);
+		if (req == NULL)
+		{
+			ThrowBaseError( memfull, DBaction_ChangingFieldProperties);
+		}
+		else
+		{
+			req->PutBaseParam( GetOwner()->GetOwner());
+			req->PutTableParam( GetOwner());
+			req->PutFieldParam( this);
+			req->PutBooleanParam( x);
+			req->PutProgressParam( InProgress);
+
+			VError err = req->GetLastError();
+			if (err == VE_OK)
+			{
+				err = req->Send();
+				if (err == VE_OK)
+				{
+					occupe();
+					cri->SetHideInRest( x);
+					libere();
+				}
+			}
+			req->Release();
+		}
+	}
+	else
+	{
+		Boolean old = cri->GetHideInRest();
+		cri->SetHideInRest(x);
+		if (old != x)
+		{
+			Touch();
+			Owner->save();
+		}
+	}
 }
 
 
@@ -1071,6 +1116,24 @@ VError Field::UpdateField(const CritereDISK *crd1, VValueBag *inExtraProperties)
 }
 
 
+VError Field::SetTyp(sLONG typ)
+{
+	if (typ != GetTyp())
+	{
+		if (cri != nil)
+			delete cri;
+		fCRD.typ = typ;
+		cri = CreateCritere(&fCRD, &fCRD);
+		if (cri == nil)
+		{
+			fCRD.typ = VK_STRING;
+			cri = CreateCritere(&fCRD, &fCRD);
+		}
+	}
+	return VE_OK;
+}
+
+
 VError Field::setCRD( const CritereDISK *crd1, CDB4DBaseContext* inContext, Boolean inNotify, VProgressIndicator* progress)
 {
 	VError err = VE_OK;
@@ -1458,6 +1521,7 @@ VError Field::LoadFromBagWithLoader( const VValueBag& inBag, VBagLoader *inLoade
 		cri->SetUnique( DB4DBagKeys::unique( &inBag));
 		cri->SetOutsideData(DB4DBagKeys::outside_blob( &inBag));
 		cri->SetStyledText(DB4DBagKeys::styled_text( &inBag));
+		cri->SetHideInRest(DB4DBagKeys::hide_in_REST( &inBag));
 		if ((typ == VK_TEXT) || (typ == VK_TEXT_UTF8))
 			cri->SetTextSwitchSize( DB4DBagKeys::text_switch_size( &inBag));
 		if ((typ == VK_BLOB) || (typ == VK_BLOB_DB4D) || (typ == VK_IMAGE))
@@ -1525,6 +1589,8 @@ VError Field::SaveToBag( VValueBag& ioBag, VString& outKind) const
 	DB4DBagKeys::outside_blob.Set( &ioBag, cri->getCRD()->fOuterData);
 
 	DB4DBagKeys::styled_text.Set( &ioBag, cri->getCRD()->fTextIsWithStyle);
+
+	DB4DBagKeys::hide_in_REST.Set( &ioBag, cri->getCRD()->fHideInRest);
 
 	// insert extra properties.
 	err = PutExtraPropertiesInBag( DB4DBagKeys::field_extra, const_cast<Field*>( this), ioBag, nil);
@@ -2235,12 +2301,12 @@ Boolean Table::CanRegister()
 #if debuglr == 111
 sLONG Table::Retain(const char* DebugInfo) const
 {
-	return IRefCountable::Retain(DebugInfo);
+	return IDebugRefCountable::Retain(DebugInfo);
 }
 
 sLONG Table::Release(const char* DebugInfo) const
 {
-	return IRefCountable::Release(DebugInfo);
+	return IDebugRefCountable::Release(DebugInfo);
 }
 #endif
 
@@ -2605,7 +2671,15 @@ Boolean Table::CheckUniqueness(FicheInMem* fic, const NumFieldArray& deps, BaseT
 				err = query.AnalyseSearch(&rech, context);
 			if (err == VE_OK)
 			{
-				Selection *sel = query.Perform((Bittab*)nil, nil, context, err, DB4D_Do_Not_Lock);
+				//Uniqueness checking can take a while on *large* data sets so
+				//better to have it popping up in the UI
+				VDB4DProgressIndicatorWrapper progressWrapper;
+                VDB4DProgressIndicator* progress(nil);
+                
+                progressWrapper.SetTitleAfterKind(PK_UniquenessChecking);
+                progress = progressWrapper.GetProgressIndicator();
+                
+                Selection *sel = query.Perform((Bittab*)nil, progress, context, err, DB4D_Do_Not_Lock);
 				if (sel != nil)
 				{
 					if (sel->GetQTfic() == 0)
@@ -2868,7 +2942,7 @@ VError Table::FakeRecCreatorMethod (CLanguageContext* inContext, CMethod* inMeth
 	{
 		if (xbd != nil)
 		{
-			Base4D* b = VImpCreator<VDB4DBase>::GetImpObject(xbd)->GetBase();
+			Base4D* b = dynamic_cast<VDB4DBase*>(xbd)->GetBase();
 			Table* t = b->FindAndRetainTableByRecordCreator(inMethod);
 			if (t != nil)
 			{
@@ -3032,7 +3106,7 @@ void Table::RegisterForLang(Boolean inWithFields)
 				// c'est dommage mais il faut creer un base context supplementaire
 
 				CDB4DBase* xxbase = Owner->RetainBaseX("Table::RegisterForLang");
-				VDB4DBase* xbase = VImpCreator<VDB4DBase>::GetImpObject(xxbase);
+				VDB4DBase* xbase = dynamic_cast<VDB4DBase*>(xxbase);
 				VDB4DTable *xtable = new VDB4DTable(VDBMgr::GetManager(), xbase, this);
 				CDB4DTable *xxtable = xtable;
 				xxbase->Release("Table::RegisterForLang");
@@ -3557,7 +3631,6 @@ void FichierDISK::SwapBytes()
 	ByteSwap(&UnusedAddr1);
 	ByteSwap(&UnusedAddr2);
 	ByteSwap(&ExtraLen);
-	ByteSwap(&UnusedLen1);
 	ByteSwap(&UnusedLen2);
 	ByteSwap(&typ);
 	ByteSwap(&nbcrit);
@@ -5549,7 +5622,7 @@ VError Table::ActivateAutomaticRelations_N_To_1(FicheInMem* mainrec, vector<Cach
 						err = ThrowBaseError(memfull);
 					else
 					{
-						xsel = new VDB4DSelection(VDBMgr::GetManager(), VImpCreator<VDB4DBase>::GetImpObject(xbase), tt, sel);
+						xsel = new VDB4DSelection(VDBMgr::GetManager(), dynamic_cast<VDB4DBase*>((CDB4DBase*)xbase), tt, sel);
 						if (rec != nil)
 						{
 							sel->FixFic(1);
@@ -5678,7 +5751,7 @@ VError Table::ActivateAutomaticRelations_1_To_N(FicheInMem* mainrec, vector<Cach
 		CDB4DRecord* xrec = nil;
 		CDB4DSelection* xsel = nil;
 
-		xsel = new VDB4DSelection(VDBMgr::GetManager(), VImpCreator<VDB4DBase>::GetImpObject(xbase), tt, sel);
+		xsel = new VDB4DSelection(VDBMgr::GetManager(), dynamic_cast<VDB4DBase*>((CDB4DBase*)xbase), tt, sel);
 		if (rec != nil)
 		{
 			xrec = new VDB4DRecord(VDBMgr::GetManager(), rec, context->GetEncapsuleur());
@@ -5709,7 +5782,7 @@ VError Table::ActivateAutomaticRelations_1_To_N(FicheInMem* mainrec, vector<Cach
 			CDB4DRecord* xrec = nil;
 			CDB4DSelection* xsel = nil;
 
-			xsel = new VDB4DSelection(VDBMgr::GetManager(), VImpCreator<VDB4DBase>::GetImpObject(xbase), tt, sel);
+			xsel = new VDB4DSelection(VDBMgr::GetManager(), dynamic_cast<VDB4DBase*>((CDB4DBase*)xbase), tt, sel);
 			if (rec != nil)
 			{
 				sel->FixFic(1);
@@ -5945,7 +6018,10 @@ TableRegular::TableRegular(Base4D *owner, sLONG xnres, Boolean canBeSaved, Boole
 	FID.ExtraLen = 0;
 
 	FID.UnusedAddr1 = 0;
-	FID.UnusedLen1 = 0;
+	FID.fHideInRest = 0;
+	FID.fUnusedChar1 = 0;
+	FID.fUnusedChar2 = 0;
+	FID.fUnusedChar3 = 0;
 	FID.UnusedAddr2 = 0;
 	FID.UnusedLen2 = 0;
 	FID.fStamp = 1;
@@ -7194,6 +7270,10 @@ VError TableRegular::SetCrit(sLONG n, const VValueBag& inFieldDefinition, CDB4DB
 				if (inFieldDefinition.GetBoolean( DB4DBagKeys::styled_text, xstyledtext))
 					cri.fTextIsWithStyle = xstyledtext ? 1 : 0;
 
+				Boolean hideinrest;
+				if (inFieldDefinition.GetBoolean( DB4DBagKeys::hide_in_REST, hideinrest))
+					cri.fHideInRest = hideinrest ? 1 : 0;
+
 				err = fld->setCRD( &cri, inContext, true, progress);
 
 				if (err == VE_OK)
@@ -7244,6 +7324,11 @@ VError TableRegular::LoadFromBagWithLoader( const VValueBag& inBag, VBagLoader *
 	if (err == VE_OK)
 	{
 		FID.fKeepSyncInfo = DB4DBagKeys::keep_record_sync_info.Get( &inBag) ? 1 : 0;
+	}
+
+	if (err == VE_OK)
+	{
+		FID.fHideInRest = DB4DBagKeys::hide_in_REST.Get( &inBag) ? 1 : 0;
 	}
 
 	if (err == VE_OK)
@@ -7341,6 +7426,7 @@ VError TableRegular::SaveToBag( VValueBag& ioBag, VString& outKind) const
 	DB4DBagKeys::leave_tag_on_delete.Set( &ioBag, FID.fNotFullyDeleteRecords);
 	DB4DBagKeys::keep_record_stamps.Set( &ioBag, FID.fKeepStamps == 1);
 	DB4DBagKeys::keep_record_sync_info.Set( &ioBag, FID.fKeepSyncInfo == 1);
+	DB4DBagKeys::hide_in_REST.Set( &ioBag, FID.fHideInRest == 1);
 
 	DB4DBagKeys::sql_schema_id.Set( &ioBag, FID.fSchemaID);
 
@@ -7557,7 +7643,7 @@ sLONG TableRegular::AddField(const VString &name, sLONG fieldtyp, sLONG fieldlen
 			cd.fDefaultValue = 0;
 			cd.fOuterData = 0;
 			cd.fTextIsWithStyle = 0;
-			cd.fUnusedChar3 = 0;
+			cd.fHideInRest = 0;
 
 			x.Regenerate();
 			x.ToBuffer(cd.ID);
@@ -8194,6 +8280,58 @@ bool TableRegular::HasSyncInfo() const
 }
 
 
+
+
+VError TableRegular::SetHideInRest( CDB4DBaseContext* inContext, bool x, VDB4DProgressIndicator* inProgress)
+{
+	VError err = VE_OK;
+
+	if (fIsRemote)
+	{
+		// sc 24/04/2009 ACI0061742
+		IRequest *req = GetOwner()->CreateRequest( inContext, Req_SetTableHideInRest + kRangeReqDB4D);
+		if (req == NULL)
+		{
+			err = ThrowBaseError( memfull, DBaction_ChangingTableProperties);
+		}
+		else
+		{
+			req->PutBaseParam( GetOwner());
+			req->PutTableParam( this);
+			req->PutBooleanParam( x);
+			req->PutProgressParam( inProgress);
+
+			err = req->GetLastError();
+			if (err == VE_OK)
+			{
+				err = req->Send();
+				if (err == VE_OK)
+				{
+					occupe();
+					FID.fHideInRest = x ? 1 : 0;
+					libere();
+				}
+			}
+			req->Release();
+		}
+	}
+	else
+	{
+		FID.fHideInRest = x ? 1 : 0;
+		Touch();
+		err = save();
+	}
+
+	return err;
+}
+
+
+bool TableRegular::GetHideInRest() const
+{
+	return FID.fHideInRest != 0;
+}
+
+
 void TableRegular::MarkRecordAsPushed(sLONG numrec)
 {
 	if (fIsRemote)
@@ -8518,6 +8656,21 @@ TableOfSchemas::TableOfSchemas(Base4D* owner):TableSystem(owner, -7, L"_USER_SCH
 }
 
 
+TableOfViews::TableOfViews (Base4D *inOwner) : TableSystem(inOwner, -8, L"_USER_VIEWS", VUUID((VUUIDBuffer &) "Sys_DB4D_000008"), L"_USER_VIEWS")
+{
+	fViewName = System_AddField(DB4D_StrFix, L"VIEW_NAME");
+	fSchemaID = System_AddField(DB4D_Integer32, L"SCHEMA_ID");
+}
+
+TableOfViewFields::TableOfViewFields (Base4D *inOwner) : TableSystem(inOwner, -9, L"_USER_VIEW_COLUMNS", VUUID((VUUIDBuffer&)"Sys_DB4D_000009"), L"_USER_VIEW_COLUMNS")
+{
+	fViewName = System_AddField(DB4D_StrFix, L"VIEW_NAME");
+	fColumnName = System_AddField(DB4D_StrFix, L"COLUMN_NAME");
+	fDataType = System_AddField(DB4D_Integer32, L"DATA_TYPE");
+	fDataLength = System_AddField(DB4D_Integer32, L"DATA_LENGTH");
+	fNullable = System_AddField(DB4D_Boolean, L"NULLABLE");
+}
+
 								/* ----------------------------------------------- */
 
 
@@ -8717,7 +8870,7 @@ VError DataTable::DataToCollection(Selection* sel, DB4DCollectionManager& collec
 							CDB4DField* f = collection.GetColumnRef(i+1);
 							if (f != nil)
 							{
-								Field* cri = (VImpCreator<VDB4DField>::GetImpObject(f))->GetField();
+								Field* cri = (dynamic_cast<VDB4DField*>(f))->GetField();
 								if (cri != nil)
 								{
 									cri->Retain();
@@ -8999,7 +9152,7 @@ VError DataTable::CollectionToData(Selection* sel, DB4DCollectionManager& collec
 				CDB4DField* f = collection.GetColumnRef(i+1);
 				if (f != nil)
 				{
-					Field* cri = (VImpCreator<VDB4DField>::GetImpObject(f))->GetField();
+					Field* cri = (dynamic_cast<VDB4DField*>(f))->GetField();
 					if (cri != nil)
 					{
 						cri->Retain();
@@ -9138,7 +9291,7 @@ VError DataTable::CollectionToData(Selection* sel, DB4DCollectionManager& collec
 
 
 Bittab* DataTable::Search(VError& err, RechNode* rn, Bittab *cursel, VDB4DProgressIndicator* InProgress, 
-						 BaseTaskInfo* context, DB4D_Way_of_Locking HowToLock, Bittab *exceptions, sLONG limit, Bittab &Nulls, EntityModel* model)
+						 BaseTaskInfo* context, DB4D_Way_of_Locking HowToLock, Bittab *exceptions, sLONG limit, Bittab &Nulls, LocalEntityModel* model)
 {
 	//CheckUseCount();
 
@@ -9177,7 +9330,16 @@ Bittab* DataTable::Search(VError& err, RechNode* rn, Bittab *cursel, VDB4DProgre
 						crit->GetName(tname);
 					bag.SetString("TableName", tname);
 					bag.SetString("curValue", L"{curValue}");
-					bag.SetString("maxValue", L"{maxValue}");
+					VString param;
+					if(cursel == nil)
+					{
+						param.AppendLong(nb);
+					}
+					else
+					{
+						param.AppendLong(cursel->Compte());
+					}
+					bag.SetString("maxValue", param);
 					gs(1005,4,session_title);	// Sequential Search: %curValue of %maxValue Records
 					session_title.Format(&bag);
 					InProgress->BeginSession( (cursel == nil) ? nb : cursel->Compte(), session_title);
@@ -9958,8 +10120,17 @@ Selection* DataTable::SortSel(SortTab& inSort, Selection* inSel, BaseTaskInfo* c
 					if (p1.ascendant != ascent)
 						okToLookForIndex = false;
 				}
-				p2->numfield=p1.numfield;
-				p2->numfile=p1.numfile;
+				if (p1.isfield)
+				{
+					p2->numfield=p1.numfield;
+					p2->numfile=p1.numfile;
+				}
+				else
+				{
+					p2->numfield = 0;
+					p2->numfile = 0;
+					okToLookForIndex = false;
+				}
 				p2++;
 			}
 
@@ -10237,6 +10408,18 @@ DataTableRegular::DataTableRegular()
 	fRemoteMaxRecordsStamp = 1;
 	fMustFullyDeleteForLibereEspaceDisk = false;
 }
+
+#if debuglr == 114
+sLONG DataTableRegular::Retain(const char* DebugInfo) const
+{
+	return IDebugRefCountable::Retain(DebugInfo);
+}
+
+sLONG DataTableRegular::Release(const char* DebugInfo) const
+{
+	return IDebugRefCountable::Release(DebugInfo);
+}
+#endif
 
 void oldDataFileDISK::SwapBytes()
 {
@@ -11209,7 +11392,11 @@ VError DataTableRegular::SaveRecordInTrans(FicheOnDisk *ficD, BaseTaskInfo* cont
 								WriteLogAction(L"Before Putaddr", n);
 								uLONG stamp = 0;
 								if (withStamp)
-									stamp = ficD->GetModificationStamp();
+								{
+									FicTabAddr.GetxAddr(n, context, err2, curstack, nil, &stamp);
+									++stamp;
+									//stamp = ficD->GetModificationStamp();
+								}
 
 								err = FicTabAddr.GiveBackAddrTemporary(n, context, &DFD.debutTransRecTrou, curstack);
 								err = FicTabAddr.PutxAddr(n, ou, len, context, curstack, stamp, "SaveRecordInTrans");
@@ -11270,10 +11457,16 @@ VError DataTableRegular::SaveRecordInTrans(FicheOnDisk *ficD, BaseTaskInfo* cont
 								*/
 								uLONG stamp = 0;
 								if (withStamp)
-									stamp = ficD->GetModificationStamp();
+								{
+									VError err2;
+									FicTabAddr.GetxAddr(n, context, err2, curstack, nil, &stamp);
+									++stamp;
+									//stamp = ficD->GetModificationStamp();
+								}
 #if debug_Addr_Overlap
 								db->ChangeDBObjRefLength(ficD->getaddr(), len+kSizeRecordHeader, debug_FicheRef(crit->GetNum(), n));
 #endif
+								VError err2;
 								err=FicTabAddr.PutxAddr(n,ficD->getaddr(),len,context, curstack, stamp, "SaveRecordInTrans");
 								ficD->SetModificationStamp(stamp);
 							}
@@ -11282,7 +11475,12 @@ VError DataTableRegular::SaveRecordInTrans(FicheOnDisk *ficD, BaseTaskInfo* cont
 						{
 							uLONG stamp = 0;
 							if (withStamp)
-								stamp = ficD->GetModificationStamp();
+							{
+								VError err2;
+								FicTabAddr.GetxAddr(n, context, err2, curstack, nil, &stamp);
+								++stamp;
+								//stamp = ficD->GetModificationStamp();
+							}
 
 							ou=db->findplace(len+kSizeRecordHeader, context, err, 0, ficD);
 							if (ou>0)
@@ -15136,7 +15334,7 @@ Boolean DataTableRegular::CheckForNonUniqueField(const NumFieldArray& fields, VP
 			Selection* allrecs = AllRecords(ConvertContext(context), err);
 			if (allrecs != nil)
 			{
-				CDB4DSelection* alls = new VDB4DSelection(VDBMgr::GetManager(), VImpCreator<VDB4DBase>::GetImpObject(basex), GetTable(), allrecs);
+				CDB4DSelection* alls = new VDB4DSelection(VDBMgr::GetManager(), dynamic_cast<VDB4DBase*>(basex), GetTable(), allrecs);
 
 				if (alls != nil)
 				{
@@ -15147,7 +15345,7 @@ Boolean DataTableRegular::CheckForNonUniqueField(const NumFieldArray& fields, VP
 
 					if (context != nil)
 					{
-						(VImpCreator<VDB4DSelection>::GetImpObject(alls))->SortSelection(&xsort, progress, context, err, true, true);
+						(dynamic_cast<VDB4DSelection*>(alls))->SortSelection(&xsort, progress, context, err, true, true);
 					}
 					else
 						err = ThrowError(memfull, DBaction_CheckingUniqueness);
@@ -15190,6 +15388,7 @@ AutoSeqNumber* DataTableRegular::GetSeqNum(CDB4DBaseContext* inContext)
 			fSeq = db->AddSeqNum(DB4D_AutoSeq_Simple, err, inContext);
 			if (fSeq != nil)
 			{
+				fSeq->Retain();
 				fSeq->GetID().ToBuffer(DFD.SeqNum_ID);
 				setmodif(true, db, nil);
 			}
@@ -21219,3 +21418,289 @@ VError ReplicationInputJSONFormatter::GetFieldType ( uWORD& outType )
 	return VE_OK;
 }
 
+DataTableOfViews::DataTableOfViews (Base4D *xdb, Table *xcrit) : DataTableSystem(xdb, xcrit)
+{
+}
+
+DataTableOfViews::~DataTableOfViews ()
+{
+}
+
+FicheInMem *DataTableOfViews::LoadRecord (
+	sLONG n, 
+	VError &err, 
+	DB4D_Way_of_Locking HowToLock, 
+	BaseTaskInfo *Context, 
+	Boolean WithSubRecords, 
+	Boolean BitLockOnly, 
+	ReadAheadBuffer *buffer, 
+	Boolean *outEnoughMem)
+{
+	IDB4D_SQLIntf	*sqlInterface;
+	XBOX::VValueBag	*valueBag;
+
+	if ((sqlInterface = VDBMgr::GetManager()->GetSQLInterface()) == NULL
+	|| (valueBag = sqlInterface->RetainView(db->GetUUID(), n)) == NULL) {
+
+		err = ThrowError(VE_DB4D_CANNOTLOADRECORD, DBaction_LoadingRecord);
+		return NULL;
+
+	}
+
+	FicheInMemSystem	*fiche	= NULL;
+	TableOfViews		*tcrit	= (TableOfViews *) crit;
+	bool				found;
+		
+	err = XBOX::VE_OK;
+
+	if ((fiche = new FicheInMemSystem(Context, db, crit, err)) == NULL) 
+
+		err = ThrowError(XBOX::VE_MEMORY_FULL, DBaction_LoadingRecord);
+
+	else
+
+		fiche->SetNumRec(n);
+
+	if (err == XBOX::VE_OK) {
+
+		XBOX::VString	*viewName;
+
+		if ((viewName = new VString()) == NULL)
+
+			err = ThrowError(XBOX::VE_MEMORY_FULL, DBaction_LoadingRecord);
+
+		else {
+	
+			found = valueBag->GetString("VIEW_NAME", *viewName);
+			xbox_assert(found);
+			if ((err = fiche->SetNthField(tcrit->fViewName, viewName)) != XBOX::VE_OK) 
+
+				delete viewName;
+
+		}
+
+	}
+
+	if (err == XBOX::VE_OK) {
+
+		XBOX::VLong	*schemaID;
+
+		if ((schemaID = new VLong()) == NULL) 
+
+			err = ThrowError(XBOX::VE_MEMORY_FULL, DBaction_LoadingRecord);
+			
+		else {
+
+			found = valueBag->GetLong("SCHEMA_ID", *schemaID);
+			xbox_assert(found);
+			if ((err = fiche->SetNthField(tcrit->fSchemaID, schemaID)) != XBOX::VE_OK) 
+
+				delete schemaID;
+
+		}
+
+	}
+
+	if (err != XBOX::VE_OK) {
+	
+		err = ThrowError(VE_DB4D_CANNOTLOADRECORD, DBaction_LoadingRecord);
+		XBOX::ReleaseRefCountable<FicheInMemSystem>(&fiche);
+
+	}
+
+	XBOX::ReleaseRefCountable<XBOX::VValueBag>(&valueBag);
+
+	return fiche;
+}
+
+sLONG DataTableOfViews::GetNbRecords (BaseTaskInfo *context, bool lockread)
+{
+	return GetMaxRecords(context);
+}
+
+sLONG DataTableOfViews::GetMaxRecords (BaseTaskInfo *context) const
+{
+	IDB4D_SQLIntf	*sqlInterface;
+
+	if ((sqlInterface = VDBMgr::GetManager()->GetSQLInterface()) != NULL)
+
+		return sqlInterface->NumberViews(db->GetUUID());
+
+	else
+
+		return 0;
+}
+
+DataTableOfViewFields::DataTableOfViewFields (Base4D *xdb, Table *xcrit) : DataTableSystem(xdb, xcrit)
+{
+}
+
+DataTableOfViewFields::~DataTableOfViewFields ()
+{
+}
+
+FicheInMem *DataTableOfViewFields::LoadRecord (
+	sLONG n, 
+	VError &err, 
+	DB4D_Way_of_Locking HowToLock, 
+	BaseTaskInfo *Context, 
+	Boolean WithSubRecords, 
+	Boolean BitLockOnly, 
+	ReadAheadBuffer *buffer, 
+	Boolean *outEnoughMem)
+{
+	IDB4D_SQLIntf	*sqlInterface;
+	XBOX::VValueBag	*valueBag;
+
+	if ((sqlInterface = VDBMgr::GetManager()->GetSQLInterface()) == NULL
+	|| (valueBag = sqlInterface->RetainViewField(db->GetUUID(), n)) == NULL) {
+
+		err = ThrowError(VE_DB4D_CANNOTLOADRECORD, DBaction_LoadingRecord);
+		return NULL;
+
+	}
+
+	FicheInMemSystem	*fiche	= NULL;
+	TableOfViewFields	*tcrit	= (TableOfViewFields *) crit;
+	bool				found;
+		
+	err = XBOX::VE_OK;
+
+	if ((fiche = new FicheInMemSystem(Context, db, crit, err)) == NULL) 
+
+		err = ThrowError(XBOX::VE_MEMORY_FULL, DBaction_LoadingRecord);
+
+	else
+
+		fiche->SetNumRec(n);
+
+	if (err == XBOX::VE_OK) {
+
+		XBOX::VString	*viewName;
+
+		if ((viewName = new VString()) == NULL)
+
+			err = ThrowError(XBOX::VE_MEMORY_FULL, DBaction_LoadingRecord);
+
+		else {
+
+			found = valueBag->GetString("VIEW_NAME", *viewName);
+			xbox_assert(found);
+			if ((err = fiche->SetNthField(tcrit->fViewName, viewName)) != XBOX::VE_OK) 
+
+				delete viewName;
+			
+		}
+
+	}
+
+	if (err == XBOX::VE_OK) {
+
+		XBOX::VString	*columnName;
+
+		if ((columnName = new VString()) == NULL)
+
+			err = ThrowError(XBOX::VE_MEMORY_FULL, DBaction_LoadingRecord);
+
+		else {
+
+			found = valueBag->GetString("COLUMN_NAME", *columnName);
+			xbox_assert(found);
+			if ((err = fiche->SetNthField(tcrit->fColumnName, columnName)) != XBOX::VE_OK) 
+
+				delete columnName;
+			
+		}
+
+	}
+
+	if (err == XBOX::VE_OK) {
+
+		XBOX::VLong	*dataType;
+
+		if ((dataType = new VLong()) == NULL) 
+
+			err = ThrowError(XBOX::VE_MEMORY_FULL, DBaction_LoadingRecord);
+			
+		else {
+
+			found = valueBag->GetLong("DATA_TYPE", *dataType);
+			xbox_assert(found);
+			if ((err = fiche->SetNthField(tcrit->fDataType, dataType)) != XBOX::VE_OK) 
+
+				delete dataType;
+
+		}
+
+	}
+
+	if (err == XBOX::VE_OK) {
+
+		XBOX::VLong	*dataLength;
+
+		if ((dataLength = new VLong()) == NULL) 
+
+			err = ThrowError(XBOX::VE_MEMORY_FULL, DBaction_LoadingRecord);
+			
+		else {
+
+			found = valueBag->GetLong("DATA_LENGTH", *dataLength);
+			xbox_assert(found);
+			if ((err = fiche->SetNthField(tcrit->fDataLength, dataLength)) != XBOX::VE_OK) 
+
+				delete dataLength;
+
+		}
+
+	}
+
+	if (err == XBOX::VE_OK) {
+
+		XBOX::VBoolean	*nullable;
+
+		if ((nullable = new VBoolean(false)) == NULL) 
+
+			err = ThrowError(XBOX::VE_MEMORY_FULL, DBaction_LoadingRecord);
+			
+		else {
+
+			Boolean	boolean;
+
+			found = valueBag->GetBoolean("NULLABLE", boolean);
+			xbox_assert(found);
+			*nullable = boolean;
+			if ((err = fiche->SetNthField(tcrit->fNullable, nullable)) != XBOX::VE_OK) 
+
+				delete nullable;
+
+		}
+
+	}
+
+	if (err != XBOX::VE_OK) {
+	
+		err = ThrowError(VE_DB4D_CANNOTLOADRECORD, DBaction_LoadingRecord);
+		XBOX::ReleaseRefCountable<FicheInMemSystem>(&fiche);
+
+	}
+
+	return fiche;
+}
+
+sLONG DataTableOfViewFields::GetNbRecords (BaseTaskInfo *context, bool lockread)
+{
+	return GetMaxRecords(context);
+}
+
+sLONG DataTableOfViewFields::GetMaxRecords (BaseTaskInfo *context) const
+{
+	IDB4D_SQLIntf	*sqlInterface;
+
+	if ((sqlInterface = VDBMgr::GetManager()->GetSQLInterface()) != NULL)
+
+		return sqlInterface->NumberViewFields(db->GetUUID());
+
+	else
+
+		return 0;
+}

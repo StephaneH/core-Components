@@ -468,7 +468,7 @@
     <mimeType contentType="model/vnd.vtu" extensions="vtu"/>
     <mimeType contentType="model/vrml" extensions="wrl;vrml"/>
     <mimeType compressible="true" contentType="text/calendar" extensions="ics;ifb"/>
-    <mimeType compressible="true" contentType="text/css" extensions="css"/>
+    <mimeType compressible="true" contentType="text/css" extensions="css;less"/>
     <mimeType compressible="true" contentType="text/csv" extensions="csv"/>
     <mimeType compressible="true" contentType="text/html" extensions="html;htm;shtml;shtm" parsable="true"/>
     <mimeType compressible="true" contentType="text/plain" extensions="txt;text;conf;def;list;log;in"/>

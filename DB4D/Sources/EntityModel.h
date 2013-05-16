@@ -39,6 +39,7 @@ const VErrorDB4D	VE_DB4D_ENUMERATION_DOES_NOT_EXIST	= MAKE_VERROR(CDB4DManager::
 
 const VErrorDB4D	VE_DB4D_ENTITY_ATTRIBUTE_IS_READ_ONLY = MAKE_VERROR(CDB4DManager::Component_Type, 1516);
 const VErrorDB4D	VE_DB4D_ENTITY_RECORD_CANNOT_BE_SAVED = MAKE_VERROR(CDB4DManager::Component_Type, 1517);
+const VErrorDB4D	VE_DB4D_ENTITY_CANNOT_BE_DELETED = MAKE_VERROR(CDB4DManager::Component_Type, 1518);
 
 const VErrorDB4D	VE_DB4D_CANNOT_BUILD_ENUM_FROM_DEF = MAKE_VERROR(CDB4DManager::Component_Type, 1519);
 const VErrorDB4D	VE_DB4D_CANNOT_BUILD_TYPE_FROM_DEF = MAKE_VERROR(CDB4DManager::Component_Type, 1520);
@@ -148,86 +149,39 @@ const VErrorDB4D	VE_DB4D_ENTITY_STRING_GREATER_THAN_MAX = MAKE_VERROR(CDB4DManag
 const VErrorDB4D	VE_DB4D_ENTITY_STRING_LENGTH_EQUAL = MAKE_VERROR(CDB4DManager::Component_Type, 1593);
 
 
+const VErrorDB4D	VE_DB4D_ENTITY_IS_NOT_OF_THE_RIGHT_MODEL = MAKE_VERROR(CDB4DManager::Component_Type, 1600);
+const VErrorDB4D	VE_DB4D_QUERY_NOT_THE_RIGHT_MODEL = MAKE_VERROR(CDB4DManager::Component_Type, 1601);
+
+const VErrorDB4D	VE_DB4D_INVALID_COLLECTION_IN_RESTRICTING_EVENT = MAKE_VERROR(CDB4DManager::Component_Type, 1602);
+const VErrorDB4D	VE_DB4D_ENTITY_COLLECTION_IS_NOT_OF_THE_RIGHT_MODEL = MAKE_VERROR(CDB4DManager::Component_Type, 1603);
+
+const VErrorDB4D	VE_DB4D_MISSING_SQL_CONNECTOR = MAKE_VERROR(CDB4DManager::Component_Type, 1604);
+const VErrorDB4D	VE_DB4D_CANNOT_ESTABLISH_SQL_CONNECTION = MAKE_VERROR(CDB4DManager::Component_Type, 1605);
+
 const sLONG kDefaultTopSize = 100;
 
 const UniChar kEntityTablePrefixChar = '$';
 const VString kEntityTablePrefixString = L"$";
 
-const ArrayOfConstUniCharPtr xEatt_types = { L"storage", L"alias", L"calculated", L"relatedEntity", L"relatedEntities", L"removed", L"altered", /*L"field",*/ L"composition", L"" };
-const Enumeration EattTypes(xEatt_types);
+ENTITY_API extern const Enumeration EattTypes;
 
-const ArrayOfConstUniCharPtr xScript_types = { L"db4d", L"javascript", L"4d", L"" };
-const Enumeration ScriptTypes(xScript_types);
+ENTITY_API extern const Enumeration ScriptTypes;
+
 typedef enum { script_none, script_db4d, script_javascript, script_4d } script_type;
 
-const ArrayOfConstUniCharPtr xERelTypes = { L"manyToOne", L"oneToMany", L"" };
-const Enumeration ERelTypes(xERelTypes);
+ENTITY_API extern const Enumeration ERelTypes;
 
-const ArrayOfConstUniCharPtr xEmeth_types = { L"dataClass", L"entity", L"entityCollection", L"" };
-const Enumeration EmethTypes(xEmeth_types);
+ENTITY_API extern const Enumeration EmethTypes;
 
-const ArrayOfConstUniCharPtr xEValPredefinedTypes = 
-{ 
-	L"bool", 
-	L"byte", 
-	L"word", 
-	L"long", 
-	L"long64", 
-	L"number", 
-	L"float", 
-	L"date", 
-	L"duration", 
-	L"string", 
-	L"VK_BLOB", 
-	L"image",
-	L"uuid", 
-	L"VK_TEXT", 
-	L"VK_SUBTABLE", 
-	L"VK_SUBTABLE_KEY", 
-	L"VK_OBSOLETE_STRING_DB4D", 
-	L"blob", // VK_BLOB_DB4D
-	L"VK_STRING_UTF8", 
-	L"VK_TEXT_UTF8", 
-	L"" 
-};
-const Enumeration EValPredefinedTypes(xEValPredefinedTypes);
+ENTITY_API extern const Enumeration EValPredefinedTypes;
 
-const ArrayOfConstUniCharPtr xIndexKinds = 
-{
-	L"btree",
-	L"hash",
-	L"cluster",
-	L"unused4",
-	L"unused5",
-	L"unused6",
-	L"auto",
-	L"keywords",
-	L""
-};
+ENTITY_API extern const Enumeration EFormulaeActions;
 
-const Enumeration EIndexKinds(xIndexKinds);
+ENTITY_API extern const Enumeration EIndexKinds;
 
+ENTITY_API extern const Enumeration EScopeKinds;
 
-const ArrayOfConstUniCharPtr xScopeKinds = 
-{
-	L"public",
-	L"publicOnServer",
-	L"protected",
-	L"private",
-	L""
-};
-const Enumeration EScopeKinds(xScopeKinds);
-
-
-const ArrayOfConstUniCharPtr xPermResourceType = 
-{
-	L"model",
-	L"dataClass",
-	L"method",
-	L""
-};
-
-const Enumeration EPermResourceType(xPermResourceType);
+ENTITY_API extern const Enumeration EPermResourceType;
 
 typedef enum 
 { 
@@ -238,62 +192,9 @@ typedef enum
 } PermResourceType;
 
 
+ENTITY_API extern const Enumeration EPermAction;
 
-const ArrayOfConstUniCharPtr xPermAction = 
-{
-	L"read",
-	L"create",
-	L"update",
-	L"remove",
-	L"execute",
-	L"promote",
-	L""
-};
-
-const Enumeration EPermAction(xPermAction);
-/*
-typedef enum 
-{ 
-	permaction_none = 0,
-	permaction_read,
-	permaction_create, 
-	permaction_update,
-	permaction_delete,
-	permaction_execute,
-	permaction_promote
-} PermAction;
-*/
-
-/*
-const ArrayOfConstUniCharPtr xOldDBEventKinds = 
-{
-	L"save",
-	L"load",
-	L"init",
-	L"remove",
-	L"validate",
-	L"set",
-	L"get",
-	L""
-};
-
-const Enumeration oldEDBEventKinds(xOldDBEventKinds);
-*/
-
-const ArrayOfConstUniCharPtr xDBEventKinds = 
-{
-	L"onSave",
-	L"onLoad",
-	L"onInit",
-	L"onRemove",
-	L"onValidate",
-	L"onRestrictingQuery",
-	L"onSet",
-	L"onGet",
-	L""
-};
-
-const Enumeration EDBEventKinds(xDBEventKinds);
+ENTITY_API extern const Enumeration EDBEventKinds;
 
 typedef enum 
 { 
@@ -311,114 +212,7 @@ typedef enum
 } DBEventKind;
 
 
-
-const ArrayOfConstUniCharPtr ecat_correspondance = 
-{
-	L"entityModel", L"entityModels",
-	L"type", L"types",
-	L"relationship", L"relationships",
-	L"", L""
-};
-
-const Correspondance CatCorres(ecat_correspondance);
-
-
-class DataSet : public IRefCountable
-{
-	public:
-
-		DataSet(Table* inTable, Selection* inSel, uLONG timeout = 0)
-		{
-			fTable = RetainRefCountable(inTable);
-			fSel = RetainRefCountable(inSel);
-			fTimeout = timeout;
-			fID.Regenerate();
-			fStartingTime = VSystem::GetCurrentTime();
-		}
-
-		inline void SetID(const VUUID& xid)
-		{
-			fID = xid;
-		}
-
-		inline VUUID& GetID()
-		{
-			return fID;
-		}
-
-		inline const VUUID& GetID() const
-		{
-			return fID;
-		}
-
-		inline Selection* GetSel() const
-		{
-			return fSel;
-		}
-
-		inline Table* GetTable() const
-		{
-			return fTable;
-		}
-
-		inline void ResetTimer(uLONG curtime)
-		{
-			fStartingTime = curtime;
-		}
-
-		inline bool Expired(uLONG curtime) const
-		{
-			if (fTimeout == 0)
-				return false;
-			else
-			{
-				uLONG delay;
-				if (curtime > fStartingTime)
-					delay = curtime - fStartingTime;
-				else
-					delay = fStartingTime - curtime;
-				return delay > fTimeout;
-			}
-		}
-
-		inline uLONG GetExpirationTime() const
-		{
-			return fStartingTime + fTimeout;
-		}
-
-		void GetInfo(VValueBag& outBag)
-		{
-			VString tablename;
-			fTable->GetName(tablename);
-			outBag.SetVUUID(L"id", fID);
-			outBag.SetString(L"tableName", tablename);
-			outBag.SetLong("selectionSize", fSel->GetQTfic());
-			bool sorted = true;
-			if (fSel->GetTypSel() == sel_bitsel)
-				sorted = false;
-			outBag.SetBool(L"sorted", sorted);
-			uLONG depart = VSystem::GetCurrentTime()-fStartingTime;
-			VTime ts;
-			ts.FromSystemTime();
-			VDuration sdur(depart);
-			ts.Substract(sdur);
-			outBag.SetTime(L"refreshed", ts);
-			VDuration dur(fTimeout);
-			ts.Add(dur);
-			outBag.SetTime(L"expires", ts);
-		}
-
-
-	protected:
-		virtual ~DataSet();
-
-		Selection* fSel;
-		Table* fTable;
-		VUUID fID;
-		uLONG fTimeout;
-		uLONG fStartingTime;
-};
-
+ENTITY_API extern const Correspondance CatCorres;
 
 									// ---------------------------------------------
 
@@ -427,7 +221,7 @@ class EntityModelCatalog;
 class RestTools;
 
 
-class EmEnum : public IRefCountable
+class ENTITY_API EmEnum : public IRefCountable
 {
 	public:
 
@@ -482,7 +276,7 @@ class EmEnum : public IRefCountable
 									// ---------------------------------------------
 
 
-class AttributeType : public IRefCountable
+class ENTITY_API AttributeType : public IDebugRefCountable
 {
 	public:
 		typedef list<AttributeType*> ListOfTypes;
@@ -660,22 +454,23 @@ class AttributeType : public IRefCountable
 typedef vector<EntityRelation*> EntityRelationCollection;
 
 
-class EntityRelation : public IRefCountable
+class ENTITY_API EntityRelation : public IDebugRefCountable
 {
 	public:
-		inline EntityRelation(Field* source, Field* dest, EntityRelationKind kind)
+
+		inline EntityRelation(const EntityAttribute* source, const EntityAttribute* dest, EntityRelationKind kind)
 		{
-			fSource = source;
-			fDest = dest;
+			fSourceAtt = source;
+			fDestAtt = dest;
 			fType = kind;
-			assert(fSource != nil);
-			assert(fDest != nil);
+			assert(fSourceAtt != nil);
+			assert(fDestAtt != nil);
 		}
 
 		inline EntityRelation()
 		{
-			fSource = nil;
-			fDest = nil;
+			fSourceAtt = nil;
+			fDestAtt = nil;
 			fType = erel_none;
 		}
 
@@ -685,7 +480,7 @@ class EntityRelation : public IRefCountable
 
 		inline bool operator == (const EntityRelation& other) const
 		{
-			return (fSource == other.fSource) && (fDest == other.fDest) && (fType == other.fType);
+			return (fSourceAtt == other.fSourceAtt) && (fDestAtt == other.fDestAtt) && (fType == other.fType);
 		}
 
 		inline const VString& GetName() const
@@ -693,6 +488,7 @@ class EntityRelation : public IRefCountable
 			return fName;
 		}
 
+		/*
 		inline Table* GetSourceTable() const
 		{
 			return fSource->GetOwner();
@@ -712,6 +508,17 @@ class EntityRelation : public IRefCountable
 		inline Field* GetDestField() const
 		{
 			return fDest;
+		}
+		*/
+
+		const EntityAttribute* GetSourceAtt() const
+		{
+			return fSourceAtt;
+		}
+
+		const EntityAttribute* GetDestAtt() const
+		{
+			return fDestAtt;
 		}
 
 
@@ -757,8 +564,10 @@ class EntityRelation : public IRefCountable
 		}
 
 		VString fName;
-		Field* fSource;
-		Field* fDest;
+		//Field* fSource;
+		//Field* fDest;
+		const EntityAttribute* fSourceAtt;
+		const EntityAttribute* fDestAtt;
 		EntityRelationKind fType;
 		EntityRelationCollection fSubPath;
 		EntityRelationCollection fPath;
@@ -776,7 +585,170 @@ class EntityRecord;
 									// ---------------------------------------------
 
 
-class EntityMethod : public VComponentImp<CDB4DEntityMethod>
+class EntityCollectionIterator;
+class WafSelection;
+
+class ENTITY_API EntityCollection  : public CDB4DEntityCollection
+{
+	public:
+		EntityCollection(EntityModel* inOwner)
+		{
+			fOwner = inOwner;
+			fQueryPlan = nil;
+			fQueryPath = nil;
+		}
+
+		virtual VError AddEntity(EntityRecord* entity, bool atTheEnd = false) = 0;
+
+		virtual VError AddCollection(EntityCollection* other, BaseTaskInfo* context, bool atTheEnd = false);
+
+		virtual CDB4DEntityRecord* LoadEntityRecord(RecIDType posInCol, CDB4DBaseContext* context, VErrorDB4D& outError, DB4D_Way_of_Locking HowToLock = DB4D_Do_Not_Lock);
+
+		virtual EntityRecord* LoadEntity(RecIDType posInCol, BaseTaskInfo* context, VError& outError, DB4D_Way_of_Locking HowToLock = DB4D_Do_Not_Lock) = 0;
+		virtual RecIDType GetLength(BaseTaskInfo* context) = 0;
+
+		virtual RecIDType GetLength(CDB4DBaseContext* context);
+
+		virtual bool IsSorted() const = 0;
+		virtual bool IsSafeRef() const = 0;
+
+		virtual VError GetDistinctValues(EntityAttribute* att, DB4DCollectionManager& outCollection, BaseTaskInfo* context, VDB4DProgressIndicator* InProgress, const VCompareOptions& inOptions) = 0;
+		
+		virtual EntityCollection* ProjectCollection(EntityAttribute* att, VError& err, BaseTaskInfo* context) = 0;
+		virtual VJSValue ProjectAttribute(EntityAttribute* att, VError& err, BaseTaskInfo* context, JS4D::ContextRef jscontext);
+
+		virtual EntityCollection* SortCollection(const VString& orderby, BaseTaskInfo* context, VError err, VDB4DProgressIndicator* InProgress);
+
+		virtual VJSArray ToJsArray(BaseTaskInfo* context, JS4D::ContextRef jscontext, EntityAttributeSortedSelection& whichAttributes, EntityAttributeSelection* expandAttributes, 
+									EntityAttributeSortedSelection* sortingAttributes, bool withKey, bool allowEmptyAttList, sLONG from, sLONG count, VError& err);
+
+		virtual VError Compute(EntityAttributeSortedSelection& atts, VJSObject& outObj, BaseTaskInfo* context, JS4D::ContextRef jscontext, bool distinct);
+		virtual VError ComputeOnOneAttribute(const EntityAttribute* att, DB4D_ColumnFormulae action, VJSValue& outVal, BaseTaskInfo* context, JS4D::ContextRef jscontext);
+
+		virtual VError DropEntities(BaseTaskInfo* context, VDB4DProgressIndicator* InProgress = nil, EntityCollection* *outLocked = nil) = 0;
+		virtual VError DeleteEntities(CDB4DBaseContext* context, VDB4DProgressIndicator* InProgress = nil, CDB4DEntityCollection* *outLocked = nil);
+
+		virtual EntityCollection* SortSel(VError& err, EntityAttributeSortedSelection* sortingAtt, BaseTaskInfo* context, VDB4DProgressIndicator* InProgress = nil, WafSelection* inWafSel = nil, WafSelection* outWafSel = nil) = 0;
+
+		virtual RecIDType NextNotNull(BaseTaskInfo* context, RecIDType startFrom) = 0;
+
+		virtual EntityCollection* And(EntityCollection* other, VError& err, BaseTaskInfo* context) = 0;
+		virtual EntityCollection* Or(EntityCollection* other, VError& err, BaseTaskInfo* context) = 0;
+		virtual EntityCollection* Minus(EntityCollection* other, VError& err, BaseTaskInfo* context) = 0;
+		virtual bool Intersect(EntityCollection* other, VError& err, BaseTaskInfo* context) = 0;
+
+		virtual EntityCollectionIterator* NewIterator(BaseTaskInfo* context);
+
+		virtual VError RemoveSelectedRange(sLONG inRecordIndex1, sLONG inRecordIndex2, BaseTaskInfo* context) = 0;
+
+		virtual EntityCollection* NewFromWafSelection(WafSelection* wafSel, BaseTaskInfo* context) = 0;
+
+		virtual RecIDType FindKey(VectorOfVString& vals, BaseTaskInfo* context, VError& err) = 0;
+
+		inline EntityModel* GetModel() const
+		{
+			return fOwner;
+		}
+
+		void SetQueryPlan(VValueBag* inQueryPlan)
+		{
+			CopyRefCountable(&fQueryPlan, inQueryPlan);
+		}
+
+		void SetQueryPath(VValueBag* inQuerypath)
+		{
+			CopyRefCountable(&fQueryPath, inQuerypath);
+		}
+
+		VValueBag* GetQueryPlan() const
+		{
+			return fQueryPlan;
+		}
+
+		VValueBag* GetQueryPath() const
+		{
+			return fQueryPath;
+		}
+
+		virtual bool MatchAllocationNumber(sLONG allocationNumber) = 0;
+		virtual size_t CalcLenOnDisk(void) = 0;
+
+
+	protected:
+		EntityModel* fOwner;
+		VValueBag* fQueryPlan;
+		VValueBag* fQueryPath;
+};
+
+
+class ENTITY_API EntityCollectionIterator : public IDebugRefCountable
+{
+	public:
+		EntityCollectionIterator(EntityCollection* collection, BaseTaskInfo* context);
+
+		virtual ~EntityCollectionIterator();
+
+		virtual EntityRecord* First(VError& err);
+		virtual EntityRecord* Next(VError& err);
+		virtual RecIDType GetCurPos() const;
+		virtual EntityRecord* SetCurPos(RecIDType pos, VError& err);
+
+	protected:
+		EntityRecord* _loadEntity(RecIDType atPos, VError& err);
+
+		EntityCollection* fCollection;
+		RecIDType fCurpos, fNbElems;
+		BaseTaskInfo* fContext;
+
+};
+
+
+class ENTITY_API EntityCollectionIter
+{
+	public:
+
+		inline EntityCollectionIter(EntityCollection* collection, BaseTaskInfo* context)
+		{
+			fIter = collection->NewIterator(context);
+		}
+
+		inline ~EntityCollectionIter()
+		{
+			fIter->Release();
+		}
+
+		inline EntityRecord* First(VError& err)
+		{
+			return fIter->First(err);
+		}
+
+		inline EntityRecord* Next(VError& err)
+		{
+			return fIter->Next(err);
+		}
+
+		inline RecIDType GetCurPos() const
+		{
+			return fIter->GetCurPos();
+		}
+
+		inline EntityRecord* SetCurPos(RecIDType pos, VError& err)
+		{
+			return fIter->SetCurPos(pos, err);
+		}
+
+
+	protected:
+		EntityCollectionIterator* fIter;
+};
+
+
+
+									// ---------------------------------------------
+
+
+
+class ENTITY_API EntityMethod : public CDB4DEntityMethod
 {
 	public:
 
@@ -801,10 +773,12 @@ class EntityMethod : public VComponentImp<CDB4DEntityMethod>
 			fKind = kind;
 		}
 
+		
 		virtual EntityMethodKind GetMethodKind() const
 		{
 			return fKind;
 		}
+		
 
 		inline const VString& GetName() const
 		{
@@ -819,9 +793,9 @@ class EntityMethod : public VComponentImp<CDB4DEntityMethod>
 
 		EntityMethod* Clone(EntityModel* inModel) const;
 
-		bool GetScriptObjFunc(VJSGlobalContext* jsglobcontext, BaseTaskInfo* context, VJSObject& outObjFunc) const;
+		virtual bool GetScriptObjFunc(VJSGlobalContext* jsglobcontext, BaseTaskInfo* context, VJSObject& outObjFunc) const;
 
-		VError Execute(Selection* inSel, const vector<VJSValue>* inParams, BaseTaskInfo* context, VJSValue& outResult) const;
+		VError Execute(EntityCollection* inSel, const vector<VJSValue>* inParams, BaseTaskInfo* context, VJSValue& outResult) const;
 
 		VError Execute(EntityRecord* inRec, const vector<VJSValue>* inParams, BaseTaskInfo* context, VJSValue& outResult) const;
 
@@ -883,7 +857,7 @@ class EntityMethod : public VComponentImp<CDB4DEntityMethod>
 
 
 
-class DBEvent
+class ENTITY_API DBEvent
 {
 	public:
 		DBEvent();
@@ -913,7 +887,7 @@ class DBEvent
 
 		VError CopyFrom(EntityModel* inOwner, const DBEvent* from);
 
-		VError Call(EntityRecord* inRec, BaseTaskInfo* context, const EntityAttribute* inAtt, const EntityModel* inDataClass, Selection* *outSel = nil) const;
+		VError Call(EntityRecord* inRec, BaseTaskInfo* context, const EntityAttribute* inAtt, const EntityModel* inDataClass, EntityCollection* *outSel = nil) const;
 
 
 	protected:
@@ -943,9 +917,10 @@ typedef set<SubPathRef> SubPathRefSet;
 
 typedef enum { script_attr_get = 0, script_attr_set, script_attr_query, script_attr_sort, script_attr_last = script_attr_sort, script_attr_none } script_attr;
 
-class EntityAttribute : public VComponentImp<CDB4DEntityAttribute>
+class ENTITY_API EntityAttribute : public CDB4DEntityAttribute
 {
 	public:
+		void xinit();
 
 		EntityAttribute(EntityModel* owner);
 
@@ -958,7 +933,10 @@ class EntityAttribute : public VComponentImp<CDB4DEntityAttribute>
 			return fOwner;
 		}
 
-		virtual CDB4DEntityModel* GetModel() const;
+		inline EntityModel* GetModel() const
+		{
+			return fOwner;
+		}
 
 		inline EntityAttributeKind GetKind() const
 		{
@@ -988,10 +966,12 @@ class EntityAttribute : public VComponentImp<CDB4DEntityAttribute>
 			return fPosInOwner;
 		}
 
+		/*
 		virtual sLONG GetPosInModel() const
 		{
 			return fPosInOwner;
 		}
+		*/
 
 		inline void SetPosInOwner(sLONG pos)
 		{
@@ -1038,27 +1018,29 @@ class EntityAttribute : public VComponentImp<CDB4DEntityAttribute>
 			return fSubEntity;
 		}
 
-		inline Table* getFlattenTableDest() const
-		{
-			return fFlattenTableDest;
-		}
-
 		inline const VString& getFlattenAttributeName() const
 		{
 			return fFlattenColumnName;
 		}
 
-		inline bool isFlattenedFromField() const
+		inline EntityModel* getFlattenLastDest() const
 		{
-			return fFlattenFromAField;
+			return fFlattenLastDest;
 		}
 
-		virtual CDB4DEntityModel* GetRelatedEntityModel() const;
+		EntityAttribute* getFlattenAttribute() const;
 
 		EntityRelation* GetRelPath() const
 		{
 			return fRelation;
 		}
+
+		bool isSimpleDate() const
+		{
+			return fSimpleDate && (ComputeScalarType() == VK_TIME);
+		}
+
+
 
 		VError GetScriptFromBag(const VValueBag* bag, EntityModelCatalog* catalog, const VValueBag::StKey& inScriptKey, script_attr inWhatScript, bool devMode);
 		VError FromBag(const VValueBag* bag, EntityModelCatalog* catalog, bool fieldmustexits, bool devMode);
@@ -1083,7 +1065,9 @@ class EntityAttribute : public VComponentImp<CDB4DEntityAttribute>
 
 		bool CanBeModified() const
 		{
-			if (fKind == eattr_alias)
+			if (fBehavesAsStorage)
+				return fCanBeModified;
+			else if (fKind == eattr_alias)
 				return false;
 			else if (fKind == eattr_computedField)
 			{
@@ -1094,7 +1078,7 @@ class EntityAttribute : public VComponentImp<CDB4DEntityAttribute>
 		}
 
 #if BuildEmFromTable
-		void SetRelation(Relation* rel, EntityRelationKind kind, EntityModelCatalog* catalog);
+		void SetRelation(Relation* rel, EntityRelationKind kind, LocalEntityModelCatalog* catalog);
 #endif
 
 		inline SearchTab* GetScriptQuery() const
@@ -1319,14 +1303,27 @@ class EntityAttribute : public VComponentImp<CDB4DEntityAttribute>
 				return fScalarType;
 		}
 
-		Field* RetainDirectField() const;
-
-		Field* RetainField() const;
-
 		inline const VString& GetIndexKind() const
 		{
 			return fIndexKind;
 		}
+
+		inline void SetIndexKind(const VString& indexkind)
+		{
+			if (fIndexKind.IsEmpty())
+				fIndexKind = indexkind;
+		}
+
+		inline void SetScalarType(sLONG typ)
+		{
+			fScalarType = typ;
+		}
+
+		bool IsIndexed() const;
+		bool IsFullTextIndexed() const;
+
+		bool IsIndexable() const;
+		bool IsFullTextIndexable() const;
 
 		inline void SetPartOfPrimKey()
 		{
@@ -1361,6 +1358,23 @@ class EntityAttribute : public VComponentImp<CDB4DEntityAttribute>
 
 		bool NeedValidation() const;
 
+		virtual CDB4DEntityModel* GetRelatedEntityModel() const;
+
+		bool BehavesAsStorage() const
+		{
+			return fBehavesAsStorage;
+		}
+
+		bool IsAutoGen() const
+		{
+			return fAutoGen;
+		}
+
+		bool IsAutoSeq() const
+		{
+			return fAutoSeq;
+		}
+
 	protected:
 		VString fName;
 		EntityAttributeKind fKind;
@@ -1368,15 +1382,16 @@ class EntityAttribute : public VComponentImp<CDB4DEntityAttribute>
 		sLONG fRelationPathID;  // un indice dans EntityModel.fRelationPaths et dans EntityRecord.fSubEntitiesCache
 		EntityRelation* fRelation;
 		const EntityAttribute* fFrom;
-		Table* fFlattenTableDest;
 		VString fFlattenColumnName;
+		VUUID fDB4DUUID;
+		EntityModel* fFlattenLastDest;
 		sLONG fPosInOwner;
 		sLONG fFieldPos;
 		EntityModel* fOwner;
 		VString fRelPath;
 		VString fSubEntityName;
 		VString fIndexKind;
-		VUUID fCrit_UUID;
+		//VUUID fCrit_UUID;
 		EntityModel* fSubEntity;
 		AttributeType* fType;
 		AttributeType* fLocalType;
@@ -1389,7 +1404,9 @@ class EntityAttribute : public VComponentImp<CDB4DEntityAttribute>
 		SearchTab* fScriptQuery;
 		script_type fScriptKind;
 		sLONG fScalarType;
-		bool fOverWrite,fCanBeModified,fReversePath,fIsForeignKey,fIdentifying,fPartOfPrimKey,fFlattenFromAField, fIsMultiLine;
+		bool fOverWrite,fCanBeModified,fReversePath,fIsForeignKey,fIdentifying,fPartOfPrimKey, fIsMultiLine;
+		bool fAutoGen, fAutoSeq, fStyledText, fOuterBlob, fNotNull, fNullToEmpty, fUnique, fBehavesAsStorage, fSimpleDate;
+		sLONG fLimitingLen, fBlobSwitchSize;
 		mutable OptimizedQuery* fOptimizedScriptDB4D;
 		mutable sLONG fScriptNum[script_attr_last+1];
 
@@ -1399,7 +1416,7 @@ class EntityAttribute : public VComponentImp<CDB4DEntityAttribute>
 
 									// ---------------------------------------------
 
-class EntityAttributeInstance
+class ENTITY_API EntityAttributeInstance
 {
 	public:
 		EntityAttributeInstance(const EntityAttribute* inAtt, sLONG inInstance = 0)
@@ -1453,13 +1470,9 @@ class AttributeStringPath : public IPartable<VectorOfVString, const VString*>
 
 
 template<>
-inline const VString* IPartable<VectorOfVString, const VString*>::GetElem(VectorOfVString::const_iterator iter) const
-{
-	return &(*iter);
-}
+const VString* IPartable<VectorOfVString, const VString*>::GetElem(VectorOfVString::const_iterator iter) const;
 
-
-class AttributePath : public IPartable<EntityAttributeInstanceCollection, const EntityAttributeInstance*>, public IRefCountable
+class AttributePath : public IPartable<EntityAttributeInstanceCollection, const EntityAttributeInstance*>, public IDebugRefCountable
 {
 	public:
 		AttributePath()
@@ -1535,17 +1548,14 @@ class AttributePath : public IPartable<EntityAttributeInstanceCollection, const 
 
 
 template<>
-inline const EntityAttributeInstance* IPartable<EntityAttributeInstanceCollection, const EntityAttributeInstance*>::GetElem(EntityAttributeInstanceCollection::const_iterator iter) const
-{
-	return &(*iter);
-}
+const EntityAttributeInstance* IPartable<EntityAttributeInstanceCollection, const EntityAttributeInstance*>::GetElem(EntityAttributeInstanceCollection::const_iterator iter) const;
 
 
 
 class EntityAttributeSortedSelection;
 class EntityAttributeSelection;
 
-class EntityAttributeItem
+class ENTITY_API EntityAttributeItem
 {
 	public:
 		inline EntityAttributeItem()
@@ -1571,7 +1581,7 @@ class EntityAttributeItem
 };
 
 
-class EntityAttributeSelection : public vector<EntityAttributeItem>  // le vector est toujours dimensionne au nombre d'attributs du model et les non-trous representent les attributs selectionnes
+class ENTITY_API EntityAttributeSelection : public vector<EntityAttributeItem>  // le vector est toujours dimensionne au nombre d'attributs du model et les non-trous representent les attributs selectionnes
 {
 	public:
 
@@ -1584,6 +1594,8 @@ class EntityAttributeSelection : public vector<EntityAttributeItem>  // le vecto
 		bool AddAttribute(const VString& inAttributePath, RestTools* req);
 		bool AddAttribute(const AttributeStringPath& inAttributePath, RestTools* req);
 
+		void GetString(VString& outString, bool FirstLevelOnly, const VString* prefix = nil);
+
 	protected:
 		EntityModel* fModel;
 		void Dispose();
@@ -1593,7 +1605,7 @@ class EntityAttributeSelection : public vector<EntityAttributeItem>  // le vecto
 
 
 
-class EntityAttributeSortedItem
+class ENTITY_API EntityAttributeSortedItem
 {
 public:
 	inline EntityAttributeSortedItem()
@@ -1604,7 +1616,7 @@ public:
 		fAttPath = nil;
 	}
 
-	inline EntityAttributeSortedItem(EntityAttribute* inAttribute, bool ascent = true)
+	inline EntityAttributeSortedItem(const EntityAttribute* inAttribute, bool ascent = true)
 	{
 		fAttribute = inAttribute;
 		fSousSelection = nil;
@@ -1620,14 +1632,14 @@ public:
 		fAscent = ascent;
 	}
 
-	EntityAttribute* fAttribute;
+	const EntityAttribute* fAttribute;
 	AttributePath* fAttPath;
 	EntityAttributeSortedSelection* fSousSelection;
 	bool fAscent;
 };
 
 
-class EntityAttributeSortedSelection : public vector<EntityAttributeSortedItem>
+class ENTITY_API EntityAttributeSortedSelection : public vector<EntityAttributeSortedItem>
 {
 	public:
 		
@@ -1672,7 +1684,7 @@ class EntityAttributeSortedSelection : public vector<EntityAttributeSortedItem>
 		bool AddAttribute(const VString& inAttributePath, bool ascent, bool forSorting, RestTools* req);
 		bool AddAttribute(const AttributeStringPath& inAttributePath, bool ascent, bool forSorting, RestTools* req);
 
-		bool AddAttribute(EntityAttribute* att, RestTools* req);
+		bool AddAttribute(const EntityAttribute* att, RestTools* req);
 
 		EntityAttributeSortedSelection::iterator FindAttribute(const EntityAttribute* att);
 		EntityAttributeSortedSelection::const_iterator FindAttribute(const EntityAttribute* att) const;
@@ -1680,6 +1692,7 @@ class EntityAttributeSortedSelection : public vector<EntityAttributeSortedItem>
 		EntityAttributeSortedSelection* FindSubSelection(const EntityAttribute* att) const;
 
 		void ToString(VString& outString);
+		void GetString(VString& outString, bool FirstLevelOnly, bool forSorting, const VString* prefix = nil);
 
 
 	protected:
@@ -1690,7 +1703,7 @@ class EntityAttributeSortedSelection : public vector<EntityAttributeSortedItem>
 };
 
 
-class IdentifyingAttribute
+class ENTITY_API IdentifyingAttribute
 {
 	public:
 		IdentifyingAttribute(EntityAttribute* att = nil)
@@ -1706,43 +1719,67 @@ class IdentifyingAttribute
 typedef vector<IdentifyingAttribute> IdentifyingAttributeCollection;
 
 
+class ENTITY_API computeResult
+{
+public:
+	computeResult()
+	{
+		fSum = 0;
+		first = true;
+		fMinVal = nil;
+		fMaxVal = nil;
+		fPrevious = nil;
+		fCount = 0;
+		fSumDistinct = 0;
+		fCountDistinct = 0;
+	}
+
+	~computeResult()
+	{
+		if (fMinVal != nil)
+			delete fMinVal;
+		if (fMaxVal != nil)
+			delete fMaxVal;
+		if (fPrevious != nil)
+			delete fPrevious;
+	}
+
+	VValueSingle* fMinVal;
+	VValueSingle* fMaxVal;
+	VValueSingle* fPrevious;
+	Real fSum;
+	sLONG8 fCount;
+	Real fSumDistinct;
+	sLONG8 fCountDistinct;
+	bool first;
+};
+
+
+
 
 									// ---------------------------------------------
 
 
 class RestTools;
 
-class EntityModel : public VComponentImp<CDB4DEntityModel>
+class EntityModelCatalog;
+
+class ENTITY_API EntityModel : public CDB4DEntityModel
 {
 	public:
 
 		typedef list<EntityModel*> ListOfModels;
 
-		EntityModel(Base4D* inOwner, Table* inMainTable = nil);
+		EntityModel(EntityModelCatalog* inOwner);
 
 		VError ThrowError( VError inErrCode, const VString* p1 = nil) const;
 
-		inline Base4D* GetOwner() const
-		{
-			return fOwner;
-		}
-
-		virtual CDB4DBase* RetainDataBase() const
-		{
-			return fOwner->RetainBaseX();
-		}
+		virtual bool IsValid() const = 0;
 
 		virtual sLONG CountAttributes() const
 		{
 			return (sLONG)fAttributes.size();
 		}
-
-		inline Table* GetMainTable() const
-		{
-			return fMainTable;
-		}
-
-		virtual CDB4DTable* RetainTable() const;
 
 		inline sLONG CountRelationPaths() const
 		{
@@ -1779,7 +1816,6 @@ class EntityModel : public VComponentImp<CDB4DEntityModel>
 			return fName;
 		}
 
-
 		inline const VString& GetCollectionName() const
 		{
 			return fCollectionName;
@@ -1793,23 +1829,20 @@ class EntityModel : public VComponentImp<CDB4DEntityModel>
 		VError BuildRelPath(SubPathRefSet& already, EntityModelCatalog* catalog, const VectorOfVString& path, EntityRelationCollection& outRelPath, VString& outLastpart, bool& outAllNto1, bool devMode, EntityModel* &outLastDest);
 		VError ActivatePath(EntityRecord* erec, sLONG inPathID, SubEntityCache& outResult, bool Nto1, EntityModel* subEntityModel, BaseTaskInfo* context);
 
-		Selection* projectSelection(Selection* sel, EntityAttribute* att, VError& err, BaseTaskInfo* context);
-		virtual CDB4DSelection* ProjectSelection(CDB4DSelection* sel, CDB4DEntityAttribute* att, VError& err, CDB4DBaseContext* context);
-
 		EntityAttribute* getAttribute(sLONG pos) const;
 		EntityAttribute* getAttribute(const VString& AttributeName) const;
+
+		CDB4DEntityAttribute* GetAttribute(const XBOX::VString& AttributeName) const
+		{
+			return getAttribute(AttributeName);
+		}
 
 		virtual CDB4DEntityAttribute* GetAttribute(sLONG pos) const
 		{
 			return getAttribute(pos);
 		}
 
-		virtual CDB4DEntityAttribute* GetAttribute(const VString& AttributeName) const
-		{
-			return getAttribute(AttributeName);
-		}
-
-		EntityAttribute* FindAttributeByFieldPos(sLONG FieldPos);
+		//EntityAttribute* FindAttributeByFieldPos(sLONG FieldPos);
 
 		VError ToBag(VValueBag& outBag, bool forDax, bool forSave, bool forJSON, RestTools* req = nil) const;
 		VError FromBag(const VValueBag* inBag, EntityModelCatalog* catalog, bool devMode);
@@ -1834,7 +1867,7 @@ class EntityModel : public VComponentImp<CDB4DEntityModel>
 		VError ResolveQueryStatements(EntityModelCatalog* catalog, bool devMode, BaseTaskInfo* context);
 		//VError ResolveRelatedPath(EntityModelCatalog* catalog);
 
-		sLONG FindAttribute(const VString& AttributeName) const;
+		//sLONG FindAttribute(const VString& AttributeName) const;
 
 		bool GetAllSortedAttributes(EntityAttributeSortedSelection& outAtts, RestTools* req) const;
 		bool BuildListOfSortedAttributes(const VString& inAttributeList, EntityAttributeSortedSelection& outAtts, BaseTaskInfo* context, bool FirstLevelOnly, bool forSorting, RestTools* req) const;
@@ -1842,47 +1875,66 @@ class EntityModel : public VComponentImp<CDB4DEntityModel>
 		bool GetAllAttributes(EntityAttributeSelection& outAtts, RestTools* req) const;
 		bool BuildListOfAttributes(const VString& inAttributeList, EntityAttributeSelection& outAtts, bool FirstLevelOnly, RestTools* req) const;
 
-		EntityRecord* LoadEntityRecord(sLONG n, VError& err, DB4D_Way_of_Locking HowToLock, BaseTaskInfo* context, bool autoexpand);
-
-		virtual CDB4DEntityRecord* LoadEntity(sLONG n, VError& err, DB4D_Way_of_Locking HowToLock, CDB4DBaseContext* context, bool autoexpand);
-
 
 		EntityAttribute* GetAttributeByPath(const VString& inPath) const;
 		EntityAttribute* GetAttributeByPath(const AttributeStringPath& inPath) const;
 
-		virtual sLONG CountEntities(CDB4DBaseContext* inContext);
-		
-		virtual CDB4DSelection* SelectAllEntities(CDB4DBaseContextPtr inContext, VErrorDB4D* outErr = NULL, 
-												  DB4D_Way_of_Locking HowToLock = DB4D_Do_Not_Lock, CDB4DSet* outLockSet = NULL);
-		
-		Selection* SelectAllEntities(BaseTaskInfo* context, VErrorDB4D* outErr = NULL, 
-										DB4D_Way_of_Locking HowToLock = DB4D_Do_Not_Lock, Bittab* outLockSet = NULL);
+		virtual RecIDType countEntities(BaseTaskInfo* inContext) = 0;
 
-		virtual CDB4DQuery *NewQuery();
-		
-		virtual CDB4DSelection* ExecuteQuery( CDB4DQuery *inQuery, CDB4DBaseContextPtr inContext, CDB4DSelectionPtr Filter = NULL, 
-											 VDB4DProgressIndicator* InProgress = NULL, DB4D_Way_of_Locking HowToLock = DB4D_Do_Not_Lock, 
-											 sLONG limit = 0, CDB4DSet* outLockSet = NULL, VErrorDB4D *outErr = NULL);
-		
-		Selection* ExecuteQuery( SearchTab* querysearch, BaseTaskInfo* context, Selection* filter = nil, 
+		virtual RecIDType CountEntities(CDB4DBaseContext* inContext);
+
+		virtual bool QueriesAreProcessedRemotely() const
+		{
+			return false;
+		}
+
+		virtual EntityCollection* SelectAllEntities(BaseTaskInfo* context, VErrorDB4D* outErr = NULL, 
+										DB4D_Way_of_Locking HowToLock = DB4D_Do_Not_Lock, EntityCollection* outLockSet = NULL, bool allowRestrict = true) = 0;
+				
+		virtual EntityCollection* executeQuery( SearchTab* querysearch, BaseTaskInfo* context, EntityCollection* filter = nil, 
 									VDB4DProgressIndicator* InProgress = NULL, DB4D_Way_of_Locking HowToLock = DB4D_Do_Not_Lock, 
-									sLONG limit = 0, Bittab* outLockSet = NULL, VError *outErr = NULL);
+									sLONG limit = 0, EntityCollection* outLockSet = NULL, VError *outErr = NULL) = 0;
+
+		virtual EntityCollection* executeQuery( const VString& queryString, VJSParms_callStaticFunction& ioParms, BaseTaskInfo* context, EntityCollection* filter = nil, 
+									VDB4DProgressIndicator* InProgress = NULL, DB4D_Way_of_Locking HowToLock = DB4D_Do_Not_Lock, 
+									sLONG limit = 0, EntityCollection* outLockSet = NULL, VError *outErr = NULL) = 0;
+
+		virtual EntityCollection* executeQuery( const VString& queryString, VJSONArray* params, BaseTaskInfo* context, EntityCollection* filter = nil, 
+									VDB4DProgressIndicator* InProgress = NULL, DB4D_Way_of_Locking HowToLock = DB4D_Do_Not_Lock, 
+									sLONG limit = 0, EntityCollection* outLockSet = NULL, VError *outErr = NULL) = 0;
+
+
+		virtual EntityCollection* executeQuery( VJSObject queryObj, BaseTaskInfo* context, EntityCollection* filter = nil, 
+									VDB4DProgressIndicator* InProgress = NULL, DB4D_Way_of_Locking HowToLock = DB4D_Do_Not_Lock, 
+									sLONG limit = 0, EntityCollection* outLockSet = NULL, VError *outErr = NULL) = 0;
 
 	
-		virtual CDB4DSelection* NewSelection(DB4D_SelectionType inSelectionType) const;
+		virtual EntityCollection* NewCollection(bool ordered = false, bool safeRef = false) const = 0;
+		virtual EntityCollection* NewCollection(const VectorOfVString& primKeys, VError& err, BaseTaskInfo* context) const;
 		
-		virtual CDB4DEntityRecord* NewEntity(CDB4DBaseContextPtr inContext, DB4D_Way_of_Locking HowToLock) const;
+		virtual EntityRecord* newEntity(BaseTaskInfo* inContext) const = 0;
 
-		EntityRecord* NewEntity(BaseTaskInfo* inContext, DB4D_Way_of_Locking HowToLock) const;
+		virtual EntityCollection* FromArray(VJSArray& arr, BaseTaskInfo* context, VError& err, VDB4DProgressIndicator* InProgress = nil);
+
+		virtual CDB4DEntityRecord* NewEntity(CDB4DBaseContextPtr inContext) const;
+
+		virtual CDB4DEntityCollection* NewSelection(bool ordered = false, bool safeRef = false) const;
+
+		virtual CDB4DEntityCollection* SelectAllEntities(CDB4DBaseContextPtr inContext, VErrorDB4D* outErr = NULL, 
+			DB4D_Way_of_Locking HowToLock = DB4D_Do_Not_Lock, CDB4DEntityCollection* outLockSet = NULL);
+
+		virtual CDB4DEntityCollection* ExecuteQuery( CDB4DQuery *inQuery, CDB4DBaseContextPtr inContext, CDB4DEntityCollection* Filter = NULL, 
+			VDB4DProgressIndicator* InProgress = NULL, DB4D_Way_of_Locking HowToLock = DB4D_Do_Not_Lock, 
+			sLONG limit = 0, CDB4DEntityCollection* outLockSet = NULL, VErrorDB4D *outErr = NULL);
 
 #if BuildEmFromTable
-		static EntityModel* BuildEntityModel(Table* from, EntityModelCatalog* catalog);
+		static EntityModel* BuildLocalEntityModel(Table* from, LocalEntityModelCatalog* catalog);
 #endif
 
 		//static void ClearCacheTableEM();
 
 		bool AddRestrictionToQuery(SearchTab& query, BaseTaskInfo* context, VError& err);
-		Selection* BuildRestrictingSelection(BaseTaskInfo* context, VError& err);
+		EntityCollection* BuildRestrictingSelection(BaseTaskInfo* context, VError& err);
 
 		bool WithRestriction() const
 		{
@@ -1907,6 +1959,24 @@ class EntityModel : public VComponentImp<CDB4DEntityModel>
 		inline EntityModel* GetBaseEm() const
 		{
 			return fBaseEm;
+		}
+
+		const EntityModel* GetRootBaseEm() const
+		{
+			if (fBaseEm == nil)
+				return this;
+			else
+				return fBaseEm->GetRootBaseEm();
+
+		}
+
+		EntityModel* GetRootBaseEm()
+		{
+			if (fBaseEm == nil)
+				return this;
+			else
+				return fBaseEm->GetRootBaseEm();
+
 		}
 
 		void AddDerivated(EntityModel* em);
@@ -1973,52 +2043,37 @@ class EntityModel : public VComponentImp<CDB4DEntityModel>
 
 		bool isExtendedFrom(const EntityModel* otherEM) const;
 
-		sLONG getEntityNumWithPrimKey(const VString& primkey, BaseTaskInfo* context, VError& err);
-		sLONG getEntityNumWithPrimKey(const VectorOfVString& primkey, BaseTaskInfo* context, VError& err);
-		sLONG getEntityNumWithPrimKey(const VValueBag& primkey, BaseTaskInfo* context, VError& err, bool ErrOnNull = true);
-		sLONG getEntityNumWithPrimKey(const VectorOfVValue& primkey, BaseTaskInfo* context, VError& err);
-		sLONG getEntityNumWithPrimKey(VJSObject objkey, BaseTaskInfo* context, VError& err);
 
-		EntityRecord* findEntityWithPrimKey(const VString& primkey, BaseTaskInfo* context, VError& err, DB4D_Way_of_Locking HowToLock);
-		EntityRecord* findEntityWithPrimKey(const VectorOfVString& primkey, BaseTaskInfo* context, VError& err, DB4D_Way_of_Locking HowToLock);
-		EntityRecord* findEntityWithPrimKey(const VValueBag& primkey, BaseTaskInfo* context, VError& err, DB4D_Way_of_Locking HowToLock);
-		EntityRecord* findEntityWithPrimKey(const VectorOfVValue& primkey, BaseTaskInfo* context, VError& err, DB4D_Way_of_Locking HowToLock);
-		EntityRecord* findEntityWithPrimKey(VJSObject objkey, BaseTaskInfo* context, VError& err, DB4D_Way_of_Locking HowToLock);
+		virtual EntityRecord* findEntityWithPrimKey(const VString& primkey, BaseTaskInfo* context, VError& err, DB4D_Way_of_Locking HowToLock) = 0;
+		virtual EntityRecord* findEntityWithPrimKey(const VectorOfVString& primkey, BaseTaskInfo* context, VError& err, DB4D_Way_of_Locking HowToLock) = 0;
+		virtual EntityRecord* findEntityWithPrimKey(const VValueBag& primkey, BaseTaskInfo* context, VError& err, DB4D_Way_of_Locking HowToLock) = 0;
+		virtual EntityRecord* findEntityWithPrimKey(const VectorOfVValue& primkey, BaseTaskInfo* context, VError& err, DB4D_Way_of_Locking HowToLock) = 0;
+		virtual EntityRecord* findEntityWithPrimKey(VJSObject objkey, BaseTaskInfo* context, VError& err, DB4D_Way_of_Locking HowToLock) = 0;
 
-		virtual CDB4DEntityRecord* FindEntityWithPrimKey(const VString& primkey, CDB4DBaseContext* inContext, VErrorDB4D& err, DB4D_Way_of_Locking HowToLock);
-
-		virtual CDB4DEntityRecord* FindEntityWithPrimKey(const VectorOfVString& primkey, CDB4DBaseContext* inContext, VErrorDB4D& err, DB4D_Way_of_Locking HowToLock);
-
-		virtual CDB4DEntityRecord* FindEntityWithPrimKey(const VValueBag& primkey, CDB4DBaseContext* inContext, VErrorDB4D& err, DB4D_Way_of_Locking HowToLock);
-
-		virtual CDB4DEntityRecord* FindEntityWithPrimKey(const VectorOfVValue& primkey, CDB4DBaseContext* inContext, VErrorDB4D& err, DB4D_Way_of_Locking HowToLock);
+		virtual EntityRecord* findEntityWithIdentifyingAtts(const VectorOfVString& idents, BaseTaskInfo* context, VError& err, DB4D_Way_of_Locking HowToLock) = 0;
+		virtual EntityRecord* findEntityWithIdentifyingAtts(const VValueBag& idents, BaseTaskInfo* context, VError& err, DB4D_Way_of_Locking HowToLock) = 0;
+		virtual EntityRecord* findEntityWithIdentifyingAtts(const VectorOfVValue& idents, BaseTaskInfo* context, VError& err, DB4D_Way_of_Locking HowToLock) = 0;
 
 
+		virtual CDB4DEntityRecord* FindEntityWithPrimKey(const XBOX::VString& primkey, CDB4DBaseContext* inContext, VErrorDB4D& err, DB4D_Way_of_Locking HowToLock);
+		virtual CDB4DEntityRecord* FindEntityWithPrimKey(const XBOX::VectorOfVString& primkey, CDB4DBaseContext* inContext, VErrorDB4D& err, DB4D_Way_of_Locking HowToLock);
+		virtual CDB4DEntityRecord* FindEntityWithPrimKey(const XBOX::VValueBag& primkey, CDB4DBaseContext* inContext, VErrorDB4D& err, DB4D_Way_of_Locking HowToLock);
+		virtual CDB4DEntityRecord* FindEntityWithPrimKey(const XBOX::VectorOfVValue& primkey, CDB4DBaseContext* inContext, VErrorDB4D& err, DB4D_Way_of_Locking HowToLock);
 
-		sLONG getEntityNumWithIdentifyingAtts(const VectorOfVString& idents, BaseTaskInfo* context, VError& err);
-		sLONG getEntityNumWithIdentifyingAtts(const VValueBag& idents, BaseTaskInfo* context, VError& err, bool ErrOnNull = true);
-		sLONG getEntityNumWithIdentifyingAtts(const VectorOfVValue& idents, BaseTaskInfo* context, VError& err);
-
-		EntityRecord* findEntityWithIdentifyingAtts(const VectorOfVString& idents, BaseTaskInfo* context, VError& err, DB4D_Way_of_Locking HowToLock);
-		EntityRecord* findEntityWithIdentifyingAtts(const VValueBag& idents, BaseTaskInfo* context, VError& err, DB4D_Way_of_Locking HowToLock);
-		EntityRecord* findEntityWithIdentifyingAtts(const VectorOfVValue& idents, BaseTaskInfo* context, VError& err, DB4D_Way_of_Locking HowToLock);
-
-		virtual CDB4DEntityRecord* FindEntityWithIdentifyingAtts(const VectorOfVString& idents, CDB4DBaseContext* inContext, VErrorDB4D& err, DB4D_Way_of_Locking HowToLock);
-
-		virtual CDB4DEntityRecord* FindEntityWithIdentifyingAtts(const VValueBag& idents, CDB4DBaseContext* inContext, VErrorDB4D& err, DB4D_Way_of_Locking HowToLock);
-
-		virtual CDB4DEntityRecord* FindEntityWithIdentifyingAtts(const VectorOfVValue& idents, CDB4DBaseContext* inContext, VErrorDB4D& err, DB4D_Way_of_Locking HowToLock);
-
-		bool MatchPrimKeyWithDataSource() const;
+		virtual CDB4DEntityRecord* FindEntityWithIdentifyingAtts(const XBOX::VectorOfVString& idents, CDB4DBaseContext* inContext, VErrorDB4D& err, DB4D_Way_of_Locking HowToLock);
+		virtual CDB4DEntityRecord* FindEntityWithIdentifyingAtts(const XBOX::VValueBag& idents, CDB4DBaseContext* inContext, VErrorDB4D& err, DB4D_Way_of_Locking HowToLock);
+		virtual CDB4DEntityRecord* FindEntityWithIdentifyingAtts(const XBOX::VectorOfVValue& idents, CDB4DBaseContext* inContext, VErrorDB4D& err, DB4D_Way_of_Locking HowToLock);
 
 		const VString& GetDefaultOrderBy() const
 		{
 			return fRestrictingOrderByString;
 		}
 
-		virtual Selection* query( const VString& inQuery, BaseTaskInfo* context, VErrorDB4D& err, const VValueSingle* param1 = nil, const VValueSingle* param2 = nil, const VValueSingle* param3 = nil);
-		virtual CDB4DSelection* Query( const VString& inQuery, CDB4DBaseContext* inContext, VErrorDB4D& err, const VValueSingle* param1 = nil, const VValueSingle* param2 = nil, const VValueSingle* param3 = nil);
-		virtual CDB4DEntityRecord* Find(const VString& inQuery, CDB4DBaseContext* inContext, VErrorDB4D& err, const VValueSingle* param1 = nil, const VValueSingle* param2 = nil, const VValueSingle* param3 = nil);
+		virtual CDB4DEntityCollection* Query( const XBOX::VString& inQuery, CDB4DBaseContext* inContext, VErrorDB4D& err, const XBOX::VValueSingle* param1 = nil, const XBOX::VValueSingle* param2 = nil, const XBOX::VValueSingle* param3 = nil);
+		virtual CDB4DEntityRecord* Find(const XBOX::VString& inQuery, CDB4DBaseContext* inContext, VErrorDB4D& err, const XBOX::VValueSingle* param1 = nil, const XBOX::VValueSingle* param2 = nil, const XBOX::VValueSingle* param3 = nil);
+
+		virtual EntityCollection* query( const VString& inQuery, BaseTaskInfo* context, VErrorDB4D& err, const VValueSingle* param1 = nil, const VValueSingle* param2 = nil, const VValueSingle* param3 = nil);
+		virtual EntityRecord* find(const VString& inQuery, BaseTaskInfo* inContext, VErrorDB4D& err, const VValueSingle* param1 = nil, const VValueSingle* param2 = nil, const VValueSingle* param3 = nil);
 
 		virtual VError SetPermission(DB4D_EM_Perm inPerm, const VUUID& inGroupID, bool forced);
 		virtual VError GetPermission(DB4D_EM_Perm inPerm, VUUID& outGroupID, bool& forced) const;
@@ -2027,23 +2082,27 @@ class EntityModel : public VComponentImp<CDB4DEntityModel>
 
 		EntityMethod* getMethod(const VString& inMethodName, bool publicOnly = false) const;
 
-		virtual CDB4DEntityMethod* GetMethod(const VString& inMethodName) const
+		virtual CDB4DEntityMethod* GetMethod(const XBOX::VString& inMethodName, bool publicOnly = false) const
 		{
-			return getMethod(inMethodName);
+			return getMethod(inMethodName, publicOnly);
 		}
 
-		VError callMethod(const VString& inMethodName, const VectorOfVString& params, VJSValue& result, CDB4DBaseContext* inContext, Selection* inSel = nil, EntityRecord* inRec = nil);
-		VError callMethod(const VString& inMethodName, const VString& jsonparams, VJSValue& result, CDB4DBaseContext* inContext, Selection* inSel = nil, EntityRecord* inRec = nil);
-		VError callMethod(const VString& inMethodName, const VValueBag& bagparams, VJSValue& result, CDB4DBaseContext* inContext, Selection* inSel = nil, EntityRecord* inRec = nil);
+		VError callMethod(const VString& inMethodName, const VectorOfVString& params, VJSValue& result, BaseTaskInfo* inContext, EntityCollection* inSel = nil, EntityRecord* inRec = nil);
+		VError callMethod(const VString& inMethodName, const VString& jsonparams, VJSValue& result, BaseTaskInfo* inContext, EntityCollection* inSel = nil, EntityRecord* inRec = nil);
+		VError callMethod(const VString& inMethodName, const VValueBag& bagparams, VJSValue& result, BaseTaskInfo* inContext, EntityCollection* inSel = nil, EntityRecord* inRec = nil);
+
+		virtual VJSValue call_Method(const VString& inMethodName,VJSArray& params, VJSObject& thisObj, BaseTaskInfo* context, JS4D::ContextRef jscontext, VError& err) = 0;
+
+		virtual VError SetAutoSequenceNumber(sLONG8 newnum, BaseTaskInfo* context) = 0;
 
 		inline const EntityAttributeCollection& getAllAttributes() const
 		{
 			return fAttributes;
 		}
 
-		VError compute(EntityAttributeSortedSelection& atts, Selection* sel, VJSObject& outObj, BaseTaskInfo* context, JS4D::ContextRef jscontext);
+		//virtual VError compute(EntityAttributeSortedSelection& atts, EntityCollection* sel, VJSObject& outObj, BaseTaskInfo* context, JS4D::ContextRef jscontext) = 0;
 
-		VError CallDBEvent(DBEventKind kind, BaseTaskInfo* context, Selection* *outSel) const;
+		VError CallDBEvent(DBEventKind kind, BaseTaskInfo* context, EntityCollection* *outSel) const;
 		VError CallDBEvent(DBEventKind kind, EntityRecord* inRec, BaseTaskInfo* context) const;
 		VError CallAttributesDBEvent(DBEventKind kind, EntityRecord* inRec, BaseTaskInfo* context) const;
 
@@ -2064,17 +2123,34 @@ class EntityModel : public VComponentImp<CDB4DEntityModel>
 			return fAllowOverrideStamp;
 		}
 
+		inline EntityModelCatalog* GetCatalog() const
+		{
+			return fCatalog;
+		}
+
+		virtual bool IsIndexed(const EntityAttribute* att) const = 0;
+		virtual bool IsFullTextIndexed(const EntityAttribute* att) const = 0;
+
+		virtual bool IsIndexable(const EntityAttribute* att) const = 0;
+		virtual bool IsFullTextIndexable(const EntityAttribute* att) const = 0;
+
+		VError BuildQueryString(SearchTab* querysearch, BaseTaskInfo* context, VString outQuery);
+
 	protected:
 		virtual ~EntityModel();
+
+
+		VError getQParams(VJSParms_callStaticFunction& ioParms, sLONG firstparam, QueryParamElementVector& outParams, SearchTab* inQuery);
+		VError FillQueryWithParams(SearchTab* query, VJSParms_callStaticFunction& ioParms, sLONG firstparam);
 
 		VString fName;
 		VString fCollectionName;
 		VString fExtends;
 		EntityModel* fBaseEm;
-		Table* fMainTable;
-		Base4D* fOwner;
+		EntityModelCatalog* fCatalog;
 		ListOfModels fDerivateds;
 		list<VString> fRemoveAttributes;
+		VUUID fDB4DUUID;
 		EntityAttributeCollection fAttributes;
 		EntityAttributeMap fAttributesByName;
 		EntityMethodMap fMethodsByName;
@@ -2095,8 +2171,9 @@ class EntityModel : public VComponentImp<CDB4DEntityModel>
 		sLONG fQueryLimit;
 		sLONG fDefaultTopSize;
 		EntityAttributeScope fScope;
-		bool fQueryApplyToEM, fAlreadyResolvedComputedAtts, fIsTableDef, fHasDeleteEvent, fOneAttributeHasDeleteEvent, 
-			fPublishAsGlobal, fPublishAsGlobalDefined, fWithRestriction, fAllowOverrideStamp;
+		bool fAlreadyResolvedComputedAtts, fHasDeleteEvent, fOneAttributeHasDeleteEvent, 
+			fPublishAsGlobal, fPublishAsGlobalDefined, fWithRestriction, fAllowOverrideStamp,
+			fNoEdit,fNoSave;
 		mutable uBYTE fMatchPrimKey;
 
 		/*
@@ -2112,39 +2189,28 @@ class EntityModel : public VComponentImp<CDB4DEntityModel>
 									// ---------------------------------------------
 
 class EntityRecord;
+class EntityCollection;
 
 
-class SubEntityCache
+class ENTITY_API SubEntityCache
 {
 	public:
 		inline SubEntityCache()
 		{
 			fSel = nil;
-			fRec = nil;
 			fErec = nil;
 			fAlreadyActivated = false;
 			fModel = nil;
 			fLockWay = DB4D_Do_Not_Lock;
 		}
 
-		inline void SetRecord(FicheInMem* rec)
-		{
-			fRec = rec;
-			fAlreadyActivated = true;
-		}
-
-		inline FicheInMem* GetRecord() const
-		{
-			return fRec;
-		}
-
-		inline void SetSel(Selection* sel)
+		inline void SetSel(EntityCollection* sel)
 		{
 			fSel = sel;
 			fAlreadyActivated = true;
 		}
 
-		inline Selection* GetSel() const
+		inline EntityCollection* GetSel() const
 		{
 			return fSel;
 		}
@@ -2173,12 +2239,20 @@ class SubEntityCache
 
 		void Clear();
 
-		EntityRecord* GetErec();
-			
+		inline EntityRecord* GetErec()
+		{
+			return fErec;
+		}
+
+		inline void SetErec(EntityRecord* erec)
+		{
+			fErec = erec;
+			fAlreadyActivated = true;
+		}
+
 
 	protected:
-		Selection* fSel;
-		FicheInMem* fRec;
+		EntityCollection* fSel;
 		EntityRecord* fErec;
 		EntityModel* fModel;
 		DB4D_Way_of_Locking fLockWay;
@@ -2192,20 +2266,20 @@ typedef vector<SubEntityCache> SubEntityCacheCollection;
 
 //typedef enum { eav_vvalue = 1, eav_subentity, eav_selOfSubentity } EntityAttributeValueKind;
 
-class EntityAttributeValue : public VComponentImp<CDB4DEntityAttributeValue>
+class ENTITY_API EntityAttributeValue : public CDB4DEntityAttributeValue
 {
 	public:
 		
 #if debuglr
-		virtual CComponent*	Retain (const char* DebugInfo = 0);
-		virtual void		Release (const char* DebugInfo = 0);
+		virtual	sLONG		Retain(const char* DebugInfo = 0) const;
+		virtual	sLONG		Release(const char* DebugInfo = 0) const;
 #endif
 
 		EntityAttributeValue(EntityRecord* owner, const EntityAttribute* attribute, EntityAttributeValueKind kind, VValueSingle* inVal, bool isowned = false);
 
 		EntityAttributeValue(EntityRecord* owner, const EntityAttribute* attribute, EntityAttributeValueKind kind, EntityRecord* erec, EntityModel* inSubModel);
 
-		EntityAttributeValue(EntityRecord* owner, const EntityAttribute* attribute, EntityAttributeValueKind kind, Selection* sel, EntityModel* inSubModel);
+		EntityAttributeValue(EntityRecord* owner, const EntityAttribute* attribute, EntityAttributeValueKind kind, EntityCollection* sel, EntityModel* inSubModel);
 
 
 		inline EntityAttributeValueKind GetKind() const
@@ -2239,21 +2313,26 @@ class EntityAttributeValue : public VComponentImp<CDB4DEntityAttributeValue>
 
 		VError setRelatedKey(const VectorOfVValue& key);
 
-		virtual CDB4DEntityRecord* GetRelatedEntity() const;
-
 		inline EntityModel* getRelatedEntityModel() const
 		{
 			return fSubModel;
 		}
+
+		inline EntityCollection* getRelatedSelection() const
+		{
+			return fSel;
+		}
+
+		virtual CDB4DEntityRecord* GetRelatedEntity() const;
 
 		virtual CDB4DEntityModel* GetRelatedEntityModel() const
 		{
 			return fSubModel;
 		}
 
-		inline Selection* getRelatedSelection() const
+		virtual CDB4DEntityCollection* GetRelatedSelection() const
 		{
-			return fSel;
+			return getRelatedSelection();
 		}
 
 		inline uLONG GetStamp() const
@@ -2267,8 +2346,6 @@ class EntityAttributeValue : public VComponentImp<CDB4DEntityAttributeValue>
 		{
 			fStamp = 0;
 		}
-
-		virtual CDB4DSelection* GetRelatedSelection() const;
 
 		inline bool CanBeModified() const
 		{
@@ -2323,6 +2400,11 @@ class EntityAttributeValue : public VComponentImp<CDB4DEntityAttributeValue>
 
 		EntityAttributeValue* Clone(EntityRecord* newOwner);
 
+		inline const EntityAttribute* GetAttribute() const
+		{
+			return fAttribute;
+		}
+
 
 	protected:
 
@@ -2337,7 +2419,6 @@ class EntityAttributeValue : public VComponentImp<CDB4DEntityAttributeValue>
 			fSubModel = nil;
 			fType = kind;
 			fIsValueOwned = false;
-			fCDB4DSel = nil;
 			fStamp = 0;
 			fCanBeModified = true;
 			fSubModificationStamp = 0;
@@ -2359,8 +2440,7 @@ class EntityAttributeValue : public VComponentImp<CDB4DEntityAttributeValue>
 		VValueSingle* fRelatedKey;
 		VJSObject fJSObject;
 		//void* fExtraData;
-		Selection* fSel;
-		mutable CDB4DSelection* fCDB4DSel;
+		EntityCollection* fSel;
 		EntityAttributeValueKind fType;
 		bool fIsValueOwned, fCanBeModified, fJSObjectIsValid, fSubEntityCanTryToReload;
 		uLONG fStamp, fSubModificationStamp;
@@ -2374,34 +2454,23 @@ typedef vector<EntityAttributeValue*> EntityAttributeValueCollection;
 
 
 
-class EntityRecord : public VComponentImp<CDB4DEntityRecord>
+class ENTITY_API EntityRecord : public CDB4DEntityRecord
 {
 	public:
 		
-#if debuglr
-		virtual CComponent*	Retain (const char* DebugInfo = 0);
-		virtual void		Release (const char* DebugInfo = 0);
-#endif
-
-		EntityRecord(EntityModel* inModel, FicheInMem* inMainRec, CDB4DBaseContext* inContext, DB4D_Way_of_Locking HowToLock);
-
+		EntityRecord(EntityModel* inModel, BaseTaskInfo* inContext);
 
 		inline EntityModel* GetOwner() const
 		{
 			return fModel;
 		}
 
-		virtual CDB4DEntityModel* GetModel() const
+		inline EntityModel* GetModel() const
 		{
 			return fModel;
 		}
 
-		inline FicheInMem* getRecord() const
-		{
-			return fMainRec;
-		}
-
-		virtual CDB4DRecord* GetRecord() const;
+		virtual void TouchAttribute(const EntityAttribute* att) = 0;
 
 		VError ThrowError( VError inErrCode, const VString* p1 = nil) const;
 
@@ -2409,23 +2478,26 @@ class EntityRecord : public VComponentImp<CDB4DEntityRecord>
 		bool SubEntityCacheNeedsActivation(sLONG inPathID);
 		void ClearSubEntityCache(sLONG inPathID);
 
+		virtual EntityAttributeValue* do_getAttributeValue(const EntityAttribute* inAttribute, VError& err, BaseTaskInfo* context, bool restrictValue = false) = 0;
+		virtual VError do_setAttributeValue(const EntityAttribute* inAttribute, const VValueSingle* inValue) = 0;
+		virtual EntityRecord* do_LoadRelatedEntity(const EntityAttribute* inAttribute, const EntityAttribute* relatedAttribute, BaseTaskInfo* context, VError& err, DB4D_Way_of_Locking HowToLock = DB4D_Do_Not_Lock);
+
+		EntityAttributeValue* getAttributeValue(const EntityAttribute* inAttribute, VError& err, BaseTaskInfo* context, bool restrictValue = false);
+
+		VError setAttributeValue(const EntityAttribute* inAttribute, const VValueSingle* inValue)
+		{
+			return do_setAttributeValue(inAttribute, inValue);
+		}
+
 		EntityAttributeValue* getAttributeValue(const VString& inAttributeName, VError& err, BaseTaskInfo* context, bool restrictValue = false);
 		EntityAttributeValue* getAttributeValue(sLONG pos, VError& err, BaseTaskInfo* context, bool restrictValue = false);
-		EntityAttributeValue* getAttributeValue(const EntityAttribute* inAttribute, VError& err, BaseTaskInfo* context, bool restrictValue = false);
 		EntityAttributeValue* getAttributeValue(const AttributePath& inAttPath, VError& err, BaseTaskInfo* context, bool restrictValue = false);
-
-		virtual CDB4DEntityAttributeValue* GetAttributeValue(const VString& inAttributeName, VError& err);
-
-		virtual CDB4DEntityAttributeValue* GetAttributeValue(sLONG pos, VError& err);
-
-		virtual CDB4DEntityAttributeValue* GetAttributeValue(const CDB4DEntityAttribute* inAttribute, VError& err);
 
 
 		bool equalAttributeValue(const VString& inAttributeName, const VValueSingle* inValue);
 		bool equalAttributeValue(const EntityAttribute* inAttribute, const VValueSingle* inValue);
 
 		VError setAttributeValue(const VString& inAttributeName, const VValueSingle* inValue);
-		VError setAttributeValue(const EntityAttribute* inAttribute, const VValueSingle* inValue);
 
 		VError setAttributeValue(const VString& inAttributeName, EntityRecord* inRelatedEntity);
 		VError setAttributeValue(const EntityAttribute* inAttribute, EntityRecord* inRelatedEntity);
@@ -2440,118 +2512,135 @@ class EntityRecord : public VComponentImp<CDB4DEntityRecord>
 		VError setAttributeValue(const VString& inAttributeName, const VJSObject& inJSObject);
 
 
-		virtual VError SetAttributeValue(const CDB4DEntityAttribute* inAttribute, const VValueSingle* inValue)
+		VError touchAttributeValue(const EntityAttribute* inAttribute);
+
+		virtual CDB4DEntityAttributeValue* GetAttributeValue(const XBOX::VString& inAttributeName, VErrorDB4D& err)
 		{
-			return setAttributeValue(VImpCreator<EntityAttribute>::GetImpObject(inAttribute), inValue);
+			return getAttributeValue(inAttributeName, err, fContext);
 		}
 
-		virtual VError SetAttributeValue(const VString& inAttributeName, const VValueSingle* inValue)
+		virtual CDB4DEntityAttributeValue* GetAttributeValue(const CDB4DEntityAttribute* inAttribute, VErrorDB4D& err)
+		{
+			return getAttributeValue(dynamic_cast<const EntityAttribute*>(inAttribute), err, fContext);
+		}
+
+		virtual VErrorDB4D SetAttributeValue(const CDB4DEntityAttribute* inAttribute, const XBOX::VValueSingle* inValue)
+		{
+			return setAttributeValue(dynamic_cast<const EntityAttribute*>(inAttribute), inValue);
+		}
+
+		virtual VErrorDB4D SetAttributeValue(const XBOX::VString& inAttributeName, const XBOX::VValueSingle* inValue)
 		{
 			return setAttributeValue(inAttributeName, inValue);
 		}
 
-
-		virtual VError SetAttributeValue(const CDB4DEntityAttribute* inAttribute, CDB4DEntityRecord* inRelatedEntity)
+		virtual VErrorDB4D SetAttributeValue(const CDB4DEntityAttribute* inAttribute, CDB4DEntityRecord* inRelatedEntity)
 		{
-			return setAttributeValue(VImpCreator<EntityAttribute>::GetImpObject(inAttribute), VImpCreator<EntityRecord>::GetImpObject(inRelatedEntity));
+			return setAttributeValue(dynamic_cast<const EntityAttribute*>(inAttribute), inRelatedEntity == nil ? nil : dynamic_cast<EntityRecord*>(inRelatedEntity));
 		}
 
-		virtual VError SetAttributeValue(const VString& inAttributeName, CDB4DEntityRecord* inRelatedEntity)
+		virtual VErrorDB4D SetAttributeValue(const XBOX::VString& inAttributeName, CDB4DEntityRecord* inRelatedEntity)
 		{
-			return setAttributeValue(inAttributeName, VImpCreator<EntityRecord>::GetImpObject(inRelatedEntity));
+			return setAttributeValue(inAttributeName, inRelatedEntity == nil ? nil : dynamic_cast<EntityRecord*>(inRelatedEntity));
 		}
 
-
-		virtual VError SetAttributeValue(const CDB4DEntityAttribute* inAttribute, const VectorOfVValue* inValues)
+		virtual VErrorDB4D SetAttributeValue(const CDB4DEntityAttribute* inAttribute, const XBOX::VectorOfVValue* inValues)
 		{
-			return setAttributeValue(VImpCreator<EntityAttribute>::GetImpObject(inAttribute), *inValues);
+			return setAttributeValue(dynamic_cast<const EntityAttribute*>(inAttribute), inValues);
 		}
 
-		virtual VError SetAttributeValue(const VString& inAttributeName, const VectorOfVValue* inValues)
+		virtual VErrorDB4D SetAttributeValue(const XBOX::VString& inAttributeName, const XBOX::VectorOfVValue* inValues)
 		{
-			return setAttributeValue(inAttributeName, *inValues);
+			return setAttributeValue(inAttributeName, inValues);
 		}
 
-
-		VError SetAttributeValue(const CDB4DEntityAttribute* inAttribute, const VString& inJsonValue)
+		virtual VErrorDB4D SetAttributeValue(const CDB4DEntityAttribute* inAttribute, const XBOX::VString& inJsonValue)
 		{
-			return setAttributeValue(VImpCreator<EntityAttribute>::GetImpObject(inAttribute), inJsonValue);
+			return setAttributeValue(dynamic_cast<const EntityAttribute*>(inAttribute), inJsonValue);
 		}
 
-		VError SetAttributeValue(const VString& inAttributeName, const VString& inJsonValue)
+		virtual VErrorDB4D SetAttributeValue(const XBOX::VString& inAttributeName, const XBOX::VString& inJsonValue)
 		{
 			return setAttributeValue(inAttributeName, inJsonValue);
 		}
 
-		VError SetAttributeValue(const CDB4DEntityAttribute* inAttribute, const VJSObject& inJSObject)
+		virtual VErrorDB4D SetAttributeValue(const CDB4DEntityAttribute* inAttribute, const XBOX::VJSObject& inJSObject)
 		{
-			return setAttributeValue(VImpCreator<EntityAttribute>::GetImpObject(inAttribute), inJSObject);
+			return setAttributeValue(dynamic_cast<const EntityAttribute*>(inAttribute), inJSObject);
 		}
 
-		VError SetAttributeValue(const VString& inAttributeName, const VJSObject& inJSObject)
+		virtual VErrorDB4D SetAttributeValue(const XBOX::VString& inAttributeName, const XBOX::VJSObject& inJSObject)
 		{
 			return setAttributeValue(inAttributeName, inJSObject);
 		}
 
-
-		VError touchAttributeValue(const EntityAttribute* inAttribute);
-
-		virtual VError TouchAttributeValue(const CDB4DEntityAttribute* inAttribute)
+		virtual VErrorDB4D TouchAttributeValue(const CDB4DEntityAttribute* inAttribute)
 		{
-			return touchAttributeValue(VImpCreator<EntityAttribute>::GetImpObject(inAttribute));
+			return touchAttributeValue(dynamic_cast<const EntityAttribute*>(inAttribute));
+		}
+
+		virtual VErrorDB4D resetAttributeValue(const EntityAttribute* inAttribute);
+
+		virtual VErrorDB4D ResetAttributeValue(const CDB4DEntityAttribute* inAttribute)
+		{
+			return resetAttributeValue(dynamic_cast<const EntityAttribute*>(inAttribute));
+		}
+
+		VErrorDB4D resetAttributeValue(const VString& inAttributeName);
+
+		virtual VErrorDB4D ResetAttributeValue(const VString& inAttributeName)
+		{
+			return resetAttributeValue(inAttributeName);
 		}
 
 
-		virtual sLONG GetNum() const
-		{
-			if (fMainRec == nil)
-				return -1;
-			else
-				return fMainRec->GetNum();
-		}
+		virtual bool ContainsBlobData(const EntityAttribute* inAttribute, BaseTaskInfo* context) = 0;
 
-		virtual sLONG GetModificationStamp() const
-		{
-			if (fMainRec == nil)
-				return 0;
-			else
-				return fMainRec->GetModificationStamp();
-		}
+		virtual VError Save(Transaction* *trans, BaseTaskInfo* context, uLONG stamp, bool allowOverrideStamp = false) = 0;
+		virtual VErrorDB4D Save(uLONG stamp, bool allowOverrideStamp = false) = 0;
 
-		bool ContainsBlobData(const EntityAttribute* inAttribute, BaseTaskInfo* context);
-
-		VError Save(Transaction* *trans, BaseTaskInfo* context, uLONG stamp, bool allowOverrideStamp = false);
-		virtual VErrorDB4D Save(uLONG stamp, bool allowOverrideStamp = false);
-
-		VError Validate(BaseTaskInfo* context);
-		virtual VErrorDB4D Validate();
+		virtual VErrorDB4D Validate() = 0;
 		
-		virtual Boolean IsNew() const;
-		virtual Boolean IsProtected() const;
-		virtual Boolean IsModified() const;
+		virtual Boolean IsNew() const = 0;
+		virtual Boolean IsProtected() const = 0;
+		virtual Boolean IsModified() const = 0;
 		
-		virtual void GetTimeStamp(VTime& outValue);
+		virtual void GetTimeStamp(VTime& outValue) = 0;
 		
-		virtual VErrorDB4D Drop();
+		virtual VErrorDB4D Drop() = 0;
 
-		FicheInMem* GetRecordForAttribute(const EntityAttribute* inAttribute);
+		virtual uLONG GetStamp() const = 0;
+		virtual sLONG GetModificationStamp() const = 0;
 
-		inline uLONG GetStamp() const
-		{
-			return fStamp;
-		}
+		virtual VError Reload();
+		virtual VError do_Reload() = 0;
 
-		inline void Touch(BaseTaskInfo* context)
-		{
-			fStamp++;
-			CallDBEvent(dbev_set, context);
-		}
+		virtual void Touch(BaseTaskInfo* context) = 0;
 
 		void GetPrimKeyValue(VJSObject& outObj);
 		void GetPrimKeyValue(VValueBag& outBagKey);
 		void GetPrimKeyValue(VString& outKey, bool autoQuotes);
+		void GetPrimKeyValue(VectorOfVValue& outPrimkey);
 
-		virtual void GetPrimKeyValue(VectorOfVValue& outPrimkey);
+		virtual bool do_GetPrimKeyValueAsObject(VJSObject& outObj)
+		{
+			return false;
+		}
+
+		virtual bool do_GetPrimKeyValueAsBag(VValueBag& outBagKey)
+		{
+			return false;
+		}
+
+		virtual bool do_GetPrimKeyValueAsString(VString& outKey, bool autoQuotes)
+		{
+			return false;
+		}
+
+		virtual bool do_GetPrimKeyValueAsVValues(VectorOfVValue& outPrimkey)
+		{
+			return false;
+		}
 
 		VError setIdentifyingAtts(const VectorOfVValue& idents);
 		VError setPrimKey(const VectorOfVValue& primkey);
@@ -2568,17 +2657,14 @@ class EntityRecord : public VComponentImp<CDB4DEntityRecord>
 			return SetPrimKey(primkey);
 		}
 
-		virtual CDB4DBaseContext* GetContext()
-		{
-			return fContext;
-		}
-
 		BaseTaskInfo* getContext();
 
+		virtual CDB4DBaseContext* GetContext();
+		
 		//virtual void ReleaseExtraDatas();
 
-		VValueSingle* getFieldValue(Field* cri, VError& err);
-		VError setFieldValue(Field* cri, const VValueSingle* inValue);
+		//VValueSingle* getFieldValue(Field* cri, VError& err);
+		//VError setFieldValue(Field* cri, const VValueSingle* inValue);
 
 		VError ConvertToJSObject(VJSObject& outObj, EntityAttributeSortedSelection& whichAttributes, EntityAttributeSelection* expandAttributes, 
 			EntityAttributeSortedSelection* sortingAttributes, bool withKey, bool allowEmptyAttList);
@@ -2605,33 +2691,43 @@ class EntityRecord : public VComponentImp<CDB4DEntityRecord>
 
 		void ReleaseCallEvent(DBEventKind kind);
 
+		virtual VError SetForeignKey(const EntityAttribute* att, EntityRecord* relatedEntity, const VValueSingle* inForeignKey) = 0;
+
+		VError GetModifiedAttributes(EntityAttributeCollection& outatts);
+
+	
+#if debuglr
+		virtual	sLONG		Retain(const char* DebugInfo = 0) const;
+		virtual	sLONG		Release(const char* DebugInfo = 0) const;
+#endif
+
 
 	protected:
 
 		virtual ~EntityRecord();
 
 		EntityModel* fModel;
-		FicheInMem* fMainRec;
-		mutable CDB4DRecord* fCDB4DMainRec;
-		CDB4DBaseContext* fContext;
+		BaseTaskInfo* fContext;
 		SubEntityCacheCollection fSubEntitiesCache;  // a mettre en parallele avec EntityModel.fRelationPaths
 		EntityAttributeValueCollection fValues;
-		uLONG fModificationStamp, fStamp;
 		DB4D_Way_of_Locking fWayOfLock;
 		uBYTE fAlreadyCallEvent[dbev_lastEvent+1];
 		bool fAlreadySaving, fAlreadyDeleting;
 };
 
 
+/*
 VError SelToJSObject(BaseTaskInfo* context, VJSArray& outArr, EntityModel* em, Selection* inSel, EntityAttributeSortedSelection& whichAttributes, EntityAttributeSelection* expandAttributes, 
 					 EntityAttributeSortedSelection* sortingAttributes, bool withKey, bool allowEmptyAttList, sLONG from, sLONG count);
 
 VError SelToJSObject(BaseTaskInfo* context, VJSArray& outArr, EntityModel* em, Selection* inSel, const VString& inAttributeList , bool withKey, bool allowEmptyAttList, sLONG from, sLONG count);
-
+*/
 
 
 // ----------------------------------------------------------------------------------------------------------------------------------
 
+const sLONG kRemoteCatalogFactory = 1;
+const sLONG kSQLCatalogFactory = 2;
 
 
 typedef map<VString, EntityModel*, CompareLessVStringStrict> EntityModelMap;
@@ -2641,8 +2737,12 @@ typedef map<VString, EmEnum*> EmEnumMap;
 
 class Base4D;
 
+class EntityModelCatalog;
 
-class EntityModelCatalog : public IRefCountable
+typedef EntityModelCatalog* (*ModelCatalogFactory)(Base4D* inOwner, VJSONObject* inParams, VError& outErr);
+typedef map<sLONG, ModelCatalogFactory> ModelCatalogFactoryMap;
+
+class ENTITY_API EntityModelCatalog : public IDebugRefCountable
 {
 
 	public:
@@ -2660,6 +2760,7 @@ class EntityModelCatalog : public IRefCountable
 			fPublishDataClassesAsGlobals = false;
 			fPublishDataClassesAsGlobalsDefined = false;
 			fill(&fForced[DB4D_EM_None_Perm], &fForced[DB4D_EM_Promote_Perm+1], 0);
+			fJsonFormat = true;
 		}
 
 		Base4D* GetOwner()
@@ -2676,6 +2777,20 @@ class EntityModelCatalog : public IRefCountable
 		void DisposeEntityRelations();
 		void DisposeEntityTypes();
 		void DisposeEnumerations();
+
+		virtual EntityModel* NewModel() = 0;
+
+		virtual VError do_LoadEntityModels(const VValueBag& bagEntities, bool devMode, unordered_map_VString<VRefPtr<VFile> >* outIncludedFiles, BaseTaskInfo* context)
+		{
+			return VE_OK;
+		}
+
+		virtual VError do_SecondPassLoadEntityModels()
+		{
+			return VE_OK;
+		}
+
+		VError SecondPassLoadEntityModels();
 
 		VError LoadEntityModels(const VValueBag& bagEntities, bool devMode, unordered_map_VString<VRefPtr<VFile> >* outIncludedFiles = nil);
 		VError LoadEntityModels(const VFile& inFile, bool inXML = true, bool devMode = false, const VString* inXmlContent = nil, unordered_map_VString<VRefPtr<VFile> >* outIncludedFiles = nil);
@@ -2707,7 +2822,9 @@ class EntityModelCatalog : public IRefCountable
 			return (sLONG)fEntityModels.size();
 		}
 
-		VError GetAllEntityModels(vector<CDB4DEntityModel*>& outList, CDB4DBaseContext* context) const;
+		VError GetAllEntityModels(vector<CDB4DEntityModel*>& outList) const;
+		VError GetAllEntityModels(vector<EntityModel*>& outList) const;
+		VError RetainAllEntityModels(vector<VRefPtr<EntityModel> >& outList) const;
 
 		VError LoadEntityPermissions(const VValueBag& bagEntities, CUAGDirectory* inDirectory, bool devMode);
 		VError LoadEntityPermissions(const VFile& inFile, CUAGDirectory* inDirectory, bool inXML = true, bool devMode = false);
@@ -2790,6 +2907,14 @@ class EntityModelCatalog : public IRefCountable
 			return fPublishDataClassesAsGlobals;
 		}
 
+		VError ResolveRelatedEntities(BaseTaskInfo* context);
+
+		static ModelCatalogFactoryMap sModelFactories;
+		static void RegisterFactory(sLONG signature, ModelCatalogFactory code);
+		static ModelCatalogFactory GetFactory(sLONG signature);
+		static EntityModelCatalog* NewCatalog(sLONG signature, Base4D* inOwner, VJSONObject* params, VError& outErr);
+
+
 	protected:
 
 		virtual ~EntityModelCatalog()
@@ -2816,13 +2941,113 @@ class EntityModelCatalog : public IRefCountable
 		mutable VCriticalSection fEntityModelMutex;
 		mutable VJSContext* fLoadingContext;
 		mutable VJSObject* fLoadingGlobalObject;
-		bool fMustTouchXML, fSomeErrorsInCatalog, fParseUserDefined, fPublishDataClassesAsGlobals, fPublishDataClassesAsGlobalsDefined;
+		bool fMustTouchXML, fSomeErrorsInCatalog, fParseUserDefined, fPublishDataClassesAsGlobals, fPublishDataClassesAsGlobalsDefined, fJsonFormat;
 		sLONG fParseLineError;
 		VString fParseMessageError;
 		VFile* fParseFileError;
 		VUUID fPerms[DB4D_EM_Promote_Perm+1];
 		uBYTE fForced[DB4D_EM_Promote_Perm+1];
 
+};
+
+
+
+						// ---------------------------------------------------------------------------- 
+
+
+
+class ENTITY_API DataSet : public IDebugRefCountable
+{
+public:
+
+	DataSet(EntityModel* inModel, EntityCollection* inSel, uLONG timeout = 0)
+	{
+		fModel = RetainRefCountable(inModel);
+		fSel = RetainRefCountable(inSel);
+		fTimeout = timeout;
+		fID.Regenerate();
+		fStartingTime = VSystem::GetCurrentTime();
+	}
+
+	inline void SetID(const VUUID& xid)
+	{
+		fID = xid;
+	}
+
+	inline VUUID& GetID()
+	{
+		return fID;
+	}
+
+	inline const VUUID& GetID() const
+	{
+		return fID;
+	}
+
+	inline EntityCollection* GetSel() const
+	{
+		return fSel;
+	}
+
+	inline EntityModel* GetModel() const
+	{
+		return fModel;
+	}
+
+	inline void ResetTimer(uLONG curtime)
+	{
+		fStartingTime = curtime;
+	}
+
+	inline bool Expired(uLONG curtime) const
+	{
+		if (fTimeout == 0)
+			return false;
+		else
+		{
+			uLONG delay;
+			if (curtime > fStartingTime)
+				delay = curtime - fStartingTime;
+			else
+				delay = fStartingTime - curtime;
+			return delay > fTimeout;
+		}
+	}
+
+	inline uLONG GetExpirationTime() const
+	{
+		return fStartingTime + fTimeout;
+	}
+
+	void GetInfo(VValueBag& outBag)
+	{
+		VString tablename;
+		tablename = fModel->GetName();
+		outBag.SetVUUID(L"id", fID);
+		outBag.SetString(L"dataClass", tablename);
+		outBag.SetLong("selectionSize", fSel->GetLength((BaseTaskInfo*)nil));
+		bool sorted = fSel->IsSorted();
+		outBag.SetBool(L"sorted", sorted);
+		uLONG depart = VSystem::GetCurrentTime()-fStartingTime;
+		VTime ts;
+		ts.FromSystemTime();
+		VDuration sdur(depart);
+		ts.Substract(sdur);
+		outBag.SetTime(L"refreshed", ts);
+		VDuration dur(fTimeout);
+		ts.Add(dur);
+		outBag.SetTime(L"expires", ts);
+	}
+
+
+protected:
+	virtual ~DataSet();
+
+	EntityCollection* fSel;
+	EntityModel* fModel;
+	VUUID fID;
+	uLONG fTimeout;
+	uLONG fStartingTime;
 };
 
 

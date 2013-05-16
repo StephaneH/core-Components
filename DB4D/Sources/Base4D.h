@@ -200,6 +200,12 @@ class StructElemDef : public ObjCacheInTree
 };
 
 
+class LocalEntityModelCatalog;
+class EntityModel;
+class EntityModelCatalog;
+
+
+
 class StructElemDefTreeInMem : public TreeInMem
 {
 public:
@@ -212,6 +218,8 @@ protected:
 typedef vector<VRefPtr<IndexInfo> > IndexRefCollection;
 
 typedef map<pair<sLONG, sLONG>, JoinPath> CachedRelationPathCollection;
+
+typedef vector<EntityModelCatalog*> EntityModelCatalogCollection;
 
 class StructElemDefTreeInMemHeader : public TreeInMemHeader
 {
@@ -234,9 +242,6 @@ typedef map<VString, sLONG, less<VString>, cache_allocator<pair<const VString, s
 
 typedef map<uLONG8, BaseTaskInfo*> ContextMap;
 
-class EntityModel;
-class EntityModelCatalog;
-
 
 
 class logEntryRef
@@ -249,6 +254,7 @@ public:
 
 typedef vector<logEntryRef> logEntryRefVector;
 
+class IBackupSettings;
 
 class Base4D : public ObjCache, public IBaggable
 {
@@ -269,6 +275,21 @@ public:
 		IRefCountable::DoOnRefCountZero();
 		ObjCacheInTree::EnsableCheck();
 	}
+#endif
+
+#if debugLeaksAll
+	virtual bool OKToTrackDebug() const
+	{
+		return true;
+	}
+
+	virtual void GetDebugInfo(VString& outText) const
+	{
+		VString s;
+		GetName(s);
+		outText = "base4D : "+s;
+	}
+
 #endif
 
 	inline void GetUUID(VUUID& outID) const { outID = fID; };
@@ -325,6 +346,11 @@ public:
 	VError PutIndexDefIntoBag(VValueBag& ioBag) const;
 	//VError LoadIndicesFromBag(const VValueBag* inBag);
 
+	void SetRetainedBackupSettings(IBackupSettings* inSettings);
+
+	const IBackupSettings* RetainBackupSettings()const;
+	
+
 		// from IBaggable
 	virtual VError	LoadFromBag( const VValueBag& inBag, VBagLoader *inLoader);
 	virtual VError	SaveToBag( VValueBag& ioBag, VString& outKind) const;
@@ -339,16 +365,19 @@ public:
 	VError LoadTable( const VValueBag& inBag, VBagLoader *inLoader, CDB4DBaseContext* inContext);
 	VError LoadAllTableDefs();
 	VError	CreateTable( const VValueBag& inBag, VBagLoader *inLoader, Table **outTable, CDB4DBaseContext* inContext, Boolean inGenerateName);
-	VError	AddTable( Table *inTable, bool inWithNamesCheck, CDB4DBaseContext* inContext, bool inKeepUUID = false, bool inGenerateName = false, bool BuildDataTable = true, sLONG inPos = 0, bool cantouch = true);
+	VError	AddTable( Table *inTable, bool inWithNamesCheck, CDB4DBaseContext* inContext, bool inKeepUUID = false, bool inGenerateName = false, bool BuildDataTable = true, sLONG inPos = 0, bool cantouch = true, const VUUID *inID = nil);
 	VError	GetNameForNewTable( VString& outName) const;
 
 	void ReleaseAllTables();
 	void ClearAllTableDependencies();
+
+	Table* FindOrCreateTableRef(const VString& tablename, VError& err, const VUUID& xid);
 	
 	//VError CreDataFile(Table* crit, Boolean atTheEnd = true);
 
 	DataTable* CreateDataTable(Table* Associate, VError& err, sLONG prefseg = 0, DataTableDISK* dejaDFD = nil, sLONG dejapos = -1);
-	
+	DataTable* FindDataTableWithTableUUID(const VUUID& inTableID);
+
 	//sLONG AddTable( const VString& name, const CritereDISK* from, sLONG nbcrit, CDB4DBaseContext* inContext, bool cantouch);
 
 	VError writelong(void* p, sLONG len, DataAddr4D ou, sLONG offset, VString* WhereFrom = nil, sLONG TrueLen = 0);
@@ -926,13 +955,14 @@ public:
 	VError ExportToSQL(BaseTaskInfo* context, VFolder* inBaseFolder, VProgressIndicator* inProgress, ExportOption& options);
 	VError ImportRecords(BaseTaskInfo* context, VFolder* inBaseFolder, VProgressIndicator* inProgress, ExportOption& options);
 
-	VError BuildAutoModelCatalog();
+	VError BuildAutoModelCatalog(BaseTaskInfo* context);
 	void InvalidateAutoCatalog();
 
 	VError LoadEntityModels(const VFile* inFile = nil, bool devMode = false, const VString* inXmlContent = nil, unordered_map_VString<VRefPtr<VFile> >* outIncludedFiles = nil, CUAGDirectory* inDirectory = nil, const VFile* inPermissions = nil);
 	VError ReLoadEntityModels(const VFile* inFile = nil);
+	VError SecondPassLoadEntityModels();
 
-	VError SetEntityCatalog(EntityModelCatalog* newcat);
+	VError SetEntityCatalog(LocalEntityModelCatalog* newcat);
 
 	VError SaveEntityModels(bool alternateName = false);
 
@@ -942,11 +972,12 @@ public:
 
 	EntityModel* RetainEntityModelByCollectionName(const VString& entityName) const;
 
-	sLONG CountEntityModels(bool onlyRealOnes) const;
+	//sLONG CountEntityModels(bool onlyRealOnes) const;
 
 	VError GetAllEntityModels(vector<CDB4DEntityModel*>& outList, CDB4DBaseContext* context, bool onlyRealOnes) const;
 
 	VError RetainAllEntityModels(vector<CDB4DEntityModel*>& outList, CDB4DBaseContext* context, bool withTables, bool onlyRealOnes) const;
+	VError RetainAllEntityModels(vector<VRefPtr<EntityModel> >& outList, bool onlyRealOnes) const;
 
 	EntityModelCatalog* GetGoodEntityCatalog(bool onlyRealOnes) const;
 
@@ -1007,6 +1038,8 @@ public:
 
 	VError GetListOfDeadTables(vector<VString>& outTableNames, vector<VUUID>& outTableIDs, CDB4DBaseContext* inContext);
 
+	VError BuildTablesFromDataTables();
+
 	VError SaveDataTablesToStructTablesMatching();
 	bool ExistDataTablesToStructTablesMatching();
 
@@ -1028,6 +1061,15 @@ public:
 	}
 
 	VError CompactInto(VFile* destData, IDB4D_DataToolsIntf* inDataToolLog, bool KeepRecordNumbers);
+
+	VError ReleaseOutsideCatalogs();
+	VError AddOutsideCatalog(EntityModelCatalog* catalog);
+	VError RemoveOutsideCatalog(EntityModelCatalog* catalog);
+
+	VError AddOutsideCatalog(const VValueBag* catref);
+	VError AddOutsideSQLCatalog(const VValueBag* catref);
+
+	VError _fixForWakandaV4();
 
 #if debug_Addr_Overlap
 	void SetDBObjRef(DataAddr4D addr, sLONG len, debug_dbobjref* dbobjref, bool checkConflict = false);
@@ -1191,6 +1233,12 @@ protected:
 	TableOfSchemas* fTableOfSchemas;
 	DataTableOfSchemas* fDataTableOfSchemas;
 
+	TableOfViews			*fTableOfViews;
+	DataTableOfViews		*fDataTableOfViews;
+
+	TableOfViewFields		*fTableOfViewFields;
+	DataTableOfViewFields	*fDataTableOfViewFields;
+
 	VSyncEvent* fCloseSyncEvent;
 
 	Boolean fIndexClusterInvalid, fMustRebuildAllIndex, fNeedRebuildDataTableHeader, fNeedToLoadOldRelations, fNeedToConvertIndexes;
@@ -1221,8 +1269,9 @@ protected:
 	sLONG fSchemasCatalogStamp;
 	mutable VCriticalSection fSchemaMutex;
 
-	EntityModelCatalog* fEntityCatalog;
-	EntityModelCatalog* fAutoEntityCatalog;
+	EntityModelCatalogCollection fOutsideCatalogs;
+	LocalEntityModelCatalog* fEntityCatalog;
+	LocalEntityModelCatalog* fAutoEntityCatalog;
 	mutable VCriticalSection fEntityCatalogMutex;
 //	mutable VCriticalSection fAutoEntityCatalogMutex;
 	SynchroBaseHelper* fSyncHelper;
@@ -1249,6 +1298,8 @@ protected:
 #if debuglog
 	VFile* fDebugLog;
 #endif
+
+	IBackupSettings*	fBackupSettings;
 };
 
 
@@ -1666,9 +1717,3 @@ class Base4DRemote
 
 
 #endif
-
-
-
-
-
-

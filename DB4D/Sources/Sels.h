@@ -86,9 +86,34 @@ public:
 	inline TypeSortElem<Type>& operator =( const TypeSortElem<Type>& other) { recnum = other.recnum; value = other.value; return *this;};
 	inline bool operator <( const TypeSortElem<Type>& other) const { return value < other.value;};
 
+	inline void GetString(VString& s)
+	{
+		s.Clear();
+	}
+
 	sLONG recnum;
 	Type value;
 };
+
+
+template <>
+inline void TypeSortElem<uLONG8>::GetString(VString& s)
+{
+	s = "U8  "+ToString(value);
+}
+
+template <>
+inline void TypeSortElem<sLONG8>::GetString(VString& s)
+{
+	s = "S8  "+ToString(value);
+}
+
+
+template <>
+inline void TypeSortElem<sLONG>::GetString(VString& s)
+{
+	s = "S  "+ToString(value);
+}
 
 
 #if COMPIL_GCC
@@ -480,8 +505,10 @@ class IRequestReply;
 
 class FieldsForCache;
 
+class db4dEntityAttribute;
 class EntityAttributeSortedSelection;
 class EntityModel;
+class LocalEntityModel;
 class WafSelection;
 
 class Selection : public ObjInCacheMem, public IObjToFlush, public IChainable<Selection>
@@ -555,7 +582,7 @@ class Selection : public ObjInCacheMem, public IObjToFlush, public IChainable<Se
 		Selection* SortSel(VError& err, SortTab* tabs, BaseTaskInfo* context, VDB4DProgressIndicator* InProgress = nil, Boolean TestUnicite = false, 
 								Table* remoteTable = nil, WafSelection* inWafSel = nil, WafSelection* outWafSel = nil);
 
-		Selection* SortSel(VError& err, EntityModel* em, EntityAttributeSortedSelection* sortingAtt, BaseTaskInfo* context, 
+		Selection* SortSel(VError& err, LocalEntityModel* em, EntityAttributeSortedSelection* sortingAtt, BaseTaskInfo* context, 
 								VDB4DProgressIndicator* InProgress = nil, WafSelection* inWafSel = nil, WafSelection* outWafSel = nil);
 
 		virtual Boolean LockRecords(BaseTaskInfo* context = nil) = 0;
@@ -569,13 +596,15 @@ class Selection : public ObjInCacheMem, public IObjToFlush, public IChainable<Se
 		virtual void Touch() { fModificationCounter++; };
 		inline void SetModificationCounter(uLONG x) { fModificationCounter = x; };
 
-		virtual VError DeleteRecords(BaseTaskInfo* context, Bittab* NotDeletedOnes = nil, Relation* RefIntRel = nil, VDB4DProgressIndicator* InProgress = nil, Table* inRemoteTable = nil, EntityModel* inModel = nil);
+		virtual VError DeleteRecords(BaseTaskInfo* context, Bittab* NotDeletedOnes = nil, Relation* RefIntRel = nil, VDB4DProgressIndicator* InProgress = nil, Table* inRemoteTable = nil);
 
 		virtual VError GetDistinctValues(Field* cri, DB4DCollectionManager& outCollection, BaseTaskInfo* context, 
 											VDB4DProgressIndicator* InProgress, const VCompareOptions& inOptions);
 
-		virtual VError GetDistinctValues(EntityAttribute* att, DB4DCollectionManager& outCollection, BaseTaskInfo* context, 
+		
+		virtual VError GetDistinctValues(db4dEntityAttribute* att, DB4DCollectionManager& outCollection, BaseTaskInfo* context, 
 											VDB4DProgressIndicator* InProgress, const VCompareOptions& inOptions);
+											
 
 		virtual VError QuickGetDistinctValues(Field* cri, QuickDB4DArrayOfValues *outCollection, BaseTaskInfo* context, 
 											VDB4DProgressIndicator* InProgress, const VCompareOptions& inOptions);
@@ -783,37 +812,37 @@ class Selection : public ObjInCacheMem, public IObjToFlush, public IChainable<Se
 											   VDB4DProgressIndicator* InProgress, sLONG typ, const VCompareOptions& inOptions);
 
 
-		Boolean TryToFastGetDistinctValues(VError& err, EntityAttribute* att, DB4DCollectionManager& outCollection, BaseTaskInfo* context, 
+		Boolean TryToFastGetDistinctValues(VError& err, db4dEntityAttribute* att, DB4DCollectionManager& outCollection, BaseTaskInfo* context, 
 			VDB4DProgressIndicator* InProgress, const VCompareOptions& inOptions);
 
-		Boolean TryToFastGetDistinctValuesAlpha(VError& err, EntityAttribute* att, DB4DCollectionManager& outCollection, BaseTaskInfo* context, 
+		Boolean TryToFastGetDistinctValuesAlpha(VError& err, db4dEntityAttribute* att, DB4DCollectionManager& outCollection, BaseTaskInfo* context, 
 			VDB4DProgressIndicator* InProgress, sLONG typ, const VCompareOptions& inOptions);
 
-		Boolean TryToFastGetDistinctValuesAlphaUTF8(VError& err, EntityAttribute* att, DB4DCollectionManager& outCollection, BaseTaskInfo* context, 
+		Boolean TryToFastGetDistinctValuesAlphaUTF8(VError& err, db4dEntityAttribute* att, DB4DCollectionManager& outCollection, BaseTaskInfo* context, 
 			VDB4DProgressIndicator* InProgress, sLONG typ, const VCompareOptions& inOptions);
 
-		Boolean TryToFastGetDistinctValuesTime(VError& err, EntityAttribute* att, DB4DCollectionManager& outCollection, BaseTaskInfo* context, 
+		Boolean TryToFastGetDistinctValuesTime(VError& err, db4dEntityAttribute* att, DB4DCollectionManager& outCollection, BaseTaskInfo* context, 
 			VDB4DProgressIndicator* InProgress, sLONG typ, const VCompareOptions& inOptions);
 
-		Boolean TryToFastGetDistinctValuesLong8(VError& err, EntityAttribute* att, DB4DCollectionManager& outCollection, BaseTaskInfo* context, 
+		Boolean TryToFastGetDistinctValuesLong8(VError& err, db4dEntityAttribute* att, DB4DCollectionManager& outCollection, BaseTaskInfo* context, 
 			VDB4DProgressIndicator* InProgress, sLONG typ, const VCompareOptions& inOptions);
 
-		Boolean TryToFastGetDistinctValuesLong(VError& err, EntityAttribute* att, DB4DCollectionManager& outCollection, BaseTaskInfo* context, 
+		Boolean TryToFastGetDistinctValuesLong(VError& err, db4dEntityAttribute* att, DB4DCollectionManager& outCollection, BaseTaskInfo* context, 
 			VDB4DProgressIndicator* InProgress, sLONG typ, const VCompareOptions& inOptions);
 
-		Boolean TryToFastGetDistinctValuesShort(VError& err, EntityAttribute* att, DB4DCollectionManager& outCollection, BaseTaskInfo* context, 
+		Boolean TryToFastGetDistinctValuesShort(VError& err, db4dEntityAttribute* att, DB4DCollectionManager& outCollection, BaseTaskInfo* context, 
 			VDB4DProgressIndicator* InProgress, sLONG typ, const VCompareOptions& inOptions);
 
-		Boolean TryToFastGetDistinctValuesBoolean(VError& err, EntityAttribute* att, DB4DCollectionManager& outCollection, BaseTaskInfo* context, 
+		Boolean TryToFastGetDistinctValuesBoolean(VError& err, db4dEntityAttribute* att, DB4DCollectionManager& outCollection, BaseTaskInfo* context, 
 			VDB4DProgressIndicator* InProgress, sLONG typ, const VCompareOptions& inOptions);
 
-		Boolean TryToFastGetDistinctValuesByte(VError& err, EntityAttribute* att, DB4DCollectionManager& outCollection, BaseTaskInfo* context, 
+		Boolean TryToFastGetDistinctValuesByte(VError& err, db4dEntityAttribute* att, DB4DCollectionManager& outCollection, BaseTaskInfo* context, 
 			VDB4DProgressIndicator* InProgress, sLONG typ, const VCompareOptions& inOptions);
 
-		Boolean TryToFastGetDistinctValuesReal(VError& err, EntityAttribute* att, DB4DCollectionManager& outCollection, BaseTaskInfo* context, 
+		Boolean TryToFastGetDistinctValuesReal(VError& err, db4dEntityAttribute* att, DB4DCollectionManager& outCollection, BaseTaskInfo* context, 
 			VDB4DProgressIndicator* InProgress, sLONG typ, const VCompareOptions& inOptions);
 
-		Boolean TryToFastGetDistinctValuesUUID(VError& err, EntityAttribute* att, DB4DCollectionManager& outCollection, BaseTaskInfo* context, 
+		Boolean TryToFastGetDistinctValuesUUID(VError& err, db4dEntityAttribute* att, DB4DCollectionManager& outCollection, BaseTaskInfo* context, 
 			VDB4DProgressIndicator* InProgress, sLONG typ, const VCompareOptions& inOptions);
 
 
@@ -1266,6 +1295,10 @@ class BitSel : public Selection
 			pTB->SetOwner(remoteDB);
 			pTB->Retain();
 
+#if debugLeaksAll == 102
+			if (debug_canRegisterLeaksAll)
+				RegisterStackCrawl(this);
+#endif
 #if debugLeakCheck_BitSel
 			if (debug_candumpleaks)
 				DumpStackCrawls();
@@ -1284,6 +1317,10 @@ class BitSel : public Selection
 			if ((inContext != (CDB4DBaseContext*)-1))
 				pTB->SetRemoteContext(inContext);
 				*/
+#if debugLeaksAll == 102
+			if (debug_canRegisterLeaksAll)
+				RegisterStackCrawl(this);
+#endif
 #if debugLeakCheck_BitSel
 			if (debug_candumpleaks)
 				DumpStackCrawls();
@@ -1302,6 +1339,10 @@ class BitSel : public Selection
 			pTB->SetAsSel();
 			pTB->SetOwner(remoteDB);
 
+#if debugLeaksAll == 102
+			if (debug_canRegisterLeaksAll)
+				RegisterStackCrawl(this);
+#endif
 #if debugLeakCheck_BitSel
 			if (debug_candumpleaks)
 				DumpStackCrawls();
@@ -1318,6 +1359,16 @@ class BitSel : public Selection
 			if (pTB != nil)
 				pTB->Release();
 		};
+
+#if debugLeaksAll
+		virtual bool OKToTrackDebug() const
+		{
+			return true;
+		}
+
+		virtual void GetDebugInfo(VString& outText) const;
+
+#endif
 
 		virtual void setmodif(uBOOL xismodif, Base4D* bd, BaseTaskInfo* context);
 		virtual void ChangeAddr(DataAddr4D addr, Base4D* bd, BaseTaskInfo* context);
@@ -1467,15 +1518,20 @@ class SelectionIterator
 
 		void Reset(Selection* sel);
 
-		sLONG PreviousRecord();
-		sLONG NextRecord();
-		sLONG FirstRecord();
-		sLONG LastRecord();
-		sLONG SetCurrentRecord(sLONG PosInSel);
+		RecIDType PreviousRecord();
+		RecIDType NextRecord();
+		RecIDType FirstRecord();
+		RecIDType LastRecord();
+		RecIDType SetCurrentRecord(sLONG PosInSel);
+
+		RecIDType GetCurPos() const
+		{
+			return fCurIndice;
+		}
 
 	protected:
-		sLONG fCurRecord;
-		sLONG fCurIndice;
+		RecIDType fCurRecord;
+		RecIDType fCurIndice;
 		Selection* fSel;
 		Boolean fWasJustReset;
 };

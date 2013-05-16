@@ -1338,6 +1338,12 @@ void VDBFlushMgr::Flush(Base4D* target, Boolean inSynchronous)
 
 void VDBFlushMgr::Flush( Boolean inSynchronous, Boolean onlyForAllWritten)
 {
+#if debuglr == 101
+	if (fFlushProgress != nil && !fFlushProgress->IsManagerValid())
+	{
+		sLONG xdebug = 1; // put a break here
+	}
+#endif
 
 	if (fFlushTask != nil) 
 	{
@@ -1684,6 +1690,13 @@ void VDBFlushMgr::PutObject(IObjToFlush *inObject, Boolean inSetCacheDirty, Bool
 	}
 #endif
 
+#if debuglr == 101
+	if (fFlushProgress != nil && !fFlushProgress->IsManagerValid())
+	{
+		sLONG xdebug = 1; // put a break here
+	}
+#endif
+
 	if (!inForDelete)
 		inObject->Retain();
 
@@ -1927,6 +1940,16 @@ void VDBFlushMgr::MainLoop()
 		fpi.starttime = VSystem::GetCurrentTime();
 		fpi.lasttime = fpi.starttime;
 		fpi.currentBD = nil;
+
+#if debuglr == 101
+		if (fFlushProgress != nil && !fFlushProgress->IsManagerValid())
+		{
+			sLONG xdebug = 1; // put a break here
+		}
+
+		if (fFlushProgress != nil)
+			fFlushProgress->Release();
+#endif
 
 		fFlushProgress = VDBMgr::GetManager()->RetainDefaultProgressIndicator_For_DataCacheFlushing();
 		if (fFlushProgress != nil)
@@ -2200,8 +2223,12 @@ void VDBFlushMgr::MainLoop()
 		if (fFlushProgress != nil)
 		{
 			fFlushProgress->EndSession();
+#if debuglr == 101
+			// when debugging, keep the progress indicator
+#else
 			fFlushProgress->Release();
 			fFlushProgress = nil;
+#endif
 		}
 
 		SetCurTaskFlushing(false);

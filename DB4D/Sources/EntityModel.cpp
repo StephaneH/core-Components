@@ -16,18 +16,167 @@
 #include "4DDBHeaders.h"
 
 
-namespace d4
+const ArrayOfConstUniCharPtr xEatt_types = { L"storage", L"alias", L"calculated", L"relatedEntity", L"relatedEntities", L"removed", L"altered", /*L"field",*/ L"composition", L"" };
+const Enumeration EattTypes(xEatt_types);
+
+const ArrayOfConstUniCharPtr xScript_types = { L"db4d", L"javascript", L"4d", L"" };
+const Enumeration ScriptTypes(xScript_types);
+
+const ArrayOfConstUniCharPtr xERelTypes = { L"manyToOne", L"oneToMany", L"" };
+const Enumeration ERelTypes(xERelTypes);
+
+const ArrayOfConstUniCharPtr xEmeth_types = { L"dataClass", L"entity", L"entityCollection", L"" };
+const Enumeration EmethTypes(xEmeth_types);
+
+
+const ArrayOfConstUniCharPtr xEValPredefinedTypes = 
+{ 
+	L"bool", 
+	L"byte", 
+	L"word", 
+	L"long", 
+	L"long64", 
+	L"number", 
+	L"float", 
+	L"date", 
+	L"duration", 
+	L"string", 
+	L"VK_BLOB", 
+	L"image",
+	L"uuid", 
+	L"VK_TEXT", 
+	L"VK_SUBTABLE", 
+	L"VK_SUBTABLE_KEY", 
+	L"VK_OBSOLETE_STRING_DB4D", 
+	L"blob", // VK_BLOB_DB4D
+	L"VK_STRING_UTF8", 
+	L"VK_TEXT_UTF8", 
+	L"" 
+};
+const Enumeration EValPredefinedTypes(xEValPredefinedTypes);
+
+
+
+const ArrayOfConstUniCharPtr xFormulaeActions = 
 {
-	CREATE_BAGKEY(allow);
-	CREATE_BAGKEY(publishAsJSGlobal);
-	CREATE_BAGKEY(allowOverrideStamp);
+	L"sum",
+	L"average",
+	L"min",
+	L"max",
+	L"count",
+	L"countDistinct",
+	L"averageDistinct",
+	L"sumDistinct",
+	L""
+};
+const Enumeration EFormulaeActions(xFormulaeActions);
+
+
+const ArrayOfConstUniCharPtr xIndexKinds = 
+{
+	L"btree",
+	L"hash",
+	L"cluster",
+	L"unused4",
+	L"unused5",
+	L"unused6",
+	L"auto",
+	L"keywords",
+	L""
+};
+
+const Enumeration EIndexKinds(xIndexKinds);
+
+
+
+const ArrayOfConstUniCharPtr xScopeKinds = 
+{
+	L"public",
+	L"publicOnServer",
+	L"protected",
+	L"private",
+	L""
+};
+const Enumeration EScopeKinds(xScopeKinds);
+
+
+const ArrayOfConstUniCharPtr xPermResourceType = 
+{
+	L"model",
+	L"dataClass",
+	L"method",
+	L""
+};
+
+const Enumeration EPermResourceType(xPermResourceType);
+
+
+const ArrayOfConstUniCharPtr xPermAction = 
+{
+	L"read",
+	L"create",
+	L"update",
+	L"remove",
+	L"execute",
+	L"promote",
+	L""
+};
+
+const Enumeration EPermAction(xPermAction);
+
+
+
+const ArrayOfConstUniCharPtr xDBEventKinds = 
+{
+	L"onSave",
+	L"onLoad",
+	L"onInit",
+	L"onRemove",
+	L"onValidate",
+	L"onRestrictingQuery",
+	L"onSet",
+	L"onGet",
+	L""
+};
+
+const Enumeration EDBEventKinds(xDBEventKinds);
+
+
+
+const ArrayOfConstUniCharPtr ecat_correspondance = 
+{
+	L"entityModel", L"entityModels",
+	L"type", L"types",
+	L"relationship", L"relationships",
+	L"", L""
+};
+
+const Correspondance CatCorres(ecat_correspondance);
+
+
+// ---------------------------------------------------------------------------------------
+
+
+template<>
+const VString* IPartable<VectorOfVString, const VString*>::GetElem(VectorOfVString::const_iterator iter) const
+{
+	return &(*iter);
 }
 
+
+template<>
+const EntityAttributeInstance* IPartable<EntityAttributeInstanceCollection, const EntityAttributeInstance*>::GetElem(EntityAttributeInstanceCollection::const_iterator iter) const
+{
+	return &(*iter);
+}
+
+
+// ----------------------------------------------------------------------------------------
 
 DataSet::~DataSet()
 {
 	QuickReleaseRefCountable(fSel);
-	QuickReleaseRefCountable(fTable);
+	QuickReleaseRefCountable(fModel);
 }
 
 
@@ -573,8 +722,8 @@ inline EntityRelation::EntityRelation(const EntityRelationCollection& path, bool
 	for (EntityRelationCollection::iterator cur = fSubPath.begin(), end = fSubPath.end(); cur != end; cur++)
 		(*cur)->Retain();
 
-	fSource = fPath[0]->GetSourceField();
-	fDest = fPath[fPath.size()-1]->GetDestField();
+	fSourceAtt = fPath[0]->fSourceAtt;
+	fDestAtt = fPath[fPath.size()-1]->fDestAtt;
 	if (nTo1)
 		fType = erel_Nto1;
 	else
@@ -584,7 +733,7 @@ inline EntityRelation::EntityRelation(const EntityRelationCollection& path, bool
 
 VError EntityRelation::ThrowError( VError inErrCode, const VString* p1) const
 {
-	VErrorDB4D_OnEMRelation *err = new VErrorDB4D_OnEMRelation(inErrCode, noaction, fSource == nil ? nil : fSource->GetOwner()->GetOwner(), this);
+	VErrorDB4D_OnEMRelation *err = new VErrorDB4D_OnEMRelation(inErrCode, noaction, fSourceAtt == nil ? nil : fSourceAtt->GetOwner()->GetCatalog()->GetOwner(), this);
 	if (p1 != nil)
 		err->GetBag()->SetString(Db4DError::Param1, *p1);
 	VTask::GetCurrent()->PushRetainedError( err);
@@ -687,7 +836,7 @@ bool EntityRelation::MatchesBeginingOf(const EntityRelation* otherRel) const
 	{
 		for (EntityRelationCollection::const_iterator cur = fPath.begin(), end = fPath.end(), curOther = otherRel->fPath.begin(); cur != end; ++cur, ++curOther)
 		{
-			if ((*cur)->fSource != (*curOther)->fSource || (*cur)->fDest != (*curOther)->fDest)
+			if ((*cur)->fSourceAtt != (*curOther)->fSourceAtt || (*cur)->fDestAtt != (*curOther)->fDestAtt)
 			{
 				res = false;
 				break;
@@ -828,6 +977,485 @@ VError EntityRelation::ToBag(VValueBag& outBag, bool forDax, bool forSave, bool 
 
 // ----------------------------------------------------------------------------------------
 
+CDB4DEntityRecord* EntityCollection::LoadEntityRecord(RecIDType posInCol, CDB4DBaseContext* context, VErrorDB4D& outError, DB4D_Way_of_Locking HowToLock)
+{
+	return LoadEntity(posInCol, ConvertContext(context), outError, HowToLock);
+}
+
+RecIDType EntityCollection::GetLength(CDB4DBaseContext* context)
+{
+	return GetLength(ConvertContext(context));
+}
+
+
+VError EntityCollection::DeleteEntities(CDB4DBaseContext* context, VDB4DProgressIndicator* InProgress, CDB4DEntityCollection* *outLocked)
+{
+	VError err = DropEntities(ConvertContext(context), InProgress, nil);
+	return err;
+}
+
+
+VError EntityCollection::AddCollection(EntityCollection* other, BaseTaskInfo* context, bool atTheEnd)
+{
+	sLONG nbelem = other->GetLength(context);
+	VError err = VE_OK;
+	for (sLONG i = 0; i < nbelem && err == VE_OK; i++)
+	{
+		EntityRecord* erec = other->LoadEntity(i, context, err, DB4D_Do_Not_Lock);
+		if (erec != nil)
+		{
+			AddEntity(erec, atTheEnd);
+			erec->Release();
+		}
+	}
+	return err;
+}
+
+
+
+VJSArray EntityCollection::ToJsArray(BaseTaskInfo* context, JS4D::ContextRef jscontext, EntityAttributeSortedSelection& whichAttributes, EntityAttributeSelection* expandAttributes, 
+										EntityAttributeSortedSelection* sortingAttributes, bool withKey, bool allowEmptyAttList, sLONG from, sLONG count, VError& err)
+{
+	VJSArray outArr(jscontext);
+	err = VE_OK;
+	EntityCollection* trueSel = sortingAttributes == nil ? RetainRefCountable(this) : SortSel(err, sortingAttributes, context, nil);
+
+	if (err == VE_OK && trueSel != nil)
+	{
+		EntityCollectionIter selIter(trueSel, context);
+		if (from < 0)
+			from = 0;
+		sLONG qt = trueSel->GetLength(context);
+		if (count < 0)
+			count = qt;
+		sLONG lastrow = from+count-1;
+		if (lastrow >= qt)
+			lastrow = qt-1;
+
+		RecIDType curpos = from;
+		EntityRecord* erec = selIter.SetCurPos(from, err);
+		while (curpos <= lastrow && err == VE_OK)
+		{
+			if (erec != nil)
+			{
+				VJSObject subObj(outArr, -1);
+				err = erec->ConvertToJSObject(subObj, whichAttributes, expandAttributes, sortingAttributes, withKey, allowEmptyAttList);
+
+			}
+			QuickReleaseRefCountable(erec);
+			erec = selIter.Next(err);
+			++curpos;
+		}
+
+		QuickReleaseRefCountable(erec);
+	}
+
+	QuickReleaseRefCountable(trueSel);
+	return outArr;
+}
+
+
+VJSValue EntityCollection::ProjectAttribute(EntityAttribute* att, VError& err, BaseTaskInfo* context, JS4D::ContextRef jscontext)
+{
+	sLONG nbelem = GetLength(context);
+	VJSArray result(jscontext);
+	err = VE_OK;
+	for (sLONG i = 0; i < nbelem && err == VE_OK; i++)
+	{
+		EntityRecord* erec = LoadEntity(i, context, err, DB4D_Do_Not_Lock);
+		if (erec != nil)
+		{
+			EntityAttributeValue* xval = erec->getAttributeValue(att, err, context);
+			if (err == VE_OK && xval != nil)
+			{
+				VValueSingle* cv = xval->getVValue();
+				result.PushValue(*cv);
+			}
+			erec->Release();
+		}
+	}
+	if (err != VE_OK)
+	{
+		VJSValue val(jscontext);
+		val.SetNull();
+		return val;
+	}
+	else
+	{
+		return result;
+	}
+
+}
+
+
+EntityCollection* EntityCollection::SortCollection(const VString& orderby, BaseTaskInfo* context, VError err, VDB4DProgressIndicator* InProgress)
+{
+	err = VE_OK;
+	//EntityAttributeSortedSelection sortingAtts(fOwner, orderby, context, false);
+	EntityAttributeSortedSelection sortingAtts(fOwner);
+	sortingAtts.BuildFromString(orderby, context, false, true, nil);
+	EntityCollection* newcol = SortSel(err, &sortingAtts, context, InProgress);
+	return newcol;
+}
+
+
+
+
+VError EntityCollection::Compute(EntityAttributeSortedSelection& atts, VJSObject& outObj, BaseTaskInfo* context, JS4D::ContextRef jscontext, bool distinct)
+{
+	VJSObject resultObj(jscontext);
+	outObj = resultObj;
+
+	outObj.MakeEmpty();
+
+	vector<computeResult> results;
+	results.resize(atts.size());
+	VError err = VE_OK;
+	if (okperm(context, fOwner, DB4D_EM_Read_Perm) || okperm(context, fOwner, DB4D_EM_Update_Perm) || okperm(context, fOwner, DB4D_EM_Delete_Perm))
+	{
+		EntityCollection* sel = this;
+		EntityCollection* selsorted = nil;
+		if (distinct && !atts.empty())
+		{
+			const EntityAttribute* att = atts[0].fAttribute;
+			EntityAttributeSortedSelection sortingAtt(fOwner);
+			sortingAtt.AddAttribute(att, nil);
+			selsorted = SortSel(err, &sortingAtt, context);
+			if (selsorted != nil)
+				sel = selsorted;
+		}
+
+		RecIDType nbelem = sel->GetLength(context);
+		for (RecIDType i = 0; i < nbelem && err == VE_OK; ++i)
+		{
+			EntityRecord* rec = sel->LoadEntity(i, context, err, DB4D_Do_Not_Lock);
+			if (rec != nil)
+			{
+				sLONG respos = 0;
+				for (EntityAttributeSortedSelection::const_iterator cur = atts.begin(), end = atts.end(); cur != end && err == VE_OK; cur++, respos++)
+				{
+					computeResult& result = results[respos];
+					EntityAttributeValue* eval = rec->getAttributeValue(cur->fAttribute, err, context);
+					if (err == VE_OK)
+					{
+						if (eval->GetAttributeKind() == eav_vvalue)
+						{
+							VValueSingle* cv = eval->getVValue();
+							if (cv != nil && !cv->IsNull())
+							{
+								if (result.fPrevious == nil || !result.fPrevious->EqualToSameKind(cv))
+								{
+									if (result.fPrevious == nil)
+										result.fPrevious = cv->Clone();
+									else
+										result.fPrevious->FromValueSameKind(cv);
+									result.fCountDistinct++;
+									result.fSumDistinct += cv->GetReal();
+								}
+								result.fCount++;
+								result.fSum += cv->GetReal();
+								if (result.first)
+								{
+									result.fMinVal = cv->Clone();
+									result.fMaxVal = cv->Clone();
+									result.first = false;
+								}
+								else
+								{
+									if (result.fMinVal->CompareToSameKind(cv, true) == CR_BIGGER)
+										result.fMinVal->FromValueSameKind(cv);
+									if (result.fMaxVal->CompareToSameKind(cv, true) == CR_SMALLER)
+										result.fMaxVal->FromValueSameKind(cv);
+								}
+							}
+						}
+					}
+				}
+				QuickReleaseRefCountable(rec);
+			}
+		}
+
+		sLONG respos = 0;
+		for (EntityAttributeSortedSelection::const_iterator cur = atts.begin(), end = atts.end(); cur != end && err == VE_OK; cur++, respos++)
+		{
+			computeResult& result = results[respos];
+			VJSObject subobject(outObj, cur->fAttribute->GetName());
+			subobject.SetProperty("count", result.fCount);
+			if (distinct && respos == 0)
+				subobject.SetProperty("countDistinct", result.fCountDistinct);
+			if (!result.first)
+			{
+				if (cur->fAttribute->IsSummable())
+				{
+					if (distinct && respos == 0)
+					{
+						subobject.SetProperty("sumDistinct", result.fSumDistinct);
+						if (result.fCountDistinct != 0)
+							subobject.SetProperty("averageDistinct", result.fSumDistinct / (Real)result.fCountDistinct);
+						else
+							subobject.SetNullProperty("averageDistinct");
+					}
+					subobject.SetProperty("sum", result.fSum);
+					if (result.fCount != 0)
+						subobject.SetProperty("average", result.fSum / (Real)result.fCount);
+					else
+						subobject.SetNullProperty("average");
+				}
+				subobject.SetProperty("min", result.fMinVal);
+				subobject.SetProperty("max", result.fMaxVal);
+			}
+			else
+			{	
+				if (cur->fAttribute->IsSummable())
+				{
+					if (distinct && respos == 0)
+					{
+						subobject.SetNullProperty("averageDistinct");
+						subobject.SetProperty("sumDistinct", 0.0);
+					}
+					subobject.SetNullProperty("average");
+					subobject.SetProperty("sum", 0.0);
+				}
+				subobject.SetNullProperty("min");
+				subobject.SetNullProperty("max");
+			}
+		}
+		QuickReleaseRefCountable(selsorted);
+	}
+	else
+	{
+		context->SetPermError();
+		err = fOwner->ThrowError(VE_DB4D_NO_PERM_TO_READ);
+	}
+	return err;
+
+}
+
+
+VError EntityCollection::ComputeOnOneAttribute(const EntityAttribute* att, DB4D_ColumnFormulae action, VJSValue& outVal, BaseTaskInfo* context, JS4D::ContextRef jscontext)
+{
+	bool okresult = false;
+	EntityModel* model = fOwner;
+	EntityModel* em = model;
+	EntityCollection* sel = this;
+	VJSValue resultVal(jscontext);
+	resultVal.SetNull();
+	VError err = VE_OK;
+
+	if (att->GetModel() != model)
+	{
+		VString s = em->GetName()+"."+att->GetName();
+		err = ThrowBaseError(VE_DB4D_ENTITY_ATTRIBUTE_IS_FROM_ANOTHER_DATACLASS, s);
+	}
+	else
+	{
+		if (action == DB4D_Count || action == DB4D_Count_distinct || action == DB4D_Min || action == DB4D_Max)
+		{
+			if (!att->IsStatable())
+			{
+				err = att->ThrowError(VE_DB4D_WRONG_ATTRIBUTE_KIND);
+			}
+		}
+		else
+		{
+			if (!att->IsSummable())
+			{
+				err = att->ThrowError(VE_DB4D_WRONG_ATTRIBUTE_KIND);
+			}
+		}
+	}
+
+	if (err == VE_OK)
+	{
+		EntityCollection* selsorted = nil;
+		bool withdistinct = false;
+
+		if (action >= DB4D_Count_distinct && action <=DB4D_Sum_distinct)
+		{
+			withdistinct = true;
+			EntityAttributeSortedSelection sortingAtt(em);
+			sortingAtt.AddAttribute(att, nil);
+			selsorted = SortSel(err, &sortingAtt, context);
+			if (selsorted != nil)
+				sel = selsorted;
+		}
+
+		/*
+		if (att->GetKind() == eattr_storage)
+		{
+			Field* cri = att->RetainDirectField();
+			if (cri != nil)
+			{
+				ColumnFormulas formules(em->GetMainTable());
+				formules.AddAction(action, cri);
+				VError err = formules.Execute(sel, ConvertContext(context), nil, nil, sel == selsorted);
+				if (err == VE_OK)
+				{
+					VValueSingle* result = formules.GetResult(0);
+					if (result != nil)
+					{
+						if (result->IsNull() && (action == DB4D_Sum || action == DB4D_Count))
+							ioParms.ReturnNumber(0);
+						else
+							ioParms.ReturnVValue(*result);
+						okresult = true;
+					}
+				}
+				cri->Release();
+			}
+		}
+		else
+			*/
+		{
+			EntityAttributeSortedSelection attlist(em);
+			attlist.AddAttribute(att, nil);
+
+			VJSObject result(jscontext);
+
+			err  = sel->Compute(attlist, result, context, jscontext, withdistinct);
+			if (err == VE_OK)
+			{
+				VJSValue subatt(jscontext);
+				subatt = result.GetProperty(att->GetName());
+				if (subatt.IsObject())
+				{
+					VJSObject subattobj(jscontext);
+					subatt.GetObject(subattobj);
+
+					VJSValue subresult(jscontext);
+					switch (action)
+					{
+						case DB4D_Sum:
+							subresult = subattobj.GetProperty("sum");
+							break;
+						case DB4D_Average:
+							subresult = subattobj.GetProperty("average");
+							break;
+						case DB4D_Min:
+							subresult = subattobj.GetProperty("min");
+							break;
+						case DB4D_Max:
+							subresult = subattobj.GetProperty("max");
+							break;
+						case DB4D_Count:
+							subresult = subattobj.GetProperty("count");
+							break;
+						case DB4D_Sum_distinct:
+							subresult = subattobj.GetProperty("sumDistinct");
+							break;
+						case DB4D_Average_distinct:
+							subresult = subattobj.GetProperty("averageDistinct");
+							break;
+						case DB4D_Count_distinct:
+							subresult = subattobj.GetProperty("countDistinct");
+							break;
+					}
+					if ( (subresult.IsUndefined() || subresult.IsNull()) && (action == DB4D_Sum || action == DB4D_Count) )
+					{
+						resultVal.SetNumber(0);
+					}
+					else
+					{
+						if (subresult.IsUndefined())
+							resultVal.SetNull();
+						else
+							resultVal = subresult;
+					}
+					okresult = true;
+				}
+			}
+		}
+		QuickReleaseRefCountable(selsorted);
+	}
+
+	outVal = resultVal;
+	return err;
+}
+
+
+EntityCollectionIterator* EntityCollection::NewIterator(BaseTaskInfo* context)
+{
+	return new EntityCollectionIterator(this, context);
+}
+
+
+		// -----------------------------------
+
+
+EntityCollectionIterator::EntityCollectionIterator(EntityCollection* collection, BaseTaskInfo* context)
+{
+	fContext = RetainRefCountable(context);
+	fCollection = RetainRefCountable(collection);
+	fCurpos = 0;
+	fNbElems = collection->GetLength(context);
+}
+
+
+EntityCollectionIterator::~EntityCollectionIterator()
+{
+	QuickReleaseRefCountable(fContext);
+	QuickReleaseRefCountable(fCollection);
+}
+
+
+EntityRecord* EntityCollectionIterator::_loadEntity(RecIDType atPos, VError& err)
+{
+	err = VE_OK;
+	if (atPos == -1)
+		return nil;
+	else
+		return fCollection->LoadEntity(atPos, fContext, err, DB4D_Do_Not_Lock);
+}
+
+
+
+EntityRecord* EntityCollectionIterator::First(VError& err)
+{
+	fCurpos = 0;
+	if (fCurpos >= fNbElems)
+		fCurpos = -1;
+	return _loadEntity(fCurpos, err);
+}
+
+
+EntityRecord* EntityCollectionIterator::Next(VError& err)
+{
+	if (fCurpos != -1)
+	{
+		++fCurpos;
+		if (fCurpos >= fNbElems)
+			fCurpos = -1;
+	}
+	return _loadEntity(fCurpos, err);
+}
+
+
+RecIDType EntityCollectionIterator::GetCurPos() const
+{
+	return fCurpos;
+}
+
+
+EntityRecord* EntityCollectionIterator::SetCurPos(RecIDType pos, VError& err)
+{
+	if (pos >= fNbElems)
+	{
+		fCurpos = -1;
+	}
+	else
+	{
+		fCurpos = pos;
+	}
+
+	return _loadEntity(fCurpos, err);
+}
+
+
+
+
+
+// ----------------------------------------------------------------------------------------
+
 
 EntityMethod::EntityMethod(EntityModel* owner)
 {
@@ -871,7 +1499,7 @@ CDB4DEntityModel* EntityMethod::GetModel() const
 VError EntityMethod::ThrowError( VError inErrCode, const VString* p1) const
 {
 	
-	VErrorDB4D_OnEMMethod *err = new VErrorDB4D_OnEMMethod(inErrCode, noaction, fOwner->GetOwner(), fOwner, this);
+	VErrorDB4D_OnEMMethod *err = new VErrorDB4D_OnEMMethod(inErrCode, noaction, fOwner->GetCatalog()->GetOwner(), fOwner, this);
 	if (p1 != nil)
 		err->GetBag()->SetString(Db4DError::Param1, *p1);
 	VTask::GetCurrent()->PushRetainedError( err);
@@ -1208,12 +1836,12 @@ bool EntityMethod::GetScriptObjFunc(VJSGlobalContext* jsglobcontext, BaseTaskInf
 					else
 					{
 						VJSObject glueFunc(jscontext);
-						VJSValue glueresult(jscontext);
+						//VJSValue glueresult(jscontext);
 						bool okGlue = false;
 						JSEntityMethodReference glueref;
 						if (!context->GetJSMethod(glueref, glueFunc))
 						{
-							VFolder* compfolder = VDBMgr::GetManager()->RetainResourceFolder();
+							VFolder* compfolder = VDBMgr::GetManager()->RetainJSCodeResourceFolder();
 							if (compfolder != nil)
 							{
 								VFile scriptfile(*compfolder, "methodCall.js");
@@ -1222,7 +1850,7 @@ bool EntityMethod::GetScriptObjFunc(VJSGlobalContext* jsglobcontext, BaseTaskInf
 									StErrorContextInstaller errs(false);
 									VJSValue xresult(jscontext);
 									jscontext.EvaluateScript(&scriptfile, &xresult, nil, nil);
-									if (!result.IsUndefined() && result.IsObject())
+									if (!xresult.IsUndefined() && xresult.IsObject())
 									{
 										xresult.GetObject(glueFunc);
 										if (glueFunc.IsFunction())
@@ -1287,7 +1915,7 @@ bool EntityMethod::GetScriptObjFunc(VJSGlobalContext* jsglobcontext, BaseTaskInf
 }
 
 
-VError EntityMethod::Execute(Selection* inSel, const vector<VJSValue>* inParams, BaseTaskInfo* context, VJSValue& outResult) const
+VError EntityMethod::Execute(EntityCollection* inSel, const vector<VJSValue>* inParams, BaseTaskInfo* context, VJSValue& outResult) const
 {
 	VError err = VE_OK;
 	if (okperm(context, fExecutePerm))
@@ -1295,15 +1923,7 @@ VError EntityMethod::Execute(Selection* inSel, const vector<VJSValue>* inParams,
 		if (context->GetJSContext() != nil)
 		{
 			VJSContext jscontext(context->GetJSContext());
-			CDB4DBase* xbase = fOwner->GetOwner()->RetainBaseX();
-			if (inSel != nil)
-				inSel->Retain();
-			CDB4DSelection* xsel = new VDB4DSelection(VDBMgr::GetManager(), VImpCreator<VDB4DBase>::GetImpObject(xbase), fOwner->GetMainTable(), inSel);
-			xbase->Release();
-			xsel->SetAssociatedModel(fOwner);
-
-			VJSObject therecord(jscontext, VJSEntitySelection::CreateInstance(jscontext, xsel));
-			xsel->Release();
+			VJSObject therecord(jscontext, VJSEntitySelection::CreateInstance(jscontext, inSel));
 
 			VJSObject* objfunc = nil;
 			VJSObject localObjFunc(jscontext);
@@ -1350,7 +1970,7 @@ VError EntityMethod::Execute(EntityRecord* inRec, const vector<VJSValue>* inPara
 		if (context->GetJSContext() != nil)
 		{
 			VJSContext jscontext(context->GetJSContext());
-			VJSObject therecord(jscontext, VJSEntitySelectionIterator::CreateInstance(jscontext, new EntitySelectionIterator(inRec, context->GetEncapsuleur())));
+			VJSObject therecord(jscontext, VJSEntitySelectionIterator::CreateInstance(jscontext, new EntitySelectionIterator(inRec, context)));
 			VJSObject* objfunc = nil;
 			VJSObject localObjFunc(jscontext);
 			if (GetScriptObjFunc(context->GetJSContext(), context, localObjFunc))
@@ -1459,10 +2079,8 @@ VJSObject* EntityMethod::GetFuncObject(CDB4DBaseContext* inContext, VJSObject& o
 
 // ----------------------------------------------------------------------------------------
 
-
-EntityAttribute::EntityAttribute(EntityModel* owner)
+void EntityAttribute::xinit()
 {
-	fOwner = owner;
 	fFrom = nil;
 	fRelationPathID = -1;
 	fPosInOwner = 0;
@@ -1470,7 +2088,6 @@ EntityAttribute::EntityAttribute(EntityModel* owner)
 	fKind = eattr_none;
 	fScope = escope_public;
 	fSubEntity = nil;
-	fFlattenTableDest = nil;
 	fOverWrite = false;
 	fRelation = nil;
 	fType = nil;
@@ -1486,9 +2103,26 @@ EntityAttribute::EntityAttribute(EntityModel* owner)
 	fIsForeignKey = false;
 	fIdentifying = false;
 	fPartOfPrimKey = false;
-	fFlattenFromAField = true;
 	fIsMultiLine = false;
+	fFlattenLastDest = nil;
 	std::fill(&fScriptUserDefined[0], &fScriptUserDefined[script_attr_last+1], 0);
+	fAutoGen = false;
+	fAutoSeq = false;
+	fStyledText = false;
+	fOuterBlob = false;
+	fNotNull = false;
+	fNullToEmpty = false;
+	fUnique = false;
+	fLimitingLen = 0;
+	fBlobSwitchSize = 0;
+	fBehavesAsStorage = false;
+	fSimpleDate = false;
+}
+
+EntityAttribute::EntityAttribute(EntityModel* owner)
+{
+	fOwner = owner;
+	xinit();
 }
 
 
@@ -1522,14 +2156,25 @@ EntityAttribute* EntityAttribute::Clone(EntityModel* inModel) const
 	result->fRelPath = fRelPath;
 	result->fSubEntity = RetainRefCountable(fSubEntity);
 	result->fOverWrite = false;
-	result->fFlattenTableDest = fFlattenTableDest;
 	result->fFlattenColumnName = fFlattenColumnName;
-	result->fFlattenFromAField = fFlattenFromAField;
+	result->fFlattenLastDest = fFlattenLastDest;
 	result->fRelation = RetainRefCountable(fRelation);
 	result->fType = RetainRefCountable(fType);
-	result->fCrit_UUID = fCrit_UUID;
+//	result->fCrit_UUID = fCrit_UUID;
 	result->fIdentifying = fIdentifying;
 	result->fIsMultiLine = fIsMultiLine;
+	result->fAutoGen = fAutoGen;
+	result->fAutoSeq = fAutoSeq;
+	result->fStyledText = fStyledText;
+	result->fOuterBlob = fOuterBlob;
+	result->fNotNull = fNotNull;
+	result->fNullToEmpty = fNullToEmpty;
+	result->fUnique = fUnique;
+	result->fLimitingLen = fLimitingLen;
+	result->fBlobSwitchSize = fBlobSwitchSize;
+	result->fBehavesAsStorage = fBehavesAsStorage;
+	result->fSimpleDate = fSimpleDate;
+
 	if (fLocalType == nil)
 		result->fLocalType = nil;
 	else
@@ -1538,14 +2183,14 @@ EntityAttribute* EntityAttribute::Clone(EntityModel* inModel) const
 		result->fScriptQuery = nil;
 	else
 	{
-		result->fScriptQuery = new SearchTab(inModel->GetMainTable());
+		result->fScriptQuery = new SearchTab(inModel);
 		result->fScriptQuery->From(*fScriptQuery);
 	}
 	if (fScriptDB4D == nil)
 		result->fScriptDB4D = nil;
 	else
 	{
-		result->fScriptDB4D = new SearchTab(inModel->GetMainTable());
+		result->fScriptDB4D = new SearchTab(inModel);
 		result->fScriptDB4D->From(*fScriptDB4D);
 	}
 	result->fScriptKind = fScriptKind;
@@ -1567,7 +2212,7 @@ EntityAttribute* EntityAttribute::Clone(EntityModel* inModel) const
 
 VError EntityAttribute::ThrowError( VError inErrCode, const VString* p1) const
 {
-	VErrorDB4D_OnEMAttribute *err = new VErrorDB4D_OnEMAttribute(inErrCode, noaction, fOwner->GetOwner(), fOwner, this);
+	VErrorDB4D_OnEMAttribute *err = new VErrorDB4D_OnEMAttribute(inErrCode, noaction, fOwner->GetCatalog()->GetOwner(), fOwner, this);
 	if (p1 != nil)
 		err->GetBag()->SetString(Db4DError::Param1, *p1);
 	VTask::GetCurrent()->PushRetainedError( err);
@@ -1576,20 +2221,10 @@ VError EntityAttribute::ThrowError( VError inErrCode, const VString* p1) const
 }
 
 
-CDB4DEntityModel* EntityAttribute::GetModel() const
-{
-	return fOwner;
-}
-
-
-CDB4DEntityModel* EntityAttribute::GetRelatedEntityModel() const
-{
-	return fSubEntity;
-}
-
 
 ValueKind EntityAttribute::GetDataKind() const
 {
+	/*
 	if (fKind == eattr_alias)
 	{
 		return getFlattenTableDest()->GetFieldType(fFieldPos);
@@ -1602,6 +2237,8 @@ ValueKind EntityAttribute::GetDataKind() const
 		return ComputeScalarType();
 	else
 		return VK_EMPTY;
+		*/
+	return ComputeScalarType();
 }
 
 
@@ -1655,32 +2292,32 @@ bool EntityAttribute::GetScriptObjFunc(script_attr whichscript, VJSGlobalContext
 }
 
 
-Field* EntityAttribute::RetainDirectField() const
+bool EntityAttribute::IsIndexed() const
 {
-	if (fKind == eattr_storage && fOwner->GetMainTable() != nil)
-		return fOwner->GetMainTable()->RetainField(fFieldPos);
-	else
-		return nil;
+	return fOwner->IsIndexed(this);
 }
 
 
-Field* EntityAttribute::RetainField() const
+bool EntityAttribute::IsFullTextIndexed() const
 {
-	Field* result = nil;
-	switch (fKind)
-	{
-		case eattr_storage:
-			if (fOwner->GetMainTable() != nil)
-				result = fOwner->GetMainTable()->RetainField(fFieldPos);
-			break;
-
-		case eattr_alias:
-			if (fFlattenTableDest != nil)
-				result = fFlattenTableDest->RetainField(fFieldPos);
-			break;
-	}
-	return result;
+	return fOwner->IsFullTextIndexed(this);
 }
+
+
+
+bool EntityAttribute::IsIndexable() const
+{
+	return fOwner->IsIndexable(this);
+}
+
+
+bool EntityAttribute::IsFullTextIndexable() const
+{
+	return fOwner->IsFullTextIndexable(this);
+}
+
+
+
 
 /*
 EntityRelation* EntityAttribute::GetRelPath() const
@@ -1728,96 +2365,60 @@ VError EntityAttribute::ToBag(VValueBag& outBag, bool forDax, bool forSave, bool
 		outBag.SetString(d4::scope, EScopeKinds[(sLONG)fScope]);
 	}
 
+	if (!fDB4DUUID.IsNull())
+		outBag.SetVUUID(d4::uuid, fDB4DUUID);
+
 	if (fKind == eattr_alias || fKind == eattr_storage || fKind == eattr_computedField)
 	{
-		ValueKind xtype = 0;
-		Field* cri = nil;
-		if (fKind == eattr_alias)
-		{
-			if (fFlattenTableDest != nil)
-			{
-				cri = fFlattenTableDest->RetainField(fFieldPos);
-				xtype = fFlattenTableDest->GetFieldType(fFieldPos);
-			}
-		}
-		else if (fKind == eattr_computedField)
-		{
-			xtype = fScalarType;
-		}
-		else
-		{
-			cri = fOwner->GetMainTable()->RetainField(fFieldPos);
-			xtype = fOwner->GetMainTable()->GetFieldType(fFieldPos);
-		}
+		ValueKind xtype = ComputeScalarType();
 
-		if (cri != nil && fKind != eattr_alias)
+		if (fKind != eattr_alias)
 		{
-			if (cri->IsIndexed())
+			if (IsIndexed())
 				outBag.SetBool(d4::indexed, true);
 		}
-		if (cri != nil && forSave)
+		if (forSave)
 		{
-			if (fKind == eattr_storage && isTableDef)
+			if (fKind == eattr_storage/* && isTableDef*/)
 			{
-				
-				VUUID xid;
-				cri->GetUUID(xid);
-				outBag.SetVUUID(d4::uuid, xid);
-				
-				
-				outBag.SetLong(d4::fieldPos, cri->GetPosInRec());
-				Critere* xcri = cri->GetCritere();
+				//outBag.SetLong(d4::fieldPos, GetFieldPos());
 
 				if (xtype == VK_TEXT || xtype == VK_TEXT_UTF8)
 					outBag.SetBool(d4::textAsBlob, true);
 
-				if (cri->GetLimitingLen() != 0 && (xtype == VK_STRING || xtype == VK_STRING_UTF8))
-					outBag.SetLong(DB4DBagKeys::limiting_length, cri->GetLimitingLen());
+				if (fLimitingLen != 0)
+					outBag.SetLong(DB4DBagKeys::limiting_length, fLimitingLen);
 
-				if (cri->getCRD()->unique)
-					outBag.SetBool(DB4DBagKeys::unique, cri->getCRD()->unique);
+				if (fBlobSwitchSize != 0)
+					outBag.SetLong(DB4DBagKeys::blob_switch_size, fBlobSwitchSize);
 
-				if (cri->getCRD()->not_null)
-					outBag.SetBool(DB4DBagKeys::not_null, cri->getCRD()->not_null);
+				if (fUnique)
+					outBag.SetBool(DB4DBagKeys::unique, fUnique);
 
-				if (cri->getCRD()->fNeverNull)
-					outBag.SetBool(DB4DBagKeys::never_null, cri->getCRD()->fNeverNull);
+				if (fNotNull)
+					outBag.SetBool(DB4DBagKeys::not_null, fNotNull);
 
-				if (cri->getCRD()->fAutoSeq)
-					outBag.SetBool(DB4DBagKeys::autosequence, cri->getCRD()->fAutoSeq);
+				if (fNullToEmpty)
+					outBag.SetBool(DB4DBagKeys::never_null, fNullToEmpty);
 
-				if (cri->getCRD()->fAutoGenerate)
-					outBag.SetBool(DB4DBagKeys::autogenerate, cri->getCRD()->fAutoGenerate);
+				if (fAutoSeq)
+					outBag.SetBool(DB4DBagKeys::autosequence, fAutoSeq);
 
-				if (xtype == VK_STRING_UTF8 || xtype == VK_TEXT_UTF8)
-					outBag.SetBool(DB4DBagKeys::store_as_utf8, true);
+				if (fAutoGen)
+					outBag.SetBool(DB4DBagKeys::autogenerate, fAutoGen);
 
-				if ((xtype == VK_BLOB || xtype == VK_BLOB_DB4D || xtype == VK_IMAGE) && cri->GetBlobSwitchSize() != 0)
-					outBag.SetLong(DB4DBagKeys::blob_switch_size, cri->GetBlobSwitchSize());
+				if (fOuterBlob)
+					outBag.SetBool(DB4DBagKeys::outside_blob, fOuterBlob);
 
-				if ((xtype == VK_TEXT_UTF8 || xtype == VK_TEXT) && cri->GetTextSwitchSize() != 0)
-					outBag.SetLong(DB4DBagKeys::text_switch_size, cri->GetTextSwitchSize());
+				if (fStyledText)
+					outBag.SetBool(DB4DBagKeys::styled_text, fStyledText);
 
-				if (cri->getCRD()->fOuterData)
-					outBag.SetBool(DB4DBagKeys::outside_blob, cri->getCRD()->fOuterData);
-
-				if (cri->getCRD()->fOuterData)
-					outBag.SetBool(DB4DBagKeys::styled_text, cri->getCRD()->fTextIsWithStyle);
-
-
-			}
-			else
-			{
-				VString columnname;
-				cri->GetName(columnname);
-				outBag.SetString(d4::columnName, columnname);
 			}
 		}
 
 		if (xtype == VK_STRING_UTF8 || xtype == VK_TEXT || xtype == VK_TEXT_UTF8)
 			xtype = VK_STRING;
 
-		QuickReleaseRefCountable(cri);
 		if (forDax)
 		{
 			if (xtype >= VK_BYTE && xtype <= VK_FLOAT)
@@ -1842,6 +2443,9 @@ VError EntityAttribute::ToBag(VValueBag& outBag, bool forDax, bool forSave, bool
 		{
 			outBag.SetString(d4::type, EValPredefinedTypes[xtype]);
 		}
+
+		if (xtype == VK_TIME)
+			outBag.SetBool(d4::simpleDate, fSimpleDate);
 	}
 	else
 	{
@@ -1863,8 +2467,6 @@ VError EntityAttribute::ToBag(VValueBag& outBag, bool forDax, bool forSave, bool
 
 		if (fIsForeignKey)
 		{
-			outBag.SetVUUID(d4::uuid, fCrit_UUID);
-			outBag.SetLong(d4::fieldPos, GetFieldPos());
 		}
 	}
 	if (fReversePath)
@@ -1967,6 +2569,15 @@ VError EntityAttribute::ToBag(VValueBag& outBag, bool forDax, bool forSave, bool
 }
 
 
+EntityAttribute* EntityAttribute::getFlattenAttribute() const
+{
+	if (fFlattenLastDest != nil)
+		return fFlattenLastDest->getAttribute(fFlattenColumnName);
+	else
+		return nil;
+}
+
+
 VError EntityAttribute::GetScriptFromBag(const VValueBag* bag, EntityModelCatalog* catalog, const VValueBag::StKey& inScriptKey, script_attr inWhatScript, bool devMode)
 {
 	VError err = VE_OK;
@@ -2001,17 +2612,19 @@ VError EntityAttribute::GetScriptFromBag(const VValueBag* bag, EntityModelCatalo
 VError EntityAttribute::FromBag(const VValueBag* bag, EntityModelCatalog* catalog, bool fieldmustexits, bool devMode)
 {
 	VError err = VE_OK;
-	bool uuidWasGenerated = false;
 
 	fExtraProperties = bag->RetainUniqueElement(d4::extraProperties);
 	
+
 	VUUID xid;
-	if (!bag->GetVUUID(d4::uuid, xid))
+	if (bag->GetVUUID(d4::uuid, xid))
 	{
-		xid.Regenerate();
-		uuidWasGenerated = true;
+		fDB4DUUID = xid;
 	}
-	fCrit_UUID = xid;
+	else
+		fDB4DUUID.SetNull();
+
+
 	
 	if (! bag->GetString(d4::name, fName))
 	{
@@ -2064,6 +2677,9 @@ VError EntityAttribute::FromBag(const VValueBag* bag, EntityModelCatalog* catalo
 	fIdentifying = false;
 	bag->GetBool(d4::identifying, fIdentifying);
 
+	fSimpleDate = false;
+	bag->GetBool(d4::simpleDate, fSimpleDate);
+
 	
 
 	if (err == VE_OK)
@@ -2112,50 +2728,6 @@ VError EntityAttribute::FromBag(const VValueBag* bag, EntityModelCatalog* catalo
 
 	if (err == VE_OK)
 	{
-		if (xkind == eattr_storage || xkind == eattr_alias)
-		{
-			if (xkind == eattr_alias)
-			{
-				/* resolution retardee
-				*/
-			}
-
-			sLONG npos = -1;
-			VString fieldname;
-			if (bag->GetString(d4::columnName, fieldname))
-			{
-				if (xkind == eattr_storage)
-					npos = fOwner->GetMainTable()->FindField(fieldname);
-				else
-				{
-					fFlattenColumnName = fieldname;
-				}
-				if (npos > 0)
-					fFieldPos = npos;
-			}
-
-			if (npos == -1)
-			{
-				if (! bag->GetLong(d4::fieldPos, npos))
-				{
-					if (fFieldPos == 0 && fieldmustexits && xkind == eattr_storage && !devMode)
-					{
-						if (fieldname.IsEmpty())
-							err = ThrowError(VE_DB4D_ATT_FIELD_IS_MISSING);
-						else
-							err = ThrowError(VE_DB4D_ATT_FIELD_NOT_FOUND, &fieldname);
-					}
-				}
-				else
-				{
-					fFieldPos = npos;
-				}
-			}
-		}
-	}
-
-	if (err == VE_OK)
-	{
 		const VBagArray* DBEventsBag = bag->GetElements(d4::events);
 		if (DBEventsBag != nil)
 		{
@@ -2174,10 +2746,6 @@ VError EntityAttribute::FromBag(const VValueBag* bag, EntityModelCatalog* catalo
 						if (eventBag->GetString(d4::kind, ss) && !ss.IsEmpty())
 						{
 							evkind = (DBEventKind)EDBEventKinds[ss];
-							/*
-							if (evkind == dbev_none)
-								evkind = (DBEventKind)oldEDBEventKinds[ss];
-								*/
 						}
 						if (evkind == dbev_none)
 						{
@@ -2194,6 +2762,49 @@ VError EntityAttribute::FromBag(const VValueBag* bag, EntityModelCatalog* catalo
 				}
 			}
 		}
+	}
+
+	if (xkind == eattr_storage)
+	{
+		sLONG limitlen = 0;
+		if (bag->GetLong(DB4DBagKeys::limiting_length, limitlen))
+			fLimitingLen = limitlen;
+
+		sLONG switchsize = 0;
+		if (bag->GetLong(DB4DBagKeys::text_switch_size, switchsize))
+			fBlobSwitchSize = switchsize;
+
+		switchsize = 0;
+		if (bag->GetLong(DB4DBagKeys::blob_switch_size, switchsize))
+			fBlobSwitchSize = switchsize;
+
+		bool uniq = false;
+		if (bag->GetBool(DB4DBagKeys::unique, uniq))
+			fUnique = uniq;
+
+		bool notnull = false;
+		if (bag->GetBool(DB4DBagKeys::not_null, notnull))
+			fNotNull = notnull;
+
+		bool nulltoempty = false;
+		if (bag->GetBool(DB4DBagKeys::never_null, nulltoempty))
+			fNullToEmpty = nulltoempty;
+
+		bool autotseq = false;
+		if (bag->GetBool(DB4DBagKeys::autosequence, autotseq))
+			fAutoSeq = autotseq;
+
+		bool autogen = false;
+		if (bag->GetBool(DB4DBagKeys::autogenerate, autogen))
+			fAutoGen = autogen;
+
+		bool outsideblob = false;
+		if (bag->GetBool(DB4DBagKeys::outside_blob, outsideblob))
+			fOuterBlob = outsideblob;
+
+		bool styledtext = false;
+		if (bag->GetBool(DB4DBagKeys::styled_text, styledtext))
+			fStyledText = styledtext;		
 	}
 
 	if (err == VE_OK)
@@ -2245,7 +2856,7 @@ VError EntityAttribute::FromBag(const VValueBag* bag, EntityModelCatalog* catalo
 			AttributeType* tempType = fLocalType;
 			if (tempType == nil)
 			{
-				tempType = new AttributeType(fOwner->GetOwner());
+				tempType = new AttributeType(fOwner->GetCatalog()->GetOwner());
 			}
 			tempType->FromBag(bag, catalog, false, devMode);
 			if (tempType->IsEmpty())
@@ -2283,9 +2894,8 @@ VError EntityAttribute::FromBag(const VValueBag* bag, EntityModelCatalog* catalo
 		else
 			fIsMultiLine = false;
 
-		if (xkind == eattr_relation_Nto1 || xkind == eattr_storage /*|| xkind == eattr_field*/)
+		if (xkind == eattr_relation_Nto1 || xkind == eattr_storage)
 		{
-			if (uuidWasGenerated)
 			{
 				bool oktouch = true;
 				if (xkind == eattr_relation_Nto1)
@@ -2421,8 +3031,11 @@ VError EntityAttribute::ResolveRelatedEntities(SubPathRefSet& already, EntityMod
 			fRelation = RetainRefCountable(fFrom->fRelation);
 			if (fSubEntity == nil)
 				fSubEntity = RetainRefCountable(fFrom->fSubEntity);
-			fFlattenTableDest = fFrom->fFlattenTableDest;
+			//fFlattenTableDest = fFrom->fFlattenTableDest;
 			fFieldPos = fFrom->fFieldPos;
+			fFlattenColumnName = fFrom->fFlattenColumnName;
+			fFlattenLastDest = fFrom->fFlattenLastDest;
+			fSubEntityName = fFrom->fSubEntityName;
 			if (fRelation != nil)
 			{
 				fRelationPathID = fOwner->FindRelationPath(fRelation);
@@ -2467,16 +3080,6 @@ VError EntityAttribute::ResolveRelatedEntities(SubPathRefSet& already, EntityMod
 							{
 								fIsForeignKey = true;
 								mustBuildForeignKey = true;
-								Table* towner = fOwner->GetMainTable();
-
-								sLONG pos = GetFieldPos();
-								if (pos == 0)
-								{
-									pos = towner->FindNextFieldFree();
-									if (pos == -1)
-										pos = towner->GetNbCrit()+1;
-									SetFieldPos(pos);
-								}
 
 								const IdentifyingAttributeCollection* otherPrim = otherEntity->GetPrimaryAtts();
 								if (otherPrim->empty())
@@ -2498,35 +3101,15 @@ VError EntityAttribute::ResolveRelatedEntities(SubPathRefSet& already, EntityMod
 									else
 									{
 										const EntityAttribute* otherAtt = (*otherPrim)[0].fAtt;
+
 										sLONG typ = otherAtt->ComputeScalarType();
+										fScalarType = typ;
 
-										Field* cri = new Field(typ, pos, towner);
-										Critere* xcri = cri->GetCritere();
-										xcri->SetName(fName);
-										cri->SetUUID(fCrit_UUID);
-										towner->AddFieldSilently(cri, pos);
-
-										fOwner->GetOwner()->AddObjectID(objInBase_Field, cri, fCrit_UUID);
-
-
-										IndexInfoFromField* ind = new IndexInfoFromField(fOwner->GetOwner(), towner->GetNum(), cri->GetPosInRec(), DB4D_Index_BtreeWithCluster, false, true);
-										fOwner->GetOwner()->AddXMLIndex(ind);
-										ind->Release();
-
-
-										Field* dest = otherAtt->RetainDirectField();
-										if (testAssert(dest != nil))
-										{
-											EntityRelation* rel = new EntityRelation(cri, dest, erel_Nto1);
-											rel->RecalcPath();
-											fRelationPathID = fOwner->AddRelationPath(rel);
-											catalog->AddOneEntityRelation(rel, false);
-											fRelation = rel;
-
-											dest->Release();
-										}
-
-
+										EntityRelation* rel = new EntityRelation(this, otherAtt, erel_Nto1);
+										rel->RecalcPath();
+										fRelationPathID = fOwner->AddRelationPath(rel);
+										catalog->AddOneEntityRelation(rel, false);
+										fRelation = rel;
 									}
 								}
 
@@ -2670,6 +3253,7 @@ VError EntityAttribute::ResolveRelatedEntities(SubPathRefSet& already, EntityMod
 								if (fRelationPathID == -1)
 									fRelationPathID = fOwner->AddRelationPath(fRelation);
 								fFlattenColumnName = lastpart;
+								fFlattenLastDest = lastDest;
 							}
 						}
 					}
@@ -2691,41 +3275,34 @@ VError EntityAttribute::ResolveRelatedEntities(SubPathRefSet& already, EntityMod
 							fSubEntity = RetainRefCountable(lastDest);
 							fSubEntityName = fSubEntity->GetName();
 						}
-						fFlattenTableDest = fRelation->GetPath()[fRelation->GetPath().size()-1]->GetDestTable();
 						if (!fFlattenColumnName.IsEmpty())
 						{
-							fFieldPos = fFlattenTableDest->FindField(fFlattenColumnName);
-							if (fFieldPos <= 0)
+							const EntityAttribute* flattenDestAtt = nil;
+							if (lastDest != nil)
 							{
-								const EntityAttribute* flattenDestAtt = nil;
-								if (lastDest != nil)
+								flattenDestAtt = lastDest->getAttribute(fFlattenColumnName);
+							}
+							if (flattenDestAtt == nil)
+							{
+								if (!devMode)
+									err = ThrowError(VE_DB4D_ATT_FIELD_NOT_FOUND, &fFlattenColumnName);
+								else
+									catalog->AddError();
+							}
+							else
+							{
+								if (flattenDestAtt->IsScalar())
 								{
-									flattenDestAtt = lastDest->getAttribute(fFlattenColumnName);
 								}
-								if (flattenDestAtt == nil)
+								else
 								{
 									if (!devMode)
 										err = ThrowError(VE_DB4D_ATT_FIELD_NOT_FOUND, &fFlattenColumnName);
 									else
 										catalog->AddError();
 								}
-								else
-								{
-									if (flattenDestAtt->IsScalar())
-									{
-										fFlattenFromAField = false;
-									}
-									else
-									{
-										if (!devMode)
-											err = ThrowError(VE_DB4D_ATT_FIELD_NOT_FOUND, &fFlattenColumnName);
-										else
-											catalog->AddError();
-									}
-								}
 							}
-							else
-								fFlattenFromAField = true;
+							
 						}
 						else
 						{
@@ -2771,7 +3348,7 @@ VError EntityAttribute::ResolveQueryStatements(EntityModelCatalog* catalog, bool
 		{
 			if (fScriptDB4D == nil)
 			{
-				fScriptDB4D = new SearchTab(fOwner->GetMainTable());
+				fScriptDB4D = new SearchTab(fOwner);
 				fScriptDB4D->AllowJSCode(true);
 				if (devMode)
 				{
@@ -2787,7 +3364,7 @@ VError EntityAttribute::ResolveQueryStatements(EntityModelCatalog* catalog, bool
 
 			if (fScriptQuery == nil && err == VE_OK)
 			{
-				fScriptQuery = new SearchTab(fOwner->GetMainTable());
+				fScriptQuery = new SearchTab(fOwner);
 				fScriptQuery->AllowJSCode(true);
 				if (devMode)
 				{
@@ -2815,7 +3392,7 @@ VError EntityAttribute::ResolveQueryStatements(EntityModelCatalog* catalog, bool
 
 #if BuildEmFromTable
 
-void EntityAttribute::SetRelation(Relation* rel, EntityRelationKind kind, EntityModelCatalog* catalog)
+void EntityAttribute::SetRelation(Relation* rel, EntityRelationKind kind, LocalEntityModelCatalog* catalog)
 {
 	Field* source;
 	Field* dest;
@@ -2832,13 +3409,25 @@ void EntityAttribute::SetRelation(Relation* rel, EntityRelationKind kind, Entity
 		dest = rel->GetSource();
 		source = rel->GetDest();
 	}
-	fSubEntity = EntityModel::BuildEntityModel(desttable, catalog);
-	fRelation = new EntityRelation(source, dest, kind);
-	fRelation->RecalcPath();
-	fRelationPathID = fOwner->FindRelationPath(fRelation);
-	if (fRelationPathID == -1)
-		fRelationPathID = fOwner->AddRelationPath(fRelation);
-	fSubEntityName = fSubEntity->GetName();
+	fSubEntity = EntityModel::BuildLocalEntityModel(desttable, catalog);
+	if (fSubEntity != nil)
+	{
+		VString sourcename,destname;
+		source->GetName(sourcename);
+		dest->GetName(destname);
+		fFieldPos = source->GetPosInRec();
+		EntityAttribute* sourceatt = fSubEntity->getAttribute(sourcename);
+		EntityAttribute* destatt = fSubEntity->getAttribute(destname);
+		if (sourceatt != nil && destatt != nil)
+		{
+			fRelation = new EntityRelation(sourceatt, destatt, kind);
+			fRelation->RecalcPath();
+			fRelationPathID = fOwner->FindRelationPath(fRelation);
+			if (fRelationPathID == -1)
+				fRelationPathID = fOwner->AddRelationPath(fRelation);
+		}
+		fSubEntityName = fSubEntity->GetName();
+	}
 }
 #endif
 
@@ -2897,17 +3486,21 @@ bool EntityAttribute::IsSortable() const
 		case eattr_storage:
 		case eattr_alias:
 			{
+				sLONG scalartype = ComputeScalarType();
+				res = (scalartype != 0 && scalartype != VK_IMAGE && scalartype != VK_BLOB && scalartype != VK_BLOB_DB4D); // temporaire
+				/*
 				Field* cri = RetainField();
 				if (cri != nil)
 				{
 					res = cri->IsSortable();
 				}
+				*/
 			}
 			break;
 		case eattr_computedField:
 			{
 				sLONG scalartype = ComputeScalarType();
-				res = (scalartype != VK_IMAGE && scalartype != VK_BLOB && scalartype != VK_BLOB_DB4D); // temporaire
+				res = (scalartype != 0 && scalartype != VK_IMAGE && scalartype != VK_BLOB && scalartype != VK_BLOB_DB4D); // temporaire
 			}
 			break;
 	}
@@ -2954,6 +3547,11 @@ bool EntityAttribute::NeedValidation() const
 	return needvalidate;
 }
 
+
+CDB4DEntityModel* EntityAttribute::GetRelatedEntityModel() const
+{
+	return GetSubEntityModel();
+}
 
 
 
@@ -3353,8 +3951,63 @@ void EntityAttributeSortedSelection::ToString(VString& outString)
 	}
 }
 
+void EntityAttributeSortedSelection::GetString(VString& outString, bool FirstLevelOnly, bool forSorting, const VString* prefix)
+{
+	bool first = true;
+	for (iterator cur = begin(), last = end(); cur != last; cur++)
+	{
+		VString name;
 
-bool EntityAttributeSortedSelection::AddAttribute(EntityAttribute* att, RestTools* req)
+		EntityAttributeSortedSelection* soussel = cur->fSousSelection;
+		if (soussel != nil)
+		{
+			VString sousprefix;
+			const EntityAttribute* att = cur->fAttribute;
+			sousprefix = att->GetName()+".";
+			if (prefix != nil)
+				sousprefix = *prefix+sousprefix;
+			if (!FirstLevelOnly)
+			{
+				soussel->GetString(name, false, forSorting, &sousprefix);
+			}
+		}
+		else
+		{
+			AttributePath* attpath = cur->fAttPath;
+			if (attpath != nil)
+			{
+				attpath->GetString(name);
+			}
+			else
+			{
+				const EntityAttribute* att = cur->fAttribute;
+				name = att->GetName();
+			}
+			if (prefix != nil)
+				name = *prefix + name;
+			if (forSorting)
+			{
+				if (cur->fAscent)
+					name += " asc";
+				else
+					name += " desc";
+			}
+		}
+		if (!name.IsEmpty())
+		{
+			if (first)
+				first = false;
+			else
+				outString += ",";
+			outString += name;
+		}
+	}
+
+}
+
+
+
+bool EntityAttributeSortedSelection::AddAttribute(const EntityAttribute* att, RestTools* req)
 {
 	if (req == nil || att->getScope() == escope_public)
 	{
@@ -3622,6 +4275,59 @@ void EntityAttributeSelection::Dispose()
 
 
 
+void EntityAttributeSelection::GetString(VString& outString, bool FirstLevelOnly, const VString* prefix)
+{
+	bool first = true;
+	for (iterator cur = begin(), last = end(); cur != last; cur++)
+	{
+		VString name;
+
+		EntityAttributeSelection* soussel = cur->fSousSelection;
+		if (soussel != nil)
+		{
+			VString sousprefix;
+			const EntityAttribute* att = cur->fAttribute;
+			sousprefix = att->GetName()+".";
+			if (prefix != nil)
+				sousprefix = *prefix+sousprefix;
+			if (!FirstLevelOnly)
+			{
+				soussel->GetString(name, false, &sousprefix);
+			}
+		}
+		else
+		{
+			const EntityAttribute* att = cur->fAttribute;
+			if (att != nil)
+			{
+				name = att->GetName();
+				sLONG skip = cur->fSkip;
+				sLONG count = cur->fCount;
+				if (skip != -1)
+				{
+					name +=":"+ToString(skip)+"-"+ToString(count);
+				}
+				else if (count != -1)
+				{
+					name +=":"+ToString(count);
+				}
+				if (prefix != nil)
+					name = *prefix + name;
+			}
+		}
+		if (!name.IsEmpty())
+		{
+			if (first)
+				first = false;
+			else
+				outString += ",";
+			outString += name;
+		}
+	}
+
+}
+
+
 
 
 // ----------------------------------------------------------------------------------------
@@ -3701,10 +4407,10 @@ VError DBEvent::FromBag(EntityModel* inOwner, const VValueBag* bag, EntityModelC
 }
 
 
-VError DBEvent::Call(EntityRecord* inRec, BaseTaskInfo* context, const EntityAttribute* inAtt, const EntityModel* inDataClass, Selection* *outSel) const
+VError DBEvent::Call(EntityRecord* inRec, BaseTaskInfo* context, const EntityAttribute* inAtt, const EntityModel* inDataClass, EntityCollection* *outSel) const
 {
 	VError err = VE_OK;
-	Selection* selresult = nil;
+	EntityCollection* selresult = nil;
 	if (IsValid())
 	{
 		bool go = false;
@@ -3748,11 +4454,11 @@ VError DBEvent::Call(EntityRecord* inRec, BaseTaskInfo* context, const EntityAtt
 					VJSObject therecord(jscontext);
 					if (inDataClass != nil)
 					{
-						CDB4DEntityModel* model = (EntityModel*)inDataClass;
+						EntityModel* model = (EntityModel*)inDataClass;
 						therecord = VJSEntityModel::CreateInstance(jscontext, model);
 					}
 					else
-						therecord = VJSEntitySelectionIterator::CreateInstance(jscontext, new EntitySelectionIterator(inRec, context->GetEncapsuleur()));
+						therecord = VJSEntitySelectionIterator::CreateInstance(jscontext, new EntitySelectionIterator(inRec, context));
 					JS4D::ExceptionRef excep;
 					VJSValue outResult(jscontext);
 					vector<VJSValue> Params;
@@ -3774,10 +4480,10 @@ VError DBEvent::Call(EntityRecord* inRec, BaseTaskInfo* context, const EntityAtt
 					}
 					else
 					{
-						CDB4DSelection* selres = outResult.GetObjectPrivateData<VJSEntitySelection>();
+						EntityCollection* selres = outResult.GetObjectPrivateData<VJSEntitySelection>();
 						if (selres != nil)
 						{
-							selresult = VImpCreator<VDB4DSelection>::GetImpObject(selres)->GetSel();
+							selresult = selres;
 							if (selresult != nil)
 								selresult->Retain();
 						}
@@ -3801,7 +4507,19 @@ VError DBEvent::Call(EntityRecord* inRec, BaseTaskInfo* context, const EntityAtt
 									}
 									err = vThrowUserGeneratedError(MAKE_VERROR('dbev', errnum), errorMessage);
 								}
+								else if (fKind == dbev_restrict)
+								{
+									err = ThrowBaseError(VE_DB4D_INVALID_COLLECTION_IN_RESTRICTING_EVENT, fOwner->GetName());
+								}
 							}
+							else if (fKind == dbev_restrict)
+							{
+								err = ThrowBaseError(VE_DB4D_INVALID_COLLECTION_IN_RESTRICTING_EVENT, fOwner->GetName());
+							}
+						}
+						else if (fKind == dbev_restrict)
+						{
+							err = ThrowBaseError(VE_DB4D_INVALID_COLLECTION_IN_RESTRICTING_EVENT, fOwner->GetName());
 						}
 					}
 
@@ -3828,18 +4546,15 @@ VError DBEvent::Call(EntityRecord* inRec, BaseTaskInfo* context, const EntityAtt
 
 
 
-EntityModel::EntityModel(Base4D* inOwner, Table* inMainTable)
+EntityModel::EntityModel(EntityModelCatalog* inOwner)
 {
-	fOwner = inOwner;
-	fMainTable = RetainRefCountable(inMainTable);
+	fCatalog = inOwner;
 	fQueryLimit = 0;
-	fQueryApplyToEM = true;
 	fBaseEm = nil;
 	fDefaultTopSize = 0;
 	fMatchPrimKey = 2;
 	fRestrictingQuery = nil;
 	fAlreadyResolvedComputedAtts = false;
-	fIsTableDef = false;
 	fExtraProperties = nil;
 	fScope = escope_public;
 	fHasDeleteEvent = false;
@@ -3848,13 +4563,14 @@ EntityModel::EntityModel(Base4D* inOwner, Table* inMainTable)
 	fPublishAsGlobal = false;
 	fPublishAsGlobalDefined = false;
 	fAllowOverrideStamp = false;
+	fNoEdit = false;
+	fNoSave = false;
 	fill(&fForced[DB4D_EM_None_Perm], &fForced[DB4D_EM_Promote_Perm+1], 0);
 }
 
 
 EntityModel::~EntityModel()
 {
-	QuickReleaseRefCountable(fMainTable);
 	QuickReleaseRefCountable(fBaseEm);
 	for (EntityAttributeCollection::iterator cur = fAttributes.begin(), end = fAttributes.end(); cur != end; cur++)
 	{
@@ -3870,13 +4586,62 @@ EntityModel::~EntityModel()
 
 VError EntityModel::ThrowError( VError inErrCode, const VString* p1) const
 {
-	VErrorDB4D_OnEM *err = new VErrorDB4D_OnEM(inErrCode, noaction, fOwner, this);
+	VErrorDB4D_OnEM *err = new VErrorDB4D_OnEM(inErrCode, noaction, fCatalog->GetOwner(), this);
 	if (p1 != nil)
 		err->GetBag()->SetString(Db4DError::Param1, *p1);
 	VTask::GetCurrent()->PushRetainedError( err);
 
 	return inErrCode;
 }
+
+
+CDB4DEntityRecord* EntityModel::NewEntity(CDB4DBaseContextPtr inContext) const
+{
+	return newEntity(ConvertContext(inContext));
+}
+
+RecIDType EntityModel::CountEntities(CDB4DBaseContext* inContext)
+{
+	return countEntities(ConvertContext(inContext));
+}
+
+
+CDB4DEntityRecord* EntityModel::FindEntityWithPrimKey(const XBOX::VString& primkey, CDB4DBaseContext* inContext, VErrorDB4D& err, DB4D_Way_of_Locking HowToLock)
+{
+	return findEntityWithPrimKey(primkey, ConvertContext(inContext), err, HowToLock);
+}
+
+CDB4DEntityRecord* EntityModel::FindEntityWithPrimKey(const XBOX::VectorOfVString& primkey, CDB4DBaseContext* inContext, VErrorDB4D& err, DB4D_Way_of_Locking HowToLock)
+{
+	return findEntityWithPrimKey(primkey, ConvertContext(inContext), err, HowToLock);
+}
+
+CDB4DEntityRecord* EntityModel::FindEntityWithPrimKey(const XBOX::VValueBag& primkey, CDB4DBaseContext* inContext, VErrorDB4D& err, DB4D_Way_of_Locking HowToLock)
+{
+	return findEntityWithPrimKey(primkey, ConvertContext(inContext), err, HowToLock);
+}
+
+CDB4DEntityRecord* EntityModel::FindEntityWithPrimKey(const XBOX::VectorOfVValue& primkey, CDB4DBaseContext* inContext, VErrorDB4D& err, DB4D_Way_of_Locking HowToLock)
+{
+	return findEntityWithPrimKey(primkey, ConvertContext(inContext), err, HowToLock);
+}
+
+
+CDB4DEntityRecord* EntityModel::FindEntityWithIdentifyingAtts(const XBOX::VectorOfVString& idents, CDB4DBaseContext* inContext, VErrorDB4D& err, DB4D_Way_of_Locking HowToLock)
+{
+	return findEntityWithIdentifyingAtts(idents, ConvertContext(inContext), err, HowToLock);
+}
+
+CDB4DEntityRecord* EntityModel::FindEntityWithIdentifyingAtts(const XBOX::VValueBag& idents, CDB4DBaseContext* inContext, VErrorDB4D& err, DB4D_Way_of_Locking HowToLock)
+{
+	return findEntityWithIdentifyingAtts(idents, ConvertContext(inContext), err, HowToLock);
+}
+
+CDB4DEntityRecord* EntityModel::FindEntityWithIdentifyingAtts(const XBOX::VectorOfVValue& idents, CDB4DBaseContext* inContext, VErrorDB4D& err, DB4D_Way_of_Locking HowToLock)
+{
+	return findEntityWithIdentifyingAtts(idents, ConvertContext(inContext), err, HowToLock);
+}
+
 
 
 EntityMethod* EntityModel::getMethod(const VString& inMethodName, bool publicOnly) const
@@ -3913,6 +4678,7 @@ EntityAttribute* EntityModel::getAttribute(const VString& AttributeName) const
 }
 
 
+/*
 sLONG EntityModel::FindAttribute(const VString& AttributeName) const
 {
 	EntityAttribute* ea = getAttribute(AttributeName);
@@ -3921,8 +4687,10 @@ sLONG EntityModel::FindAttribute(const VString& AttributeName) const
 	else
 		return ea->GetPosInOwner();
 }
+*/
 
 
+/*
 EntityAttribute* EntityModel::FindAttributeByFieldPos(sLONG FieldPos)
 {
 	EntityAttribute* res = nil;
@@ -3937,6 +4705,7 @@ EntityAttribute* EntityModel::FindAttributeByFieldPos(sLONG FieldPos)
 	}
 	return res;
 }
+*/
 
 
 
@@ -4027,27 +4796,19 @@ bool EntityModel::BuildListOfAttributes(const VString& inAttributeList, EntityAt
 }
 
 
-CDB4DTable* EntityModel::RetainTable() const
-{
-	CDB4DBase* base = fOwner->RetainBaseX();
-	CDB4DTable* result = new VDB4DTable(VDBMgr::GetManager(), VImpCreator<VDB4DBase>::GetImpObject(base), fMainTable);
-	base->Release();
-	return result;
-}
-
-
+/*
 CDB4DSelection* EntityModel::ProjectSelection(CDB4DSelection* sel, CDB4DEntityAttribute* att, VError& err, CDB4DBaseContext* context)
 {
 	Selection* result = nil;
 	VDB4DSelection* xresult = nil;
-	EntityAttribute* xatt = VImpCreator<EntityAttribute>::GetImpObject(att);
+	EntityAttribute* xatt = dynamic_cast<EntityAttribute*>(att);
 	EntityModel* destModel = xatt->GetSubEntityModel();
-	Selection* xsel = VImpCreator<VDB4DSelection>::GetImpObject(sel)->GetSel();
+	Selection* xsel = dynamic_cast<VDB4DSelection*>(sel)->GetSel();
 	result = projectSelection(xsel, xatt, err, ConvertContext(context));
 	if (result != nil)
 	{
 		CDB4DBase* xbase = fOwner->RetainBaseX();
-		xresult = new VDB4DSelection(VDBMgr::GetManager(), VImpCreator<VDB4DBase>::GetImpObject(xbase), destModel->GetMainTable(), result, destModel);
+		xresult = new VDB4DSelection(VDBMgr::GetManager(), dynamic_cast<VDB4DBase*>(xbase), destModel->GetMainTable(), result, destModel);
 		xbase->Release();
 	}
 	return xresult;
@@ -4116,117 +4877,168 @@ Selection* EntityModel::projectSelection(Selection* sel, EntityAttribute* att, V
 
 	return result;
 }
-
+*/
 
 VError EntityModel::ActivatePath(EntityRecord* erec, sLONG inPathID, SubEntityCache& outResult, bool Nto1, EntityModel* subEntityModel, BaseTaskInfo* context)
 {
 	VError err = VE_OK;
-	EntityRelation* relpath = nil;
 	
+	outResult.Clear();
 	outResult.SetActivated();
 	outResult.SetModel(subEntityModel);
 
-	relpath = fRelationPaths[inPathID];
-
+	EntityRelation* relpath = fRelationPaths[inPathID];
 	const EntityRelationCollection& path = relpath->GetPath();
 
-	if (testAssert(relpath != nil && erec != nil))
+	if (relpath->IsSimple() && Nto1)
 	{
-		Table* finaltarget = nil;
-		if (!path.empty())
-			finaltarget = path[path.size()-1]->GetDestTable();
-
-		if (testAssert(finaltarget != nil))
+		if (erec != nil)
 		{
-			if (subEntityModel == nil || testAssert(subEntityModel->GetMainTable() == finaltarget))
+			const EntityRelation* rel = path[0];
+			outResult.SetErec(erec->do_LoadRelatedEntity(rel->GetSourceAtt(), rel->GetDestAtt(), context, err, DB4D_Do_Not_Lock));
+		}
+
+	}
+	else
+	{
+		EntityRecord* curErec = erec;
+
+		sLONG posInrel = -1;
+		bool found1ToNinPath = false, allstop = false;
+
+		for (EntityRelationCollection::const_iterator cur = path.begin(), end = path.end(); cur != end && !found1ToNinPath && !allstop && err == VE_OK; ++cur, ++posInrel)
+		{
+			if (curErec == nil)
+				allstop = true;
+			else
 			{
-				bool emptyResult = false;
-				SearchTab query(finaltarget);
-				InstanceMap instances;
-				sLONG previnstance = 0;
-
-				sLONG nbrel = path.size(), i = 0;
-
-				for (EntityRelationCollection::const_reverse_iterator cur = path.rbegin(), end = path.rend(); cur != end && !emptyResult; ++cur, ++i)
+				const EntityRelation* rel = *cur;
+				if (rel->GetKind() == erel_Nto1)
 				{
-					if (i == nbrel - 1)
+					EntityAttributeValue* val = curErec->getAttributeValue(rel->GetSourceAtt(), err, context, false);
+					if (err == VE_OK)
 					{
-						VValueSingle* cv = erec->getRecord()->GetFieldValue((*cur)->GetSourceField(), err, false, true);
-						if (cv == nil || cv->IsNull())
-							emptyResult = true;
-						else
-							query.AddSearchLineSimple((*cur)->GetDestField(), DB4D_Equal, cv, false, previnstance );
+						curErec = val->getRelatedEntity();
 					}
 					else
 					{
-						sLONG sourcetablenum = (*cur)->GetSourceField()->GetOwner()->GetNum();
-						sLONG desttablenum = (*cur)->GetDestField()->GetOwner()->GetNum();
-		
-						sLONG destinstance = previnstance;
-						if (desttablenum == sourcetablenum)
-							instances.GetInstanceAndIncrement(desttablenum);
-						sLONG sourceinstance = instances.GetInstanceAndIncrement(sourcetablenum);
-						previnstance = sourceinstance;
-
-						query.AddSearchLineJoin((*cur)->GetSourceField(), DB4D_Equal, (*cur)->GetDestField(), false, sourceinstance, destinstance);
-						query.AddSearchLineBoolOper(DB4D_And);
+						allstop = true;
+						curErec = nil;
 					}
 				}
+				else
+					found1ToNinPath = true;
+			}
+		}
 
-				if (emptyResult)
+		if (allstop)
+		{
+		}
+		else if (found1ToNinPath)
+		{
+			SearchTab query(subEntityModel);
+			InstanceMap instances;
+			sLONG previnstance = 0;
+			sLONG nbrel = path.size(), i = nbrel-1;
+			bool emptyResult = false;
+			for (EntityRelationCollection::const_reverse_iterator cur = path.rbegin(), end = path.rend(); cur != end && !emptyResult && i >= posInrel; ++cur, --i)
+			{
+				const EntityRelation* rel = *cur;
+				const EntityAttribute* sourceAtt = rel->GetSourceAtt();
+				const EntityAttribute* destAtt = rel->GetDestAtt();
+
+				if (i == posInrel)
 				{
-					if (Nto1)
-						outResult.SetRecord(nil);
+					VValueSingle* cv = nil;
+
+					VCompareOptions options;
+					options.SetDiacritical(false);
+
+					EntityAttributeValue* val = curErec->getAttributeValue(sourceAtt, err, context, false);
+					if (val != nil)
+						cv = val->getVValue();
+					if (cv == nil || cv->IsNull())
+						emptyResult = true;
 					else
-						outResult.SetSel(nil);
+						query.AddSearchLineEmSimple(destAtt, DB4D_Equal, cv, options, previnstance );
 				}
 				else
 				{
-					SearchTab restsearch(subEntityModel->GetMainTable());
-					if (subEntityModel->AddRestrictionToQuery(restsearch, context, err))
-					{
-						query.Add(restsearch);
-					}
-					if (subEntityModel->WithRestrictingQuery())
-					{
-						query.Add(*(subEntityModel->fRestrictingQuery));
-					}
-					OptimizedQuery xquery;
-#if 0 && debuglr
-					Boolean olddescribe = context->ShouldDescribeQuery();
-					context->MustDescribeQuery(true);
-#endif
+					EntityModel* sourceModel = sourceAtt->GetModel();
+					EntityModel* destModel = destAtt->GetModel();
+					sLONG destinstance = previnstance;
+					if (destModel == sourceModel)
+						instances.GetInstanceAndIncrement(destModel);
+					sLONG sourceinstance = instances.GetInstanceAndIncrement(sourceModel);
+					previnstance = sourceinstance;
 
-					err = xquery.AnalyseSearch(&query, context);
-					if (err == VE_OK)
+					query.AddSearchLineJoinEm(sourceAtt, DB4D_Equal, destAtt, false, sourceinstance, destinstance);
+					query.AddSearchLineBoolOper(DB4D_And);
+				}
+			}
+
+			if (emptyResult)
+			{
+				/*
+				if (Nto1)
+					outResult.SetErec(nil);
+				else
+					outResult.SetSel(nil);
+					*/
+			}
+			else
+			{
+				/*
+				SearchTab restsearch(subEntityModel);
+				if (subEntityModel->AddRestrictionToQuery(restsearch, context, err))
+				{
+					query.Add(restsearch);
+				}
+				if (subEntityModel->WithRestrictingQuery())
+				{
+					query.Add(*(subEntityModel->fRestrictingQuery));
+				}
+				*/
+
+				if (okperm(context, subEntityModel, DB4D_EM_Read_Perm) || okperm(context, subEntityModel, DB4D_EM_Update_Perm) || okperm(context, subEntityModel, DB4D_EM_Delete_Perm))
+				{
+					EntityCollection* col = subEntityModel->executeQuery(&query, context, nil, nil, DB4D_Do_Not_Lock, 0, nil, &err);
+					if (err == VE_OK && col != nil)
 					{
-						if (okperm(context, subEntityModel, DB4D_EM_Read_Perm) || okperm(context, subEntityModel, DB4D_EM_Update_Perm) || okperm(context, subEntityModel, DB4D_EM_Delete_Perm))
+						if (Nto1)
 						{
-							Selection* sel = xquery.Perform((Bittab*)nil, nil, context, err, DB4D_Do_Not_Lock);
-							if (sel != nil)
+							assert(!Nto1); // ne devrait plus passer par ici
+							if (col->GetLength(context) > 0)
 							{
-								if (Nto1)
+								EntityRecord* rec = col->LoadEntity(0, context, err, DB4D_Do_Not_Lock);
+								if (rec != nil)
 								{
-									FicheInMem* rec = nil;
-									if (sel->GetQTfic() > 0)
-										rec = finaltarget->GetDF()->LoadRecord(sel->GetFic(0), err, DB4D_Do_Not_Lock, context);
-									QuickReleaseRefCountable(sel);
-									outResult.SetRecord(rec);
+									outResult.SetErec(rec);
 								}
-								else
-									outResult.SetSel(sel);
 							}
+							QuickReleaseRefCountable(col);
 						}
 						else
-						{
-							err = subEntityModel->ThrowError(VE_DB4D_NO_PERM_TO_READ);
-							context->SetPermError();
-						}
+							outResult.SetSel(col);
 					}
-#if 0 && debuglr
-					context->MustDescribeQuery(olddescribe);
-#endif
+					else
+						QuickReleaseRefCountable(col);
 				}
+				else
+				{
+					err = subEntityModel->ThrowError(VE_DB4D_NO_PERM_TO_READ);
+					context->SetPermError();
+				}
+			}
+
+		}
+		else
+		{
+			assert(Nto1);
+			if (curErec != nil)
+			{
+				assert(subEntityModel == curErec->GetModel());
+				outResult.SetErec(RetainRefCountable(curErec));
 			}
 		}
 	}
@@ -4250,15 +5062,19 @@ VError EntityModel::BuildRelPath(SubPathRefSet& already, EntityModelCatalog* cat
 	}
 	else
 	{
+		bool deja = false;
 		SubPathRef part(this, attname);
 		if (already.find(part) != already.end())
 		{
+			/*
 			if (!devMode)
 				err = ThrowError(VE_DB4D_RELATION_PATH_IS_RECURSIVE, &attname);
 			else
 				catalog->AddError();
+				*/
+			deja = true;
 		}
-		else
+		
 		{
 			already.insert(part);
 			EntityAttributeKind what = att->GetKind();
@@ -4266,7 +5082,10 @@ VError EntityModel::BuildRelPath(SubPathRefSet& already, EntityModelCatalog* cat
 			{
 				if (what != eattr_relation_Nto1)
 					outAllNto1 = false;
-				err = att->ResolveRelatedEntities(already, catalog, devMode, nil);
+				if (deja)
+					err = VE_OK;
+				else
+					err = att->ResolveRelatedEntities(already, catalog, devMode, nil);
 				if (err == VE_OK)
 				{
 					EntityRelation* rel = att->GetRelPath();
@@ -4360,9 +5179,8 @@ VError EntityModel::ToBag(VValueBag& outBag, bool forDax, bool forSave, bool for
 	outBag.SetString(d4::collectionName, fCollectionName);
 	if (fScope != escope_none)
 		outBag.SetString(d4::scope, EScopeKinds[(sLONG)fScope]);
-
-	VString tablename;
-	fMainTable->GetName(tablename);
+	if (!fDB4DUUID.IsNull())
+		outBag.SetVUUID(d4::uuid, fDB4DUUID);
 
 	if (forSave)
 	{
@@ -4370,27 +5188,9 @@ VError EntityModel::ToBag(VValueBag& outBag, bool forDax, bool forSave, bool for
 			outBag.SetBool(d4::allowOverrideStamp, fAllowOverrideStamp);
 		if (fPublishAsGlobalDefined)
 			outBag.SetBool(d4::publishAsJSGlobal, fPublishAsGlobal);
-		if (fIsTableDef)
-		{
-			VUUID xid;
-			fMainTable->GetUUID(xid);
-			outBag.SetVUUID(d4::uuid, xid);
-			outBag.SetLong(d4::tablePos, fMainTable->GetNum());
-		}
-		else
-		{
-			if (fExtends.IsEmpty())
-				outBag.SetString(d4::dataSource, tablename);
-			else
-				outBag.SetString(d4::extends, fExtends);
-		}
+		if (!fExtends.IsEmpty())
+			outBag.SetString(d4::extends, fExtends);
 	}
-	/*
-	else
-	{
-		outBag.SetString(d4::dataSource, tablename);
-	}
-	*/
 
 	if (!forSave && req != nil)
 	{
@@ -4404,6 +5204,11 @@ VError EntityModel::ToBag(VValueBag& outBag, bool forDax, bool forSave, bool for
 		outBag.SetLong(d4::defaultTopSize, fDefaultTopSize);
 	}
 
+	if (fNoEdit)
+		outBag.SetBool(d4::noEdit, true);
+	if (fNoSave)
+		outBag.SetBool(d4::noSave, true);
+
 	if (WithRestrictingQuery() && forSave)
 	{
 		VValueBag* queryBag = new VValueBag();
@@ -4413,8 +5218,6 @@ VError EntityModel::ToBag(VValueBag& outBag, bool forDax, bool forSave, bool for
 		if (forSave)
 		{
 			queryBag->SetString(d4::queryStatement, fRestrictingQueryString);
-			if (fQueryApplyToEM)
-				queryBag->SetBool(d4::applyToModel, true);
 		}
 		else
 		{
@@ -4451,7 +5254,7 @@ VError EntityModel::ToBag(VValueBag& outBag, bool forDax, bool forSave, bool for
 		if ((att->IsOverWritten() || !forSave) && (req == nil || att->getScope() == escope_public))
 		{
 			VValueBag* attBag = new VValueBag();
-			att->ToBag(*attBag, forDax, forSave, forJSON, fIsTableDef && forSave);
+			att->ToBag(*attBag, forDax, forSave, forJSON, forSave);
 			outBag.AddElement(d4::attributes, attBag);
 			attBag->Release();
 		}
@@ -4489,7 +5292,8 @@ VError EntityModel::ToBag(VValueBag& outBag, bool forDax, bool forSave, bool for
 		for (IdentifyingAttributeCollection::const_iterator cur = prims->begin(), end = prims->end(); cur != end; cur++)
 		{
 			BagElement identbag(outBag, d4::key);
-			identbag->SetString(d4::name, cur->fAtt->GetName());
+			if ( cur->fAtt )
+				identbag->SetString(d4::name, cur->fAtt->GetName());
 		}
 	}
 
@@ -4523,6 +5327,14 @@ VError EntityModel::FromBag(const VValueBag* inBag, EntityModelCatalog* catalog,
 
 	fExtraProperties = inBag->RetainUniqueElement(d4::extraProperties);
 
+	VUUID xid;
+	if (inBag->GetVUUID(d4::uuid, xid))
+	{
+		fDB4DUUID = xid;
+	}
+	else
+		fDB4DUUID.SetNull();
+
 	bool AsGlobal;
 	if (inBag->GetBool(d4::publishAsJSGlobal, AsGlobal))
 	{
@@ -4543,6 +5355,26 @@ VError EntityModel::FromBag(const VValueBag* inBag, EntityModelCatalog* catalog,
 	else
 	{
 		fAllowOverrideStamp = false;
+	}
+
+	bool noedit;
+	if (inBag->GetBool(d4::noEdit, noedit))
+	{
+		fNoEdit = noedit;
+	}
+	else
+	{
+		fNoEdit = noedit;
+	}
+
+	bool nosave;
+	if (inBag->GetBool(d4::noSave, nosave))
+	{
+		fNoSave = nosave;
+	}
+	else
+	{
+		fNoSave = false;
 	}
 
 	if (inBag->GetString(d4::className, fName))
@@ -4576,7 +5408,7 @@ VError EntityModel::FromBag(const VValueBag* inBag, EntityModelCatalog* catalog,
 		else
 		{
 			if (!devMode)
-				err = fOwner->ThrowError(VE_DB4D_ENTITY_NAME_MISSING, noaction);
+				err = fCatalog->GetOwner()->ThrowError(VE_DB4D_ENTITY_NAME_MISSING, noaction);
 			else
 				catalog->AddError();
 		}
@@ -4595,9 +5427,6 @@ VError EntityModel::FromBag(const VValueBag* inBag, EntityModelCatalog* catalog,
 	}
 
 	VString cumulQuery;
-	VString tablename;
-	Table* maintable = nil;
-	bool mustbuildtable = false;
 	if (err == VE_OK)
 	{
 		VString otherEMname;
@@ -4610,17 +5439,15 @@ VError EntityModel::FromBag(const VValueBag* inBag, EntityModelCatalog* catalog,
 			fBaseEm = otherEm;
 			if (otherEm != nil)
 			{
-				fMainTable = RetainRefCountable(otherEm->fMainTable);
 				fRelationPaths.resize(otherEm->fRelationPaths.size());
 				if (otherEm->fRestrictingQuery != nil)
 				{
-					fRestrictingQuery = new SearchTab(fMainTable);
+					fRestrictingQuery = new SearchTab(this);
 					fRestrictingQuery->From(*(otherEm->fRestrictingQuery));
 				}
 				else
 					fRestrictingQuery = nil;
 				fQueryLimit = otherEm->fQueryLimit;
-				fQueryApplyToEM = true;
 				fRelationPaths = otherEm->fRelationPaths;
 				fDefaultTopSize = otherEm->fDefaultTopSize;
 				for (EntityAttributeCollection::const_iterator cur = otherEm->fAttributes.begin(), end = otherEm->fAttributes.end(); cur != end; cur++)
@@ -4647,11 +5474,11 @@ VError EntityModel::FromBag(const VValueBag* inBag, EntityModelCatalog* catalog,
 				fPrimaryAtts = otherEm->fPrimaryAtts;
 				for (IdentifyingAttributeCollection::iterator cur = fPrimaryAtts.begin(), end = fPrimaryAtts.end(); cur != end; cur++)
 				{
-					cur->fAtt = FindAttributeByFieldPos(cur->fAtt->GetFieldPos());
+					cur->fAtt = getAttribute(cur->fAtt->GetName());
 				}
 				for (IdentifyingAttributeCollection::iterator cur = fIdentifyingAtts.begin(), end = fIdentifyingAtts.end(); cur != end; cur++)
 				{
-					cur->fAtt = FindAttributeByFieldPos(cur->fAtt->GetFieldPos());
+					cur->fAtt = getAttribute(cur->fAtt->GetName());
 				}
 				otherEm->AddDerivated(this);
 				//otherEm->Release();
@@ -4662,50 +5489,6 @@ VError EntityModel::FromBag(const VValueBag* inBag, EntityModelCatalog* catalog,
 					catalog->AddError();
 				else
 					err = ThrowError(VE_DB4D_ENTITY_NOT_FOUND_FOR_EXTENDS, &otherEMname);
-			}
-		}
-		else
-		{
-			if (inBag->GetString(d4::dataSource, tablename))
-			{
-				maintable = fOwner->FindAndRetainTableRef(tablename);
-				if (maintable != nil)
-				{
-					fMainTable = maintable;
-				}
-				else
-				{
-					if (devMode)
-						catalog->AddError();
-					else
-						err = ThrowError(VE_DB4D_ENTITY_WRONG_TABLE_REF, &tablename);
-				}
-			}
-			else
-			{
-				mustbuildtable = true;
-				maintable = fOwner->FindAndRetainTableRef(fName);
-				if (maintable != nil)
-				{
-					if (devMode)
-						catalog->AddError();
-					else
-						err = ThrowError(VE_DB4D_ENTITY_TABLENAME_DUPLICATED, &fName);					
-					maintable->Release();
-				}
-				else
-				{
-					fMainTable = new TableRegular(fOwner, 0, true);
-					fMainTable->SetNameSilently(fName);
-					VUUID xid;
-					if (!inBag->GetVUUID(d4::uuid, xid))
-					{
-						xid.Regenerate();
-						catalog->TouchXML();
-					}
-					fMainTable->SetUUID(xid);
-					fIsTableDef = true;
-				}
 			}
 		}
 	}
@@ -4883,70 +5666,11 @@ VError EntityModel::FromBag(const VValueBag* inBag, EntityModelCatalog* catalog,
 						if (entAtt == nil)
 							entAtt = new EntityAttribute(this);
 						if (err == VE_OK)
-							err = entAtt->FromBag(attributeBag, catalog, !mustbuildtable, devMode);
+							err = entAtt->FromBag(attributeBag, catalog, false, devMode);
 						if (err == VE_OK && !entAtt->GetName().IsEmpty())
 						{
 							if (mustChangeName)
 								entAtt->SetName(attname);
-							if (mustbuildtable && dejaAtt == nil)
-							{
-								if (entAtt->GetAttributeKind() == eattr_storage)
-								{
-									sLONG typ = entAtt->ComputeScalarType();
-									if (typ != 0)
-									{
-										sLONG pos = entAtt->GetFieldPos();
-										if (pos == 0)
-										{
-											pos = fMainTable->FindNextFieldFree();
-											if (pos == -1)
-												pos = fMainTable->GetNbCrit()+1;
-											entAtt->SetFieldPos(pos);
-										}
-										if (typ == VK_STRING && d4::textAsBlob(attributeBag))
-											typ = VK_TEXT;
-										bool utf8 = DB4DBagKeys::store_as_utf8(attributeBag);
-										if (typ == VK_STRING && utf8)
-											typ = VK_STRING_UTF8;
-										if (typ == VK_TEXT && utf8)
-											typ = VK_TEXT_UTF8;
-
-										Field* cri = new Field(typ, pos, fMainTable);
-										attname = entAtt->GetName();
-										Critere* xcri = cri->GetCritere();
-										xcri->SetName(attname);
-
-										if ((typ == VK_STRING) || (typ == VK_STRING_UTF8))
-											xcri->SetLimitingLen( DB4DBagKeys::limiting_length( attributeBag));
-										xcri->SetAutoSeq( DB4DBagKeys::autosequence( attributeBag));
-										xcri->SetAutoGenerate( DB4DBagKeys::autogenerate( attributeBag));
-										xcri->SetStoreUTF8( DB4DBagKeys::store_as_utf8( attributeBag));
-										xcri->SetNot_Null( DB4DBagKeys::not_null( attributeBag));
-										xcri->SetNeverNull( DB4DBagKeys::never_null( attributeBag));
-										xcri->SetUnique( DB4DBagKeys::unique( attributeBag));
-										xcri->SetOutsideData(DB4DBagKeys::outside_blob( attributeBag));
-										xcri->SetStyledText(DB4DBagKeys::styled_text( attributeBag));
-										if ((typ == VK_TEXT) || (typ == VK_TEXT_UTF8))
-											xcri->SetTextSwitchSize( DB4DBagKeys::text_switch_size( attributeBag));
-										if ((typ == VK_BLOB) || (typ == VK_BLOB_DB4D) || (typ == VK_IMAGE))
-											xcri->SetBlobSwitchSize( DB4DBagKeys::blob_switch_size( attributeBag));
-
-										
-										VUUID xid;									
-										if (!attributeBag->GetVUUID(d4::uuid, xid))
-										{
-											xid.Regenerate();
-											catalog->TouchXML();
-										}
-										cri->SetUUID(xid);
-										
-
-										fMainTable->AddFieldSilently(cri, pos);
-
-										
-									}
-								}
-							}
 
 							entAtt->SetOverWrite(true);
 							EntityAttributeMap::iterator found = fAttributesByName.find(entAtt->GetName());
@@ -5005,10 +5729,6 @@ VError EntityModel::FromBag(const VValueBag* inBag, EntityModelCatalog* catalog,
 						fQueryLimit = limit;
 				}
 			}
-
-			bool ApplyToEm = true;
-			//QueryBag->GetBool(d4::applyToModel, ApplyToEm);
-			fQueryApplyToEM = ApplyToEm;
 
 			VString querystring, orderbystring;
 			QueryBag->GetString(d4::queryStatement, querystring);
@@ -5141,124 +5861,8 @@ VError EntityModel::FromBag(const VValueBag* inBag, EntityModelCatalog* catalog,
 	{
 		for (IdentifyingAttributeCollection::iterator cur = fPrimaryAtts.begin(), end = fPrimaryAtts.end(); cur != end; cur++)
 		{
-			cur->fAtt->SetPartOfPrimKey();
-		}
-
-		if (mustbuildtable)
-		{
-			NumFieldArray prim;
-			if (!fPrimaryAtts.empty())
-			{
-				prim.SetCount(fPrimaryAtts.size());
-				sLONG i = 1;
-				for (IdentifyingAttributeCollection::iterator cur = fPrimaryAtts.begin(), end = fPrimaryAtts.end(); cur != end; cur++, i++)
-				{
-					prim[i] = cur->fAtt->GetFieldPos();
-				}
-				if (!devMode)
-					err = fMainTable->SetPrimaryKeySilently(prim, nil);
-				else
-				{
-					StErrorContextInstaller errs(false);
-					VError err2 = fMainTable->SetPrimaryKeySilently(prim, nil);
-					if (err2 != VE_OK)
-					{
-						catalog->AddError();
-					}
-				}
-			}
-			if (err == VE_OK)
-			{
-				sLONG tpos = 0;
-				inBag->GetLong(d4::tablePos, tpos);
-
-				err = fOwner->AddTable(fMainTable, false, nil, true, false, false, tpos, false);
-				VUUID xid;
-				fMainTable->GetUUID(xid);
-				fOwner->AddObjectID(objInBase_Table, fMainTable, xid);
-				for (sLONG i = 1, nb = fMainTable->GetNbCrit(); i <= nb; i++)
-				{
-					Field* cri = fMainTable->RetainField(i);
-					if (cri != nil)
-					{
-						cri->GetUUID(xid);
-						fOwner->AddObjectID(objInBase_Field, cri, xid);
-					}
-					QuickReleaseRefCountable(cri);
-				}
-			}
-
-			if (err == VE_OK)
-			{
-				if (prim.GetCount() == 1)
-				{
-					IndexInfoFromField* ind = new IndexInfoFromField(fOwner, fMainTable->GetNum(), prim[1], DB4D_Index_Btree, true, true);
-					fOwner->AddXMLIndex(ind);
-					ind->Release();
-				}
-			}
-
-			const VBagArray* EntityAttsBag = inBag->GetElements(d4::attributes);
-			if (EntityAttsBag != nil)
-			{
-				VIndex nbatts = EntityAttsBag->GetCount();
-				for (VIndex i = 1; i <= nbatts && err == VE_OK; i++)
-				{
-					const VValueBag* attributeBag = EntityAttsBag->GetNth(i);
-					if (attributeBag != nil)
-					{
-						VString attname;
-						attributeBag->GetString(d4::name, attname);
-						EntityAttribute* att = getAttribute(attname);
-						if (att != nil)
-						{
-							EntityAttributeKind attkind = att->GetKind();
-							if (attkind == eattr_storage)
-							{
-								VString IndexKind = att->GetIndexKind();
-								VectorOfVString indexKinds;
-								IndexKind.GetSubStrings(',', indexKinds, false, true);
-								for (VectorOfVString::iterator cur = indexKinds.begin(), end = indexKinds.end(); cur != end; cur++)
-								{
-									sLONG indextype = EIndexKinds[*cur];
-									if (indextype == 8 /* keywords */)
-									{
-										IndexInfoFromFieldLexico* ind = new IndexInfoFromFieldLexico(fOwner, fMainTable->GetNum(), att->GetFieldPos(), DB4D_Index_Btree);
-										fOwner->AddXMLIndex(ind);
-										ind->Release();
-									}
-									else
-									{
-										if (indextype == DB4D_Index_Btree || indextype == DB4D_Index_BtreeWithCluster || indextype == DB4D_Index_AutoType)
-										{
-											IndexInfoFromField* ind = new IndexInfoFromField(fOwner, fMainTable->GetNum(), att->GetFieldPos(), indextype, false, true);
-											fOwner->AddXMLIndex(ind);
-											ind->Release();
-										}
-									}
-								}
-							}
-						}
-					}
-				}
-			}
-
-		}
-	}
-
-	if (err == VE_OK)
-	{
-		if (fMainTable != nil && fMainTable->HasPrimKey() && fPrimaryAtts.empty())
-		{
-			NumFieldArray primkey;
-			fMainTable->CopyPrimaryKey(primkey);
-			for (NumFieldArray::Iterator cur = primkey.First(), end = primkey.End(); cur != end; cur++)
-			{
-				sLONG numfield = *cur;
-				EntityAttribute* att = FindAttributeByFieldPos(numfield);
-				if (att != nil)
-					fPrimaryAtts.push_back(IdentifyingAttribute(att));
-			}
+			if ( cur->fAtt )
+				cur->fAtt->SetPartOfPrimKey();
 		}
 	}
 
@@ -5281,11 +5885,6 @@ VError EntityModel::FromBag(const VValueBag* inBag, EntityModelCatalog* catalog,
 		VJSContext	jscontext(*(catalog->getLoadingContext()));
 		VJSObject	result(jscontext);
 		VString		path	= "model."+fName;
-
-		/*		
-		jscontext.DisableDebugger();		
-		jscontext.EvaluateScript(path, nil, &result, nil, nil);
-		*/
 
 		bool				isOk		= false;
 		JS4D::ExceptionRef	exception	= NULL;
@@ -5373,6 +5972,18 @@ VError EntityModel::FromBag(const VValueBag* inBag, EntityModelCatalog* catalog,
 											scope = (EntityAttributeScope)EScopeKinds[scopestring];
 											if (scope == escope_none)
 												scope = escope_public_server;
+										}
+									}
+									else
+									{
+										if (funcObj.HasProperty("name"))
+										{
+											if (funcObj.GetPropertyAsString("name", nil, scopestring))
+											{
+												scope = (EntityAttributeScope)EScopeKinds[scopestring];
+												if (scope == escope_none)
+													scope = escope_public_server;
+											}
 										}
 									}
 									curmethod.GetPropertyName(funcname);
@@ -5534,7 +6145,7 @@ VError EntityModel::ResolveQueryStatements(EntityModelCatalog* catalog, bool dev
 			err = fBaseEm->ResolveQueryStatements(catalog, devMode, context);
 			if (fBaseEm->fRestrictingQuery != nil && err == VE_OK)
 			{
-				fRestrictingQuery = new SearchTab(fMainTable);
+				fRestrictingQuery = new SearchTab(this);
 				fRestrictingQuery->From(*(fBaseEm->fRestrictingQuery));
 			}
 		}
@@ -5544,10 +6155,10 @@ VError EntityModel::ResolveQueryStatements(EntityModelCatalog* catalog, bool dev
 		{
 			if (fRestrictingQuery == nil)
 			{
-				fRestrictingQuery = new SearchTab(fMainTable);
+				fRestrictingQuery = new SearchTab(this);
 				fRestrictingQuery->AllowJSCode(true);
 				StErrorContextInstaller errs(!devMode);
-				err = fRestrictingQuery->BuildFromString(fRestrictingQueryString, orderbystring, context, fQueryApplyToEM ? this : nil);
+				err = fRestrictingQuery->BuildFromString(fRestrictingQueryString, orderbystring, context, this);
 				if (err != VE_OK)
 					catalog->AddError();
 				if (devMode)
@@ -5556,9 +6167,9 @@ VError EntityModel::ResolveQueryStatements(EntityModelCatalog* catalog, bool dev
 			else
 			{
 				StErrorContextInstaller errs(!devMode);
-				SearchTab newquery(fMainTable);
+				SearchTab newquery(this);
 				newquery.AllowJSCode(true);
-				err = newquery.BuildFromString(fRestrictingQueryString, orderbystring, context, fQueryApplyToEM ? this : nil);
+				err = newquery.BuildFromString(fRestrictingQueryString, orderbystring, context, this);
 				if (err == VE_OK)
 					err = fRestrictingQuery->Add(newquery);
 				if (err != VE_OK)
@@ -5591,714 +6202,25 @@ VError EntityModel::ResolveQueryStatements(EntityModelCatalog* catalog, bool dev
 }
 
 
-EntityRecord* EntityModel::LoadEntityRecord(sLONG n, VError& err, DB4D_Way_of_Locking HowToLock, BaseTaskInfo* context, bool autoexpand)
+CDB4DEntityCollection* EntityModel::Query( const XBOX::VString& inQuery, CDB4DBaseContext* inContext, VErrorDB4D& err, const XBOX::VValueSingle* param1, const XBOX::VValueSingle* param2, const XBOX::VValueSingle* param3)
 {
+	return query(inQuery, ConvertContext(inContext), err, param1, param2, param3);
+}
+
+CDB4DEntityRecord* EntityModel::Find(const XBOX::VString& inQuery, CDB4DBaseContext* inContext, VErrorDB4D& err, const XBOX::VValueSingle* param1, const XBOX::VValueSingle* param2, const XBOX::VValueSingle* param3)
+{
+	return find(inQuery, ConvertContext(inContext), err, param1, param2, param3);
+}
+
+
+
+
+EntityCollection* EntityModel::query( const VString& inQuery, BaseTaskInfo* context, VErrorDB4D& err, const VValueSingle* param1, const VValueSingle* param2, const VValueSingle* param3)
+{
+	EntityCollection* result = nil;
 	if (okperm(context, fPerms[DB4D_EM_Read_Perm]) || okperm(context, fPerms[DB4D_EM_Update_Perm]) || okperm(context, fPerms[DB4D_EM_Delete_Perm]))
 	{
-		FicheInMem* rec = fMainTable->GetDF()->LoadRecord(n, err, HowToLock, context);
-		if (rec == nil)
-			return nil;
-		else
-		{
-			EntityRecord* erec = new EntityRecord(this, rec, context->GetEncapsuleur(), HowToLock);
-			rec->Release();
-			CallDBEvent(dbev_load, erec, context);
-			return erec;
-		}
-	}
-	else
-	{
-		err = ThrowError(VE_DB4D_NO_PERM_TO_READ);
-		context->SetPermError();
-		return nil;
-	}
-}
-
-
-CDB4DEntityRecord* EntityModel::LoadEntity(sLONG n, VError& err, DB4D_Way_of_Locking HowToLock, CDB4DBaseContext* context, bool autoexpand)
-{
-	if (okperm(context, fPerms[DB4D_EM_Read_Perm]) || okperm(context, fPerms[DB4D_EM_Update_Perm]) || okperm(context, fPerms[DB4D_EM_Delete_Perm]))
-	{
-		BaseTaskInfo* xcontext = ConvertContext(context);
-		FicheInMem* rec = fMainTable->GetDF()->LoadRecord(n, err, HowToLock, xcontext);
-		if (rec == nil)
-			return nil;
-		else
-		{
-			EntityRecord* erec = new EntityRecord(this, rec, context, HowToLock);
-			CallDBEvent(dbev_load, erec, xcontext);
-			return erec;
-		}
-	}
-	else
-	{
-		BaseTaskInfo* xcontext = ConvertContext(context);
-		err = ThrowError(VE_DB4D_NO_PERM_TO_READ);
-		xcontext->SetPermError();
-		return nil;
-	}
-}
-
-
-sLONG EntityModel::CountEntities(CDB4DBaseContext* inContext)
-{
-	sLONG result = 0;
-	if (okperm(inContext, fPerms[DB4D_EM_Read_Perm]) || okperm(inContext, fPerms[DB4D_EM_Update_Perm]) || okperm(inContext, fPerms[DB4D_EM_Delete_Perm]))
-	{
-		if (WithRestriction())
-		{
-			VError err = VE_OK;
-			Selection* sel = BuildRestrictingSelection(ConvertContext(inContext), err);
-			if (sel != nil)
-			{
-				result = sel->GetQTfic();
-				sel->Release();
-			}
-		}
-		else if (WithRestrictingQuery())
-		{
-			BaseTaskInfo* context = ConvertContext(inContext);
-			Base4D *db;
-			DataTable *DF;
-			DF=fMainTable->GetDF();
-			db=DF->GetDB();
-			OptimizedQuery rech;
-			db->LockIndexes();
-			VError err = rech.AnalyseSearch(fRestrictingQuery, context);
-			db->UnLockIndexes();
-			if (err == VE_OK)
-			{
-				Selection* sel = rech.Perform((Bittab*)nil, nil, context, err, DB4D_Do_Not_Lock, 0, nil);
-				if (sel != nil)
-				{
-					result = sel->GetQTfic();
-					sel->Release();
-				}
-			}
-		}
-		else
-			result = fMainTable->GetDF()->GetNbRecords(ConvertContext(inContext));
-	}
-	else
-		result = 0;
-	return result;
-}
-
-
-sLONG EntityModel::getEntityNumWithPrimKey(const VString& primkey, BaseTaskInfo* context, VError& err)
-{
-	VectorOfVString xprimkey;
-	Wordizer ww(primkey);
-	ww.ExctractStrings(xprimkey, true, '&', false);
-	return getEntityNumWithPrimKey(xprimkey, context, err);
-}
-
-
-sLONG EntityModel::getEntityNumWithPrimKey(const VectorOfVString& primkey, BaseTaskInfo* context, VError& err)
-{
-	sLONG result = -1;
-	err = VE_OK;
-	if (!fPrimaryAtts.empty())
-	{
-		if (fPrimaryAtts.size() == primkey.size())
-		{
-			SearchTab query(fMainTable);
-			VectorOfVString::const_iterator curkey = primkey.begin();
-			bool first = true;
-			for (IdentifyingAttributeCollection::iterator cur = fPrimaryAtts.begin(), end = fPrimaryAtts.end(); cur != end; cur++, curkey++)
-			{
-				if (first)
-					first = false;
-				else
-					query.AddSearchLineBoolOper(DB4D_And);
-				query.AddSearchLineSimple(fMainTable->GetNum(), cur->fAtt->GetFieldPos(), DB4D_Equal, &(*curkey));
-			}
-			Selection* sel = ExecuteQuery(&query, context, nil, nil, DB4D_Do_Not_Lock, 0, nil, &err);
-			if (sel != nil)
-			{
-				if (!sel->IsEmpty())
-				{
-					result = sel->GetFic(0);
-				}
-				sel->Release();
-			}
-		}
-		else
-			err = ThrowError(VE_DB4D_PRIMKEY_MALFORMED);
-	}
-	else
-		err = ThrowError(VE_DB4D_ENTITY_HAS_NO_PRIMKEY);
-
-	return result;
-}
-
-
-sLONG EntityModel::getEntityNumWithPrimKey(const VValueBag& primkey, BaseTaskInfo* context, VError& err, bool ErrOnNull)
-{
-	err = VE_OK;
-	sLONG result = -1;
-	if (!fPrimaryAtts.empty())
-	{
-		SearchTab query(fMainTable);
-		bool first = true;
-		for (IdentifyingAttributeCollection::iterator cur = fPrimaryAtts.begin(), end = fPrimaryAtts.end(); cur != end && err == VE_OK; cur++)
-		{
-			EntityAttribute* att = cur->fAtt;
-			const VValueSingle* cv = primkey.GetAttribute(att->GetName());
-			if (cv != nil)
-			{
-				if (first)
-					first = false;
-				else
-					query.AddSearchLineBoolOper(DB4D_And);
-				query.AddSearchLineSimple(fMainTable->GetNum(), cur->fAtt->GetFieldPos(), DB4D_Equal, cv);
-			}
-			else
-			{
-				if (ErrOnNull)
-					err = ThrowError(VE_DB4D_PRIMKEY_MALFORMED);
-				else
-					err = VE_DB4D_PRIMKEY_MALFORMED;
-			}
-		}
-		if (err == VE_OK)
-		{
-			Selection* sel = ExecuteQuery(&query, context, nil, nil, DB4D_Do_Not_Lock, 0, nil, &err);
-			if (sel != nil)
-			{
-				if (!sel->IsEmpty())
-				{
-					result = sel->GetFic(0);
-				}
-				sel->Release();
-			}
-		}
-	}
-	else
-	{
-		if (ErrOnNull)
-			err = ThrowError(VE_DB4D_ENTITY_HAS_NO_PRIMKEY);
-	}
-
-	return result;
-}
-
-
-
-sLONG EntityModel::getEntityNumWithPrimKey(const VectorOfVValue& primkey, BaseTaskInfo* context, VError& err)
-{
-	sLONG result = -1;
-	err = VE_OK;
-	if (!fPrimaryAtts.empty())
-	{
-		if (fPrimaryAtts.size() == primkey.size())
-		{
-			SearchTab query(fMainTable);
-			VectorOfVValue::const_iterator curkey = primkey.begin();
-			bool first = true;
-			for (IdentifyingAttributeCollection::iterator cur = fPrimaryAtts.begin(), end = fPrimaryAtts.end(); cur != end; cur++, curkey++)
-			{
-				if (first)
-					first = false;
-				else
-					query.AddSearchLineBoolOper(DB4D_And);
-				query.AddSearchLineSimple(fMainTable->GetNum(), cur->fAtt->GetFieldPos(), DB4D_Equal, *curkey);
-			}
-			Selection* sel = ExecuteQuery(&query, context, nil, nil, DB4D_Do_Not_Lock, 0, nil, &err);
-			if (sel != nil)
-			{
-				if (!sel->IsEmpty())
-				{
-					result = sel->GetFic(0);
-				}
-				sel->Release();
-			}
-		}
-		else
-			err = ThrowError(VE_DB4D_PRIMKEY_MALFORMED);
-	}
-	else
-		err = ThrowError(VE_DB4D_ENTITY_HAS_NO_PRIMKEY);
-
-	return result;
-}
-
-
-sLONG EntityModel::getEntityNumWithPrimKey(VJSObject objkey, BaseTaskInfo* context, VError& err)
-{
-	sLONG result = -1;
-	VJSValue jsval(objkey.GetContextRef());
-	jsval = objkey.GetProperty("__RECID");
-	if (jsval.IsNumber())
-	{
-		jsval.GetLong(&result);
-	}
-	else
-	{
-		if (!fPrimaryAtts.empty())
-		{
-			SearchTab query(fMainTable);
-			bool first = true;
-			bool okcont = true;
-			for (IdentifyingAttributeCollection::iterator cur = fPrimaryAtts.begin(), end = fPrimaryAtts.end(); cur != end && okcont ; cur++)
-			{
-				EntityAttribute* att = cur->fAtt;
-				jsval = objkey.GetProperty(att->GetName());
-				if (!jsval.IsUndefined() && !jsval.IsNull())
-				{
-					VValueSingle* cv = jsval.CreateVValue();
-					if (cv != nil)
-					{
-						if (first)
-							first = false;
-						else
-							query.AddSearchLineBoolOper(DB4D_And);
-						query.AddSearchLineSimple(fMainTable->GetNum(), cur->fAtt->GetFieldPos(), DB4D_Equal, cv);
-					}
-					else
-						okcont = false;
-				}
-				else
-					okcont = false;
-			}
-
-			if (okcont)
-			{
-				Selection* sel = ExecuteQuery(&query, context, nil, nil, DB4D_Do_Not_Lock, 0, nil, &err);
-				if (sel != nil)
-				{
-					if (!sel->IsEmpty())
-					{
-						result = sel->GetFic(0);
-					}
-					sel->Release();
-				}
-			}
-
-		}
-	}
-	return result;
-}
-
-
-EntityRecord* EntityModel::findEntityWithPrimKey(VJSObject objkey, BaseTaskInfo* context, VError& err, DB4D_Way_of_Locking HowToLock)
-{
-	err = VE_OK;
-	EntityRecord* erec = nil;
-	sLONG numrec = getEntityNumWithPrimKey(objkey, context, err);
-	if (numrec != -1)
-	{
-		erec = LoadEntityRecord(numrec, err, HowToLock, context, false);
-	}
-
-	return erec;
-}
-
-
-EntityRecord* EntityModel::findEntityWithPrimKey(const VString& primkey, BaseTaskInfo* context, VError& err, DB4D_Way_of_Locking HowToLock)
-{
-	err = VE_OK;
-	EntityRecord* erec = nil;
-	sLONG numrec = getEntityNumWithPrimKey(primkey, context, err);
-	if (numrec != -1)
-	{
-		erec = LoadEntityRecord(numrec, err, HowToLock, context, false);
-	}
-
-	return erec;
-}
-
-
-EntityRecord* EntityModel::findEntityWithPrimKey(const VectorOfVString& primkey, BaseTaskInfo* context, VError& err, DB4D_Way_of_Locking HowToLock)
-{
-	err = VE_OK;
-	EntityRecord* erec = nil;
-	sLONG numrec = getEntityNumWithPrimKey(primkey, context, err);
-	if (numrec != -1)
-	{
-		erec = LoadEntityRecord(numrec, err, HowToLock, context, false);
-	}
-
-	return erec;
-}
-
-EntityRecord* EntityModel::findEntityWithPrimKey(const VValueBag& primkey, BaseTaskInfo* context, VError& err, DB4D_Way_of_Locking HowToLock)
-{
-	err = VE_OK;
-	EntityRecord* erec = nil;
-	sLONG numrec = getEntityNumWithPrimKey(primkey, context, err);
-	if (numrec != -1)
-	{
-		erec = LoadEntityRecord(numrec, err, HowToLock, context, false);
-	}
-
-	return erec;
-}
-
-
-EntityRecord* EntityModel::findEntityWithPrimKey(const VectorOfVValue& primkey, BaseTaskInfo* context, VError& err, DB4D_Way_of_Locking HowToLock)
-{
-	err = VE_OK;
-	EntityRecord* erec = nil;
-	sLONG numrec = getEntityNumWithPrimKey(primkey, context, err);
-	if (numrec != -1)
-	{
-		erec = LoadEntityRecord(numrec, err, HowToLock, context, false);
-	}
-
-	return erec;
-}
-
-
-CDB4DEntityRecord* EntityModel::FindEntityWithPrimKey(const XBOX::VString& primkey, CDB4DBaseContext* inContext, VErrorDB4D& err, DB4D_Way_of_Locking HowToLock)
-{
-	return findEntityWithPrimKey(primkey, ConvertContext(inContext), err, HowToLock);
-}
-
-CDB4DEntityRecord* EntityModel::FindEntityWithPrimKey(const XBOX::VectorOfVString& primkey, CDB4DBaseContext* inContext, VErrorDB4D& err, DB4D_Way_of_Locking HowToLock)
-{
-	return findEntityWithPrimKey(primkey, ConvertContext(inContext), err, HowToLock);
-}
-
-CDB4DEntityRecord* EntityModel::FindEntityWithPrimKey(const XBOX::VValueBag& primkey, CDB4DBaseContext* inContext, VErrorDB4D& err, DB4D_Way_of_Locking HowToLock)
-{
-	return findEntityWithPrimKey(primkey, ConvertContext(inContext), err, HowToLock);
-}
-
-CDB4DEntityRecord* EntityModel::FindEntityWithPrimKey(const VectorOfVValue& primkey, CDB4DBaseContext* inContext, VErrorDB4D& err, DB4D_Way_of_Locking HowToLock)
-{
-	return findEntityWithPrimKey(primkey, ConvertContext(inContext), err, HowToLock);
-}
-
-
-bool EntityModel::MatchPrimKeyWithDataSource() const
-{
-	if (fMatchPrimKey == 2)
-	{
-		if (fPrimaryAtts.empty())
-			fMatchPrimKey = 0;
-		else
-		{
-			FieldArray primkeyfields;
-			fMainTable->RetainPrimaryKey(primkeyfields);
-			if (primkeyfields.GetCount() == 0 || primkeyfields.GetCount() != fPrimaryAtts.size())
-				fMatchPrimKey = 0;
-			else
-			{
-				fMatchPrimKey = 1;
-				IdentifyingAttributeCollection::const_iterator curatt = fPrimaryAtts.begin();
-				for (FieldArray::Iterator cur = primkeyfields.First(), end = primkeyfields.End(); cur != end; cur++, curatt++)
-				{
-					if ((*cur)->GetPosInRec() != curatt->fAtt->GetFieldPos())
-						fMatchPrimKey = 0;
-				}
-				
-			}
-			for (FieldArray::Iterator cur = primkeyfields.First(), end = primkeyfields.End(); cur != end; cur++)
-				(*cur)->Release();
-		}
-	}
-	return fMatchPrimKey == 1;
-}
-
-
-sLONG EntityModel::getEntityNumWithIdentifyingAtts(const VectorOfVString& idents, BaseTaskInfo* context, VError& err)
-{
-	sLONG result = -1;
-	err = VE_OK;
-	if (!fIdentifyingAtts.empty())
-	{
-		SearchTab query(fMainTable);
-		bool enough = true;
-		VectorOfVString::const_iterator curkey = idents.begin();
-		bool first = true;
-		for (IdentifyingAttributeCollection::iterator cur = fIdentifyingAtts.begin(), end = fIdentifyingAtts.end(); cur != end; cur++, curkey++)
-		{
-			if (curkey == idents.end())
-			{
-				if (!cur->fOptionnel)
-					enough = false;
-				break;
-			}
-			if (first)
-				first = false;
-			else
-				query.AddSearchLineBoolOper(DB4D_And);
-			query.AddSearchLineSimple(fMainTable->GetNum(), cur->fAtt->GetFieldPos(), DB4D_Equal, &(*curkey));
-		}
-		if (enough)
-		{
-			Selection* sel = ExecuteQuery(&query, context, nil, nil, DB4D_Do_Not_Lock, 0, nil, &err);
-			if (sel != nil)
-			{
-				if (!sel->IsEmpty())
-				{
-					result = sel->GetFic(0);
-				}
-				sel->Release();
-			}
-		}
-		else
-			err = ThrowError(VE_DB4D_IDENTKEY_MALFORMED);
-	}
-	else
-		err = ThrowError(VE_DB4D_ENTITY_HAS_NO_IDENTKEY);
-
-	return result;
-}
-
-
-sLONG EntityModel::getEntityNumWithIdentifyingAtts(const VValueBag& bagData, BaseTaskInfo* context, VError& err, bool ErrOnNull)
-{
-	sLONG result = -1;
-	bool enough = true;
-	const IdentifyingAttributeCollection* idents = GetIdentifyingAtts();
-	if (!idents->empty())
-	{
-		SearchTab xquery(fMainTable);
-		bool first = true;
-		for (IdentifyingAttributeCollection::const_iterator cur = idents->begin(), end = idents->end(); cur != end; cur++)
-		{
-			const EntityAttribute* att = cur->fAtt;
-			const VValueSingle* cv = bagData.GetAttribute(att->GetName());
-			if (cv != nil)
-			{
-				if (first)
-					first = false;
-				else
-					xquery.AddSearchLineBoolOper(DB4D_And);
-				xquery.AddSearchLineSimple(fMainTable->GetNum(), att->GetFieldPos(), DB4D_Like, cv);
-			}
-			else
-			{
-				if (!cur->fOptionnel)
-				{
-					enough = false;
-					break;
-				}
-			}
-		}
-		if (enough)
-		{
-			Selection* sel = ExecuteQuery(&xquery, context, nil, nil, DB4D_Do_Not_Lock);
-			if (sel != nil && !sel->IsEmpty())
-			{
-				result = sel->GetFic(0);
-			}
-			QuickReleaseRefCountable(sel);
-		}
-	}
-	return result;
-}
-
-
-sLONG EntityModel::getEntityNumWithIdentifyingAtts(const VectorOfVValue& idents, BaseTaskInfo* context, VError& err)
-{
-	sLONG result = -1;
-	err = VE_OK;
-	if (!fIdentifyingAtts.empty())
-	{
-		SearchTab query(fMainTable);
-		bool enough = true;
-		VectorOfVValue::const_iterator curkey = idents.begin();
-		bool first = true;
-		for (IdentifyingAttributeCollection::iterator cur = fIdentifyingAtts.begin(), end = fIdentifyingAtts.end(); cur != end; cur++, curkey++)
-		{
-			if (curkey == idents.end())
-			{
-				if (!cur->fOptionnel)
-					enough = false;
-				break;
-			}
-			if (first)
-				first = false;
-			else
-				query.AddSearchLineBoolOper(DB4D_And);
-			query.AddSearchLineSimple(fMainTable->GetNum(), cur->fAtt->GetFieldPos(), DB4D_Equal, *curkey);
-		}
-		if (enough)
-		{
-			Selection* sel = ExecuteQuery(&query, context, nil, nil, DB4D_Do_Not_Lock, 0, nil, &err);
-			if (sel != nil)
-			{
-				if (!sel->IsEmpty())
-				{
-					result = sel->GetFic(0);
-				}
-				sel->Release();
-			}
-		}
-		else
-			err = ThrowError(VE_DB4D_IDENTKEY_MALFORMED);
-	}
-	else
-		err = ThrowError(VE_DB4D_ENTITY_HAS_NO_IDENTKEY);
-
-	return result;
-}
-
-
-
-EntityRecord* EntityModel::findEntityWithIdentifyingAtts(const VectorOfVString& idents, BaseTaskInfo* context, VError& err, DB4D_Way_of_Locking HowToLock)
-{
-	err = VE_OK;
-	EntityRecord* erec = nil;
-	sLONG numrec = getEntityNumWithIdentifyingAtts(idents, context, err);
-	if (numrec != -1)
-	{
-		erec = LoadEntityRecord(numrec, err, HowToLock, context, false);
-	}
-
-	return erec;
-}
-
-EntityRecord* EntityModel::findEntityWithIdentifyingAtts(const VValueBag& idents, BaseTaskInfo* context, VError& err, DB4D_Way_of_Locking HowToLock)
-{
-	err = VE_OK;
-	EntityRecord* erec = nil;
-	sLONG numrec = getEntityNumWithIdentifyingAtts(idents, context, err);
-	if (numrec != -1)
-	{
-		erec = LoadEntityRecord(numrec, err, HowToLock, context, false);
-	}
-
-	return erec;
-}
-
-
-EntityRecord* EntityModel::findEntityWithIdentifyingAtts(const VectorOfVValue& idents, BaseTaskInfo* context, VError& err, DB4D_Way_of_Locking HowToLock)
-{
-	err = VE_OK;
-	EntityRecord* erec = nil;
-	sLONG numrec = getEntityNumWithIdentifyingAtts(idents, context, err);
-	if (numrec != -1)
-	{
-		erec = LoadEntityRecord(numrec, err, HowToLock, context, false);
-	}
-
-	return erec;
-}
-
-
-
-CDB4DEntityRecord* EntityModel::FindEntityWithIdentifyingAtts(const XBOX::VectorOfVString& idents, CDB4DBaseContext* inContext, VErrorDB4D& err, DB4D_Way_of_Locking HowToLock)
-{
-	return findEntityWithIdentifyingAtts(idents, ConvertContext(inContext), err, HowToLock);
-}
-
-CDB4DEntityRecord* EntityModel::FindEntityWithIdentifyingAtts(const XBOX::VValueBag& idents, CDB4DBaseContext* inContext, VErrorDB4D& err, DB4D_Way_of_Locking HowToLock)
-{
-	return findEntityWithIdentifyingAtts(idents, ConvertContext(inContext), err, HowToLock);
-}
-
-CDB4DEntityRecord* EntityModel::FindEntityWithIdentifyingAtts(const VectorOfVValue& idents, CDB4DBaseContext* inContext, VErrorDB4D& err, DB4D_Way_of_Locking HowToLock)
-{
-	return findEntityWithIdentifyingAtts(idents, ConvertContext(inContext), err, HowToLock);
-}
-
-
-
-Selection* EntityModel::SelectAllEntities(BaseTaskInfo* context, VErrorDB4D* outErr, DB4D_Way_of_Locking HowToLock, Bittab* outLockSet)
-{
-	VError err = VE_OK;
-	Selection* sel = nil;
-	if (okperm(context, fPerms[DB4D_EM_Read_Perm]) || okperm(context, fPerms[DB4D_EM_Update_Perm]) || okperm(context, fPerms[DB4D_EM_Delete_Perm]))
-	{
-		if (WithRestrictingQuery())
-		{
-			Base4D *db;
-			DataTable *DF;
-			DF=fMainTable->GetDF();
-			db=DF->GetDB();
-			OptimizedQuery rech;
-			db->LockIndexes();
-			err = rech.AnalyseSearch(fRestrictingQuery, context);
-			db->UnLockIndexes();
-			if (err == VE_OK)
-			{
-				sel = rech.Perform((Bittab*)nil, nil, context, err, HowToLock, 0, nil);
-				if (err == VE_OK)
-				{
-					if (WithRestriction())
-					{
-						Selection* sel2 = BuildRestrictingSelection(context, err);
-						if (err == VE_OK)
-						{
-							Bittab* b1 = sel->GenereBittab(context, err);
-							Bittab* b2 = sel2->GenereBittab(context, err);
-
-							if (b1 != nil && b2 != nil)
-							{
-								Bittab* b3 = b1->Clone(err);
-								if (b3 != nil)
-								{
-									err = b3->And(b2);
-									if (err == VE_OK)
-									{
-										Selection* sel3 = new BitSel(sel->GetParentFile(), b3);
-										QuickReleaseRefCountable(sel);
-										sel = sel3;
-									}
-								}
-								QuickReleaseRefCountable(b3);
-							}
-
-							QuickReleaseRefCountable(b1);
-							QuickReleaseRefCountable(b2);
-
-						}
-						if (err != VE_OK)
-							ReleaseRefCountable(&sel);
-						QuickReleaseRefCountable(sel2);
-					}
-				}
-			}
-		}
-		else if (WithRestriction())
-		{
-			sel = BuildRestrictingSelection(context, err);
-		}
-		else
-			sel = fMainTable->GetDF()->AllRecords(context, err);
-	}
-	else
-	{
-		err = ThrowError(VE_DB4D_NO_PERM_TO_READ);
-		context->SetPermError();
-	}
-	if (outErr != nil)
-		*outErr = err;
-	return sel;
-}
-
-
-CDB4DSelection* EntityModel::SelectAllEntities(CDB4DBaseContextPtr inContext, VErrorDB4D* outErr, DB4D_Way_of_Locking HowToLock, CDB4DSet* outLockSet)
-{
-	CDB4DSelection* result = nil;
-	Selection* sel = SelectAllEntities(ConvertContext(inContext), outErr, HowToLock, nil);
-	if (sel != nil)
-	{
-		CDB4DBase* xbase = fOwner->RetainBaseX();
-		result = new VDB4DSelection(VDBMgr::GetManager(), VImpCreator<VDB4DBase>::GetImpObject(xbase), fMainTable, sel);
-		xbase->Release();
-		result->SetAssociatedModel(this);
-	}
-	return result;
-}
-
-
-CDB4DQuery* EntityModel::NewQuery()
-{
-	return new VDB4DQuery(VDBMgr::GetManager(), fMainTable, nil, this);
-}
-
-
-Selection* EntityModel::query( const VString& inQuery, BaseTaskInfo* context, VErrorDB4D& err, const VValueSingle* param1, const VValueSingle* param2, const VValueSingle* param3)
-{
-	Selection* sel = nil;
-	if (okperm(context, fPerms[DB4D_EM_Read_Perm]) || okperm(context, fPerms[DB4D_EM_Update_Perm]) || okperm(context, fPerms[DB4D_EM_Delete_Perm]))
-	{
-		SearchTab laquery(fMainTable);
+		SearchTab laquery(this);
 		
 		VString orderby;
 		err = laquery.BuildFromString(inQuery, orderby, context, this, false);
@@ -6338,7 +6260,7 @@ Selection* EntityModel::query( const VString& inQuery, BaseTaskInfo* context, VE
 				}
 			}
 			laquery.SetParams(params, values);
-			sel = ExecuteQuery(&laquery, context, nil, nil, DB4D_Do_Not_Lock, 0, nil, &err);
+			result = executeQuery(&laquery, context, nil, nil, DB4D_Do_Not_Lock, 0, nil, &err);
 		}
 	}
 	else
@@ -6347,34 +6269,19 @@ Selection* EntityModel::query( const VString& inQuery, BaseTaskInfo* context, VE
 		err = ThrowError(VE_DB4D_NO_PERM_TO_READ);
 	}
 
-	return sel;
-}
-
-
-CDB4DSelection* EntityModel::Query(const VString& inQuery, CDB4DBaseContext* inContext, VErrorDB4D& err, const VValueSingle* param1, const VValueSingle* param2, const VValueSingle* param3)
-{
-	Selection* sel = query(inQuery, ConvertContext(inContext), err, param1, param2, param3);
-	CDB4DSelection* result = nil;
-	
-	if (sel != nil)
-	{
-		CDB4DBase* xbase = fOwner->RetainBaseX();
-		result = new VDB4DSelection(VDBMgr::GetManager(), VImpCreator<VDB4DBase>::GetImpObject(xbase), fMainTable, sel);
-		xbase->Release();
-		result->SetAssociatedModel(this);
-	}
-
 	return result;
 }
 
 
-CDB4DEntityRecord* EntityModel::Find(const VString& inQuery, CDB4DBaseContext* inContext, VErrorDB4D& err, const VValueSingle* param1, const VValueSingle* param2, const VValueSingle* param3)
+
+EntityRecord* EntityModel::find(const VString& inQuery, BaseTaskInfo* inContext, VErrorDB4D& err, const VValueSingle* param1, const VValueSingle* param2, const VValueSingle* param3)
 {
-	CDB4DEntityRecord* result = nil;
-	CDB4DSelection* sel = Query(inQuery, inContext, err, param1, param2, param3);
-	if (sel != nil && sel->CountRecordsInSelection(inContext) > 0)
+	EntityRecord* result = nil;
+	err = VE_OK;
+	EntityCollection* sel = query(inQuery, inContext, err, param1, param2, param3);
+	if (sel != nil && sel->GetLength(inContext) > 0)
 	{
-		result = sel->LoadEntity(1, DB4D_Do_Not_Lock, inContext);
+		result = sel->LoadEntity(0, inContext, err, DB4D_Do_Not_Lock);
 	}
 	QuickReleaseRefCountable(sel);
 	return result;
@@ -6388,10 +6295,10 @@ bool EntityModel::AddRestrictionToQuery(SearchTab& query, BaseTaskInfo* context,
 	if (fWithRestriction)
 	{
 		ok = true;
-		Selection* sel = BuildRestrictingSelection(context, err);
+		EntityCollection* sel = BuildRestrictingSelection(context, err);
 		if (sel != nil)
 		{
-			query.AddSearchLineSel(sel);
+			query.AddSearchLineEmSel(sel);
 			sel->Release();
 		}
 	}
@@ -6399,9 +6306,9 @@ bool EntityModel::AddRestrictionToQuery(SearchTab& query, BaseTaskInfo* context,
 }
 
 
-Selection* EntityModel::BuildRestrictingSelection(BaseTaskInfo* context, VError& err)
+EntityCollection* EntityModel::BuildRestrictingSelection(BaseTaskInfo* context, VError& err)
 {
-	Selection* result = nil;
+	EntityCollection* result = nil;
 	err = VE_OK;
 	if (fWithRestriction)
 	{
@@ -6415,7 +6322,7 @@ Selection* EntityModel::BuildRestrictingSelection(BaseTaskInfo* context, VError&
 			if (fBaseEm != nil)
 				result = fBaseEm->SelectAllEntities(context, &err);
 			else
-				result = fMainTable->GetDF()->AllRecords(context, err);
+				result = SelectAllEntities(context, &err, DB4D_Do_Not_Lock, nil, false);
 		}
 	}
 
@@ -6423,205 +6330,276 @@ Selection* EntityModel::BuildRestrictingSelection(BaseTaskInfo* context, VError&
 }
 
 
-Selection* EntityModel::ExecuteQuery( SearchTab* querysearch, BaseTaskInfo* context, Selection* Filter, 
-										  VDB4DProgressIndicator* InProgress, DB4D_Way_of_Locking HowToLock, 
-										  sLONG limit, Bittab* outLockSet, VErrorDB4D *outErr)
+EntityCollection* EntityModel::NewCollection(const VectorOfVString& primKeys, VError& err, BaseTaskInfo* context) const
 {
-	VError err = VE_OK;
-	Selection *sel = nil;
-	if (okperm(context, fPerms[DB4D_EM_Read_Perm]) || okperm(context, fPerms[DB4D_EM_Update_Perm]) || okperm(context, fPerms[DB4D_EM_Delete_Perm]))
+	err = VE_OK;
+	EntityCollection* result = NewCollection(false, false);
+	if (result != nil)
 	{
-		Base4D *db;
-		DataTable *DF;
-		OptimizedQuery rech;
-
+		for (VectorOfVString::const_iterator cur = primKeys.begin(), end = primKeys.end(); cur != end && err == VE_OK; ++cur)
 		{
-			Selection* oldsel = nil;
-
-			if (testAssert( querysearch != nil))
+			EntityRecord* erec = ((EntityModel*)this)->findEntityWithPrimKey(*cur, context, err, DB4D_Do_Not_Lock);
+			if (erec != nil)
 			{
+				result->AddEntity(erec);
+			}
+			QuickReleaseRefCountable(erec);
+		}
+	}
+	return result;
+}
 
-				DF=fMainTable->GetDF();
-				db=DF->GetDB();
 
-				SearchTab* xsearch;
-				SearchTab locsearch(fMainTable);
-				SearchTab restsearch(fMainTable);
-				bool alreadyloc = false;
 
-				if (AddRestrictionToQuery(restsearch, context, err))
-				{
-					if (!alreadyloc)
-					{
-						locsearch.From(*querysearch);
-						xsearch = &locsearch;
-					}
-					locsearch.Add(restsearch);
-					alreadyloc = true;
-				}
-				if (WithRestrictingQuery())
-				{
-					if (!alreadyloc)
-					{
-						locsearch.From(*querysearch);
-						xsearch = &locsearch;
-					}
-					locsearch.Add(*fRestrictingQuery);
-					alreadyloc = true;
-				}
-				if (!alreadyloc)
-					xsearch = querysearch;
+EntityCollection* EntityModel::FromArray(VJSArray& arr, BaseTaskInfo* context, VError& err, VDB4DProgressIndicator* InProgress)
+{
+	err = VE_OK;
+	EntityCollection* sel = NewCollection(false, false);
 
-				db->LockIndexes();
-				err = rech.AnalyseSearch(xsearch, context);
-				db->UnLockIndexes();
+	sLONG nbelem = (sLONG)arr.GetLength();
+	VJSValue jsval(arr.GetContextRef());
+	EntityModel* model = this;
+
+	for (sLONG i = 0; i < nbelem && err == VE_OK; i++)
+	{
+		jsval = arr.GetValueAt(i);
+		if (jsval.IsObject())
+		{
+			VJSObject objrec(arr.GetContextRef());
+			jsval.GetObject(objrec);
+			sLONG stamp = 0;
+			
+			EntityRecord* rec = nil;
+			jsval = objrec.GetProperty("__KEY");
+			if (jsval.IsObject())
+			{
+				VJSObject objkey(arr.GetContextRef());
+				jsval.GetObject(objkey);
+
+				jsval = objkey.GetProperty("__STAMP");
+				if (jsval.IsNumber())
+					jsval.GetLong(&stamp);
+
+				rec = model->findEntityWithPrimKey(objkey, context, err, DB4D_Do_Not_Lock);
 				if (err == VE_OK)
 				{
-					sel = rech.Perform(Filter, InProgress, context, err, HowToLock, 0, outLockSet);
+					if (rec == nil)
+					{
+						rec = model->newEntity(context);
+						if (rec != nil)
+						{
+							rec->setPrimKey(objkey);
+						}
+					}
 				}
-
-
 			}
-		}
-	}
-	else
-	{
-		context->SetPermError();
-		err = ThrowError(VE_DB4D_NO_PERM_TO_READ);
-	}
-
-	if (outErr != nil)
-		*outErr = err;
-	return sel;
-
-}
-
-
-CDB4DSelection* EntityModel::ExecuteQuery( CDB4DQuery *inQuery, CDB4DBaseContextPtr inContext, CDB4DSelectionPtr Filter, 
-									 VDB4DProgressIndicator* InProgress, DB4D_Way_of_Locking HowToLock, 
-									 sLONG limit, CDB4DSet* outLockSet, VErrorDB4D *outErr)
-{
-	Selection *sel;
-	CDB4DSelection* result = nil;
-	Base4D *db;
-	DataTable *DF;
-	OptimizedQuery rech;
-	VError err = VE_OK;
-	
-	{
-		assert(inQuery != nil);
-		VDB4DQuery *query = VImpCreator<VDB4DQuery>::GetImpObject(inQuery);
-		VDB4DSelection *xfilter;
-		if (Filter == nil) 
-			xfilter = nil;
-		else 
-			xfilter = VImpCreator<VDB4DSelection>::GetImpObject(Filter);
-		Selection* oldsel = nil;
-		
-		BaseTaskInfoPtr context = ConvertContext(inContext);
-		
-		Bittab* lockedset = nil;
-		if (outLockSet != nil)
-			lockedset = (VImpCreator<VDB4DSet>::GetImpObject(outLockSet))->GetBittab();
-		
-		if (testAssert( query != nil)) {
-			
-			if (xfilter != nil) 
-				oldsel = xfilter->GetSel();
-
-			sel = ExecuteQuery(query->GetSearchTab(), context, oldsel, InProgress, HowToLock, limit, lockedset, &err);
-			
-			if (sel != nil)
+			else if (jsval.IsString())
 			{
-				CDB4DBase* xbase = RetainDataBase();
-				result = new VDB4DSelection(VDBMgr::GetManager(), VImpCreator<VDB4DBase>::GetImpObject(xbase), fMainTable, sel, this);
-				xbase->Release();
-				if (result == nil)
+				jsval = objrec.GetProperty("__STAMP");
+				if (jsval.IsNumber())
+					jsval.GetLong(&stamp);
+				VString keyString;
+				jsval.GetString(keyString);
+				rec = model->findEntityWithPrimKey(keyString, context,err, DB4D_Do_Not_Lock);
+				if (err == VE_OK)
 				{
-					err = memfull;
-					sel->Release();
+					if (rec == nil)
+					{
+						rec = model->newEntity(context);
+						/*
+						if (rec != nil)
+						{
+							rec->setPrimKey(objkey);
+						}
+						*/
+					}
+				}
+
+			}
+			else
+			{
+				rec = model->newEntity(context);
+			}
+
+			if (rec != nil)
+			{
+				err = rec->convertFromJSObj(objrec);
+			}
+			if (err == VE_OK)
+			{
+				err = rec->Save(stamp);
+				if (err == VE_OK)
+				{
+					err = sel->AddEntity(rec);
 				}
 			}
-			
+
+			QuickReleaseRefCountable(rec);
+		}
+
+	}
+
+
+	return sel;
+}
+
+
+
+CDB4DEntityCollection* EntityModel::NewSelection(bool ordered, bool safeRef) const
+{
+	return NewCollection(ordered, safeRef);
+}
+
+CDB4DEntityCollection* EntityModel::SelectAllEntities(CDB4DBaseContextPtr inContext, VErrorDB4D* outErr, DB4D_Way_of_Locking HowToLock, CDB4DEntityCollection* outLockSet)
+{
+	EntityCollection* locked = nil;
+	if (outLockSet != nil)
+		locked = dynamic_cast<EntityCollection*>(outLockSet);
+	return SelectAllEntities(ConvertContext(inContext), outErr, HowToLock, locked);
+}
+
+
+VError EntityModel::getQParams(VJSParms_callStaticFunction& ioParms, sLONG firstparam, QueryParamElementVector& outParams, SearchTab* inQuery)
+{
+	VError err = VE_OK;
+	SearchTab* query = inQuery;
+	for (sLONG i = firstparam, nb = ioParms.CountParams(); i <= nb; i++)
+	{
+		if (ioParms.IsObjectParam(i))
+		{
+			if (!ioParms.IsNullParam(i))
+			{
+				VJSObject obj(ioParms.GetParamValue(i).GetObject());
+				if (obj.IsArray())
+				{
+					VJSArray arr(obj, false);
+					outParams.push_back(QueryParamElement(arr));
+				}
+				else
+				{
+					if (obj.HasProperty("allowJavascript"))
+					{
+						bool allowjs = obj.GetPropertyAsBool("allowJavascript", nil, nil);
+						query->AllowJSCode(allowjs);
+					}
+					if (obj.HasProperty("queryPlan"))
+					{
+						bool queryplan = obj.GetPropertyAsBool("queryPlan", nil, nil);
+					}
+					if (obj.HasProperty("queryPath"))
+					{
+						bool querypath = obj.GetPropertyAsBool("queryPath", nil, nil);	
+					}
+
+				}
+			}
+		}
+		else if (!ioParms.IsNullParam(i))
+		{
+			VJSValue jsval(ioParms.GetParamValue(i));
+			VValueSingle* cv = jsval.CreateVValue();
+			if (cv == nil)
+			{
+				cv = new VString();
+				cv->SetNull(true);
+			}
+			if (cv->GetValueKind() == VK_TIME)
+			{
+				VValueSingle* cv2 = jsval.CreateVValue(nil, true);
+				outParams.push_back(QueryParamElement(cv, cv2));
+			}
+			else
+				outParams.push_back(QueryParamElement(cv));
 		}
 	}
-	
-	if (outErr != nil)
-		*outErr = err;
+	return err;
+}
+
+
+VError EntityModel::FillQueryWithParams(SearchTab* query, VJSParms_callStaticFunction& ioParms, sLONG firstparam)
+{
+	vector<VString> ParamNames;
+	QueryParamElementVector ParamValues;
+
+	VError err = query->GetParams(ParamNames, ParamValues);
+	if (err == VE_OK)
+	{
+		QueryParamElementVector::iterator curvalue = ParamValues.begin();
+		for (vector<VString>::iterator curname = ParamNames.begin(), endname = ParamNames.end(); curname != endname; curname++, curvalue++)
+		{
+			const VString& s = *curname;
+			bool isAParam = false;
+			if (s.GetLength() >= 1)
+			{
+				UniChar c = s[0];
+				if (c >= '1' && c <= '9')
+				{
+					isAParam = true;
+					sLONG paramnum = s.GetLong() - 1 + firstparam;
+					if (ioParms.CountParams() >= paramnum)
+					{
+						VJSValue jsval(ioParms.GetParamValue(paramnum));
+						if (jsval.IsArray())
+						{
+							VJSArray jarr(jsval, false);
+							curvalue->Dispose();
+							*curvalue = QueryParamElement(jarr);
+						}
+						else
+						{
+							VValueSingle* cv = jsval.CreateVValue();
+							if (cv != nil)
+							{
+								curvalue->Dispose();
+								if (cv->GetValueKind() == VK_TIME)
+								{
+									VValueSingle* cv2 = jsval.CreateVValue(nil, true);
+									*curvalue = QueryParamElement(cv, cv2);
+								}
+								else
+									*curvalue = QueryParamElement(cv);
+							}
+						}
+					}
+				}
+				else if (c == '$')
+				{
+					isAParam = true;
+				}
+			}
+			if (!isAParam)
+			{
+				curvalue->Dispose();
+				VValueSingle* cv;
+				ioParms.EvaluateScript(*curname, &cv);
+				*curvalue = QueryParamElement(cv);
+			}
+		}
+		err = query->SetParams(ParamNames, ParamValues);
+	}
+
+	return err;
+}
+
+CDB4DEntityCollection* EntityModel::ExecuteQuery( CDB4DQuery *inQuery, CDB4DBaseContextPtr inContext, CDB4DEntityCollection* Filter, 
+											VDB4DProgressIndicator* InProgress, DB4D_Way_of_Locking HowToLock, 
+											sLONG limit, CDB4DEntityCollection* outLockSet, VErrorDB4D *outErr)
+{
+	EntityCollection* lockedset = nil;
+	EntityCollection* filter = nil;
+	if (outLockSet != nil)
+	{
+		lockedset = dynamic_cast<EntityCollection*>(outLockSet);
+	}
+	if (Filter != nil)
+	{
+		filter = dynamic_cast<EntityCollection*>(Filter);
+	}
+
+	EntityCollection* result = executeQuery(dynamic_cast<VDB4DQuery*>(inQuery)->GetSearchTab(), ConvertContext(inContext), filter, InProgress, HowToLock, limit, lockedset, outErr);
 	return result;
-	
 }
 
-
-
-CDB4DSelection* EntityModel::NewSelection(DB4D_SelectionType inSelectionType) const
-{
-	Selection* sel = nil;
-	CDB4DSelectionPtr result = nil;
-	
-	if (inSelectionType == DB4D_Sel_OneRecSel)
-		inSelectionType = DB4D_Sel_SmallSel;
-	
-	switch (inSelectionType)
-	{
-		case DB4D_Sel_SmallSel:
-			sel = new PetiteSel(fMainTable->GetDF(), fMainTable->GetOwner(), fMainTable->GetNum());
-			break;
-			
-		case DB4D_Sel_LongSel:
-			sel = new LongSel(fMainTable->GetDF(), fMainTable->GetOwner());
-			((LongSel*)sel)->PutInCache();
-			break;
-			
-		case DB4D_Sel_Bittab:
-			sel = new BitSel(fMainTable->GetDF(), fMainTable->GetOwner());
-			break;
-	}
-	
-	if (sel != nil)
-	{
-		CDB4DBase* xbase = RetainDataBase();
-		result = new VDB4DSelection(VDBMgr::GetManager(), VImpCreator<VDB4DBase>::GetImpObject(xbase), fMainTable, sel, (EntityModel*)this);
-		xbase->Release();
-	}
-	
-	return result;
-}
-
-
-CDB4DEntityRecord* EntityModel::NewEntity(CDB4DBaseContextPtr inContext, DB4D_Way_of_Locking HowToLock) const
-{
-	VError err;
-	BaseTaskInfo* context = ConvertContext(inContext);
-	FicheInMem* rec = fMainTable->GetDF()->NewRecord(err, context);
-	if (rec == nil)
-		return nil;
-	else
-	{
-		EntityRecord* erec = new EntityRecord((EntityModel*)this, rec, inContext, HowToLock);
-		rec->Release();
-		//CallDBEvent(dbev_init, erec, context);
-		erec->CallInitEvent(context);
-		return erec;
-	}
-}
-
-
-EntityRecord* EntityModel::NewEntity(BaseTaskInfo* inContext, DB4D_Way_of_Locking HowToLock) const
-{
-	VError err;
-	FicheInMem* rec = fMainTable->GetDF()->NewRecord(err, inContext);
-	if (rec == nil)
-		return nil;
-	else
-	{
-		EntityRecord* erec = new EntityRecord((EntityModel*)this, rec, inContext->GetEncapsuleur(), HowToLock);
-		rec->Release();
-		//CallDBEvent(dbev_init, erec, inContext);
-		erec->CallInitEvent(inContext);
-		return erec;
-	}
-}
 
 /*
 map<Table*, EntityModel*> EntityModel::sEMbyTable;
@@ -6630,15 +6608,15 @@ VCriticalSection EntityModel::sEMbyTableMutex;
 
 #if BuildEmFromTable
 
-EntityModel* EntityModel::BuildEntityModel(Table* from, EntityModelCatalog* catalog)
+EntityModel* EntityModel::BuildLocalEntityModel(Table* from, LocalEntityModelCatalog* catalog)
 {
 	assert(from != nil);
 	VString tablename;
 	from->GetName(tablename);
-	EntityModel* em = catalog->RetainEntity(tablename);
-	if (em == nil)
+	EntityModel* xem = catalog->RetainEntity(tablename);
+	if (xem == nil)
 	{
-		em = new EntityModel(from->GetOwner(), from);
+		LocalEntityModel* em = new LocalEntityModel(catalog, from);
 		if (em != nil)
 		{
 #if AllowDefaultEMBasedOnTables
@@ -6650,7 +6628,7 @@ EntityModel* EntityModel::BuildEntityModel(Table* from, EntityModelCatalog* cata
 			for (sLONG i = 1, nb = from->GetNbCrit(); i <= nb; i++)
 			{
 				Field* cri = from->RetainField(i);
-				if (cri != nil)
+				if (cri != nil && !cri->GetHideInRest())
 				{
 					VString fieldname;
 					cri->GetName(fieldname);
@@ -6659,6 +6637,7 @@ EntityModel* EntityModel::BuildEntityModel(Table* from, EntityModelCatalog* cata
 					att->SetFieldPos(i);
 					att->SetName(fieldname);
 					att->SetOverWrite(true);
+					att->SetScalarType(cri->GetTyp());
 
 					em->fAttributes.push_back(att);
 					em->fAttributesByName[att->GetName()] = att;
@@ -6677,15 +6656,21 @@ EntityModel* EntityModel::BuildEntityModel(Table* from, EntityModelCatalog* cata
 				VString relname = rel->GetName();
 				if (!relname.IsEmpty())
 				{
-					EntityAttribute* att = new EntityAttribute(em);
-					att->SetKind(eattr_relation_Nto1);
-					att->SetName(relname);
-					att->SetOverWrite(true);
-					att->SetRelation(rel, erel_Nto1, catalog);
+					Field* source = rel->GetSource();
+					Field* dest = rel->GetDest();
+					if (source != nil && dest != nil && !source->GetHideInRest() && !dest->GetHideInRest() 
+						&& !source->GetOwner()->GetHideInRest() && !dest->GetOwner()->GetHideInRest() )
+					{
+						EntityAttribute* att = new EntityAttribute(em);
+						att->SetKind(eattr_relation_Nto1);
+						att->SetName(relname);
+						att->SetOverWrite(true);
+						att->SetRelation(rel, erel_Nto1, catalog);
 
-					em->fAttributes.push_back(att);
-					em->fAttributesByName[att->GetName()] = att;
-					att->SetPosInOwner((sLONG)em->fAttributes.size());
+						em->fAttributes.push_back(att);
+						em->fAttributesByName[att->GetName()] = att;
+						att->SetPosInOwner((sLONG)em->fAttributes.size());
+					}
 				}
 			}
 
@@ -6698,15 +6683,21 @@ EntityModel* EntityModel::BuildEntityModel(Table* from, EntityModelCatalog* cata
 					VString relname = rel->GetOppositeName();
 					if (!relname.IsEmpty())
 					{
-						EntityAttribute* att = new EntityAttribute(em);
-						att->SetKind(eattr_relation_1toN);
-						att->SetName(relname);
-						att->SetOverWrite(true);
-						att->SetRelation(rel, erel_1toN, catalog);
+						Field* source = rel->GetSource();
+						Field* dest = rel->GetDest();
+						if (source != nil && dest != nil && !source->GetHideInRest() && !dest->GetHideInRest() 
+							&& !source->GetOwner()->GetHideInRest() && !dest->GetOwner()->GetHideInRest() )
+						{
+							EntityAttribute* att = new EntityAttribute(em);
+							att->SetKind(eattr_relation_1toN);
+							att->SetName(relname);
+							att->SetOverWrite(true);
+							att->SetRelation(rel, erel_1toN, catalog);
 
-						em->fAttributes.push_back(att);
-						em->fAttributesByName[att->GetName()] = att;
-						att->SetPosInOwner((sLONG)em->fAttributes.size());
+							em->fAttributes.push_back(att);
+							em->fAttributesByName[att->GetName()] = att;
+							att->SetPosInOwner((sLONG)em->fAttributes.size());
+						}
 					}
 				}
 			}
@@ -6718,18 +6709,30 @@ EntityModel* EntityModel::BuildEntityModel(Table* from, EntityModelCatalog* cata
 				for (NumFieldArray::Iterator cur = primkey.First(), end = primkey.End(); cur != end; cur++)
 				{
 					sLONG numfield = *cur;
-					EntityAttribute* att = em->FindAttributeByFieldPos(numfield);
-					if (att != nil)
-						em->fOwnedPrimaryAtts.push_back(IdentifyingAttribute(att));
+					Field* cri = from->RetainField(numfield);
+					if (cri != nil)
+					{
+						VString criname;
+						cri->GetName(criname);
+						EntityAttribute* att = em->getAttribute(criname);
+						if (att != nil)
+						{
+							em->fOwnedPrimaryAtts.push_back(IdentifyingAttribute(att));
+							att->SetPartOfPrimKey();
+						}
+						cri->Release();
+					}
 				}
 				if (!em->fOwnedPrimaryAtts.empty())
 					em->fPrimaryAtts = em->fOwnedPrimaryAtts;
 			}
 		}
 
+		xem = em;
+
 	}
 	
-	return em;
+	return xem;
 }
 
 #endif
@@ -6799,7 +6802,7 @@ bool EntityModel::permissionMatch(DB4D_EM_Perm inPerm, CUAGSession* inSession) c
 }
 
 
-VError EntityModel::callMethod(const VString& inMethodName, const VectorOfVString& params, VJSValue& result, CDB4DBaseContext* inContext, Selection* inSel, EntityRecord* inRec)
+VError EntityModel::callMethod(const VString& inMethodName, const VectorOfVString& params, VJSValue& result, BaseTaskInfo* inContext, EntityCollection* inSel, EntityRecord* inRec)
 {
 	VString jsonparams = L"[";
 	bool first = true;
@@ -6818,13 +6821,13 @@ VError EntityModel::callMethod(const VString& inMethodName, const VectorOfVStrin
 }
 
 
-VError EntityModel::callMethod(const VString& inMethodName, const VString& jsonparams, VJSValue& result, CDB4DBaseContext* inContext, Selection* inSel, EntityRecord* inRec)
+VError EntityModel::callMethod(const VString& inMethodName, const VString& jsonparams, VJSValue& result, BaseTaskInfo* inContext, EntityCollection* inSel, EntityRecord* inRec)
 {
 	VError err = VE_OK;
 	EntityMethod* meth = getMethod(inMethodName);
 	if (meth != nil)
 	{
-		BaseTaskInfo* context = ConvertContext(inContext);
+		BaseTaskInfo* context = inContext;
 		if (context != nil && context->GetJSContext() != nil)
 		{
 			VJSContext jscontext(context->GetJSContext());
@@ -6885,143 +6888,11 @@ VError EntityModel::callMethod(const VString& inMethodName, const VString& jsonp
 }
 
 
-VError EntityModel::callMethod(const VString& inMethodName, const VValueBag& bagparams, VJSValue& result, CDB4DBaseContext* inContext, Selection* inSel, EntityRecord* inRec)
+VError EntityModel::callMethod(const VString& inMethodName, const VValueBag& bagparams, VJSValue& result, BaseTaskInfo* inContext, EntityCollection* inSel, EntityRecord* inRec)
 {
 	VString jsonstring;
 	bagparams.GetJSONString(jsonstring);
 	return callMethod(inMethodName, jsonstring, result, inContext);
-}
-
-
-class computeResult
-{
-	public:
-		computeResult()
-		{
-			fSum = 0;
-			first = true;
-			fMinVal = nil;
-			fMaxVal = nil;
-			fCount = 0;
-		}
-
-		~computeResult()
-		{
-			if (fMinVal != nil)
-				delete fMinVal;
-			if (fMaxVal != nil)
-				delete fMaxVal;
-		}
-
-		VValueSingle* fMinVal;
-		VValueSingle* fMaxVal;
-		Real fSum;
-		sLONG8 fCount;
-		bool first;
-};
-
-VError EntityModel::compute(EntityAttributeSortedSelection& atts, Selection* sel, VJSObject& outObj, BaseTaskInfo* context, JS4D::ContextRef jscontext)
-{
-	outObj.MakeEmpty();
-
-	vector<computeResult> results;
-	results.resize(atts.size());
-	VError err = VE_OK;
-	if (okperm(context, fPerms[DB4D_EM_Read_Perm]) || okperm(context, fPerms[DB4D_EM_Update_Perm]) || okperm(context, fPerms[DB4D_EM_Delete_Perm]))
-	{
-		if (sel == nil)
-			sel = SelectAllEntities(context, &err);
-		else
-			sel->Retain();
-
-		if (err == VE_OK)
-		{
-			SelectionIterator itersel(sel);
-			sLONG currec = itersel.FirstRecord();
-
-			while (currec != -1 && err == VE_OK)
-			{
-				EntityRecord* rec = LoadEntityRecord(currec, err, DB4D_Do_Not_Lock, context, false);
-				if (rec != nil)
-				{
-					sLONG respos = 0;
-					for (EntityAttributeSortedSelection::const_iterator cur = atts.begin(), end = atts.end(); cur != end && err == VE_OK; cur++, respos++)
-					{
-						computeResult& result = results[respos];
-						EntityAttributeValue* eval = rec->getAttributeValue(cur->fAttribute, err, context);
-						if (err == VE_OK)
-						{
-							if (eval->GetAttributeKind() == eav_vvalue)
-							{
-								VValueSingle* cv = eval->getVValue();
-								if (cv != nil && !cv->IsNull())
-								{
-									result.fCount++;
-									result.fSum += cv->GetReal();
-									if (result.first)
-									{
-										result.fMinVal = cv->Clone();
-										result.fMaxVal = cv->Clone();
-										result.first = false;
-									}
-									else
-									{
-										if (result.fMinVal->CompareToSameKind(cv, true) == CR_BIGGER)
-											result.fMinVal->FromValueSameKind(cv);
-										if (result.fMaxVal->CompareToSameKind(cv, true) == CR_SMALLER)
-											result.fMaxVal->FromValueSameKind(cv);
-									}
-								}
-							}
-						}
-					}
-					QuickReleaseRefCountable(rec);
-				}
-				currec = itersel.NextRecord();
-			}
-
-
-		}
-
-		sLONG respos = 0;
-		for (EntityAttributeSortedSelection::const_iterator cur = atts.begin(), end = atts.end(); cur != end && err == VE_OK; cur++, respos++)
-		{
-			computeResult& result = results[respos];
-			VJSObject subobject(outObj, cur->fAttribute->GetName());
-			subobject.SetProperty("count", result.fCount);
-			if (!result.first)
-			{
-				if (cur->fAttribute->IsSummable())
-				{
-					subobject.SetProperty("sum", result.fSum);
-					if (result.fCount != 0)
-						subobject.SetProperty("average", result.fSum / (Real)result.fCount);
-					else
-						subobject.SetNullProperty("average");
-				}
-				subobject.SetProperty("min", result.fMinVal);
-				subobject.SetProperty("max", result.fMaxVal);
-			}
-			else
-			{	
-				if (cur->fAttribute->IsSummable())
-				{
-					subobject.SetNullProperty("average");
-					subobject.SetProperty("sum", 0.0);
-				}
-				subobject.SetNullProperty("min");
-				subobject.SetNullProperty("max");
-			}
-		}
-
-		QuickReleaseRefCountable(sel);
-	}
-	else
-	{
-		context->SetPermError();
-		err = ThrowError(VE_DB4D_NO_PERM_TO_READ);
-	}
-	return err;
 }
 
 
@@ -7040,7 +6911,7 @@ VError EntityModel::CallDBEvent(DBEventKind kind, EntityRecord* inRec, BaseTaskI
 }
 
 
-VError EntityModel::CallDBEvent(DBEventKind kind, BaseTaskInfo* context, Selection* *outSel) const
+VError EntityModel::CallDBEvent(DBEventKind kind, BaseTaskInfo* context, EntityCollection* *outSel) const
 {
 	VError err = VE_OK;
 	if (kind != dbev_none)
@@ -7097,6 +6968,13 @@ void EntityModel::ResolvePermissionsInheritance(EntityModelCatalog* catalog)
 }
 
 
+VError EntityModel::BuildQueryString(SearchTab* querysearch, BaseTaskInfo* context, VString outQuery)
+{
+	return querysearch->BuildQueryString(context, outQuery);
+}
+
+
+
 
 // ----------------------------------------------------------------------------------------------------
 
@@ -7105,7 +6983,6 @@ SubEntityCache::~SubEntityCache()
 {
 	QuickReleaseRefCountable(fErec);
 	QuickReleaseRefCountable(fSel);
-	QuickReleaseRefCountable(fRec);
 }
 
 
@@ -7113,20 +6990,7 @@ void SubEntityCache::Clear()
 {
 	ReleaseRefCountable(&fErec);
 	ReleaseRefCountable(&fSel);
-	ReleaseRefCountable(&fRec);
 	fAlreadyActivated = false;
-}
-
-
-
-EntityRecord* SubEntityCache::GetErec()
-{
-	if (fErec == nil && fRec != nil)
-	{
-		fErec = new EntityRecord(fModel, fRec, fRec->GetContext()->GetEncapsuleur(), fLockWay);
-		fErec->CallDBEvent(dbev_load, fRec->GetContext());
-	}
-	return fErec;
 }
 
 
@@ -7135,14 +6999,14 @@ EntityRecord* SubEntityCache::GetErec()
 
 
 #if debuglr
-CComponent* EntityAttributeValue::Retain(const char* DebugInfo)
+sLONG EntityAttributeValue::Retain(const char* DebugInfo) const
 {
-	return VComponentImp<CDB4DEntityAttributeValue>::Retain(DebugInfo);
+	return IRefCountable::Retain(DebugInfo);
 }
 
-void EntityAttributeValue::Release(const char* DebugInfo)
+sLONG EntityAttributeValue::Release(const char* DebugInfo) const
 {
-	VComponentImp<CDB4DEntityAttributeValue>::Release(DebugInfo);
+	return IRefCountable::Release(DebugInfo);
 }
 #endif
 
@@ -7169,7 +7033,7 @@ EntityAttributeValue::EntityAttributeValue(EntityRecord* owner, const EntityAttr
 }
 
 
-EntityAttributeValue::EntityAttributeValue(EntityRecord* owner, const EntityAttribute* attribute, EntityAttributeValueKind kind, Selection* sel, EntityModel* inSubModel):fJSObject(nil)
+EntityAttributeValue::EntityAttributeValue(EntityRecord* owner, const EntityAttribute* attribute, EntityAttributeValueKind kind, EntityCollection* sel, EntityModel* inSubModel):fJSObject(nil)
 {
 	_Init(kind);
 	fSel = RetainRefCountable(sel);
@@ -7198,7 +7062,6 @@ EntityAttributeValue::~EntityAttributeValue()
 	if (fValue != nil && fIsValueOwned)
 		delete fValue;
 	QuickReleaseRefCountable(fSubEntity);
-	QuickReleaseRefCountable(fCDB4DSel);
 	QuickReleaseRefCountable(fSel);
 	QuickReleaseRefCountable(fValueBag);
 	QuickReleaseRefCountable(fOldSubEntity);
@@ -7251,6 +7114,10 @@ VError EntityAttributeValue::setRelatedKey(const VectorOfVValue& key)
 }
 
 
+CDB4DEntityRecord* EntityAttributeValue::GetRelatedEntity() const
+{
+	return const_cast<EntityAttributeValue*>(this)->getRelatedEntity();
+}
 
 EntityRecord* EntityAttributeValue::getRelatedEntity()
 {
@@ -7275,29 +7142,6 @@ EntityRecord* EntityAttributeValue::getRelatedEntity()
 	return fSubEntity;
 }
 
-
-CDB4DEntityRecord* EntityAttributeValue::GetRelatedEntity() const
-{
-	return ((EntityAttributeValue*)this)->getRelatedEntity();
-}
-
-
-CDB4DSelection* EntityAttributeValue::GetRelatedSelection() const
-{
-	if (fSel == nil)
-		return nil;
-	else
-	{
-		if (fCDB4DSel == nil)
-		{
-			CDB4DBase* base = fSubModel->GetOwner()->RetainBaseX();
-			fCDB4DSel = new VDB4DSelection(VDBMgr::GetManager(), VImpCreator<VDB4DBase>::GetImpObject(base), fSubModel->GetMainTable(), fSel, fSubModel);
-			base->Release();
-			fSel->Retain();
-		}
-		return fCDB4DSel;
-	}
-}
 
 
 VError EntityAttributeValue::GetJsonString(VString& outJsonValue)
@@ -7326,7 +7170,7 @@ VError EntityAttributeValue::GetJSObject(VJSObject& outJSObject)
 			{
 				VJSArray arr(outJSObject.GetContextRef());
 				EntityAttributeSortedSelection atts(fOwner->GetOwner());
-				SelToJSObject(fOwner->getContext(), arr, fOwner->GetOwner(), fSel, atts, nil, nil, false, false, 0, fSel->GetQTfic());
+				outJSObject = fSel->ToJsArray(fOwner->getContext(), outJSObject.GetContextRef(), atts, nil, nil, false, false, 0, fSel->GetLength(fOwner->getContext()), err);
 				outJSObject = arr;
 			}
 			if (err == VE_OK)
@@ -7498,13 +7342,8 @@ VError EntityAttributeValue::Save(Transaction* &trans, BaseTaskInfo* context)
 					{
 						if (fStamp != 0)
 						{
-							FicheInMem* rec = fOwner->GetRecordForAttribute(fAttribute);
-							if (rec != nil)
-							{
-								err = fAttribute->CallDBEvent(dbev_save, fOwner, context);
-								if (err == VE_OK)
-									rec->Touch(fAttribute->GetFieldPos());
-							}
+							err = fAttribute->CallDBEvent(dbev_save, fOwner, context);
+							fOwner->TouchAttribute(fAttribute);
 						}
 					}
 				}
@@ -7547,41 +7386,7 @@ VError EntityAttributeValue::Save(Transaction* &trans, BaseTaskInfo* context)
 								err = fAttribute->ThrowError(VE_DB4D_ENTITY_RELATION_IS_EMPTY);
 							else
 							{
-								FicheInMem* rec = fOwner->getRecord();
-								if (rec != nil)
-								{
-									VValueSingle* cv = rec->GetFieldValue(rel->GetSourceField(), err);
-
-									FicheInMem* relatedRec = nil;
-									if (fSubEntity != nil)
-										relatedRec = fSubEntity->getRecord();
-									if (relatedRec == nil)
-									{
-										if (fRelatedKey != nil)
-										{
-											cv->FromValue(*fRelatedKey);
-										}
-										else
-										{
-											cv->Clear();
-											cv->SetNull(true);
-										}
-									}
-									else
-									{
-										VValueSingle* relatedCV = relatedRec->GetFieldValue(rel->GetDestField(), err);
-										if (relatedCV == nil)
-										{
-											cv->Clear();
-											cv->SetNull(true);
-										}
-										else
-										{
-											cv->FromValue(*relatedCV);
-										}
-									}
-									rec->Touch(rel->GetSourceField());
-								}
+								err = fOwner->SetForeignKey(fAttribute, fSubEntity, fRelatedKey);
 							}
 						}
 						else
@@ -7593,17 +7398,17 @@ VError EntityAttributeValue::Save(Transaction* &trans, BaseTaskInfo* context)
 
 			case eav_composition:
 				{
-					Selection* sel = getRelatedSelection();
+					EntityCollection* sel = getRelatedSelection();
 					EntityModel* relEm = getRelatedEntityModel();
 					if (relEm != nil)
 					{
 						err = fAttribute->CallDBEvent(dbev_save, fOwner, context);
 
-						if (err == VE_OK && sel != nil && sel->GetQTfic() > 0)
+						if (err == VE_OK && sel != nil && sel->GetLength(context) > 0)
 						{
 							if (trans == nil && context != nil)
 								trans = context->StartTransaction(err);
-							err = sel->DeleteRecords(context, nil, nil, nil, nil, relEm);
+							//err = sel->DeleteRecords(context, nil, nil, nil, nil, relEm);
 						}
 						if (err == VE_OK)
 						{
@@ -7611,6 +7416,7 @@ VError EntityAttributeValue::Save(Transaction* &trans, BaseTaskInfo* context)
 							{
 								if (fJSObject.IsInstanceOf("Array"))
 								{
+									/*
 									VJSArray arr(fJSObject, false);
 									VJSValue jsval(fJSObject.GetContextRef());
 									sLONG nbrec = arr.GetLength();
@@ -7645,6 +7451,7 @@ VError EntityAttributeValue::Save(Transaction* &trans, BaseTaskInfo* context)
 											QuickReleaseRefCountable(rec);
 										}
 									}
+									*/
 								}
 							}
 						}
@@ -7712,7 +7519,11 @@ bool EntityAttributeValue::equalRelatedEntity(EntityRecord* relatedEntity)
 			return false;
 		else
 		{
-			if (fSubEntity->GetNum() == relatedEntity->GetNum())
+			VectorOfVValue prim1,prim2;
+			fSubEntity->GetPrimKeyValue(prim1);
+			relatedEntity->GetPrimKeyValue(prim2);
+
+			if (prim1 == prim2)
 				return true;
 			else
 				return false;
@@ -7751,7 +7562,9 @@ VError EntityAttributeValue::SetRelatedEntity(EntityRecord* relatedEntity, BaseT
 			fSubEntity = RetainRefCountable(relatedEntity);
 			if (fSubEntity != nil)
 				fSubModificationStamp = fSubEntity->GetModificationStamp();
-			fOwner->ClearSubEntityCache(fAttribute->GetPathID());
+			if (fAttribute->GetPathID() >= 0)
+				fOwner->ClearSubEntityCache(fAttribute->GetPathID());
+			//# il faudrait ici faire un ClearSubEntityCache de tous les chemins qui utilisent celui ci
 		}
 		Touch(context);
 	}
@@ -7766,14 +7579,14 @@ VError EntityAttributeValue::SetRelatedEntity(EntityRecord* relatedEntity, BaseT
 
 
 #if debuglr
-CComponent* EntityRecord::Retain(const char* DebugInfo)
+sLONG EntityRecord::Retain(const char* DebugInfo) const
 {
-	return VComponentImp<CDB4DEntityRecord>::Retain(DebugInfo);
+	return IRefCountable::Retain(DebugInfo);
 }
 
-void EntityRecord::Release(const char* DebugInfo)
+sLONG EntityRecord::Release(const char* DebugInfo) const
 {
-	VComponentImp<CDB4DEntityRecord>::Release(DebugInfo);
+	return IRefCountable::Release(DebugInfo);
 }
 #endif
 
@@ -7781,8 +7594,6 @@ void EntityRecord::Release(const char* DebugInfo)
 
 EntityRecord::~EntityRecord()
 {
-	QuickReleaseRefCountable(fCDB4DMainRec);
-	QuickReleaseRefCountable(fMainRec);
 	for (EntityAttributeValueCollection::iterator cur = fValues.begin(), end = fValues.end(); cur != end; cur++)
 	{
 		if (*cur != nil)
@@ -7791,17 +7602,10 @@ EntityRecord::~EntityRecord()
 }
 
 
-EntityRecord::EntityRecord(EntityModel* inModel, FicheInMem* inMainRec, CDB4DBaseContext* inContext, DB4D_Way_of_Locking HowToLock)
+EntityRecord::EntityRecord(EntityModel* inModel, BaseTaskInfo* inContext)
 {
-	fWayOfLock = HowToLock;
-	fStamp = 0;
-	fCDB4DMainRec = nil;
 	fContext = inContext;
-	assert(inModel != nil && inMainRec != nil);
 	fModel = inModel;
-	fMainRec = RetainRefCountable(inMainRec);
-	fModificationStamp = fMainRec->GetModificationStamp();
-	assert( inMainRec->GetOwner() == fModel->GetMainTable());
 	sLONG nbelem = fModel->CountAttributes();
 	fValues.resize(nbelem, nil);
 
@@ -7813,25 +7617,11 @@ EntityRecord::EntityRecord(EntityModel* inModel, FicheInMem* inMainRec, CDB4DBas
 }
 
 
-CDB4DRecord* EntityRecord::GetRecord() const
-{
-	if (fMainRec == nil)
-		return nil;
-	else
-	{
-		if (fCDB4DMainRec == nil)
-		{
-			fCDB4DMainRec = new VDB4DRecord(VDBMgr::GetManager(), fMainRec, fContext);
-			fMainRec->Retain();
-		}
-		return fCDB4DMainRec;
-	}
-}
-
-
 VError EntityRecord::ThrowError( VError inErrCode, const VString* p1) const
 {
-	VErrorDB4D_OnEMRec *err = new VErrorDB4D_OnEMRec(inErrCode, noaction, fModel->GetOwner(), fModel, GetNum());
+	VString skey;
+	const_cast<EntityRecord*>(this)->GetPrimKeyValue(skey, false);
+	VErrorDB4D_OnEMRec *err = new VErrorDB4D_OnEMRec(inErrCode, noaction, fModel->GetCatalog()->GetOwner(), fModel, skey);
 	if (p1 != nil)
 		err->GetBag()->SetString(Db4DError::Param1, *p1);
 	VTask::GetCurrent()->PushRetainedError( err);
@@ -7889,7 +7679,7 @@ void EntityRecord::ClearSubEntityCache(sLONG inPathID)
 	}
 }
 
-
+/*
 FicheInMem* EntityRecord::GetRecordForAttribute(const EntityAttribute* inAttribute)
 {
 	FicheInMem* result = nil;
@@ -7916,248 +7706,70 @@ FicheInMem* EntityRecord::GetRecordForAttribute(const EntityAttribute* inAttribu
 	}
 	return result;
 }
+*/
+
+
+EntityRecord* EntityRecord::do_LoadRelatedEntity(const EntityAttribute* inAttribute, const EntityAttribute* relatedAttribute, BaseTaskInfo* context, VError& err, DB4D_Way_of_Locking HowToLock)
+{
+	err = VE_OK;
+	EntityRecord* result = nil;
+
+	if (inAttribute != nil && relatedAttribute != nil)
+	{
+		VectorOfVValue primkey;
+		EntityAttributeValue* val = getAttributeValue(inAttribute, err, context, false);
+		VValueSingle* cv = nil;
+		if (val != nil)
+			cv = val->getVValue();
+		if (cv != nil && !cv->IsNull())
+		{
+			primkey.push_back(cv);
+			result = relatedAttribute->GetModel()->findEntityWithPrimKey(primkey, context, err, HowToLock);
+		}
+	}
+	else
+		err = ThrowError(VE_DB4D_WRONG_ATTRIBUTE_KIND);
+
+	return result;
+}
+
+
+VError EntityRecord::Reload()
+{
+	VError err = do_Reload();
+	if (err == VE_OK)
+	{
+		for (EntityAttributeValueCollection::iterator cur = fValues.begin(), end = fValues.end(); cur != end; cur++)
+		{
+			if (*cur != nil)
+				(*cur)->Release();
+			*cur = nil;
+		}
+	}
+	return err;
+}
 
 
 EntityAttributeValue* EntityRecord::getAttributeValue(const EntityAttribute* inAttribute, VError& err, BaseTaskInfo* context, bool restrictValue)
 {
-	err = VE_OK;
-	EntityAttributeValue* result = nil;
-	assert(inAttribute != nil);
-	if (inAttribute == nil)
-		return nil;
-	assert(inAttribute->GetOwner() == fModel);
-
-	sLONG pos = inAttribute->GetPosInOwner();
-	assert(pos > 0 && pos <= fValues.size());
-
-	result = fValues[pos-1];
-	EntityAttributeKind kind = inAttribute->GetKind();
-
-	if (result == nil || kind == eattr_computedField || kind == eattr_alias)
+	EntityAttributeValue* res = do_getAttributeValue(inAttribute, err, context, restrictValue);
+	if (res != nil)
 	{
-		bool mustCallEvent = (result == nil);
-
-		switch(kind)
+		if (inAttribute->GetKind() == eattr_storage)
 		{
-			case eattr_storage:
-			case eattr_alias:
-				{
-					if (kind == eattr_alias/* && !inAttribute->isFlattenedFromField()*/)
-					{
-						bool needReload = true /*SubEntityCacheNeedsActivation(inAttribute->GetPathID()) ||  result == nil */;
-						if (needReload)
-						{
-							VValueSingle* cv3 = nil;
-							if (result == nil)
-								result = new EntityAttributeValue(this, inAttribute, eav_vvalue, nil, true);
-							SubEntityCache* cache = GetSubEntityCache(inAttribute->GetPathID(), err, true, inAttribute->GetSubEntityModel(), context);
-							if (cache != nil)
-							{
-								EntityRecord* erec = cache->GetErec();
-								if (erec != nil)
-								{
-									EntityAttributeValue* result2 = erec->getAttributeValue(inAttribute->getFlattenAttributeName(), err, context, restrictValue);
-									if (result2 != nil)
-									{
-										VValueSingle* cv2 = result2->getVValue();
-										if (cv2 != nil)
-											cv3 = cv2->Clone();
-									}
-								}
-							}
-							result->setVValue(cv3);
-						}
-					}
-					else
-					{
-						FicheInMem* rec = nil;
-						if (kind == eattr_storage)
-							rec = fMainRec;
-						else
-						{
-							SubEntityCache* cache = GetSubEntityCache(inAttribute->GetPathID(), err, true, inAttribute->GetSubEntityModel(), context);
-							if (cache != nil)
-								rec = cache->GetRecord();
-						}
-						if (rec != nil)
-						{
-							sLONG fieldtyp = 0;
-							if (kind == eattr_storage)
-								fieldtyp = fModel->GetMainTable()->GetFieldType(inAttribute->GetFieldPos());
-							else
-								fieldtyp = inAttribute->getFlattenTableDest()->GetFieldType(inAttribute->GetFieldPos());
-							if (restrictValue && (fieldtyp == VK_IMAGE || fieldtyp == VK_BLOB || fieldtyp == VK_BLOB_DB4D))
-							{
-								if (!ContainsBlobData(inAttribute, context))
-									result = nil;
-								else
-								{
-									if (fieldtyp == VK_IMAGE)
-										result = (EntityAttributeValue*)-2;
-									else
-										result = (EntityAttributeValue*)-3;
-								}
-							}
-							else
-							{
-								VValueSingle* cv = rec->GetNthField(inAttribute->GetFieldPos(), err);
-								if (err == VE_OK && cv != nil)
-								{
-									result = new EntityAttributeValue(this, inAttribute, eav_vvalue, cv);
-									if (result == nil)
-										err = ThrowBaseError(memfull);
-								}
-							}
-						}
-					}
-				}
-				break;
-
-			case eattr_relation_Nto1:
-				{
-					/* pas pour l'instant
-					if (restrictValue)
-						result = (EntityAttributeValue*)-4;
-					else
-					*/
-					{
-						SubEntityCache* cache = GetSubEntityCache(inAttribute->GetPathID(), err, true, inAttribute->GetSubEntityModel(), context);
-						if (cache != nil)
-						{
-							EntityRecord* erec = cache->GetErec();
-							result = new EntityAttributeValue(this, inAttribute, eav_subentity, erec, inAttribute->GetSubEntityModel());
-							if (result == nil)
-								err = ThrowBaseError(memfull);
-						}
-						/* old code
-						FicheInMem* rec = nil;
-						SubEntityCache* cache = GetSubEntityCache(inAttribute->GetPathID(), err, true, inAttribute->GetSubEntityModel(), context);
-						if (cache != nil)
-							rec = cache->GetRecord();
-						EntityRecord* erec = nil;
-						if (rec != nil)
-						{
-							erec = new EntityRecord(inAttribute->GetSubEntityModel(), rec, fContext, fWayOfLock);
-							erec->CallDBEvent(dbev_load, context);
-
-						}
-						result = new EntityAttributeValue(this, inAttribute, eav_subentity, erec, inAttribute->GetSubEntityModel());
-						if (result == nil)
-							err = ThrowBaseError(memfull);
-						QuickReleaseRefCountable(erec);
-						*/
-					}
-				}
-				break;
-
-			case eattr_relation_1toN:
-				{
-					if (restrictValue)
-						result = (EntityAttributeValue*)-5;
-					else
-					{
-						Selection* sel = nil;
-						SubEntityCache* cache = GetSubEntityCache(inAttribute->GetPathID(), err, false, inAttribute->GetSubEntityModel(), context);
-						if (cache != nil)
-						sel = cache->GetSel();
-						result = new EntityAttributeValue(this, inAttribute, eav_selOfSubentity, sel, inAttribute->GetSubEntityModel());
-						if (result == nil)
-							err = ThrowBaseError(memfull);
-					}
-
-				}
-				break;
-
-			case eattr_composition:
-				{
-					Selection* sel = nil;
-					SubEntityCache* cache = GetSubEntityCache(inAttribute->GetPathID(), err, false, inAttribute->GetSubEntityModel(), context);
-					if (cache != nil)
-						sel = cache->GetSel();
-					result = new EntityAttributeValue(this, inAttribute, eav_composition, sel, inAttribute->GetSubEntityModel());
-					if (result == nil)
-						err = ThrowBaseError(memfull);
-				}
-				break;
-
-			case eattr_computedField:
-				{
-					if (result == nil)
-						result = new EntityAttributeValue(this, inAttribute, eav_vvalue, nil, true);
-					VValueSingle* cv = nil;
-
-					if (inAttribute->GetScriptKind() == script_db4d)
-					{
-						OptimizedQuery* script = inAttribute->GetScriptDB4D(context);
-						if (script != nil)
-						{
-							cv = script->Compute(this, context, err);
-						}
-					}
-					else
-					{
-						if (context->GetJSContext() != nil)
-						{
-							VJSContext jscontext(context->GetJSContext());
-							VJSObject therecord(jscontext, VJSEntitySelectionIterator::CreateInstance(jscontext, new EntitySelectionIterator(this, context->GetEncapsuleur())));
-							VJSValue result(jscontext);
-							VJSObject* objfunc = nil;
-							VJSObject localObjFunc(jscontext);
-							if (inAttribute->GetScriptObjFunc(script_attr_get, context->GetJSContext(), context, localObjFunc))
-								objfunc = &localObjFunc;
-							if (objfunc == nil)
-								objfunc = context->getContextOwner()->GetJSFunction(inAttribute->GetScriptNum(script_attr_get), inAttribute->GetScriptStatement(script_attr_get), nil);
-							
-							//JSObjectSetProperty(*jscontext, therecord, name, funcref, kJSPropertyAttributeDontEnum, nil);
-							JS4D::ExceptionRef excep = nil;
-							if (objfunc != nil && therecord.CallFunction(*objfunc, nil, &result, &excep))
-							{
-								cv = result.CreateVValue(nil);
-							}
-
-							if (excep != nil)
-							{
-								ThrowJSExceptionAsError(jscontext, excep);
-								err = ThrowError(VE_DB4D_JS_ERR);
-							}
-
-						}
-					}
-
-					if (cv != nil)
-					{
-						if (cv->GetValueKind() != inAttribute->ComputeScalarType())
-						{
-							VValueSingle* cv2 = cv->ConvertTo(inAttribute->ComputeScalarType());
-							result->setVValue(cv2);
-						}
-						else
-						{
-							result->setVValue(cv);
-						}
-					}
-					else
-						result->setVValue(cv);
-
-				}
-				break;
-
-		}
-
-		if (result != nil && result != (EntityAttributeValue*)-2 && result != (EntityAttributeValue*)-3 && result != (EntityAttributeValue*)-4 && result != (EntityAttributeValue*)-5)
-		{
-			if (mustCallEvent)
+			if (inAttribute->IsAutoGen())
 			{
-				inAttribute->CallDBEvent(dbev_load, this, context);
+				VValueSingle* cv = res->getVValue();
+				if (cv != nil && cv->GetValueKind() == VK_UUID)
+				{
+					if (cv->IsNull())
+						((VUUID*)cv)->Regenerate();
+				}
+				
 			}
-
-			result->AllowModifications(inAttribute->CanBeModified());
-			fValues[pos-1] = result;
 		}
 	}
-
-
-	return result;
+	return res;
 }
 
 
@@ -8209,23 +7821,6 @@ EntityAttributeValue* EntityRecord::getAttributeValue(sLONG pos, VError& err, Ba
 
 
 
-CDB4DEntityAttributeValue* EntityRecord::GetAttributeValue(const VString& inAttributeName, VError& err)
-{
-	return getAttributeValue(inAttributeName, err, ConvertContext(fContext));
-}
-
-CDB4DEntityAttributeValue* EntityRecord::GetAttributeValue(sLONG pos, VError& err)
-{
-	return getAttributeValue(pos, err, ConvertContext(fContext));
-}
-
-
-CDB4DEntityAttributeValue* EntityRecord::GetAttributeValue(const CDB4DEntityAttribute* inAttribute, VError& err)
-{
-	return getAttributeValue(VImpCreator<EntityAttribute>::GetImpObject(inAttribute), err, ConvertContext(fContext));
-}
-
-
 
 bool EntityRecord::equalAttributeValue(const VString& inAttributeName, const VValueSingle* inValue)
 {
@@ -8252,7 +7847,6 @@ bool EntityRecord::equalAttributeValue(const EntityAttribute* inAttribute, const
 		return false;
 
 }
-
 
 
 VError EntityRecord::setAttributeValue(const VString& inAttributeName, const VString& inJsonValue)
@@ -8320,138 +7914,6 @@ VError EntityRecord::setAttributeValue(const VString& inAttributeName, const VVa
 }
 
 
-VError EntityRecord::setAttributeValue(const EntityAttribute* inAttribute, const VValueSingle* inValue)
-{
-	VError err = VE_OK;
-
-	BaseTaskInfo* context = ConvertContext(fContext);
-	EntityAttributeValue* val = getAttributeValue(inAttribute, err, context);
-	if (err == VE_OK && val != nil)
-	{
-		if (val->GetAttributeKind() == eav_vvalue)
-		{
-			if (val->CanBeModified())
-			{
-				if (inAttribute->GetKind() == eattr_computedField)
-				{
-					if (inAttribute->GetScriptKind() == script_javascript)
-					{
-						//BaseTaskInfo* context = ConvertContext(fContext);
-						if (context->GetJSContext() != nil)
-						{
-							VJSContext jscontext(context->GetJSContext());
-							VJSObject therecord(jscontext, VJSEntitySelectionIterator::CreateInstance(jscontext, new EntitySelectionIterator(this, fContext)));
-							VJSValue result(jscontext);
-							VectorOfVString params;
-							params.push_back(L"paramValue");
-
-							VJSObject* objfunc = nil;
-							VJSObject localObjFunc(jscontext);
-							if (inAttribute->GetScriptObjFunc(script_attr_set, context->GetJSContext(), context, localObjFunc))
-								objfunc = &localObjFunc;
-							if (objfunc == nil)
-							objfunc = context->getContextOwner()->GetJSFunction(inAttribute->GetScriptNum(script_attr_set), inAttribute->GetScriptStatement(script_attr_set), &params);
-							
-							//JSObjectSetProperty(*jscontext, therecord, name, funcref, kJSPropertyAttributeDontEnum, nil);
-							if (objfunc != nil)
-							{
-								vector<VJSValue> paramvalues;
-								VJSValue valjs(jscontext);
-								if (inValue == nil)
-									valjs.SetNull(nil);
-								else
-									valjs.SetVValue(*inValue, nil);
-								paramvalues.push_back(valjs);
-
-								JS4D::ExceptionRef excep;
-								if (therecord.CallFunction(*objfunc, &paramvalues, &result, &excep))
-								{
-									
-								}
-
-								if (excep != nil)
-								{
-									ThrowJSExceptionAsError(jscontext, excep);
-									err = ThrowError(VE_DB4D_JS_ERR);
-								}
-								else
-									err = inAttribute->CallDBEvent(dbev_set, this, context);
-							}
-						}
-					}
-
-				}
-				else
-				{
-					VValueSingle* cv = val->getVValue();
-					if (cv != nil)
-					{
-						if (cv != inValue)
-						{
-							if (inValue == nil)
-								cv->SetNull(true);
-							else
-							{
-								if (cv->GetValueKind() == VK_IMAGE && inValue->GetValueKind() == VK_STRING)
-								{
-									VString path;
-									inValue->GetString(path);
-									cv->SetOutsidePath(path);
-									VString computedPath;
-									cv->GetOutsidePath(computedPath);
-									VFile xfile(computedPath, FPS_POSIX);
-									if (xfile.Exists())
-										cv->ReloadFromOutsidePath();
-								}
-								else
-									cv->FromValue(*inValue);
-							}
-						}
-						val->Touch(context);
-						//err = CallDBEvent(dbev_set, ConvertContext(fContext));
-					}
-					else
-						err = inAttribute->ThrowError(VE_DB4D_ENTITY_ATTRIBUTE_IS_NOT_A_VVALUE);
-				}
-			}
-			else
-				err = inAttribute->ThrowError(VE_DB4D_ENTITY_ATTRIBUTE_IS_READ_ONLY);
-		}
-		else if (val->GetAttributeKind() == eav_subentity)
-		{
-			if (inValue == nil || inValue->IsNull())
-				err = setAttributeValue(inAttribute, (EntityRecord*)nil);
-			else
-			{
-				VectorOfVValue key(false);
-				key.push_back(inValue);
-				err = setAttributeValue(inAttribute, key);
-			}
-			ClearSubEntityCache(inAttribute->GetPathID());
-		}
-		else if (val->GetAttributeKind() == eav_composition)
-		{
-			if (inValue == nil || inValue->IsNull())
-			{
-				BaseTaskInfo* context = ConvertContext(fContext);
-				if (context->GetJSContext() != nil)
-				{
-					VJSContext jscontext(context->GetJSContext());
-					VJSArray jsemptyArray(jscontext);
-					val->SetJSObject(jsemptyArray);
-				}
-				val->Touch(context);
-				//err = CallDBEvent(dbev_set, context);
-			}
-		}
-		else
-			err = inAttribute->ThrowError(VE_DB4D_ENTITY_ATTRIBUTE_IS_NOT_A_VVALUE);
-	}
-
-	return err;
-}
-
-
 VError EntityRecord::setAttributeValue(const VString& inAttributeName, const VectorOfVValue& inIdentKey)
 {
 	EntityAttribute* cri = fModel->getAttribute(inAttributeName);
@@ -8477,34 +7939,9 @@ VError EntityRecord::setAttributeValue(const EntityAttribute* inAttribute, const
 			EntityModel* relatedEM = inAttribute->GetSubEntityModel();
 			if (testAssert(relatedEM != nil))
 			{
-				/*
-				if (relatedEM->HasIdentifyingAtts())
-				{
-					EntityRecord* rec = relatedEM->findEntityWithIdentifyingAtts(inIdentKey, context, err, DB4D_Do_Not_Lock);
-					if (rec == nil)
-					{
-						rec = relatedEM->NewEntity(context, DB4D_Do_Not_Lock);
-						rec->setIdentifyingAtts(inIdentKey);
-					}
-					if (rec != nil)
-					{
-						val->SetRelatedEntity(rec);
-						rec->Release();
-					}
-				}
-				else 
-				*/
 				if (relatedEM->HasPrimKey())
 				{
 					val->setRelatedKey(inIdentKey);
-					/*
-					EntityRecord* rec = relatedEM->findEntityWithPrimKey(inIdentKey, context, err, DB4D_Do_Not_Lock);
-					if (rec != nil)
-					{
-						val->SetRelatedEntity(rec, context);
-						rec->Release();
-					}
-					*/
 				}
 				else
 					err = inAttribute->ThrowError(VE_DB4D_ENTITY_ATTRIBUTE_IS_NOT_A_VVALUE);
@@ -8539,7 +7976,6 @@ VError EntityRecord::setAttributeValue(const EntityAttribute* inAttribute, Entit
 	if (eVal != nil && err == VE_OK)
 	{
 		err = eVal->SetRelatedEntity(inRelatedEntity, context);
-		//err = CallDBEvent(dbev_set, ConvertContext(fContext));
 	}
 
 	return err;
@@ -8561,318 +7997,70 @@ VError EntityRecord::touchAttributeValue(const EntityAttribute* inAttribute)
 }
 
 
-bool EntityRecord::ContainsBlobData(const EntityAttribute* inAttribute, BaseTaskInfo* context)
-{
-	bool result = false;
-
-	EntityAttributeKind kind = inAttribute->GetKind();
-	if (kind == eattr_storage || kind == eattr_alias)
-	{
-		FicheInMem* rec = nil;
-		if (kind == eattr_storage)
-			rec = fMainRec;
-		else
-		{
-			VError err;
-			SubEntityCache* cache = GetSubEntityCache(inAttribute->GetPathID(), err, true, inAttribute->GetSubEntityModel(), context);
-			if (cache != nil)
-				rec = cache->GetRecord();
-		}
-		if (rec != nil)
-		{
-			FicheOnDisk* assoc = rec->GetAssoc();
-			if (assoc != nil)
-			{
-				void* p = assoc->GetDataPtr(inAttribute->GetFieldPos());
-				if (p != nil)
-				{
-					if (*((sLONG*)p) != -1)
-						result = true;
-				}
-			}
-		}
-	}
-
-	return result;
-}
-
-VErrorDB4D EntityRecord::Save(uLONG stamp, bool allowOverrideStamp)
-{
-	return Save(nil, ConvertContext(fContext), stamp, allowOverrideStamp);
-}
-
-
-VError EntityRecord::Validate(BaseTaskInfo* context)
+VErrorDB4D EntityRecord::resetAttributeValue(const EntityAttribute* inAttribute)
 {
 	VError err = VE_OK;
-	bool validFail = false;
-
-	for (EntityAttributeCollection::const_iterator cur = fModel->getAllAttributes().begin(), end = fModel->getAllAttributes().end(); cur != end; ++cur)
+	EntityAttributeValue* val = nil;
+	assert(inAttribute != nil);
+	if (inAttribute != nil)
 	{
-		const EntityAttribute* att = *cur;
-		if (att->NeedValidation())
-		{
-			EntityAttributeValue* val = getAttributeValue(att, err, context, false);
-			if (err == VE_OK)
-			{
-				err = val->Validate(context);
-			}
-			if (err != VE_OK)
-				validFail = true;
-		}
-	}
-
-	/*
-	for (EntityAttributeValueCollection::iterator cur = fValues.begin(), end = fValues.end(); cur != end && err == VE_OK; cur++)
-	{
-		EntityAttributeValue* val = *cur;
+		assert(inAttribute->GetOwner() == fModel);
+		sLONG pos = inAttribute->GetPosInOwner();
+		assert(pos > 0 && pos <= fValues.size());
+		val = fValues[pos-1];
 		if (val != nil)
 		{
-			err = val->Validate(context);
-			if (err != VE_OK)
-				validFail = true;
+			val->Release();
+			fValues[pos-1] = nil;
 		}
-	}
-	*/
-
-	if (!validFail)
-	{
-		err = CallDBEvent(dbev_validate, context);
-	}
-
-	if (validFail)
-		err = ThrowError(VE_DB4D_ENTITY_RECORD_FAILS_VALIDATION);
-
-	return err;
-}
-
-
-
-VError EntityRecord::Validate()
-{
-	return Validate(ConvertContext(fContext));
-}
-
-
-VError EntityRecord::Save(Transaction* *trans, BaseTaskInfo* context, uLONG stamp, bool allowOverrideStamp)
-{
-	VError err = VE_OK;
-
-	if (!fAlreadySaving)
-	{
-		fAlreadySaving = true;
-		VUUID xGroupID;
-		bool forced;
-		bool isnew = false;
-		if (fMainRec == nil || fMainRec->IsNew())
-		{
-			fModel->GetPermission(DB4D_EM_Create_Perm, xGroupID, forced);
-			isnew = true;
-		}
-		else
-			fModel->GetPermission(DB4D_EM_Update_Perm, xGroupID, forced);
-
-		if (okperm(context, xGroupID))
-		{
-			bool firstlevel = false;
-			Transaction* localtrans = nil;
-			if (trans == nil)
-			{
-				firstlevel = true;
-				trans = &localtrans;
-			}
-
-			err = Validate(context);
-
-			if (err == VE_OK)
-			{
-				err = CallDBEvent(dbev_save, context);
-			}
-
-			if (err == VE_OK)
-			{
-				for (EntityAttributeValueCollection::iterator cur = fValues.begin(), end = fValues.end(); cur != end && err == VE_OK; cur++)
-				{
-					EntityAttributeValue* val = *cur;
-					if (val != nil)
-					{
-						err = val->Save(*trans, context);
-					}
-				}
-			}
-
-			if (err == VE_OK)
-			{
-				if (fModel->HasPrimKey() && !fModel->MatchPrimKeyWithDataSource())
-				{
-					const IdentifyingAttributeCollection* primkey = fModel->GetPrimaryAtts();
-					VValueBag keyval;
-					for (IdentifyingAttributeCollection::const_iterator cur = primkey->begin(), end = primkey->end(); cur != end && err == VE_OK; cur++)
-					{
-						EntityAttributeValue* val = getAttributeValue(cur->fAtt, err, context);
-						if (err == VE_OK)
-						{
-							if (val == nil || val->getVValue() == nil || val->GetVValue()->IsNull())
-							{
-								if (GetNum() >= 0)
-									err = ThrowError(VE_DB4D_PRIMKEY_IS_NULL);
-								else
-									err = ThrowError(VE_DB4D_PRIMKEY_IS_NULL_2);
-							}
-							else
-							{
-								keyval.SetAttribute(cur->fAtt->GetName(), val->getVValue()->Clone());
-							}
-						}
-					}
-					if (err == VE_OK)
-					{
-						sLONG otherrecid = fModel->getEntityNumWithPrimKey(keyval, context, err);
-						if (otherrecid != -1 && otherrecid != GetNum())
-						{
-							VString skey;
-							bool first = true;
-							for (IdentifyingAttributeCollection::const_iterator cur = primkey->begin(), end = primkey->end(); cur != end && err == VE_OK; cur++)
-							{
-								EntityAttributeValue* val = getAttributeValue(cur->fAtt, err, context);
-								VString s;
-								val->getVValue()->GetString(s);
-								if (first)
-									first = false;
-								else
-									skey += L";";
-								skey += s;
-							}
-							err = ThrowError(VE_DB4D_PRIMKEY_IS_NOT_UNIQUE, &skey);
-						}
-					}
-				}
-				if (err == VE_OK)
-					err = fMainRec->GetDF()->SaveRecord(fMainRec, context, stamp, allowOverrideStamp);
-				if (err == VE_OK)
-				{
-					fStamp = 0;
-					for (EntityAttributeValueCollection::iterator cur = fValues.begin(), end = fValues.end(); cur != end; cur++)
-					{
-						EntityAttributeValue* val = *cur;
-						if (val != nil)
-							val->UnTouch();
-					}
-				}
-			}
-
-			if (*trans != nil && firstlevel)
-			{
-				if (err == VE_OK)
-					err = context->CommitTransaction();
-				else
-					context->RollBackTransaction();
-			}
-		}
-		else
-		{
-			context->SetPermError();
-			if (isnew)
-				err = ThrowError(VE_DB4D_NO_PERM_TO_CREATE);
-			else
-				err = ThrowError(VE_DB4D_NO_PERM_TO_UPDATE);
-		}
-		fAlreadySaving = false;
-	}
-
-	if (err != VE_OK)
-	{
-		if (GetNum() >= 0)
-			err = ThrowError(VE_DB4D_ENTITY_RECORD_CANNOT_BE_SAVED);
-		else
-			err = ThrowError(VE_DB4D_NEW_ENTITY_RECORD_CANNOT_BE_SAVED);
+		sLONG pathID = inAttribute->GetPathID();
+		if (pathID >= 0)
+			ClearSubEntityCache(pathID);
 	}
 	return err;
 }
 
 
-Boolean EntityRecord::IsNew() const
+VErrorDB4D EntityRecord::resetAttributeValue(const VString& inAttributeName)
 {
-	return fMainRec->IsNew();
-}
-
-
-Boolean EntityRecord::IsProtected() const
-{
-	return fMainRec->ReadOnlyState();
-}
-
-
-Boolean EntityRecord::IsModified() const
-{
-	return fStamp != 0;
-}
-
-
-void EntityRecord::GetTimeStamp(VTime& outValue)
-{
-	uLONG8 quand = fMainRec->GetAssoc()->GetTimeStamp();
-	outValue.FromStamp(quand);
-}
-
-
-VErrorDB4D EntityRecord::Drop()
-{
-	BaseTaskInfo* context = ConvertContext(fContext);
-	VError err = VE_OK;
-	if (!fAlreadyDeleting)
+	EntityAttribute* cri = fModel->getAttribute(inAttributeName);
+	if (cri == nil)
 	{
-		fAlreadyDeleting = true;
-		if (okperm(context, fModel, DB4D_EM_Delete_Perm))
-		{
-			err = CallDBEvent(dbev_remove, context);
-			if (err == VE_OK)
-			{
-				if (fModel->HasDeleteEvent(true))
-					err = fModel->CallAttributesDBEvent(dbev_remove, this, context);
-				if (err == VE_OK)
-					err = fMainRec->GetDF()->DelRecord(fMainRec, context, fModificationStamp);
-			}
-		}
-		else
-		{
-			err =  ThrowError(VE_DB4D_NO_PERM_TO_DELETE);
-			context->SetPermError();
-		}
-		fAlreadyDeleting = false;
+		return ThrowError(VE_DB4D_ENTITY_ATTRIBUTE_NOT_FOUND, &inAttributeName);
 	}
-	return err;
+	else
+		return resetAttributeValue(cri);
 }
+
+
+
+
 
 
 void EntityRecord::GetPrimKeyValue(VValueBag& outBagKey)
 {
-	StErrorContextInstaller errs(false);
-	VError err;
-	const IdentifyingAttributeCollection* primatts = fModel->GetPrimaryAtts();
-	for (IdentifyingAttributeCollection::const_iterator cur = primatts->begin(), end = primatts->end(); cur != end; cur++)
+	if (!do_GetPrimKeyValueAsBag(outBagKey))
 	{
-		EntityAttributeValue* val = getAttributeValue(cur->fAtt, err, ConvertContext(fContext));
-		if (val != nil && val->getVValue() != nil && !val->getVValue()->IsNull())
-			outBagKey.SetAttribute(cur->fAtt->GetName(), val->getVValue()->Clone());
+		StErrorContextInstaller errs(false);
+		VError err;
+		const IdentifyingAttributeCollection* primatts = fModel->GetPrimaryAtts();
+		for (IdentifyingAttributeCollection::const_iterator cur = primatts->begin(), end = primatts->end(); cur != end; cur++)
+		{
+			EntityAttributeValue* val = getAttributeValue(cur->fAtt, err, ConvertContext(fContext));
+			if (val != nil && val->getVValue() != nil && !val->getVValue()->IsNull())
+				outBagKey.SetAttribute(cur->fAtt->GetName(), val->getVValue()->Clone());
+		}
 	}
 }
 
 
 void EntityRecord::GetPrimKeyValue(VJSObject& outObj)
 {
-	VError err = VE_OK;
-	outObj.MakeEmpty();
-	const IdentifyingAttributeCollection* primatts = fModel->GetPrimaryAtts();
-	if (primatts->empty())
+	if (!do_GetPrimKeyValueAsObject(outObj))
 	{
-		VJSValue jsval(outObj.GetContextRef());
-		RecIDType numrec = GetNum();
-		jsval.SetNumber(numrec);
-		outObj.SetProperty("__RECID", jsval, JS4D::PropertyAttributeNone);
-	}
-	else
-	{
+		const IdentifyingAttributeCollection* primatts = fModel->GetPrimaryAtts();
+		VError err = VE_OK;
+		outObj.MakeEmpty();
 		for (IdentifyingAttributeCollection::const_iterator cur = primatts->begin(), end = primatts->end(); cur != end; cur++)
 		{
 			EntityAttributeValue* val = getAttributeValue(cur->fAtt, err, ConvertContext(fContext));
@@ -8883,82 +8071,87 @@ void EntityRecord::GetPrimKeyValue(VJSObject& outObj)
 				outObj.SetProperty(cur->fAtt->GetName(), jsval, JS4D::PropertyAttributeNone);
 			}
 		}
+		VJSValue jsval(outObj.GetContextRef());
+		sLONG stamp = GetModificationStamp();
+		jsval.SetNumber(stamp);
+		outObj.SetProperty("__STAMP", jsval, JS4D::PropertyAttributeNone);
 	}
-	VJSValue jsval(outObj.GetContextRef());
-	sLONG stamp = GetModificationStamp();
-	jsval.SetNumber(stamp);
-	outObj.SetProperty("__STAMP", jsval, JS4D::PropertyAttributeNone);
 }
 
 
 void EntityRecord::GetPrimKeyValue(VString& outKey, bool autoQuotes)
 {
-	StErrorContextInstaller errs(false);
-	VError err;
-	UniChar c;
-	const IdentifyingAttributeCollection* primatts = fModel->GetPrimaryAtts();
-	bool first = true;
-	for (IdentifyingAttributeCollection::const_iterator cur = primatts->begin(), end = primatts->end(); cur != end; cur++)
+	if (!do_GetPrimKeyValueAsString(outKey, autoQuotes))
 	{
-		EntityAttributeValue* val = getAttributeValue(cur->fAtt, err, ConvertContext(fContext));
-		if (val != nil && val->getVValue() != nil)
+		StErrorContextInstaller errs(false);
+		VError err;
+		UniChar c;
+		const IdentifyingAttributeCollection* primatts = fModel->GetPrimaryAtts();
+		bool first = true;
+		for (IdentifyingAttributeCollection::const_iterator cur = primatts->begin(), end = primatts->end(); cur != end; cur++)
 		{
-			VString s;
-			val->getVValue()->GetString(s);
-			bool mustsimplequotes = false, mustdoublequotes = false, mustquotes = false;
-			if (autoQuotes)
+			EntityAttributeValue* val = getAttributeValue(cur->fAtt, err, ConvertContext(fContext));
+			if (val != nil && val->getVValue() != nil)
 			{
-				sLONG curpos = 0;
-				while (curpos < s.GetLength())
+				VString s;
+				val->getVValue()->GetString(s);
+				bool mustsimplequotes = false, mustdoublequotes = false, mustquotes = false;
+				if (autoQuotes)
 				{
-					c = s[curpos];
-					curpos++;
-					if (c == '&' || c == '/' || c == '?' || c == 34 || c == 39 || c == ')' || c == ',')
+					sLONG curpos = 0;
+					while (curpos < s.GetLength())
 					{
-						mustquotes = true;
-						if (c == 34)
-							mustsimplequotes = true;
-						if (c == 39)
-							mustdoublequotes = true;
+						c = s[curpos];
+						curpos++;
+						if (c == '&' || c == '/' || c == '?' || c == 34 || c == 39 || c == ')' || c == ',')
+						{
+							mustquotes = true;
+							if (c == 34)
+								mustsimplequotes = true;
+							if (c == 39)
+								mustdoublequotes = true;
+						}
 					}
+					if (mustquotes && !mustsimplequotes && !mustdoublequotes)
+						mustsimplequotes = true;
+						
 				}
-				if (mustquotes && !mustsimplequotes && !mustdoublequotes)
-					mustsimplequotes = true;
-					
+				if (first)
+					first = false;
+				else
+					outKey.AppendUniChar('&');
+
+				if (mustsimplequotes)
+					outKey.AppendUniChar(39);
+				else if (mustdoublequotes)
+					outKey.AppendUniChar(34);
+
+				outKey += s;
+
+				if (mustsimplequotes)
+					outKey.AppendUniChar(39);
+				else if (mustdoublequotes)
+					outKey.AppendUniChar(34);
 			}
-			if (first)
-				first = false;
-			else
-				outKey.AppendUniChar('&');
-
-			if (mustsimplequotes)
-				outKey.AppendUniChar(39);
-			else if (mustdoublequotes)
-				outKey.AppendUniChar(34);
-
-			outKey += s;
-
-			if (mustsimplequotes)
-				outKey.AppendUniChar(39);
-			else if (mustdoublequotes)
-				outKey.AppendUniChar(34);
 		}
 	}
-
 }
 
 
 void EntityRecord::GetPrimKeyValue(VectorOfVValue& outPrimkey)
 {
-	StErrorContextInstaller errs(false);
-	VError err;
-	const IdentifyingAttributeCollection* primatts = fModel->GetPrimaryAtts();
-	for (IdentifyingAttributeCollection::const_iterator cur = primatts->begin(), end = primatts->end(); cur != end; cur++)
+	if (!do_GetPrimKeyValueAsVValues(outPrimkey))
 	{
-		EntityAttributeValue* val = getAttributeValue(cur->fAtt, err, ConvertContext(fContext));
-		if (val != nil && val->getVValue() != nil)
+		StErrorContextInstaller errs(false);
+		VError err;
+		const IdentifyingAttributeCollection* primatts = fModel->GetPrimaryAtts();
+		for (IdentifyingAttributeCollection::const_iterator cur = primatts->begin(), end = primatts->end(); cur != end; cur++)
 		{
-			outPrimkey.push_back(val->getVValue());
+			EntityAttributeValue* val = getAttributeValue(cur->fAtt, err, ConvertContext(fContext));
+			if (val != nil && val->getVValue() != nil)
+			{
+				outPrimkey.push_back(val->getVValue());
+			}
 		}
 	}
 }
@@ -9011,7 +8204,6 @@ VError EntityRecord::setPrimKey(VJSObject objkey)
 	
 	if (!primatts->empty())
 	{
-		SearchTab query(fModel->GetMainTable());
 		bool first = true;
 		bool okcont = true;
 		for (IdentifyingAttributeCollection::const_iterator cur = primatts->begin(), end = primatts->end(); cur != end && err == VE_OK ; cur++)
@@ -9040,7 +8232,12 @@ VError EntityRecord::setPrimKey(VJSObject objkey)
 
 BaseTaskInfo* EntityRecord::getContext()
 {
-	return ConvertContext(fContext);
+	return fContext;
+}
+
+CDB4DBaseContext* EntityRecord::GetContext()
+{
+	return fContext;
 }
 
 
@@ -9066,7 +8263,7 @@ void EntityRecord::ReleaseExtraDatas()
 }
 */
 
-
+/*
 VValueSingle* EntityRecord::getFieldValue(Field* cri, VError& err)
 {
 	err = VE_OK;
@@ -9096,6 +8293,7 @@ VValueSingle* EntityRecord::getFieldValue(Field* cri, VError& err)
 }
 
 
+
 VError EntityRecord::setFieldValue(Field* cri, const VValueSingle* inValue)
 {
 	VError err = VE_OK;
@@ -9120,6 +8318,7 @@ VError EntityRecord::setFieldValue(Field* cri, const VValueSingle* inValue)
 	}
 	return err;
 }
+*/
 
 
 VError EntityRecord::ConvertToJSObject(VJSObject& outObj, const VString& inAttributeList, bool withKey, bool allowEmptyAttList)
@@ -9145,17 +8344,23 @@ VError EntityRecord::ConvertToJSObject(VJSObject& outObj, EntityAttributeSortedS
 
 	if (err == VE_OK)
 	{
-		if (GetNum() >= 0 && withKey)
+		if (withKey && !IsNew())
 		{
+			/*
 			VJSObject keyobj(jscontext);
 			GetPrimKeyValue(keyobj);
 			outObj.SetProperty("__KEY", keyobj, JS4D::PropertyAttributeNone);
+			*/
+			VString keyString;
+			GetPrimKeyValue(keyString, false);
+			outObj.SetProperty("__KEY", keyString, JS4D::PropertyAttributeNone);
+			outObj.SetProperty("__STAMP", GetModificationStamp(), JS4D::PropertyAttributeNone);
 		}
 
 		sLONG nb = (sLONG)whichAttributes.size(), i = 1;
 		for (EntityAttributeSortedSelection::iterator cur = whichAttributes.begin(), end = whichAttributes.end(); cur != end && err == VE_OK; cur++, i++)
 		{
-			EntityAttribute* attribute = cur->fAttribute;
+			const EntityAttribute* attribute = cur->fAttribute;
 			if (attribute != nil)
 			{
 				bool restrictValue = false;
@@ -9235,12 +8440,12 @@ VError EntityRecord::ConvertToJSObject(VJSObject& outObj, EntityAttributeSortedS
 									if (sortingAttributes != nil)
 										subSortingAttributes = sortingAttributes->FindSubSelection(attribute);
 
-									err = VImpCreator<EntityRecord>::GetImpObject(subrec)->ConvertToJSObject(subObj, *cur->fSousSelection, eai->fSousSelection, subSortingAttributes, false, true);
+									err = dynamic_cast<EntityRecord*>(subrec)->ConvertToJSObject(subObj, *cur->fSousSelection, eai->fSousSelection, subSortingAttributes, false, true);
 								}
 								else
 								{
 									EntityAttributeSortedSelection subAtts(submodel);
-									err = VImpCreator<EntityRecord>::GetImpObject(subrec)->ConvertToJSObject(subObj, subAtts, nil, nil, true, true);
+									err = dynamic_cast<EntityRecord*>(subrec)->ConvertToJSObject(subObj, subAtts, nil, nil, true, true);
 								}
 
 							}
@@ -9259,7 +8464,7 @@ VError EntityRecord::ConvertToJSObject(VJSObject& outObj, EntityAttributeSortedS
 					case eav_composition:
 						{
 							EntityModel* submodel = val->getRelatedEntityModel();
-							Selection* sel = val->getRelatedSelection();
+							EntityCollection* sel = val->getRelatedSelection();
 							if (sel != nil && submodel != nil)
 							{
 								EntityAttributeItem* eai = nil;
@@ -9282,26 +8487,24 @@ VError EntityRecord::ConvertToJSObject(VJSObject& outObj, EntityAttributeSortedS
 									if (countelem == -1)
 									{
 										if (kind == eav_composition)
-											countelem =  sel->GetQTfic();
+											countelem =  sel->GetLength(context);
 										else
 											countelem = submodel->GetDefaultTopSizeInUse();
 									}
-									VJSArray subarr(outObj.GetContextRef());
+									VJSArray subarr(sel->ToJsArray(context, outObj.GetContextRef(), *cur->fSousSelection, eai->fSousSelection, subSortingAttributes, false, true, eai->fSkip, countelem, err));
 									outObj.SetProperty(attribute->GetName(), subarr);
-									err = SelToJSObject(context, subarr, submodel, sel, *cur->fSousSelection, eai->fSousSelection, subSortingAttributes, false, true, eai->fSkip, countelem);
 								}
 								else
 								{
 									if (kind == eav_composition)
 									{
-										VJSArray subarr(outObj.GetContextRef());
 										EntityAttributeSortedSelection subatts(submodel);
-										err = SelToJSObject(context, subarr, submodel, sel, subatts, nil, nil, false, true, 0, sel->GetQTfic());
+										VJSArray subarr(sel->ToJsArray(context, outObj.GetContextRef(), subatts, nil, nil, false, true, 0, sel->GetLength(context), err));
 									}
 									else
 									{
 										VJSObject subObj( outObj, attribute->GetName());
-										subObj.SetProperty("__COUNT", sel->GetQTfic());
+										subObj.SetProperty("__COUNT", sel->GetLength(context));
 									}
 								}
 							}
@@ -9318,7 +8521,7 @@ VError EntityRecord::ConvertToJSObject(VJSObject& outObj, EntityAttributeSortedS
 	return err;
 }
 
-
+/*
 VError SelToJSObject(BaseTaskInfo* context, VJSArray& outArr, EntityModel* em, Selection* inSel, const VString& inAttributeList , bool withKey, bool allowEmptyAttList, sLONG from, sLONG count)
 {
 	return VE_OK;
@@ -9362,7 +8565,7 @@ VError SelToJSObject(BaseTaskInfo* context, VJSArray& outArr, EntityModel* em, S
 	QuickReleaseRefCountable(trueSel);
 	return err;
 }
-
+*/
 
 
 /*
@@ -9482,7 +8685,7 @@ VError EntityRecord::convertFromJSObj(VJSObject recobj)
 				{
 					case eav_vvalue:
 						{
-							VValueSingle* cv = jsval.CreateVValue();
+							VValueSingle* cv = jsval.CreateVValue(nil, att->isSimpleDate());
 							setAttributeValue(att, cv);
 							if (cv != nil)
 								delete cv;
@@ -9588,6 +8791,22 @@ void EntityRecord::ReleaseCallEvent(DBEventKind kind)
 }
 
 
+VError EntityRecord::GetModifiedAttributes(EntityAttributeCollection& outatts)
+{
+	for (EntityAttributeValueCollection::iterator cur = fValues.begin(), end = fValues.end(); cur != end; cur++)
+	{
+		EntityAttributeValue* val = *cur;
+		if (val != nil)
+		{
+			if (val->GetStamp() != 0)
+			{
+				outatts.push_back(const_cast<EntityAttribute*>(val->GetAttribute()));
+			}
+		}
+	}
+	return VE_OK;
+}
+
 
 
 
@@ -9682,7 +8901,7 @@ VError EntityModelCatalog::AddOneEntityModel(EntityModel* newEntity, bool canRep
 EntityModel* EntityModelCatalog::BuildEntityModel(const VValueBag* bag, VError& err, bool devMode)
 {
 	err = VE_OK; 
-	EntityModel* model = new EntityModel(fOwner);
+	EntityModel* model = NewModel();
 	err = model->FromBag(bag, this, devMode);
 	if (err != VE_OK)
 		ReleaseRefCountable(&model);
@@ -9808,6 +9027,143 @@ EmEnum* EntityModelCatalog::FindEnumeration(const VString& enumName) const
 }
 
 
+VError EntityModelCatalog::SecondPassLoadEntityModels()
+{
+	VError err = VE_OK;
+
+	err = do_SecondPassLoadEntityModels();
+	return err;
+}
+
+
+VError _addOneAttribute( const VJSValue& attVal, VValueBag* dataClassBag, const VString* attname)
+{
+	bool res, exists;
+	sLONG ll;
+	VString s;
+
+	if (!attVal.IsNull() && attVal.IsObject() && !attVal.IsFunction())
+	{
+		VValueBag* attBag = nil;
+		bool mustadd = false;
+		VJSObject attObj(attVal.GetObject());
+
+		VString attributeName;
+
+		if (attname == nil)
+		{
+			if (attObj.GetPropertyAsString("name", nil, s))
+				attributeName = s;
+				//attBag->SetString(d4::name, s);
+		}
+		else
+			attributeName = *attname;
+			//attBag->SetString(d4::name, *attname);
+
+		attBag = dataClassBag->RetainUniqueElementWithAttribute(d4::attributes, d4::name, attributeName);
+		if (attBag == nil)
+		{
+			attBag = new VValueBag();
+			attBag->SetString(d4::name, attributeName);
+			mustadd = true;
+		}
+
+		if (attObj.GetPropertyAsString("kind", nil, s))
+			attBag->SetString(d4::kind, s);
+
+		if (attObj.GetPropertyAsString("type", nil, s))
+			attBag->SetString(d4::type, s);
+
+		res = attObj.GetPropertyAsBool("simpleDate", nil, &exists);
+		if (exists)
+			attBag->SetBool(d4::simpleDate, res);
+		else if (s == "date")
+			attBag->SetBool(d4::simpleDate, true);
+
+		if (attObj.GetPropertyAsString("scope", nil, s))
+			attBag->SetString(d4::scope, s);
+
+		if (attObj.GetPropertyAsString("indexKind", nil, s))
+			attBag->SetString(d4::indexKind, s);
+
+		if (attObj.GetPropertyAsString("path", nil, s))
+			attBag->SetString(d4::path, s);
+
+		ll = attObj.GetPropertyAsLong("limiting_length", nil, &exists);
+		if (exists)
+			attBag->SetLong(DB4DBagKeys::limiting_length, ll);
+
+		ll = attObj.GetPropertyAsLong("text_switch_size", nil, &exists);
+		if (exists)
+			attBag->SetLong(DB4DBagKeys::text_switch_size, ll);
+
+		ll = attObj.GetPropertyAsLong("blob_switch_size", nil, &exists);
+		if (exists)
+			attBag->SetLong(DB4DBagKeys::blob_switch_size, ll);
+
+		res = attObj.GetPropertyAsBool("unique", nil, &exists);
+		if (exists)
+			attBag->SetBool(DB4DBagKeys::unique, res);
+
+		res = attObj.GetPropertyAsBool("not_null", nil, &exists);
+		if (exists)
+			attBag->SetBool(DB4DBagKeys::not_null, res);
+
+		res = attObj.GetPropertyAsBool("never_null", nil, &exists);
+		if (exists)
+			attBag->SetBool(DB4DBagKeys::never_null, res);
+
+		res = attObj.GetPropertyAsBool("autosequence", nil, &exists);
+		if (exists)
+			attBag->SetBool(DB4DBagKeys::autosequence, res);
+
+		res = attObj.GetPropertyAsBool("autogenerate", nil, &exists);
+		if (exists)
+			attBag->SetBool(DB4DBagKeys::autogenerate, res);
+
+		res = attObj.GetPropertyAsBool("autoComplete", nil, &exists);
+		if (exists)
+			attBag->SetBool(d4::autoComplete, res);
+
+		res = attObj.GetPropertyAsBool("outside_blob", nil, &exists);
+		if (exists)
+			attBag->SetBool(DB4DBagKeys::outside_blob, res);
+
+		res = attObj.GetPropertyAsBool("styled_text", nil, &exists);
+		if (exists)
+			attBag->SetBool(DB4DBagKeys::styled_text, res);
+
+		res = attObj.GetPropertyAsBool("identifying", nil, &exists);
+		if (exists)
+			attBag->SetBool(d4::identifying, res);
+
+		res = attObj.GetPropertyAsBool("primKey", nil, &exists);
+		if (exists)
+			attBag->SetBool(d4::primKey, res);
+
+		res = attObj.GetPropertyAsBool("reversePath", nil, &exists);
+		if (exists)
+			attBag->SetBool(d4::reversePath, res);
+
+		res = attObj.GetPropertyAsBool("readOnly", nil, &exists);
+		if (exists)
+			attBag->SetBool(d4::readOnly, res);
+
+		res = attObj.GetPropertyAsBool("multiLine", nil, &exists);
+		if (exists)
+			attBag->SetBool(d4::multiLine, res);
+
+		if (mustadd)
+			dataClassBag->AddElement(d4::attributes, attBag);
+		attBag->Release();
+	}
+
+	return VE_OK;
+}
+
+
+typedef map<VString, VValueBag*, CompareLessVStringStrict> bagsMap;
+
 VError EntityModelCatalog::LoadEntityModels(const VValueBag& bagEntities, bool devMode, unordered_map_VString<VRefPtr<VFile> >* outIncludedFiles)
 {
 	VError err = VE_OK;
@@ -9824,7 +9180,7 @@ VError EntityModelCatalog::LoadEntityModels(const VValueBag& bagEntities, bool d
 		VJSObject globalObject( jscontext.GetGlobalObject());
 #endif
 
-		CDB4DBaseContext* xcontext;
+		//CDB4DBaseContext* xcontext;
 		BaseTaskInfo* context;
 		DB4DJSRuntimeDelegate* xJSDelegate;
 		VJSGlobalContext* xJSContext;
@@ -9860,9 +9216,29 @@ VError EntityModelCatalog::LoadEntityModels(const VValueBag& bagEntities, bool d
 		{
 			if (fileJs->Exists())
 			{
-				StErrorContextInstaller errs(false);
+				StErrorContextInstaller errs(false, false);
 				VJSValue result(jscontext);
-				JS4D::ExceptionRef e = nil;
+				JS4D::ExceptionRef e = nil, e1 = nil;
+				VFolder* ResourceFolder = VDBMgr::GetManager()->RetainJSCodeResourceFolder();
+				if (ResourceFolder != nil)
+				{
+					VFile libfile(*ResourceFolder, "ModelLoadTime.js");
+					if (libfile.Exists())
+					{
+						jscontext.EvaluateScript(&libfile, &result, &e1, nil);
+						if (e1 != nil)
+						{
+							VJSValue ev(jscontext, e1);
+#if debuglr
+							VJSJSON json(jscontext);
+							VString s;
+							json.Stringify(ev, s);
+							sLONG xdebug = 1; // put a break here
+#endif						
+						}
+					}
+				}
+
 				jscontext.EvaluateScript(fileJs, &result, &e, nil);
 				if (e != nil)
 				{
@@ -9904,6 +9280,293 @@ VError EntityModelCatalog::LoadEntityModels(const VValueBag& bagEntities, bool d
 			}
 			fileJs->Release();
 		}
+
+		{
+			VJSObject	result(jscontext);
+			JS4D::ExceptionRef	exception = nil;
+
+			bagsMap classesBags;
+			const VBagArray* entities = bagEntities.GetElements(d4::dataClasses);
+			if (entities != nil)
+			{
+				VIndex nbentities = entities->GetCount();
+				for (VIndex i = 1; i <= nbentities; i++)
+				{
+					VValueBag* OneEntity = const_cast<VBagArray*>(entities)->GetNth(i);
+					if (OneEntity != nil)
+					{
+						VString name;
+						OneEntity->GetString(d4::className, name);
+						classesBags[name] = OneEntity;
+					}
+				}
+			}
+
+
+			result = jscontext.GetGlobalObject().GetPropertyAsObject("model", &exception);
+			if (exception == NULL && result.IsObject()) {
+
+				VJSObject attObj(result);
+				VJSPropertyIterator curprop(attObj);
+				while (curprop.IsValid())
+				{
+					VString propName;
+					curprop.GetPropertyName(propName);
+
+					VJSValue dataClassVal(curprop.GetProperty());
+					if (dataClassVal.IsObject() && !dataClassVal.IsFunction())
+					{
+						if (propName.EqualToUSASCIICString("_outsideSQLCatalogs"))
+						{
+							if (dataClassVal.IsArray())
+							{
+								VJSArray outCats(dataClassVal, false);
+								for (sLONG i = 0, nb = outCats.GetLength(); i < nb; ++i)
+								{
+									VJSValue val = outCats.GetValueAt(i);
+									if (val.IsObject())
+									{
+										VJSObject outCat(val.GetObject());
+										VString catname;
+										VString catpath;
+										VString username;
+										VString password;
+										if (outCat.GetPropertyAsString("hostname", nil, catpath))
+										{
+											VString s;
+											sLONG port;
+											VValueBag* bag = new VValueBag();
+											bag->SetString("hostname", catpath);
+											bool exists, withssl = false;
+											port = outCat.GetPropertyAsLong("port", nil, &exists);
+											if (exists)
+												bag->SetLong("port", port);
+											if (outCat.GetPropertyAsString("database", nil, username))
+												bag->SetString("database", username);
+											if (outCat.GetPropertyAsString("user", nil, username))
+												bag->SetString(d4::user, username);
+											if (outCat.GetPropertyAsString("password", nil, password))
+												bag->SetString(d4::password, password);
+											withssl = outCat.GetPropertyAsBool("ssl", nil, &exists);
+											if (exists)
+												bag->SetBool("ssl", withssl);
+											const_cast<VValueBag&>(bagEntities).AddElement("outsideSQLCatalogs", bag);
+										}
+									}
+								}
+							}
+						}
+						else if (propName.EqualToUSASCIICString("_outsideCatalogs"))
+						{
+							if (dataClassVal.IsArray())
+							{
+								VJSArray outCats(dataClassVal, false);
+								for (sLONG i = 0, nb = outCats.GetLength(); i < nb; ++i)
+								{
+									VJSValue val = outCats.GetValueAt(i);
+									if (val.IsObject())
+									{
+										VJSObject outCat(val.GetObject());
+										VString catname;
+										VString catpath;
+										VString username;
+										VString password;
+										if (outCat.GetPropertyAsString("path", nil, catpath))
+										{
+											VValueBag* bag = new VValueBag();
+											bag->SetString(d4::path, catpath);
+											if (outCat.GetPropertyAsString("name", nil, catname))
+												bag->SetString(d4::name, catname);
+											if (outCat.GetPropertyAsString("user", nil, username))
+												bag->SetString(d4::user, username);
+											if (outCat.GetPropertyAsString("password", nil, password))
+												bag->SetString(d4::password, password);
+											const_cast<VValueBag&>(bagEntities).AddElement(d4::outsideCatalogs, bag);
+										}
+									}
+								}
+							}
+						}
+						else
+						{
+							VJSObject dataClassObj(dataClassVal.GetObject());
+							VValueBag* dataClassBag = nil;
+							bool mustaddclass = false;
+
+							bagsMap::iterator found = classesBags.find(propName);
+							if (found != classesBags.end())
+							{
+								dataClassBag = found->second;
+							}
+							else
+							{
+								mustaddclass = true;
+								dataClassBag = new VValueBag();
+							}
+							dataClassBag->SetString(d4::name, propName);
+							dataClassBag->SetString(d4::className, propName);
+
+							if (mustaddclass)
+							{
+								dataClassBag->SetBool(d4::noEdit, true);
+								dataClassBag->SetBool(d4::noSave, true);
+							}
+
+							VJSValue dataClassPropVal(dataClassObj.GetProperty("properties"));
+							if (dataClassPropVal.IsObject())
+							{
+								VJSObject dataClassProp(dataClassPropVal.GetObject());
+								VString s;
+								if (dataClassProp.GetPropertyAsString("collectionName", nil, s))
+								{
+									dataClassBag->SetString(d4::collectionName, s);
+								}
+								if (s.IsEmpty())
+									dataClassBag->SetString(d4::collectionName, propName+"Collection");
+
+								if (dataClassProp.GetPropertyAsString("singleEntityName", nil, s))
+								{
+									dataClassBag->SetString(d4::singleEntityName, s);
+								}
+
+								if (dataClassProp.GetPropertyAsString("scope", nil, s))
+								{
+									dataClassBag->SetString(d4::scope, s);
+								}
+
+								if (dataClassProp.GetPropertyAsString("extends", nil, s))
+								{
+									dataClassBag->SetString(d4::extends, s);
+								}
+
+								bool exists = false;
+								bool res = dataClassProp.GetPropertyAsBool("publishAsJSGlobal", nil, &exists);
+								if (exists)
+									dataClassBag->SetBool(d4::publishAsJSGlobal, res);
+
+								res = dataClassProp.GetPropertyAsBool("allowOverrideStamp", nil, &exists);
+								if (exists)
+									dataClassBag->SetBool(d4::allowOverrideStamp, res);
+
+								sLONG ll;
+								ll = dataClassProp.GetPropertyAsLong("defaultTopSize", nil, &exists);
+								if (exists)
+									dataClassBag->SetLong(d4::defaultTopSize, ll);
+
+								VJSValue restrictingQueryVal(dataClassProp.GetProperty("restrictingQuery", nil));
+								if (!restrictingQueryVal.IsNull())
+								{
+									VValueBag* QueryBag = nil;
+									if (restrictingQueryVal.IsString())
+									{
+										restrictingQueryVal.GetString(s);
+										QueryBag = new VValueBag();
+										QueryBag->SetString(d4::queryStatement, s);
+									}
+									else if (restrictingQueryVal.IsObject())
+									{
+										VJSObject restrictingQueryobj(restrictingQueryVal.GetObject());
+										if (restrictingQueryobj.GetPropertyAsString("queryStatement", nil, s))
+										{
+											QueryBag = new VValueBag();
+											QueryBag->SetString(d4::queryStatement, s);
+											ll = restrictingQueryobj.GetPropertyAsLong("top", nil, &exists);
+											if (exists)
+												QueryBag->SetLong(d4::top, ll);
+										}
+									}
+									if (QueryBag != nil)
+									{
+										dataClassBag->AddElement("restrictingQuery", QueryBag);
+										QueryBag->Release();
+									}
+								}
+
+								VJSValue primkeyval(dataClassProp.GetProperty("key"));
+								if (primkeyval.IsArray())
+								{
+									VJSArray primkeyarr(primkeyval, false);
+									for (sLONG i = 0, nb = primkeyarr.GetLength(); i < nb; ++i)
+									{
+										VJSValue val1(primkeyarr.GetValueAt(i));
+										if (val1.IsString())
+										{
+											val1.GetString(s);
+											VValueBag* keybag = new VValueBag();
+											keybag->SetString(d4::name, s);
+											dataClassBag->AddElement(d4::key, keybag);
+											keybag->Release();
+										}
+									}
+								}
+								else if (primkeyval.IsString())
+								{
+									primkeyval.GetString(s);
+									VValueBag* keybag = new VValueBag();
+									keybag->SetString(d4::name, s);
+									dataClassBag->AddElement(d4::key, keybag);
+									keybag->Release();
+								}
+							}
+							
+							/*
+							VJSValue attributesVal(dataClassObj.GetProperty("attributes"));
+							if (attributesVal.IsArray())
+							{
+								VJSArray attributesArr(attributesVal, false);
+								for (sLONG i = 0, nb = attributesArr.GetLength(); i < nb; ++i)
+								{
+									_addOneAttribute(attributesArr.GetValueAt(i), dataClassBag, nil);								
+								}
+							}
+							else if (attributesVal.IsObject())
+							{
+								VJSObject attributesObj(attributesVal.GetObject());
+								VJSPropertyIterator curatt(attributesObj);
+								while (curatt.IsValid())
+								{
+									VString attname;
+									curatt.GetPropertyName(attname);
+									_addOneAttribute(curatt.GetProperty(), dataClassBag, &attname);	
+									++curatt;
+								}
+							}
+							*/
+							VJSPropertyIterator curatt(dataClassObj);
+							while (curatt.IsValid())
+							{
+								VString attname;
+								curatt.GetPropertyName(attname);
+								if (attname.EqualToUSASCIICString("properties") /*|| attname.EqualToUSASCIICString("attributes")*/ || attname.EqualToUSASCIICString("methods") 
+									|| attname.EqualToUSASCIICString("collectionMethods") || attname.EqualToUSASCIICString("entityMethods") || attname.EqualToUSASCIICString("events"))
+								{
+								}
+								else
+								{
+									_addOneAttribute(curatt.GetProperty(), dataClassBag, &attname);	
+								}
+								++curatt;
+							}
+
+
+							if (mustaddclass)
+							{
+								const_cast<VValueBag&>(bagEntities).AddElement(d4::dataClasses, dataClassBag);
+								dataClassBag->Release();
+							}
+						}
+
+					}
+
+					++curprop;
+				}
+
+
+			}
+
+		}
+
+
 
 		if (err == VE_OK)
 		{
@@ -9979,7 +9642,7 @@ VError EntityModelCatalog::LoadEntityModels(const VValueBag& bagEntities, bool d
 					if (OneEntity != nil)
 					{
 						EntityModel* newEntity = BuildEntityModel(OneEntity, err, devMode);
-						if (newEntity != nil && newEntity->GetMainTable() != nil)
+						if (newEntity != nil)
 							err = AddOneEntityModel(newEntity, false);
 						QuickReleaseRefCountable(newEntity);
 					}
@@ -10017,11 +9680,53 @@ VError EntityModelCatalog::LoadEntityModels(const VValueBag& bagEntities, bool d
 			}
 		}
 
+		if (err == VE_OK)
+		{
+			const VBagArray* outsideCatalogs = bagEntities.GetElements(d4::outsideCatalogs);
+			if (outsideCatalogs != nil)
+			{
+				VIndex nbcatalogs = outsideCatalogs->GetCount();
+				for (VIndex i = 1; i <= nbcatalogs && err == VE_OK; i++)
+				{
+					const VValueBag* oneCatRef = outsideCatalogs->GetNth(i);
+					if (oneCatRef != nil)
+					{
+						StErrorContextInstaller errs(false, false);
+						fOwner->AddOutsideCatalog(oneCatRef);
+					}
+				}
+			}
+
+			const VBagArray* outsideSQLCatalogs = bagEntities.GetElements("outsideSQLCatalogs");
+			if (outsideSQLCatalogs != nil)
+			{
+				VIndex nbcatalogs = outsideSQLCatalogs->GetCount();
+				for (VIndex i = 1; i <= nbcatalogs && err == VE_OK; i++)
+				{
+					const VValueBag* oneCatRef = outsideSQLCatalogs->GetNth(i);
+					if (oneCatRef != nil)
+					{
+						StErrorContextInstaller errs(false, false);
+						fOwner->AddOutsideSQLCatalog(oneCatRef);
+					}
+				}
+			}
+		}
+
+		if (err == VE_OK)
+			err = do_LoadEntityModels(bagEntities, devMode, outIncludedFiles, context);
+
+		// another pass for outside catalogs
+
+
+		// end of outside catalog pass
+
 		fLoadingContext = nil;
 		fLoadingGlobalObject = nil;
 
 		QuickReleaseRefCountable(xJSContext);
 		delete xJSDelegate;
+		context->Release();
 	}
 
 	// sc 28/05/2012, ensure the VJSContext object is destroyed before release the context
@@ -10038,75 +9743,74 @@ VError EntityModelCatalog::LoadEntityModels(const VFile& inFile, bool inXML, boo
 	VError err = VE_OK;
 	if (inFile.Exists())
 	{
-		/*
-		VFolder* parent = inFile.RetainParentFolder();
-		VString name;
-		inFile.GetNameWithoutExtension(name);
-		VFile dirFile(*parent, name+".waUAG");
-		parent->Release();
-		
-		if (dirFile.Exists())
-		{
-			VError err2 = VE_OK;
-
-			CUAGDirectory* directory = VDBMgr::GetUAGManager()->RetainDirectory(dirFile, FA_READ, nil, nil, &err);
-
-			directory->Release();
-		}
-		*/
-
-		bool okbag = false;
-		VValueBag bagEntities;
-		if (inXML)
-		{
-			if ( inXmlContent )
-				err = LoadBagFromXML( *inXmlContent, L"EntityModelCatalog", bagEntities);
-			else
-				err = LoadBagFromXML(inFile, L"EntityModelCatalog", bagEntities);
-
-			if (err == VE_OK)
-				okbag = true;
-		}
+		VString allEntities;
+		if (inXmlContent)
+			allEntities = *inXmlContent;
 		else
 		{
 			VFileStream input(&inFile);
 			err = input.OpenReading();
 			if (err == VE_OK)
 			{
-				VString allEntities;
+				err = input.GuessCharSetFromLeadingBytes(VTC_UTF_8);
 				err = input.GetText(allEntities);
-				if (err == VE_OK)
-				{
-					err = bagEntities.FromJSONString(allEntities);
-					if (err == VE_OK)
-					{
-						//SaveBagToXML(bagEntities, L"EntityModelCatalog", VFile(*fStructFolder, L"EntityModels.xml"));
-						okbag = true;
-					}
-
-				}
 			}
 			input.CloseReading();
 		}
 
-		if (okbag)
+		if (err == VE_OK)
 		{
-			const VValueBag* dbBag = bagEntities.RetainUniqueElement(d4::dbInfo);
-			if (dbBag != nil)
+			bool okbag = false;
+
+			VString firstpart, secondpart, thirdpart;
+			sLONG curpos = 0;
+			GetNextWord(allEntities, curpos, firstpart);
+			GetNextWord(allEntities, curpos, secondpart);
+			if (!(firstpart == "<" && secondpart == "?xml"))
+				inXML = false;
+
+			VValueBag bagEntities;
+			if (inXML)
 			{
-				err = fOwner->FromBag(*dbBag, this);
-				dbBag->Release();
+				fJsonFormat = false;
+				if ( inXmlContent )
+					err = LoadBagFromXML( *inXmlContent, L"EntityModelCatalog", bagEntities);
+				else
+					err = LoadBagFromXML(inFile, L"EntityModelCatalog", bagEntities);
+
+				if (err == VE_OK)
+					okbag = true;
 			}
 			else
-				TouchXML();
-			if (err == VE_OK)
-				err = LoadEntityModels(bagEntities, devMode, outIncludedFiles);
-			/*
-			if (err == VE_OK)
 			{
-				err = fOwner->LoadIndicesFromBag(&bagEntities);
+				fJsonFormat = true;
+				err = bagEntities.FromJSONString(allEntities);
+				if (err == VE_OK)
+				{
+					//SaveBagToXML(bagEntities, L"EntityModelCatalog", VFile(*fStructFolder, L"EntityModels.xml"));
+					okbag = true;
+				}
 			}
-			*/
+
+			if (okbag)
+			{
+				const VValueBag* dbBag = bagEntities.RetainUniqueElement(d4::dbInfo);
+				if (dbBag != nil)
+				{
+					err = fOwner->FromBag(*dbBag, this);
+					dbBag->Release();
+				}
+				else
+					TouchXML();
+				if (err == VE_OK)
+					err = LoadEntityModels(bagEntities, devMode, outIncludedFiles);
+				/*
+				if (err == VE_OK)
+				{
+					err = fOwner->LoadIndicesFromBag(&bagEntities);
+				}
+				*/
+			}
 		}
 	}
 
@@ -10137,6 +9841,9 @@ VError EntityModelCatalog::SaveEntityModels(VValueBag& catalogBag, bool inXML, b
 	{
 		catalogBag.AddElement(d4::extraProperties, (VValueBag*)fExtraProperties);
 	}
+
+	if (fJsonFormat)
+		catalogBag.SetBool("toJSON", true);
 
 	for (EmEnumMap::const_iterator cur = fEnumerations.begin(), end = fEnumerations.end(); cur != end && err == VE_OK; cur++)
 	{
@@ -10427,7 +10134,8 @@ EntityModel* EntityModelCatalog::RetainEntity(const VString& entityName) const
 			Table* tt = fOwner->FindAndRetainTableRef(tablename);
 			if (tt != nil)
 			{
-				em = EntityModel::BuildEntityModel(tt);
+				if (!tt->GetHideInRest())
+					em = EntityModel::BuildLocalEntityModel(tt);
 				tt->Release();
 			}
 		}
@@ -10461,7 +10169,51 @@ EntityRelation* EntityModelCatalog::FindRelation(const VString& relationName) co
 */
 
 
-VError EntityModelCatalog::GetAllEntityModels(vector<CDB4DEntityModel*>& outList, CDB4DBaseContext* context) const
+VError EntityModelCatalog::GetAllEntityModels(vector<EntityModel*>& outList) const
+{
+	VTaskLock lock(&fEntityModelMutex);
+	VError err = VE_OK;
+	outList.clear();
+	try
+	{
+		outList.reserve(fEntityModels.size());
+		for (EntityModelMap::const_iterator cur = fEntityModels.begin(), end = fEntityModels.end(); cur != end; cur++)
+		{
+			outList.push_back(cur->second);
+		}
+	}
+	catch (...)
+	{
+		err = fOwner->ThrowError(memfull, noaction);
+	}
+
+	return err;
+}
+
+
+VError EntityModelCatalog::RetainAllEntityModels(vector<VRefPtr<EntityModel> >& outList) const
+{
+	VTaskLock lock(&fEntityModelMutex);
+	VError err = VE_OK;
+	outList.clear();
+	try
+	{
+		outList.reserve(fEntityModels.size());
+		for (EntityModelMap::const_iterator cur = fEntityModels.begin(), end = fEntityModels.end(); cur != end; cur++)
+		{
+			outList.push_back(cur->second);
+		}
+	}
+	catch (...)
+	{
+		err = fOwner->ThrowError(memfull, noaction);
+	}
+
+	return err;
+}
+
+
+VError EntityModelCatalog::GetAllEntityModels(vector<CDB4DEntityModel*>& outList) const
 {
 	VTaskLock lock(&fEntityModelMutex);
 	VError err = VE_OK;
@@ -10497,12 +10249,12 @@ EntityRelation* EntityModelCatalog::FindOrBuildRelation(const EntityRelationColl
 				bool egal = true;
 				for (EntityRelationCollection::const_iterator cur1 = curpath.begin(), cur2 = relpath.begin(), end1 = curpath.end(); cur1 != end1; cur1++, cur2++)
 				{
-					if ((*cur1)->GetSourceField() != (*cur2)->GetSourceField())
+					if ((*cur1)->GetSourceAtt() != (*cur2)->GetSourceAtt())
 					{
 						egal = false;
 						break;
 					}
-					if ((*cur1)->GetDestField() != (*cur2)->GetDestField())
+					if ((*cur1)->GetDestAtt() != (*cur2)->GetDestAtt())
 					{
 						egal = false;
 						break;
@@ -10535,7 +10287,7 @@ void EntityModelCatalog::ReversePath(const EntityRelationCollection& relpath, En
 		const EntityRelation* rel = *cur;
 		if (rel->IsSimple())
 		{
-			EntityRelation* reverseRel = new EntityRelation(rel->GetDestField(), rel->GetSourceField(), erel_1toN);
+			EntityRelation* reverseRel = new EntityRelation(rel->GetDestAtt(), rel->GetSourceAtt(), erel_1toN);
 			outReversePath.push_back(reverseRel);
 		}
 		else
@@ -10580,6 +10332,48 @@ VError EntityModelCatalog::GetPermission(DB4D_EM_Perm inPerm, VUUID& outGroupID,
 
 	return err;
 }
+
+
+VError EntityModelCatalog::ResolveRelatedEntities(BaseTaskInfo* context)
+{
+	VError err = VE_OK;
+	for (EntityModelMap::iterator cur = fEntityModels.begin(), end = fEntityModels.end(); cur != end && err == VE_OK; cur++)
+	{
+		SubPathRefSet already;
+		err =cur->second->ResolveRelatedEntities(already, this, false, context);
+	}
+	return err;
+}
+
+
+ModelCatalogFactoryMap EntityModelCatalog::sModelFactories;
+
+void EntityModelCatalog::RegisterFactory(sLONG signature, ModelCatalogFactory code)
+{
+	sModelFactories[signature] = code;
+}
+
+
+ModelCatalogFactory EntityModelCatalog::GetFactory(sLONG signature)
+{
+	ModelCatalogFactoryMap::iterator found = sModelFactories.find(signature);
+	if (found == sModelFactories.end())
+		return nil;
+	else
+		return found->second;
+}
+
+EntityModelCatalog* EntityModelCatalog::NewCatalog(sLONG signature, Base4D* inOwner, VJSONObject* params, VError& outErr)
+{
+	EntityModelCatalog* result = nil;
+	ModelCatalogFactory code = GetFactory(signature);
+	if (code != nil)
+		result = (*code)(inOwner, params, outErr);
+	else
+		outErr = VE_DB4D_NOT_FOUND;
+	return result;
+}
+
 
 
 

@@ -12,7 +12,7 @@
 		AdditionalOptions="/MP"
 		Optimization="0"
 		OmitFramePointers="false"
-		PreprocessorDefinitions="_WIN64;WIN64;_DEBUG"
+		PreprocessorDefinitions="_WIN64;WIN64;_DEBUG;_WINDOWS"
 		MinimalRebuild="false"
 		ExceptionHandling="2"
 		BasicRuntimeChecks="3"

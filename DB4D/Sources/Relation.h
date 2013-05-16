@@ -81,7 +81,7 @@ class FieldNuplet : public Obj4D, public IObjCounter
 
 
 
-class Relation : public Obj4D, public IObjCounter, public IRefCountable, public IBaggable
+class Relation : public Obj4D, public IObjCounter, public IDebugRefCountable, public IBaggable
 {
 	//friend bool comparelessrel(const Relation* r1, const Relation* r2);
 

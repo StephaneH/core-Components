@@ -16,4 +16,4 @@ include_directories(${ComponentsRoot}
   ${XBoxRoot})
 
 
-#add_dependencies(UsersAndGroups Icu Kernel KernelIPC Xml)
+target_link_libraries(UsersAndGroups JavaScript Kernel KernelIPC Xml)

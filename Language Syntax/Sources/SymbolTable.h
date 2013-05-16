@@ -215,7 +215,7 @@ public:
 
 	virtual VString GetKindString() const
 	{
-		Symbols::ISymbol *refSym = const_cast< Symbols::ISymbol * >( Dereference() );
+		Symbols::ISymbol *refSym = const_cast< Symbols::ISymbol * >( RetainReferencedSymbol() );
 
 		VString kindStr;
 
@@ -375,10 +375,10 @@ public:
 	// would normally happen on this symbol should actually happen on the referenced symbol.  So we
 	// provide a helper function to dereference a symbol -- if the symbol isn't actually a reference, then
 	// the deref will just return "this", so it's safe to call on any symbol.
-	virtual const Symbols::ISymbol *Dereference() const {
+	virtual const Symbols::ISymbol *RetainReferencedSymbol() const {
 		if ((GetAuxillaryKindInformation() & kReferenceValue) && fReference) {
 			// Continue reference chaining
-			return fReference->Dereference();
+			return fReference->RetainReferencedSymbol();
 		} else {
 			this->Retain();
 			// This isn't a reference
@@ -415,7 +415,7 @@ public:
 	{
 		bool ret = false;
 
-		Symbols::ISymbol *refSym = const_cast< Symbols::ISymbol * >( Dereference() );
+		Symbols::ISymbol *refSym = const_cast< Symbols::ISymbol * >( RetainReferencedSymbol() );
 		if ( refSym->GetKind() == Symbols::ISymbol::kKindFunctionDeclaration ||
 			 refSym->GetKind() == Symbols::ISymbol::kKindClass               ||
 			 refSym->GetKind() == Symbols::ISymbol::kKindClassConstructor    ||
@@ -637,6 +637,60 @@ public:
 
 		return ( NULL != classSym ? classSym->GetName() : GetName() );
 	}
+#if VERSIONDEBUG
+	virtual void DebugDump() const
+	{
+		VString msg("[SymbolTable] Symbol Dump ");
+		msg.AppendString("Name(");		msg.AppendString(GetName());					msg.AppendString(") ");
+		msg.AppendString("Id(");		msg.AppendLong(GetID());						msg.AppendString(") ");
+		msg.AppendString("Line(");		msg.AppendLong(GetLineNumber());				msg.AppendString(") ");
+		msg.AppendString("Kind(");		msg.AppendLong(GetKind());
+		if( GetKind() == Symbols::ISymbol::kKindLocalVariableDeclaration )		msg.AppendString(",LocalVariableDeclaration");
+		if( GetKind() == Symbols::ISymbol::kKindFunctionDeclaration )			msg.AppendString(",FunctionDeclaration");
+		if( GetKind() == Symbols::ISymbol::kKindFunctionParameterDeclaration )	msg.AppendString(",FunctionParameterDeclaration");
+		if( GetKind() == Symbols::ISymbol::kKindCatchBlock )					msg.AppendString(",CatchBlock");
+		if( GetKind() == Symbols::ISymbol::kKindPublicProperty )				msg.AppendString(",PublicProperty");
+		if( GetKind() == Symbols::ISymbol::kKindObjectLiteral )					msg.AppendString(",ObjectLiteral");
+		if( GetKind() == Symbols::ISymbol::kKindTable )							msg.AppendString(",Table");
+		if( GetKind() == Symbols::ISymbol::kKindTableField )					msg.AppendString(",TableField");
+		if( GetKind() == Symbols::ISymbol::kKindClass )							msg.AppendString(",Class");
+		if( GetKind() == Symbols::ISymbol::kKindClassConstructor )				msg.AppendString(",ClassConstructor");
+		if( GetKind() == Symbols::ISymbol::kKindClassPublicMethod )				msg.AppendString(",ClassPublicMethod");
+		if( GetKind() == Symbols::ISymbol::kKindClassPrivateMethod )			msg.AppendString(",ClassPrivateMethod");
+		if( GetKind() == Symbols::ISymbol::kKindClassStaticMethod )				msg.AppendString(",ClassStaticMethod");
+		if( GetKind() == Symbols::ISymbol::kKindClassPrivilegedMethod )			msg.AppendString(",ClassPrivilegedMethod");
+		if( GetKind() == Symbols::ISymbol::kKindPrivateProperty )				msg.AppendString(",PrivateProperty");
+		if( GetKind() == Symbols::ISymbol::kKindStaticProperty )				msg.AppendString(",StaticProperty");
+		msg.AppendString(") ");
+		if( GetAuxillaryKindInformation() != 0 )
+		{
+			msg.AppendString("AuxKind(");	msg.AppendLong(GetAuxillaryKindInformation());
+			if( GetAuxillaryKindInformation() & Symbols::ISymbol::kInstanceValue )							msg.AppendString(",InstanceValue");
+			if( GetAuxillaryKindInformation() & Symbols::ISymbol::kReferenceValue )							msg.AppendString(",ReferenceValue");
+			if( GetAuxillaryKindInformation() & Symbols::ISymbol::kKindEntityModel )						msg.AppendString(",EntityModel");
+			if( GetAuxillaryKindInformation() & Symbols::ISymbol::kKindEntityModelMethodEntity )			msg.AppendString(",EntityModelMethodEntity");
+			if( GetAuxillaryKindInformation() & Symbols::ISymbol::kKindEntityModelMethodEntityCollection )	msg.AppendString(",EntityModelMethodEntityCollection");
+			if( GetAuxillaryKindInformation() & Symbols::ISymbol::kKindEntityModelMethodDataClass )			msg.AppendString(",EntityModelMethodDataClass");
+			if( GetAuxillaryKindInformation() & Symbols::ISymbol::kKindEntityModelAttribute )				msg.AppendString(",EntityModelAttribute");
+			if( GetAuxillaryKindInformation() & Symbols::ISymbol::kKindUndefined )							msg.AppendString(",Undefined");
+			if( GetAuxillaryKindInformation() & Symbols::ISymbol::kKindFunctionExpression )					msg.AppendString(",FunctionExpression");
+			msg.AppendString(") ");
+		}
+		msg.AppendString("OwnerId(");
+		msg.AppendLong( (GetOwner()) ? GetOwner()->GetID():0 );
+		msg.AppendString(")");
+		const Symbols::ISymbol* sym = RetainReferencedSymbol();
+		if( sym->GetID() != GetID() )
+		{
+			msg.AppendString(" Reference(");
+			msg.AppendLong(sym->GetID());
+			msg.AppendString(")");
+		}
+		ReleaseRefCountable(&sym);
+		msg.AppendString("\n");
+		DebugMsg(msg);
+	}
+#endif
 
 };
 
@@ -711,11 +765,4 @@ public:
 	virtual Kind GetKind() const { return fKind; }
 	virtual void SetKind( Kind inKind ) { fKind = inKind; }
 };
-
-#if _DEBUG
-namespace SymbolTableTest {
-	void Test();
-}
-#endif // _DEBUG
-
 #endif // _SYMBOL_TABLE_H_

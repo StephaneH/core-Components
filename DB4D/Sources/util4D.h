@@ -22,6 +22,28 @@
 #endif
 
 
+typedef enum 
+{
+	PK_UniquenessChecking=0
+} DB4D_ProgressIndicatorKind;
+
+
+class VDB4DProgressIndicatorWrapper:public XBOX::VObject
+{
+public:
+    VDB4DProgressIndicatorWrapper(VDB4DProgressIndicator* inWrappedProgressIndicator = nil);
+    virtual ~VDB4DProgressIndicatorWrapper();
+    
+    VDB4DProgressIndicator* GetProgressIndicator()const{return fProgressIndicator;}
+    bool SetTitleAfterKind(DB4D_ProgressIndicatorKind inKind);
+private:
+    VDB4DProgressIndicatorWrapper(const VDB4DProgressIndicatorWrapper&);
+    
+    VDB4DProgressIndicator* fProgressIndicator;
+};
+
+bool SetProgressIndicatorTitleForKind(VDB4DProgressIndicator& inPi, DB4D_ProgressIndicatorKind inKind);
+
 void trackDebugMsg(const VString& mess);
 
 extern const VString kDataFileExt;
@@ -152,8 +174,14 @@ class StrHashTable
 		bool fIsDiacritical;
 };
 
+class CompareLessVStringNoIntl
+{
+public:
+	bool operator () (const VString& s1, const VString& s2) const;
+};
 
-class Enumeration
+
+class ENTITY_API Enumeration
 {
 	public:
 		Enumeration(const ConstUniCharPtr* from);
@@ -173,7 +201,7 @@ class Enumeration
 		const VString& operator [] (sLONG EnumID) const;
 
 	protected:
-		typedef map<VString, sLONG> EnumMap;
+		typedef map<VString, sLONG, CompareLessVStringNoIntl> EnumMap;
 		typedef map<sLONG, VString> EnumIDMap;
 
 		EnumMap fEnums;
@@ -323,7 +351,7 @@ struct CritereDISK
 	uCHAR unique;
 	uCHAR fOuterData;
 	uCHAR fTextIsWithStyle;
-	uBOOL fUnusedChar3;		// previously fInvisible, now fInvisible is stored in the field extra-properties
+	uBOOL fHideInRest;		// previously fInvisible, now fInvisible is stored in the field extra-properties
 	uBOOL fAutoSeq;
 
 	void SwapBytes();
@@ -452,7 +480,10 @@ struct FichierDISK
 	DataAddr4D UnusedAddr1;
 	DataAddr4D UnusedAddr2;
 	sLONG ExtraLen;
-	sLONG UnusedLen1;
+	uBOOL fHideInRest;
+	uBOOL fUnusedChar1;
+	uBOOL fUnusedChar2;
+	uBOOL fUnusedChar3;
 	sLONG UnusedLen2;
 	sLONG typ;
 	sLONG nbcrit;
@@ -1208,6 +1239,8 @@ public:
 
 	sLONG fWaitForMemMgr;
 
+	void init();
+
 protected: 
 	//typedef vector<OccupableStack*> OccupableStackCollection;
 	typedef map<VTaskID, OccupableStack*> OccupableStackCollection;
@@ -1379,6 +1412,68 @@ typedef map<const Obj4D*, debugOccupeSignatureCollection> debugMapOfOccupe;
 
 
 
+
+#if debugLeaksAll
+extern uBOOL debug_candumpleaksAll;
+extern ENTITY_API uBOOL debug_canRegisterLeaksAll;
+
+class ENTITY_API IDebugRefCountable : public IRefCountable
+{
+public:
+	IDebugRefCountable();
+	virtual ~IDebugRefCountable();
+	virtual	sLONG Retain(const char* DebugInfo = 0) const;
+	virtual	sLONG Release(const char* DebugInfo = 0) const;
+
+	virtual bool OKToTrackDebug() const
+	{
+		return false;
+	}
+
+	virtual void GetDebugInfo(VString& outText) const
+	{
+		outText = "object : "+ToString((VSize)this);
+	}
+
+	typedef set<VStackCrawl> StackCrawlCollection;
+	typedef map<const IDebugRefCountable*, StackCrawlCollection> mapOfRefCountables;
+
+	static void DumpStackCrawls();
+	static void DumpStackCrawls(VString& outText);
+	static void DumpStackCrawls(VStream& outStream);
+
+protected:
+
+	static mapOfRefCountables objs ;
+	static VCriticalSection objsMutex;
+	static void RegisterStackCrawl(const IDebugRefCountable* obj);
+	static void UnRegisterStackCrawl(const IDebugRefCountable* obj);
+
+};
+
+
+
+
+
+static void xStartRecordingMemoryLeaksAll()
+{
+	debug_canRegisterLeaksAll = true;
+}
+
+static void xStopRecordingMemoryLeaksAll()
+{
+	debug_canRegisterLeaksAll = false;
+}
+
+#else
+
+typedef IRefCountable IDebugRefCountable;
+
+#endif
+
+
+
+
 class BaseFlushInfo;
 
 // ------------------------------------------------------------------
@@ -1430,9 +1525,9 @@ class IObjToFree
 
 VError ThrowJSExceptionAsError(VJSContext& context, JS4D::ExceptionRef excep);
 
-VError ThrowBaseError(VError inErrCode, ActionDB4D inAction = noaction );
-VError ThrowBaseError(VError inErrCode, const VString& param1 );
-VError ThrowBaseError(VError inErrCode, const VString& param1, const VString& param2);
+ENTITY_API VError ThrowBaseError(VError inErrCode, ActionDB4D inAction = noaction );
+ENTITY_API VError ThrowBaseError(VError inErrCode, const VString& param1 );
+ENTITY_API VError ThrowBaseError(VError inErrCode, const VString& param1, const VString& param2);
 
 const DataAddr4D kEndProtectedArea = 256 + (8192 * sizeof(DataAddr4D)) + (8192 * sizeof(sWORD));
 
@@ -1444,7 +1539,7 @@ inline bool AllowedAddress(DataAddr4D ou)
 		return true;
 }
 
-class IObjToFlush : public IRefCountable, public IOccupable
+class IObjToFlush : public IDebugRefCountable, public IOccupable
 {
 public:
 	IObjToFlush()
@@ -1609,7 +1704,7 @@ public:
 		{
 			assert(!(GetRefCount() == 2 && fModified));
 		}
-		return IRefCountable::Release(DebugInfo);
+		return IDebugRefCountable::Release(DebugInfo);
 	}
 #endif
 
@@ -1637,7 +1732,7 @@ enum { ObjBasic=0, Obj_Cache, Obj_tabaddr, Obj_treeinmem, Obj_Fiche, Obj_pageind
 				Obj_bittab, Obj_fichier, Obj_BtreeFlush, Obj_BtreeCache, Obj_FieldNuplet, Obj_ObjCacheArrayLongFix, Obj_tabaddrheader
 				};
 
-class Obj4D : public VObject
+class ENTITY_API Obj4D : public VObject
 {
 	public:
 #if debuglrWithTypObj
@@ -2043,13 +2138,35 @@ public:
 						// ------------------------------------------------------------------
 
 
-
 class BaseTaskInfo;
 
-class LockEntity : /*public ObjAlmostInCacheInTree*/ public ObjInCacheMem, public IRefCountable
+class LockEntity : /*public ObjAlmostInCacheInTree*/ public ObjInCacheMem, public IDebugRefCountable
 {
 	public:
-		inline LockEntity(BaseTaskInfo* owner) { fOwner = owner; fLockOthersTimeOut = 0; fSpecialFlushAndLock = false;};
+		inline LockEntity(BaseTaskInfo* owner) 
+		{ 
+			fOwner = owner; 
+			fLockOthersTimeOut = 0; 
+			fSpecialFlushAndLock = false;
+
+#if debugLeaksAll
+			if (debug_canRegisterLeaksAll)
+				RegisterStackCrawl(this);
+#endif
+		};
+
+#if debugLeaksAll
+		virtual bool OKToTrackDebug() const
+		{
+			return true;
+		}
+
+		virtual void GetDebugInfo(VString& outText) const
+		{
+			outText = "LockEntity : ";
+		}
+
+#endif
 
 		inline BaseTaskInfo* GetOwner() const { /*VObjLock lock(this); */return fOwner; };
 		inline void SetOwner(BaseTaskInfo* owner) { /*VObjLock lock(this);*/fOwner = owner; };
@@ -2074,6 +2191,9 @@ class LockEntity : /*public ObjAlmostInCacheInTree*/ public ObjInCacheMem, publi
 		virtual void Kill() 
 		{ 
 		};
+
+
+
 
 	protected:
 		BaseTaskInfo* fOwner;
@@ -2369,6 +2489,7 @@ protected:
 
 class EntityModel;
 class EntityAttribute;
+class db4dEntityAttribute;
 class EmEnum;
 class AttributeType;
 class EntityRelation;
@@ -2393,11 +2514,11 @@ class VErrorDB4D_OnEMRec : public VErrorDB4D_OnEM
 {
 public:
 
-	VErrorDB4D_OnEMRec( VError inErrCode, ActionDB4D inAction, const Base4D *inBase, const EntityModel* em, sLONG entityNum);
+	VErrorDB4D_OnEMRec( VError inErrCode, ActionDB4D inAction, const Base4D *inBase, const EntityModel* em, const VString& key);
 
 protected:
 	virtual void DumpToString( VString& outString) const;
-	sLONG fEntityNum;
+	VString fEntityKey;
 
 };
 
@@ -2876,7 +2997,7 @@ class xMultiFieldDataOffset
 			expression = inExpression;
 		};
 
-		sLONG Set(sLONG xoffset, EntityAttribute* inAtt, Boolean xascent);
+		sLONG Set(sLONG xoffset, db4dEntityAttribute* inAtt, Boolean xascent);
 		sLONG Set(sLONG xoffset, AttributePath* inAttPath, Boolean xascent);
 		
 		inline sLONG GetOffset() const { return offset; };
@@ -2886,7 +3007,7 @@ class xMultiFieldDataOffset
 		inline Boolean IsAscent() const { return ascent; };
 		inline void SetDataType(sLONG inType) { typ = inType; };
 		inline DB4DLanguageExpression* GetExpression() const { return expression; };
-		inline EntityAttribute* GetAttribute() const { return att; };
+		inline db4dEntityAttribute* GetAttribute() const { return att; };
 		inline AttributePath* GetAttributePath() const { return fAttPath; };
 
 		void Release();
@@ -2903,7 +3024,7 @@ class xMultiFieldDataOffset
 		Boolean ascent;
 		Bittab* fNulls;
 		DB4DLanguageExpression* expression;
-		EntityAttribute* att;
+		db4dEntityAttribute* att;
 		AttributePath* fAttPath;
 };
 
@@ -2925,14 +3046,14 @@ class xMultiFieldDataOffsets
 		};
 
 		xMultiFieldDataOffsets(Field* cri, sLONG typ, Boolean ascent, sLONG size);
-		xMultiFieldDataOffsets(EntityAttribute* att, Boolean ascent);
+		xMultiFieldDataOffsets(db4dEntityAttribute* att, Boolean ascent);
 		~xMultiFieldDataOffsets(); // non virtual on purpose
 		inline sLONG GetCount() const { return count; };
 		inline xMultiFieldDataOffset* GetOffset(sLONG n) { return &(offsets[n]); };
 		inline const xMultiFieldDataOffset* GetOffset(sLONG n) const { return &(offsets[n]); };
 		Boolean AddOffset(sLONG offset, sLONG typ, sLONG numcrit, sLONG size, Boolean ascent);
 		Boolean AddOffset(DB4DLanguageExpression* inExpression, Boolean ascent);
-		sLONG AddOffset(sLONG offset, EntityAttribute* inAtt, Boolean ascent);
+		sLONG AddOffset(sLONG offset, db4dEntityAttribute* inAtt, Boolean ascent);
 		sLONG AddOffset(sLONG offset, AttributePath* inAttPath, Boolean ascent);
 		xMultiFieldDataOffset_iterator Begin() { return &(offsets[0]); };
 		xMultiFieldDataOffset_iterator End() { return &(offsets[count]); };
@@ -2943,6 +3064,7 @@ class xMultiFieldDataOffsets
 		inline Boolean WithExpression() const { return fWithExpression; };
 		inline Boolean WithAttributes() const { return fWithAttributes; };
 		inline Boolean IsAscent() const { return IsMulti() || WithExpression() || offsets[0].IsAscent(); };
+		bool IsAllDescent() const;
 		inline void SetAuxBuffer(void* auxbuff) const { fAuxBuffer = auxbuff; };
 		inline void* GetAuxBuffer() const { return (void*)fAuxBuffer; };
 		inline sLONG GetLength() const { return fLen; };
@@ -3417,6 +3539,8 @@ inline bool IsInCollection(const Collection& col, const Cle& cle)
 }
 
 
+
+
 const sWORD kRangeReqDB4D = 10000;
 const sWORD kMaxRangeReqDB4D = 20000;
 const sWORD kRangeReqDB4DWithBaseID = 11000;
@@ -3549,6 +3673,9 @@ typedef enum
 	Req_SetTablePrimaryKey,
 	Req_SetFieldStyledText,
 	Req_SetOutsideData,
+
+	Req_SetFieldHideInRest,
+	Req_SetTableHideInRest,
 
 	Req_Final
 
@@ -4660,7 +4787,7 @@ void debug_CheckWriting(DataAddr4D ou, sLONG len);
 
 // -----------------------------------------------------
 
-class Correspondance
+class ENTITY_API Correspondance
 {
 	public:
 		Correspondance(const ConstUniCharPtr* from)
@@ -4674,7 +4801,7 @@ class Correspondance
 		const VString& MatchTo(const VString& toString) const;
 
 	protected:
-		typedef map<VString, VString> mapOfVString;
+		typedef map<VString, VString, CompareLessVStringNoIntl> mapOfVString;
 		mapOfVString fFrom;
 		mapOfVString fTo;
 
@@ -4690,7 +4817,7 @@ VError SaveBagToJson(const VValueBag& inBag, VString& outJSON, bool prettyformat
 
 
 
-class Wordizer
+class ENTITY_API Wordizer
 {
 	public:
 		Wordizer(const VString& xinput):input(xinput)
@@ -4900,6 +5027,16 @@ T xAbs(T value)
 	else
 		return value;
 }
+
+inline uLONG8 getTimeStamp()
+{
+	VTime now;
+	VTime::Now(now);
+	return now.GetStamp();
+}
+
+
+extern bool GetNextWord(const VString& input, sLONG& curpos, VString& result);
 
 #endif
 

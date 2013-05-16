@@ -468,27 +468,17 @@ public:
 		fManager->GetParsingCompleteSignal().Disconnect( this );
 	}
 
-	IDocumentParserManager::TaskCookie GetCookie() {
-		IDocumentParserManager::TaskCookie ret = { 0 };
-		ret.fIdentifier = 'PrWt';
-		return ret;
-	}
-
 	void Wait()
 	{
 		while( !fParsingDone)
-			VTask::ExecuteMessagesWithTimeout( 1000);
+			VTask::ExecuteMessagesWithTimeout( 1000 );
 	}
 
 private:
 	IDocumentParserManager	*fManager;
 	bool					fParsingDone;
 
-	virtual void ParsingComplete( VFilePath inPath, sLONG inStatus, IDocumentParserManager::TaskCookie inCookie ) {
-		if (inCookie.fIdentifier == 'PrWt') {
-			fParsingDone = true;
-		}
-	}
+	virtual void ParsingComplete( VFilePath inPath, sLONG inStatus ) { fParsingDone = true; }
 };
 
 void VJSLanguageSyntaxTester::_ParseFile( XBOX::VJSParms_callStaticFunction &ioParams, void * )
@@ -500,6 +490,10 @@ void VJSLanguageSyntaxTester::_ParseFile( XBOX::VJSParms_callStaticFunction &ioP
 	// We are expecting 4 parameters.  One for the path to the symbol table,
 	// one for the path to the test file
 	if (ioParams.CountParams() < 4)	return;
+#if VERSIONDEBUG == 114
+	CDB4DManager* DB4D = CDB4DManager::RetainManager();
+	DB4D->StartRecordingMemoryLeaks();
+#endif
 
 	VString symTablePathStr, testFilePathStr, testFileBaseFolderStr, testFileExecContextStr;
 
@@ -561,7 +555,7 @@ void VJSLanguageSyntaxTester::_ParseFile( XBOX::VJSParms_callStaticFunction &ioP
 					{
 						VLanguageSyntaxTesterCatalog* catalog = new VLanguageSyntaxTesterCatalog( testFilePath );
 
-						parserManager->ScheduleTask( (const void *)0xFEEDFACE, catalog, waiter.GetCookie(), symTable, IDocumentParserManager::kPriorityAboveNormal);
+						parserManager->ScheduleTask( (const void *)0xFEEDFACE, catalog, symTable, IDocumentParserManager::kPriorityAboveNormal);
 						catalog->Release();
 					}
 					else
@@ -569,7 +563,7 @@ void VJSLanguageSyntaxTester::_ParseFile( XBOX::VJSParms_callStaticFunction &ioP
 						VSymbolFileInfos	fileInfos(testFilePath, baseFolder, execContext);
 
 						parserManager->ScheduleTask( (const void *)0xFEEDFACE, /* Just needs to be unique per scheduler, but since this is a static method, there is no this pointer*/
-													 fileInfos, waiter.GetCookie(), symTable, IDocumentParserManager::kPriorityAboveNormal );
+													 fileInfos, symTable, IDocumentParserManager::kPriorityAboveNormal );
 					}
 					waiter.Wait();
 				}
@@ -579,6 +573,17 @@ void VJSLanguageSyntaxTester::_ParseFile( XBOX::VJSParms_callStaticFunction &ioP
 		}
 		languageSyntax->Release();
 	}
+#if VERSIONDEBUG == 114
+	VString sleaks;
+	DB4D->DumpMemoryLeaks(sleaks);
+	DebugMsg(sleaks);
+	if (!sleaks.IsEmpty())
+	{
+		sLONG xdebug = 1;
+	}
+	DB4D->StopRecordingMemoryLeaks();
+	DB4D->Release();
+#endif
 }
 
 void VJSLanguageSyntaxTester::GetDefinition( ClassDefinition &outDefinition )
@@ -801,7 +806,7 @@ VLanguageSyntaxTesterCatalog::VLanguageSyntaxTesterCatalog(XBOX::VFilePath& inFi
 
 		if ( catalogFile.Exists() )
 		{
-			CDB4DManager*		dB4DBaseManager = VComponentManager::RetainComponentOfType<CDB4DManager>();
+			CDB4DManager*		dB4DBaseManager = CDB4DManager::RetainManager();
 			if (NULL != dB4DBaseManager)
 			{
 				sLONG flags = DB4D_Open_As_XML_Definition | DB4D_Open_No_Respart | DB4D_Open_StructOnly | DB4D_Open_Allow_Temporary_Convert_For_ReadOnly;
@@ -826,7 +831,8 @@ VLanguageSyntaxTesterCatalog::VLanguageSyntaxTesterCatalog(XBOX::VFilePath& inFi
 						}
 						dB4DBaseContext->Release();
 					}
-					dB4DBase->Release();
+					//dB4DBase->Release();
+					dB4DBase->CloseAndRelease();
 				}
 				dB4DBaseManager->Release();
 			}

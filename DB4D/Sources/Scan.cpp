@@ -136,7 +136,7 @@ VError ObjectDiskPosInfoCollection::Init(Base4D_NotOpened* source)
 		fDatasEncapsule = VDBMgr::GetManager()->CreateBase(*f1, DB4D_Create_DefaultData + DB4D_Create_WithSeparateIndexSegment, XBOX::VIntlMgr::GetDefaultMgr(), &err);
 		if (fDatasEncapsule != nil)
 		{
-			fDatas = VImpCreator<VDB4DBase>::GetImpObject(fDatasEncapsule)->GetBase();
+			fDatas = dynamic_cast<VDB4DBase*>(fDatasEncapsule)->GetBase();
 			fContext = new BaseTaskInfo(fDatas, nil,nil, nil);
 
 			Table* t;

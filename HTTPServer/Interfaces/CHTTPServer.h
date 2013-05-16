@@ -170,7 +170,8 @@ public:
 														const XBOX::VString& inPath,
 														bool inSecure,
 														bool inHTTPOnly,
-														sLONG inMaxAge) = 0;
+														sLONG inMaxAge,
+														bool inAlwaysUseExpires = true) = 0;
 	virtual bool							DropCookie (const XBOX::VString& inCookieName) = 0;
 
 	/* Tell if body can be put in cache */
@@ -231,6 +232,13 @@ public:
 	 */
 	virtual bool							GetForceCloseSession() const = 0;
 	virtual void							SetForceCloseSession (bool inValue = true) = 0;
+
+	/*
+	 *	Set SetUseDefaultCharset to prevent the charset parameter to be automatically set 
+	 *	in Content-Type response header (typically for static resources)
+	 */
+	virtual bool							GetUseDefaultCharset() const = 0;
+	virtual void							SetUseDefaultCharset (bool inValue) = 0;
 };
 
 
@@ -332,7 +340,6 @@ public:
 	virtual void							SetSSLMandatory (bool inValue) = 0;
 	virtual void							SetListeningSSLPort (PortNumber inValue) = 0;
 	virtual void							SetSSLCertificatesFolderPath (const XBOX::VFilePath& inValue) = 0;
-	virtual void							SetSSLCertificatesFolderPath (const XBOX::VString& inValue) = 0;
 	virtual void							SetWebFolderPath (const XBOX::VFilePath& inValue) = 0;
 	virtual void							SetWebFolderPath (const XBOX::VString& inValue) = 0;
 	virtual void							SetIndexPageName (const XBOX::VString& inValue) = 0;
@@ -431,6 +438,8 @@ public:
 	/* Deal with opened socket descriptors (ie for publishing sockets already opened by AuthorizationHelpers with permissions. See AuthorizationHelpers.h) */
 	virtual XBOX::VError					SetListeningSocketDescriptor (sLONG inSocketDescriptor) = 0;
 	virtual XBOX::VError					SetListeningSSLSocketDescriptor (sLONG inSSLSocketDescriptor) = 0;
+
+	virtual void							SetReuseAddressSocketOption (bool inValue) = 0;
 
 	virtual IHTTPServerProjectSettings *	GetSettings() const = 0;
 
@@ -539,10 +548,10 @@ public:
 };
 
 
-class IHTTPWebsocketHandler
+class IHTTPWebsocketHandler : public XBOX::IRefCountable
 {
 public:
-	virtual XBOX::VError					TreatNewConnection(IHTTPResponse* inResponse) = 0;
+
 
 	// closes the WebSocket: no more transmissions will be possible
 	virtual XBOX::VError					Close() = 0;
@@ -551,14 +560,47 @@ public:
 	// reads ioLength bytes from current frame and puts them into Data, ioLength is updated regarding
 	// the number of bytes actually read. IsTerminated is set when all the bytes of the curt msg have been read
 	// When IoLength is returned NULL, no data are available
-	virtual XBOX::VError					ReadMessage( void* inData, uLONG* ioLength, bool* outIsTerminated ) = 0;
+	virtual XBOX::VError					ReadMessage( void* inData, XBOX::VSize& ioLength, bool& outIsTerminated ) = 0;
 
 
 	// writes Length bytes to the Frame. IsTerminated specifies that the whole message has been compltely send
 	// to the Websocket object: in this case all the data have been physically sent when WriteMessage returns
 	virtual XBOX::VError					WriteMessage( const void* inData, XBOX::VSize inLength, bool inIsTerminated  ) = 0;
+
+	typedef enum WsState_enum
+	{
+		CONNECTING_STATE=0,
+		OPENED_STATE=1,
+		CLOSING_STATE=2,
+		CLOSED_STATE=3,
+	} WsState;
+
+	virtual	WsState							GetState() const = 0;
+
+
+protected:
+	XBOX::VTCPEndPoint*						fEndpt;
+	WsState									fState;
+
+	XBOX::VError							ReadBytes(void* inData, XBOX::VSize& ioLength, bool inExactly=false);
+
+	XBOX::VError							WriteBytes(const void* inData, XBOX::VSize inLength);
+
+	void									CreateAcceptString(const XBOX::VString& key, XBOX::VString& outAcceptString);
+
 };
 
+class IHTTPWebsocketServer : public IHTTPWebsocketHandler
+{
+public:
+	virtual XBOX::VError					TreatNewConnection(IHTTPResponse* inResponse) = 0;
+};
+
+class IHTTPWebsocketClient : public IHTTPWebsocketHandler
+{
+public:
+	virtual XBOX::VError					ConnectToServer(const XBOX::VURL& inUrl) = 0;
+};
 
 class CHTTPServer : public XBOX::CComponent
 {
@@ -568,7 +610,8 @@ public:
 	virtual IHTTPServerProject *			NewHTTPServerProject (const XBOX::VValueBag *inSettings, const XBOX::VString& inProjectFolderPath, bool inAppend = true) = 0;
 	virtual XBOX::VError					RemoveHTTPServerProject (IHTTPServerProject *inHTTPServerProject) = 0;
 	virtual XBOX::VError					AppendHTTPServerProject (IHTTPServerProject *inHTTPServerProject) = 0;
-	virtual IHTTPWebsocketHandler *			NewHTTPWebsocketHandler() = 0;
+	virtual IHTTPWebsocketServer*			NewHTTPWebsocketServerHandler() = 0;
+	virtual IHTTPWebsocketClient*			NewHTTPWebsocketClientHandler() = 0;
 	virtual void							SetRequestLogger (IRequestLogger *inRequestLogger) = 0;
 
 	virtual XBOX::VError					StopConnectionHandler (XBOX::VTaskID nTaskID) = 0;

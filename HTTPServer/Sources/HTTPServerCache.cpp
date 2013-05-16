@@ -451,7 +451,7 @@ bool VCacheManager::_MakeRoom()
 						We have average number of loads per CachedObjects.
 						Let's delete all the objects that are less loaded than this value
 					*/  
-					if (cachedObject->Expired() || (cachedObject->GetNbLoads() < nbLoadsAverage) || (cachedObject->GetSize() > fCachedObjectMaxSize))
+					if (cachedObject->Expired() || (cachedObject->GetNbLoads() <= nbLoadsAverage) || (cachedObject->GetSize() > fCachedObjectMaxSize))
 					{
 						fCurrentSize -= cachedObject->GetSize();
 						fNbLoads -= cachedObject->GetNbLoads();
@@ -464,6 +464,9 @@ bool VCacheManager::_MakeRoom()
 					if (fCurrentSize < (fCacheMaxSize / 2))
 						break;
 				}
+
+				if (fCurrentSize > (fCacheMaxSize / 2)) // YT 12-Mar-2013 - ACI0080851
+					++nbLoadsAverage;
 			}
 			isOK = true;
 		}

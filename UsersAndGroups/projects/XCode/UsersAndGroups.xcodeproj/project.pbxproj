@@ -31,6 +31,8 @@
 		F45A280F113EBFA600A0C014 /* XMLDebug.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F45A2746113EBE6200A0C014 /* XMLDebug.framework */; };
 		F45BF04613BCC1DF00E94338 /* JsUAG.cpp in Sources */ = {isa = PBXBuildFile; fileRef = F45BF04413BCC1DF00E94338 /* JsUAG.cpp */; };
 		F45BF04713BCC1DF00E94338 /* JsUAG.cpp in Sources */ = {isa = PBXBuildFile; fileRef = F45BF04413BCC1DF00E94338 /* JsUAG.cpp */; };
+		F470F67116D4EC1800DDD38D /* DB4DDebug.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F47E9D9E16D4DBB400079133 /* DB4DDebug.framework */; };
+		F47E9DA916D4DBCD00079133 /* DB4DDebug.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F47E9D9C16D4DBB400079133 /* DB4DDebug.framework */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -181,6 +183,34 @@
 			remoteGlobalIDString = F9D1B73112436DB500E98EC6;
 			remoteInfo = "KernelIPC x64 BSD";
 		};
+		F47E9D9B16D4DBB400079133 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = F47E9D9616D4DBB300079133 /* DB4D.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = F48599D716D4C533005D43A1;
+			remoteInfo = DB4D;
+		};
+		F47E9D9D16D4DBB400079133 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = F47E9D9616D4DBB300079133 /* DB4D.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = F48599F416D4C637005D43A1;
+			remoteInfo = "DB4D x86_64";
+		};
+		F47E9DA416D4DBBC00079133 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = F47E9D9616D4DBB300079133 /* DB4D.xcodeproj */;
+			proxyType = 1;
+			remoteGlobalIDString = F48599D616D4C533005D43A1;
+			remoteInfo = DB4D;
+		};
+		F47E9DA616D4DBC000079133 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = F47E9D9616D4DBB300079133 /* DB4D.xcodeproj */;
+			proxyType = 1;
+			remoteGlobalIDString = F48599E916D4C637005D43A1;
+			remoteInfo = "DB4D x86_64";
+		};
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -236,6 +266,7 @@
 		F45BF04413BCC1DF00E94338 /* JsUAG.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = JsUAG.cpp; path = ../../Sources/JsUAG.cpp; sourceTree = SOURCE_ROOT; };
 		F45BF04513BCC1DF00E94338 /* JsUAG.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = JsUAG.h; path = ../../Sources/JsUAG.h; sourceTree = SOURCE_ROOT; };
 		F47C3D740E66A78F007448A6 /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		F47E9D9616D4DBB300079133 /* DB4D.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = DB4D.xcodeproj; path = ../../../DB4D/projects/Xcode/DB4D.xcodeproj; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -243,6 +274,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				F470F67116D4EC1800DDD38D /* DB4DDebug.framework in Frameworks */,
 				54DFEC5C13815B61002B85BE /* 4DJavaScript.framework in Frameworks */,
 				F437D03B113EC62A009FE5D8 /* KernelIPCDebug.framework in Frameworks */,
 				F437D03A113EC625009FE5D8 /* KernelDebug.framework in Frameworks */,
@@ -261,6 +293,7 @@
 				F45A27F8113EBF5E00A0C014 /* KernelIPCDebug.framework in Frameworks */,
 				F45A27F5113EBF5A00A0C014 /* KernelDebug.framework in Frameworks */,
 				853E53930FCC2C360082B740 /* CoreFoundation.framework in Frameworks */,
+				F47E9DA916D4DBCD00079133 /* DB4DDebug.framework in Frameworks */,
 				853E53C20FCC2C610082B740 /* System.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -360,6 +393,7 @@
 		F439E3F50D51DECE00F55316 /* Dependencies */ = {
 			isa = PBXGroup;
 			children = (
+				F47E9D9616D4DBB300079133 /* DB4D.xcodeproj */,
 				54DFEC18138159F1002B85BE /* JavaScript.xcodeproj */,
 				853E53E90FCC2D440082B740 /* XML.xcodeproj */,
 				853E52AA0FCBE5620082B740 /* KernelIPC.xcodeproj */,
@@ -394,6 +428,15 @@
 			name = Resources;
 			sourceTree = "<group>";
 		};
+		F47E9D9716D4DBB300079133 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				F47E9D9C16D4DBB400079133 /* DB4DDebug.framework */,
+				F47E9D9E16D4DBB400079133 /* DB4DDebug.framework */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -409,6 +452,7 @@
 			buildRules = (
 			);
 			dependencies = (
+				F47E9DA716D4DBC000079133 /* PBXTargetDependency */,
 				F45A27FD113EBF8000A0C014 /* PBXTargetDependency */,
 				F45A27FF113EBF8400A0C014 /* PBXTargetDependency */,
 				F45A2801113EBF8700A0C014 /* PBXTargetDependency */,
@@ -431,6 +475,7 @@
 			buildRules = (
 			);
 			dependencies = (
+				F47E9DA516D4DBBC00079133 /* PBXTargetDependency */,
 				F45A27ED113EBF3D00A0C014 /* PBXTargetDependency */,
 				F45A27F1113EBF4600A0C014 /* PBXTargetDependency */,
 				F45A27F3113EBF4C00A0C014 /* PBXTargetDependency */,
@@ -464,6 +509,10 @@
 			projectDirPath = "";
 			projectReferences = (
 				{
+					ProductGroup = F47E9D9716D4DBB300079133 /* Products */;
+					ProjectRef = F47E9D9616D4DBB300079133 /* DB4D.xcodeproj */;
+				},
+				{
 					ProductGroup = 54DFEC19138159F1002B85BE /* Products */;
 					ProjectRef = 54DFEC18138159F1002B85BE /* JavaScript.xcodeproj */;
 				},
@@ -492,14 +541,16 @@
 		54DFEC1E138159F1002B85BE /* 4DJavaScript.framework */ = {
 			isa = PBXReferenceProxy;
 			fileType = wrapper.framework;
-			path = 4DJavaScript.framework;
+			name = 4DJavaScript.framework;
+			path = 4DJavaScriptDebug.framework;
 			remoteRef = 54DFEC1D138159F1002B85BE /* PBXContainerItemProxy */;
 			sourceTree = BUILT_PRODUCTS_DIR;
 		};
 		54DFEC20138159F1002B85BE /* 4DJavaScript.framework */ = {
 			isa = PBXReferenceProxy;
 			fileType = wrapper.framework;
-			path = 4DJavaScript.framework;
+			name = 4DJavaScript.framework;
+			path = 4DJavaScriptDebug.framework;
 			remoteRef = 54DFEC1F138159F1002B85BE /* PBXContainerItemProxy */;
 			sourceTree = BUILT_PRODUCTS_DIR;
 		};
@@ -578,6 +629,20 @@
 			fileType = wrapper.framework;
 			path = KernelIPCDebug.framework;
 			remoteRef = F45FADD312B8F3BB007B551A /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		F47E9D9C16D4DBB400079133 /* DB4DDebug.framework */ = {
+			isa = PBXReferenceProxy;
+			fileType = wrapper.framework;
+			path = DB4DDebug.framework;
+			remoteRef = F47E9D9B16D4DBB400079133 /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		F47E9D9E16D4DBB400079133 /* DB4DDebug.framework */ = {
+			isa = PBXReferenceProxy;
+			fileType = wrapper.framework;
+			path = DB4DDebug.framework;
+			remoteRef = F47E9D9D16D4DBB400079133 /* PBXContainerItemProxy */;
 			sourceTree = BUILT_PRODUCTS_DIR;
 		};
 /* End PBXReferenceProxy section */
@@ -668,6 +733,16 @@
 			isa = PBXTargetDependency;
 			name = "KernelIPC x64";
 			targetProxy = F45A2800113EBF8700A0C014 /* PBXContainerItemProxy */;
+		};
+		F47E9DA516D4DBBC00079133 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			name = DB4D;
+			targetProxy = F47E9DA416D4DBBC00079133 /* PBXContainerItemProxy */;
+		};
+		F47E9DA716D4DBC000079133 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			name = "DB4D x86_64";
+			targetProxy = F47E9DA616D4DBC000079133 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 

@@ -266,7 +266,7 @@ public:
 #if debuglr
 	virtual	sLONG		Retain(const char* DebugInfo = 0) const
 	{
-		return IRefCountable::Retain(DebugInfo);
+		return IDebugRefCountable::Retain(DebugInfo);
 	}
 
 	virtual	sLONG		Release(const char* DebugInfo = 0) const
@@ -275,7 +275,7 @@ public:
 		{
 			sLONG n = 1; // put a break here
 		}
-		return IRefCountable::Release(DebugInfo);
+		return IDebugRefCountable::Release(DebugInfo);
 	}
 #endif
 

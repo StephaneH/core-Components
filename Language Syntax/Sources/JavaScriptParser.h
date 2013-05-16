@@ -39,32 +39,29 @@ private:
 	typedef int ParsingErrorException;
 	const ParsingErrorException kParsingError;
 
-	#if _DEBUG
-		// The VJavaScriptSyntax constructor has friend acess to the JavaScriptLexer
-		// class so that it can call the Test static function to do unit testing.
-		friend class VJavaScriptSyntax;
-		static void Test( void );
-	#endif
-
 	JavaScriptLexer *fLexer;
 	class SuggestionList *fSuggestions;
 	ISymbolTable *fSymbolTable;
 	std::vector<Symbols::ISymbol *> fCompletionSymbolList, fCompletionSymbolListBackup;
 	Symbols::ISymbol *fCompletionSymbol, *fCompletionSymbolBackup, *fContextSymbol, *fEntityCompletionSymbol;
 	Symbols::IFile *fContextFile;
-	void *fSyntaxCheckCookie;
 
 	// This delegate is used for error reporting, and it is not a pointer that we own
 	JavaScriptParserDelegate *fDelegate;
 	bool fWasError;
+	XBOX::VFilePath fFilePath;
 
 	// NOTE: ThrowError will actually throw a C++ exception, so callers are expected to
 	// have a C++ exception handler on their call stack to handle it.  Nothing should 
 	// ever generate an unhandled exception.
-	void ThrowError( JavaScriptError::Code code ) { fWasError = true;  if (fDelegate) fDelegate->Error( code, 
-																							fLexer->GetCurrentLineNumber(), 
-																							fLexer->GetCurrentCharacterOffset(),
-																							fSyntaxCheckCookie); throw kParsingError;}
+	void ThrowError(const VString& inMessage)
+	{
+		fWasError = true;
+		if (fDelegate)
+			fDelegate->Error( fFilePath, fLexer->GetCurrentLineNumber(), fLexer->GetCurrentCharacterOffset(), inMessage );
+		
+		throw kParsingError;
+	}
 
 	void SetCompletionSymbol(Symbols::ISymbol *inCompletionSymbol)
 	{ 
@@ -236,9 +233,7 @@ public:
 	JavaScriptParser();
 	virtual ~JavaScriptParser();
 
-	JavaScriptAST::Node *GetAST( VString *inInput, void *inCookie = NULL );
-	bool ParseDeclarations( VString *inInput, ISymbolTable *inTable, Symbols::IFile *inOwningFile, void *inCookie = NULL );
-	bool CheckSyntax( VString *inInput, void *inCookie = NULL );
+	JavaScriptAST::Node *GetAST( VFilePath inFilePath, VString *inInput, bool& outError );
 	void GetSuggestions( VString *inInput, SuggestionList *inSuggestions, Symbols::ISymbol *inContext, Symbols::IFile *inContextFile, ISymbolTable *inTable = NULL );
 	void AssignDelegate( JavaScriptParserDelegate *del ) { xbox_assert( !del || !fDelegate );  fDelegate = del; }
 

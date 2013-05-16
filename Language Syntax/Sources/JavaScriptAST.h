@@ -16,22 +16,10 @@
 #ifndef _JAVA_SCRIPT_AST_H_
 #define _JAVA_SCRIPT_AST_H_
 
-namespace JavaScriptError {
-	typedef enum Code {
-		kNoError,
-		kSyntaxError,
-		kExpectedLiteral,
-		kExpectedIdentifier,
-		kIllegalLHS,
-	} Code;
-}
-
 class JavaScriptParserDelegate {
 public:
-	virtual void Error( JavaScriptError::Code code, sLONG line, sLONG offset, void *cookie ) = 0;
-	virtual void BlockOpener( sLONG line, sLONG offset, void *cookie ) = 0;
-	virtual void BlockCloser( sLONG line, sLONG offset, void *cookie ) = 0;
-	virtual Symbols::ISymbol *GetDeclarationContext( void *cookie ) = 0;
+	virtual void Error( XBOX::VFilePath, sLONG inLine, sLONG inOffset, const XBOX::VString& inMessage ) = 0;
+	virtual Symbols::ISymbol *GetDeclarationContext( ) = 0;
 };
 
 namespace JavaScriptAST {
@@ -43,8 +31,7 @@ namespace JavaScriptAST {
 	// a subclass of the visitor to perform actual operations.
 	class Visitor {
 	public:
-		static Visitor *GetDeclarationParser( ISymbolTable *inSymTable, Symbols::IFile *inOwningFile, JavaScriptParserDelegate *inDelegate = NULL, void *inDelegateCookie = NULL );
-//		static Visitor *GetCallGraphWalker();	// See information in .cpp file for why this is commented out
+		static Visitor *GetDeclarationParser( ISymbolTable *inSymTable, Symbols::IFile *inOwningFile, JavaScriptParserDelegate *inDelegate = NULL );
 
 	protected:
 		Visitor() { }
@@ -672,6 +659,7 @@ namespace JavaScriptAST {
 		}
 
 		Node *GetLHS() const { return fLHS; }
+        FunctionCallArgumentsNode* GetArgs() { return fArgs; }
 
 	protected:
 		Node *fLHS;

@@ -28,7 +28,8 @@ typedef struct {
 	uLONG fLineKindEndsBlocks	: 8;
 	uLONG fEndsWithOpenComment	: 1;
 	uLONG fOpenStringType		: 2;
-	uLONG fUnused				: 13;
+	uLONG fIsSingleLineComment	: 1;
+	uLONG fUnused				: 12;
 	
 } JavaScriptSyntaxLineKind;
 
@@ -69,6 +70,7 @@ private:
 	bool fAutoInsertBlock;
 	bool fInsertSpaces;
 	sLONG fTabWidth;
+	bool fActiveBreakPoints;
 
 	void CleanTokens( std::vector< class ILexerToken * > &inTokens );
 
@@ -84,14 +86,6 @@ private:
 	void _SuggestSymbol(ISymbolTable *inSymTable, Symbols::ISymbol* inSymbol, const XBOX::VString& inContextName, std::vector< Completion >& inCompletions);
 	bool _AreExecutionContextCompatible(Symbols::IFile* inFile1, Symbols::IFile* inFile2);
 
-	#if _DEBUG
-		void RunUnitTests();
-		static void Test();
-	#endif
-
-	virtual void HandleCompileError( XBOX::VFilePath inFile, sLONG inLineNumber, sLONG inStatus, IDocumentParserManager::TaskCookie inCookie );
-	virtual void ParsingComplete( XBOX::VFilePath inFile, sLONG inStatus, IDocumentParserManager::TaskCookie inCookie );
-
 public:
 	VJavaScriptSyntax();
 	virtual ~VJavaScriptSyntax();
@@ -102,11 +96,9 @@ public:
 	virtual void SetTabWidth( sLONG inTabWidth ) {fTabWidth = inTabWidth;}
 	virtual sLONG GetTabWidth() const {return fTabWidth;}
 
-	virtual void Error( JavaScriptError::Code code, sLONG line, sLONG offset, void *cookie ) {}	// Unused now that we're using the parser manager
+	virtual void Error( XBOX::VFilePath, sLONG inLine, sLONG inOffset, const XBOX::VString& inMessage ) {}	// Unused now that we're using the parser manager
 	virtual void ParserOffsetChanged( sLONG offset, void *cookie ) { } 	// Unused now that we're using the parser manager
-	virtual void BlockOpener( sLONG line, sLONG offset, void *cookie ) {} 	// Unused now that we're using the parser manager
-	virtual void BlockCloser( sLONG line, sLONG offset, void *cookie ){}	// Unused now that we're using the parser manager
-	virtual Symbols::ISymbol *GetDeclarationContext( void *cookie );
+	virtual Symbols::ISymbol *GetDeclarationContext( );
 
 	virtual void SetSymbolTable( ISymbolTable *inTable ) { if (inTable) {inTable->Retain();} if (fSymTable) { fSymTable->Release(); } fSymTable = inTable; }
 
@@ -140,6 +132,8 @@ public:
 	virtual void RemoveBreakPoint( ICodeEditorDocument* inDocument, sLONG inLineNumber );
 	virtual bool GetBreakPoints( ICodeEditorDocument* inDocument, std::vector<sLONG>& outLineNumbers, std::vector<sWORD>& outIDs, std::vector<bool>& outDisabled );
 	virtual void UpdateBreakPointContent( ICodeEditorDocument* inDocument, sWORD inBreakID, const XBOX::VString& inNewLineContent );
+	virtual void SetBreakPointsActive( bool inActive ) { fActiveBreakPoints = inActive; }
+	virtual bool AreBreakPointsActive() { return fActiveBreakPoints; }
 	virtual void UpdateCompilerErrors( ICodeEditorDocument* inDocument );
 	virtual void GotoNextMethodError( ICodeEditorDocument* inDocument, bool inNext );
 	virtual void SwapAssignments( ICodeEditorDocument* inDocument, XBOX::VString& ioString );

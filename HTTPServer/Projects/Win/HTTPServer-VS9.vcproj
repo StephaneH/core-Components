@@ -580,10 +580,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\Sources\NameValueCollection.cpp"
-				>
-			</File>
-			<File
 				RelativePath="..\..\Sources\VAuthenticationManager.cpp"
 				>
 			</File>
@@ -593,10 +589,6 @@
 			</File>
 			<File
 				RelativePath="..\..\Sources\VDebugInfosHTTPRequestHandler.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\..\Sources\VHTMLForm.cpp"
 				>
 			</File>
 			<File
@@ -612,19 +604,7 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\Sources\VHTTPCookie.cpp"
-				>
-			</File>
-			<File
 				RelativePath="..\..\Sources\VHTTPError.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\..\Sources\VHTTPHeader.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\..\Sources\VHTTPMessage.cpp"
 				>
 			</File>
 			<File
@@ -782,10 +762,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\Headers\NameValueCollection.h"
-				>
-			</File>
-			<File
 				RelativePath="..\..\Headers\VAuthenticationManager.h"
 				>
 			</File>
@@ -795,10 +771,6 @@
 			</File>
 			<File
 				RelativePath="..\..\Headers\VDebugInfosHTTPRequestHandler.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\Headers\VHTMLForm.h"
 				>
 			</File>
 			<File
@@ -814,19 +786,7 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\Headers\VHTTPCookie.h"
-				>
-			</File>
-			<File
 				RelativePath="..\..\Headers\VHTTPError.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\Headers\VHTTPHeader.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\Headers\VHTTPMessage.h"
 				>
 			</File>
 			<File

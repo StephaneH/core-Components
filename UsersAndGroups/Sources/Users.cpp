@@ -122,18 +122,20 @@ VError UAGUser::RetainOwners(CUAGGroupVector& outgroups, bool oneLevelDeep)
 	VError err = VE_OK;
 	if (oneLevelDeep)
 	{
+		fUserRec->ResetAttributeValue("groups");
+		fUserRec->ResetAttributeValue("usergroups");
 		CDB4DEntityAttributeValue* xval = fUserRec->GetAttributeValue(L"groups", err);
 		if (xval != nil)
 		{
 			CDB4DBaseContext* context = fUserRec->GetContext();
-			CDB4DSelection* sel = xval->GetRelatedSelection();
+			CDB4DEntityCollection* sel = xval->GetRelatedSelection();
 			if (sel != nil)
 			{
-				sLONG nb = sel->CountRecordsInSelection(context);
+				sLONG nb = sel->GetLength(context);
 				outgroups.resize(nb, nil);
 				for (sLONG i = 0; i < nb && err == VE_OK; i++)
 				{
-					CDB4DEntityRecord* gowner = fDirectory->GetGroupModel()->LoadEntity(sel->GetSelectedRecordID(i+1, context), err, DB4D_Do_Not_Lock, context, false);
+					CDB4DEntityRecord* gowner = sel->LoadEntityRecord(i, context, err, DB4D_Do_Not_Lock);
 					if (gowner != nil)
 					{
 						CUAGGroup* group = new UAGGroup(fDirectory, gowner);
@@ -282,7 +284,7 @@ VError UAGUser::PutIntoGroup( CUAGGroup* group)
 		CDB4DEntityRecord* ugCouple = ug->Find("user.ID = :p1 and group.ID = :p2", fDirectory->GetDBContext(), err, &userID, &groupID);
 		if (ugCouple == nil)
 		{
-			ugCouple = ug->NewEntity(fDirectory->GetDBContext(), DB4D_Do_Not_Lock);
+			ugCouple = ug->NewEntity(fDirectory->GetDBContext());
 			ugCouple->SetAttributeValue("user", fUserRec);
 			ugCouple->SetAttributeValue("group", grouprec);
 			ugCouple->Save(0);
@@ -309,10 +311,10 @@ VError UAGUser::RemoveFromGroup( CUAGGroup* group)
 
 		fUserRec->GetAttributeValue("ID", err)->GetVValue()->GetString(userID);
 
-		CDB4DSelection* ugCouples = ug->Query("user.ID = :p1 and group.ID = :p2", fDirectory->GetDBContext(), err, &userID, &groupID);
+		CDB4DEntityCollection* ugCouples = ug->Query("user.ID = :p1 and group.ID = :p2", fDirectory->GetDBContext(), err, &userID, &groupID);
 		if (ugCouples != nil)
 		{
-			err = ugCouples->DeleteRecords(fDirectory->GetDBContext());
+			err = ugCouples->DeleteEntities(fDirectory->GetDBContext());
 			ugCouples->Release();
 		}
 	}
@@ -331,10 +333,10 @@ VError UAGUser::Drop()
 	VString userID;
 	fUserRec->GetAttributeValue("ID", err)->GetVValue()->GetString(userID);
 
-	CDB4DSelection* ugCouples = ug->Query("user.ID = :p1", fDirectory->GetDBContext(), err, &userID);
+	CDB4DEntityCollection* ugCouples = ug->Query("user.ID = :p1", fDirectory->GetDBContext(), err, &userID);
 	if (ugCouples != nil)
 	{
-		err = ugCouples->DeleteRecords(fDirectory->GetDBContext());
+		err = ugCouples->DeleteEntities(fDirectory->GetDBContext());
 		ugCouples->Release();
 	}
 

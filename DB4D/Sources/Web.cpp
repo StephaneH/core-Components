@@ -50,13 +50,18 @@ namespace rest
 	CREATE_BAGKEY_2(progressinfo, "$progressinfo");
 	CREATE_BAGKEY_2(stop, "$stop");
 	CREATE_BAGKEY_2(asArray, "$asArray");
+	CREATE_BAGKEY_2(noKey, "$noKey");
 	CREATE_BAGKEY_2(removeFromSet, "$removeFromSet");
+	CREATE_BAGKEY_2(removeRefOnly, "$removeRefOnly");
 	CREATE_BAGKEY_2(addToSet, "$addToSet");
 	CREATE_BAGKEY_2(queryLimit, "$queryLimit");
 	CREATE_BAGKEY_2(fromSel, "$fromSel");
 	CREATE_BAGKEY_2(keepSel, "$keepSel");
 	CREATE_BAGKEY_2(rawPict, "$rawPict");
 	CREATE_BAGKEY_2(findKey, "$findKey");
+	CREATE_BAGKEY_2(compute, "$compute");
+	CREATE_BAGKEY_2(logicOperator, "$logicOperator");
+	CREATE_BAGKEY_2(otherCollection, "$otherCollection");
 };
 
 
@@ -235,6 +240,7 @@ void RestTools::DeInit()
 	if (newwafkeepselptr != nil)
 		delete newwafkeepselptr;
 	QuickReleaseRefCountable(fUAGDirectory);
+	QuickReleaseRefCountable(selectedEntities);
 }
 
 
@@ -575,7 +581,7 @@ VError RestTools::CalculateDataURI(VString& outURI, const EntityModel* em, const
 	if (withquotes)
 		outURI.AppendUniChar('"');
 
-	outURI += L"/rest/";
+	outURI += L"/"+VDBMgr::GetManager()->GetRestPrefix()+"/";
 
 	VString entityname;
 	em->GetName(entityname);
@@ -613,7 +619,7 @@ VError RestTools::CalculateURI(VString& outURI, const EntityModel* em, const VSt
 	if (withquotes)
 		outURI.AppendUniChar('"');
 
-	outURI += L"/rest/$catalog/";
+	outURI += L"/"+VDBMgr::GetManager()->GetRestPrefix()+"/$catalog/";
 
 	VString entityname;
 	em->GetName(entityname);
@@ -651,27 +657,22 @@ VError RestTools::CalculateURI(VString& outURI, EntityRecord* erec, const Entity
 	if (withquotes)
 		outURI.AppendUniChar('"');
 
-	outURI += L"/rest/";
+	outURI += L"/"+VDBMgr::GetManager()->GetRestPrefix()+"/";
 
 	VString entityname;
 	erec->GetOwner()->GetName(entityname);
 	outURI += entityname;
 	outURI.AppendUniChar('(');
-	if (erec->GetOwner()->HasPrimKey())
+	VString skey;
+	erec->GetPrimKeyValue(skey, true);
+	if (forJSON)
 	{
-		VString skey;
-		erec->GetPrimKeyValue(skey, true);
-		if (forJSON)
-		{
-			VString skeyj;
-			skey.GetJSONString(skeyj);
-			outURI += skeyj;
-		}
-		else
-			outURI += skey;
+		VString skeyj;
+		skey.GetJSONString(skeyj);
+		outURI += skeyj;
 	}
 	else
-		outURI += ToString(erec->GetNum());
+		outURI += skey;
 	outURI.AppendUniChar(')');
 	if (attribute != nil)
 	{
@@ -722,7 +723,7 @@ VError RestTools::CalculateURI(VString& outURI, DataSet* inDataSet, const Entity
 
 	if (withquotes)
 		outURI.AppendUniChar('"');
-	outURI += L"/rest/";
+	outURI += L"/"+VDBMgr::GetManager()->GetRestPrefix()+"/";
 
 	VString tablename;
 	em->GetName(tablename);
@@ -962,15 +963,11 @@ VError RestTools::EntityRecordToJSON(EntityRecord* erec, EntityAttributeSortedSe
 
 		if (errToSend != nil)
 			PutJsonProperty(L"__ERROR", *errToSend, true);
+
+		if (!erec->IsNew())
 		{
 			VString skey;
-			if (em->HasPrimKey())
-			{
-				erec->GetPrimKeyValue(skey, true);
-			}
-			else
-				skey.FromLong(erec->GetNum());
-
+			erec->GetPrimKeyValue(skey, true);
 			PutJsonProperty(L"__KEY", skey, true);
 		}
 		
@@ -979,7 +976,7 @@ VError RestTools::EntityRecordToJSON(EntityRecord* erec, EntityAttributeSortedSe
 		sLONG nb = (sLONG)whichAttributes.size(), i = 1;
 		for (EntityAttributeSortedSelection::iterator cur = whichAttributes.begin(), end = whichAttributes.end(); cur != end && err == VE_OK; cur++, i++)
 		{
-			EntityAttribute* attribute = cur->fAttribute;
+			const EntityAttribute* attribute = cur->fAttribute;
 			if (attribute != nil)
 			{
 				PutJsonPropertyName(attribute->GetName());
@@ -1048,7 +1045,14 @@ VError RestTools::EntityRecordToJSON(EntityRecord* erec, EntityAttributeSortedSe
 								}
 								else
 								{
-									PutJsonPropertyValue(*cv);
+									if (attribute->isSimpleDate() && cv->GetValueKind() == VK_TIME)
+									{
+										VString dateString;
+										((VTime*)cv)->toSimpleDateString(dateString);
+										PutJsonPropertyValue(dateString);
+									}
+									else
+										PutJsonPropertyValue(*cv);
 								}
 							}
 						}
@@ -1082,12 +1086,7 @@ VError RestTools::EntityRecordToJSON(EntityRecord* erec, EntityAttributeSortedSe
 									VString uri;
 									CalculateURI(uri, subrec, nil, L"", true, true, true, true);
 									VString subkey;
-									if (submodel->HasPrimKey())
-									{
-										subrec->GetPrimKeyValue(subkey, true);
-									}
-									else
-										subkey.FromLong(subrec->GetNum());
+									subrec->GetPrimKeyValue(subkey, true);
 									PutDeferred(uri, false, nil, &subkey);
 								}
 							}
@@ -1097,7 +1096,7 @@ VError RestTools::EntityRecordToJSON(EntityRecord* erec, EntityAttributeSortedSe
 					case eav_selOfSubentity:
 						{
 							EntityModel* submodel = val->getRelatedEntityModel();
-							Selection* sel = val->getRelatedSelection();
+							EntityCollection* sel = val->getRelatedSelection();
 							if (sel == nil || submodel == nil)
 								PutText(L"null");
 							else
@@ -1135,7 +1134,7 @@ VError RestTools::EntityRecordToJSON(EntityRecord* erec, EntityAttributeSortedSe
 					case eav_composition:
 						{
 							EntityModel* submodel = val->getRelatedEntityModel();
-							Selection* sel = val->getRelatedSelection();
+							EntityCollection* sel = val->getRelatedSelection();
 							if (sel == nil || submodel == nil)
 								PutText(L"null");
 							else
@@ -1180,18 +1179,18 @@ VError RestTools::EntityRecordToJSON(EntityRecord* erec, EntityAttributeSortedSe
 }
 
 
-VError RestTools::SelToJSON(EntityModel* em, Selection* inSel, EntityAttributeSortedSelection& whichAttributes, EntityAttributeSelection* expandAttributes, 
+VError RestTools::SelToJSON(EntityModel* em, EntityCollection* inSel, EntityAttributeSortedSelection& whichAttributes, EntityAttributeSelection* expandAttributes, 
 							EntityAttributeSortedSelection* sortingAttributes, bool withheader, sLONG from, sLONG count, DataSet* inDataSet, bool dejatriee, bool isAComposition)
 {
 	VError err = VE_OK;
-	Selection* trueSel = dejatriee ? RetainRefCountable(inSel) : inSel->SortSel(err, em, sortingAttributes, fContext, nil);
+	EntityCollection* trueSel = dejatriee ? RetainRefCountable(inSel) : inSel->SortSel(err, sortingAttributes, fContext, nil);
 	if (err == VE_OK && trueSel != nil)
 	{
 		inSel = trueSel;
 		VStream* output = fOutput;
 		if (from < 0)
 			from = 0;
-		sLONG qt = inSel->GetQTfic();
+		sLONG qt = inSel->GetLength(fContext);
 		if (count < 0)
 			count = qt;
 		sLONG lastrow = from+count-1;
@@ -1277,7 +1276,7 @@ VError RestTools::SelToJSON(EntityModel* em, Selection* inSel, EntityAttributeSo
 			PutJsonQueryPlan();
 			if (withheader)
 				PutJsonProperty(L"__entityModel", em->GetName(), true);
-			PutJsonProperty(L"__COUNT", inSel->GetQTfic(), true);
+			PutJsonProperty(L"__COUNT", inSel->GetLength(fContext), true);
 			PutJsonProperty(L"__SENT", lastrow-from+1, true);
 			PutJsonProperty(L"__FIRST", from, true);
 			PutJsonPropertyName(L"__ENTITIES");
@@ -1285,21 +1284,27 @@ VError RestTools::SelToJSON(EntityModel* em, Selection* inSel, EntityAttributeSo
 
 		PutJsonBeginArray();
 
-		SelectionIterator itersel(inSel);
-		sLONG lastrec = itersel.SetCurrentRecord(lastrow+1);
-		sLONG currec = itersel.SetCurrentRecord(from);
-		while (currec != -1 && currec != lastrec && err == VE_OK)
+		for (sLONG i = from; i <= lastrow; ++i)
 		{
-			EntityRecord* erec = em->LoadEntityRecord(currec, err, DB4D_Do_Not_Lock, fContext, false);
+			EntityRecord* erec = inSel->LoadEntity(i, fContext, err, DB4D_Do_Not_Lock);
 			if (erec != nil)
 			{
 				err = EntityRecordToJSON(erec, whichAttributes, expandAttributes, sortingAttributes, false);
+				if (i != lastrow)
+					PutJsonSeparator();
+				NewLine();
+				erec->Release();
 			}
-			currec = itersel.NextRecord();
-			if (erec != nil && currec != -1 && currec != lastrec)
-				PutJsonSeparator();
-			NewLine();
-			QuickReleaseRefCountable(erec);
+			else
+			{
+				PutJsonBeginObject(true);
+				PutJsonPropertyName("__STAMP");
+				PutJsonPropertyLong(0);
+				PutJsonEndObject();
+				if (i != lastrow)
+					PutJsonSeparator();
+
+			}
 		}
 
 		PutJsonEndArray();
@@ -1337,15 +1342,10 @@ VError RestTools::EntityRecordToBag(VValueBag& outBag, EntityRecord* erec, Entit
 	{
 		if (errToSend != nil)
 			outBag.SetLong(L"__ERROR", *errToSend);
-		if (erec->GetNum() >= 0)
+		if (!erec->IsNew())
 		{
 			VString skey;
-			if (em->HasPrimKey())
-			{
-				erec->GetPrimKeyValue(skey, true);
-			}
-			else
-				skey.FromLong(erec->GetNum());
+			erec->GetPrimKeyValue(skey, true);
 			outBag.SetString(d4::__KEY, skey);
 			outBag.SetLong(d4::__STAMP, erec->GetModificationStamp());
 		}
@@ -1353,7 +1353,7 @@ VError RestTools::EntityRecordToBag(VValueBag& outBag, EntityRecord* erec, Entit
 		sLONG nb = (sLONG)whichAttributes.size(), i = 1;
 		for (EntityAttributeSortedSelection::iterator cur = whichAttributes.begin(), end = whichAttributes.end(); cur != end && err == VE_OK; cur++, i++)
 		{
-			EntityAttribute* attribute = cur->fAttribute;
+			const EntityAttribute* attribute = cur->fAttribute;
 			if (attribute != nil)
 			{
 				bool restrictValue = false;
@@ -1420,7 +1420,14 @@ VError RestTools::EntityRecordToBag(VValueBag& outBag, EntityRecord* erec, Entit
 								}
 								else
 								{
-									outBag.SetAttribute(attribute->GetName(), (VValueSingle*)cv->Clone());
+									if (attribute->isSimpleDate() && cv->GetValueKind() == VK_TIME)
+									{
+										VString dateString;
+										((VTime*)cv)->toSimpleDateString(dateString);
+										outBag.SetAttribute(attribute->GetName(), (VValueSingle*)dateString.Clone());
+									}
+									else
+										outBag.SetAttribute(attribute->GetName(), (VValueSingle*)cv->Clone());
 								}
 							}
 						}
@@ -1460,12 +1467,7 @@ VError RestTools::EntityRecordToBag(VValueBag& outBag, EntityRecord* erec, Entit
 									VString uri;
 									CalculateURI(uri, subrec, nil, L"", false, false, true, false);
 									VString subkey;
-									if (submodel->HasPrimKey())
-									{
-										subrec->GetPrimKeyValue(subkey, true);
-									}
-									else
-										subkey.FromLong(subrec->GetNum());
+									subrec->GetPrimKeyValue(subkey, true);
 									VValueBag* deferredbag = PutDeferred(err, uri, false, nil, &subkey);
 									if (!fToXML)
 										deferredbag->SetBool(____objectunic, true);
@@ -1479,7 +1481,7 @@ VError RestTools::EntityRecordToBag(VValueBag& outBag, EntityRecord* erec, Entit
 					case eav_selOfSubentity:
 						{
 							EntityModel* submodel = val->getRelatedEntityModel();
-							Selection* sel = val->getRelatedSelection();
+							EntityCollection* sel = val->getRelatedSelection();
 							if (sel != nil && submodel != nil)
 							{
 								EntityAttributeItem* eai = nil;
@@ -1523,7 +1525,7 @@ VError RestTools::EntityRecordToBag(VValueBag& outBag, EntityRecord* erec, Entit
 					case eav_composition:
 						{
 							EntityModel* submodel = val->getRelatedEntityModel();
-							Selection* sel = val->getRelatedSelection();
+							EntityCollection* sel = val->getRelatedSelection();
 							if (sel != nil && submodel != nil)
 							{
 								EntityAttributeItem* eai = nil;
@@ -1563,19 +1565,19 @@ VError RestTools::EntityRecordToBag(VValueBag& outBag, EntityRecord* erec, Entit
 }
 
 
-VError RestTools::SelToBag(VValueBag& outBag, EntityModel* em, Selection* inSel, EntityAttributeSortedSelection& whichAttributes, EntityAttributeSelection* expandAttributes, 
+VError RestTools::SelToBag(VValueBag& outBag, EntityModel* em, EntityCollection* inSel, EntityAttributeSortedSelection& whichAttributes, EntityAttributeSelection* expandAttributes, 
 						   EntityAttributeSortedSelection* sortingAttributes, bool withheader, sLONG from, sLONG count, DataSet* inDataSet, bool dejatriee, 
 						   bool isAComposition, const VString* arrayname)
 {
 	VError err = VE_OK;
-	Selection* trueSel = dejatriee ? RetainRefCountable(inSel) : inSel->SortSel(err, em, sortingAttributes, fContext, nil);
+	EntityCollection* trueSel = dejatriee ? RetainRefCountable(inSel) : inSel->SortSel(err, sortingAttributes, fContext, nil);
 	if (err == VE_OK && trueSel != nil)
 	{
 		inSel = trueSel;
 
 		if (from < 0)
 			from = 0;
-		sLONG qt = inSel->GetQTfic();
+		sLONG qt = inSel->GetLength(fContext);
 		if (count < 0)
 			count = qt;
 		sLONG lastrow = from+count-1;
@@ -1603,7 +1605,7 @@ VError RestTools::SelToBag(VValueBag& outBag, EntityModel* em, Selection* inSel,
 
 			if (withheader)
 				outBag.SetString(L"__entityModel", em->GetName());
-			outBag.SetLong(L"__COUNT", inSel->GetQTfic());
+			outBag.SetLong(L"__COUNT", inSel->GetLength(fContext));
 			outBag.SetLong(L"__SENT", lastrow-from+1);
 			outBag.SetLong(L"__FIRST", from);
 		}
@@ -1613,12 +1615,9 @@ VError RestTools::SelToBag(VValueBag& outBag, EntityModel* em, Selection* inSel,
 			fWithQueryPlan = false;
 		}
 
-		SelectionIterator itersel(inSel);
-		sLONG lastrec = itersel.SetCurrentRecord(lastrow+1);
-		sLONG currec = itersel.SetCurrentRecord(from);
-		while (currec != -1 && currec != lastrec && err == VE_OK)
+		for (sLONG i = from; i <= lastrow; ++i)
 		{
-			EntityRecord* erec = em->LoadEntityRecord(currec, err, DB4D_Do_Not_Lock, fContext, false);
+			EntityRecord* erec = inSel->LoadEntity(i, fContext, err, DB4D_Do_Not_Lock);
 			if (erec != nil)
 			{
 				VValueBag* oneEntityBag = new VValueBag();
@@ -1633,7 +1632,16 @@ VError RestTools::SelToBag(VValueBag& outBag, EntityModel* em, Selection* inSel,
 				}
 				oneEntityBag->Release();
 			}
-			currec = itersel.NextRecord();
+			else
+			{
+				VValueBag* oneEntityBag = new VValueBag();
+				oneEntityBag->SetLong("__STAMP", 0);
+				if (isAComposition && arrayname != nil)
+					outBag.AddElement(*arrayname, oneEntityBag);
+				else
+					outBag.AddElement(d4::__ENTITIES, oneEntityBag);
+				oneEntityBag->Release();
+			}
 		}
 
 		fWithQueryPath = oldfWithQueryPath;
@@ -1752,7 +1760,7 @@ VError RestTools::PutHTMLString(const VString& inText)
 }
 
 
-VError RestTools::SelToHTML(EntityModel* em, Selection* inSel, EntityAttributeSortedSelection& whichFields, bool withheader, sLONG from, sLONG count, DataSet* inDataSet)
+VError RestTools::SelToHTML(EntityModel* em, EntityCollection* inSel, EntityAttributeSortedSelection& whichFields, bool withheader, sLONG from, sLONG count, DataSet* inDataSet)
 {
 	VError err = VE_OK;
 	return err;
@@ -1782,7 +1790,7 @@ VError RestTools::ImportEntitiesSel(EntityModel* em, const VValueBag& bagData, V
 	return err;
 }
 
-VError RestTools::ImportEntityRecord(EntityModel* em, const VValueBag& bagData, VValueBag& bagResult, EntityAttributeValue* parent, bool onlyone, Field* relDestField, VValueSingle* relValue, bool firstLevel)
+VError RestTools::ImportEntityRecord(EntityModel* em, const VValueBag& bagData, VValueBag& bagResult, EntityAttributeValue* parent, bool onlyone, const EntityAttribute* relDestAtt, EntityAttributeValue* relValue, bool firstLevel)
 {
 	VError errglob = VE_OK;
 	VError err = VE_OK;
@@ -1790,7 +1798,6 @@ VError RestTools::ImportEntityRecord(EntityModel* em, const VValueBag& bagData, 
 	StErrorContextInstaller errs(false);
 
 	bool newrec = true;
-	sLONG recid = -3, recIDByKey = -3;
 	sLONG stamp = 0;
 	EntityRecord* erec = nil;
 	bool toutok = true, mustsave = true;
@@ -1800,109 +1807,17 @@ VError RestTools::ImportEntityRecord(EntityModel* em, const VValueBag& bagData, 
 	bagData.GetLong(d4::__STAMP, stamp);
 
 	VString skey;
-	if (bagData.GetString(d4::__KEY, skey))
+	if (bagData.GetString(d4::__KEY, skey) && !skey.IsEmpty())
 	{
-		if (em->HasPrimaryKey())
-		{
-			sLONG dejarecid = em->getEntityNumWithPrimKey(skey, fContext, err);
-			if (dejarecid != -1)
-			{
-				recid = dejarecid;
-				newrec = false;
-			}
-		}
-		else
-		{
-			recid = skey.GetLong();
-			newrec = false;
-		}
-	}
-	
-	if (newrec)
-	{
-		sLONG xrecid;
-		if (bagData.GetLong(d4::__RECID, xrecid))
-		{
-			recid = xrecid;
-			newrec = false;
-		}
-		else if (!firstLevel)
-		{
-			StErrorContextInstaller errs(false);
-			sLONG dejarecid = em->getEntityNumWithPrimKey(bagData, fContext, err, false);
-			if (dejarecid == -1)
-			{
-				if (err == VE_DB4D_PRIMKEY_MALFORMED)
-					err = VE_OK;
-				bool enough = true;
-				const IdentifyingAttributeCollection* idents = em->GetIdentifyingAtts();
-				if (!idents->empty())
-				{
-					SearchTab xquery(em->GetMainTable());
-					bool first = true;
-					for (IdentifyingAttributeCollection::const_iterator cur = idents->begin(), end = idents->end(); cur != end; cur++)
-					{
-						const EntityAttribute* att = cur->fAtt;
-						const VValueSingle* cv = bagData.GetAttribute(att->GetName());
-						if (cv != nil)
-						{
-							if (first)
-								first = false;
-							else
-								xquery.AddSearchLineBoolOper(DB4D_And);
-							xquery.AddSearchLineSimple(em->GetMainTable()->GetNum(), att->GetFieldPos(), DB4D_Like, cv);
-						}
-						else
-						{
-							if (!cur->fOptionnel)
-							{
-								enough = false;
-								break;
-							}
-						}
-					}
-					if (enough)
-					{
-						StErrorContextInstaller errs(false);
-						Selection* sel = em->ExecuteQuery(&xquery, fContext, nil,  GetProgressIndicator(), DB4D_Do_Not_Lock);
-						if (sel != nil && !sel->IsEmpty())
-						{
-							recid = sel->GetFic(0);
-							newrec = false;
-						}
-						QuickReleaseRefCountable(sel);
-					}
-				}
-			}
-			else
-			{
-				recid = dejarecid;
-				newrec = false;
-			}
-		}
+		newrec = false;
+		erec = em->findEntityWithPrimKey(skey, fContext, err, DB4D_Do_Not_Lock);
 	}
 
 	if (newrec)
-		erec = em->NewEntity(fContext, DB4D_Do_Not_Lock);
-	else
-		erec = em->LoadEntityRecord(recid, err, DB4D_Do_Not_Lock, fContext, false);
+		erec = em->newEntity(fContext);
 
-	if (erec != nil)
+	if (erec != nil && err == VE_OK)
 	{
-		EntityRecord* oldrec = nil;
-		if (!newrec)
-			oldrec = em->LoadEntityRecord(recid, err, DB4D_Do_Not_Lock, fContext, false);
-		
-		if (oldrec != nil)
-		{
-			const EntityAttributeCollection& allAtt = em->getAllAttributes(); 
-			for (EntityAttributeCollection::const_iterator cur = allAtt.begin(), end = allAtt.end(); cur != end; cur++)
-			{
-				const EntityAttribute* att = *cur;
-				oldrec->getAttributeValue(att, err, fContext, false); // pour forcer a calculer la valeur avant changement
-			}
-		}
-
 		for (VIndex i = 1, nb = bagData.GetAttributesCount(); i <= nb; i++)
 		{
 			VString attname;
@@ -1985,11 +1900,11 @@ VError RestTools::ImportEntityRecord(EntityModel* em, const VValueBag& bagData, 
 									EntityAttributeValue* eVal = erec->getAttributeValue(att, err, fContext);
 									if (eVal != nil)
 									{
-										Selection* sel = eVal->getRelatedSelection();
+										EntityCollection* sel = eVal->getRelatedSelection();
 										EntityModel* relEm = eVal->getRelatedEntityModel();
 										if (sel != nil && relEm != nil)
 										{
-											err = sel->DeleteRecords(fContext, nil, nil, nil, nil, relEm);
+											err = sel->DropEntities(fContext, nil, nil);
 											if (err == VE_OK)
 											{
 												const VBagArray* records = bagData.GetElements(attname);
@@ -1997,18 +1912,18 @@ VError RestTools::ImportEntityRecord(EntityModel* em, const VValueBag& bagData, 
 												if (records != nil)
 												{
 													EntityRelation* rel = att->GetRelPath();
-													Field* destfield = rel->GetDestField();
-													Field* sourcefield = rel->GetSourceField();
+													const EntityAttribute* destatt = rel->GetDestAtt();
+													const EntityAttribute* sourceatt = rel->GetSourceAtt();
 
 													VError err2 = VE_OK;
-													VValueSingle* cv = erec->getFieldValue(sourcefield, err);
+													EntityAttributeValue* cv = erec->getAttributeValue(sourceatt, err, fContext);
 
 													for (VIndex i = 1, nbrecs = records->GetCount(); i <= nbrecs && err == VE_OK; i++)
 													{
 														BagElement outRecBag(bagResult, d4::__ENTITIES);
 														const VValueBag* recbag = records->GetNth(i);
 														EntityRecord* subrec = nil;
-														err = ImportEntityRecord(relEm, *recbag, *outRecBag, eVal, false, destfield, cv, false);
+														err = ImportEntityRecord(relEm, *recbag, *outRecBag, eVal, false, destatt, cv, false);
 													}
 												}
 
@@ -2031,9 +1946,9 @@ VError RestTools::ImportEntityRecord(EntityModel* em, const VValueBag& bagData, 
 
 		if (err == VE_OK)
 		{
-			if (relDestField != nil && relValue != nil)
+			if (relDestAtt != nil && relValue != nil)
 			{
-				err = erec->setFieldValue(relDestField, relValue);
+				err = erec->setAttributeValue(relDestAtt, relValue);
 			}
 		}
 
@@ -2065,7 +1980,7 @@ VError RestTools::ImportEntityRecord(EntityModel* em, const VValueBag& bagData, 
 			VError err2;
 			EntityRecord* erec2 = nil;
 			if (!newrec)
-				erec2 = em->LoadEntityRecord(recid, err2, DB4D_Do_Not_Lock, fContext, false);
+				erec2 = em->findEntityWithPrimKey(skey, fContext, err2, DB4D_Do_Not_Lock);
 			if (erec2 != nil)
 			{
 				if (firstLevel)
@@ -2081,16 +1996,13 @@ VError RestTools::ImportEntityRecord(EntityModel* em, const VValueBag& bagData, 
 			}
 			else
 			{
-				if (erec->GetNum() >= 0)
+				VString skey;
+				erec->GetPrimKeyValue(skey, true);
+				if (!skey.IsEmpty())
 				{
 
 					VString skey;
-					if (em->HasPrimKey())
-					{
-						erec->GetPrimKeyValue(skey, true);
-					}
-					else
-						skey.FromLong(erec->GetNum());
+					erec->GetPrimKeyValue(skey, true);
 					bagResult.SetString(d4::__KEY, skey);
 					bagResult.SetLong(d4::__STAMP, erec->GetModificationStamp());
 					VString uri;
@@ -2106,15 +2018,11 @@ VError RestTools::ImportEntityRecord(EntityModel* em, const VValueBag& bagData, 
 				if (mustsave || !parent->equalRelatedEntity(erec))
 					parent->SetRelatedEntity(erec, fContext);
 			}
-			if (erec->GetNum() >= 0)
+			VString skey;
+			if (em->HasPrimKey())
+			erec->GetPrimKeyValue(skey, true);
+			if (!skey.IsEmpty())
 			{
-				VString skey;
-				if (em->HasPrimKey())
-				{
-					erec->GetPrimKeyValue(skey, true);
-				}
-				else
-					skey.FromLong(erec->GetNum());
 				bagResult.SetString(d4::__KEY, skey);
 				bagResult.SetLong(d4::__STAMP, erec->GetModificationStamp());
 				VString uri;
@@ -2124,31 +2032,7 @@ VError RestTools::ImportEntityRecord(EntityModel* em, const VValueBag& bagData, 
 
 			
 			{
-				//const EntityAttributeCollection& allAtt = em->getAllAttributes();
 				EntityAttributeSortedSelection outAtts(em);
-				/*
-				bool atLeastOne = false;
-				for (EntityAttributeCollection::const_iterator cur = allAtt.begin(), end = allAtt.end(); cur != end; cur++)
-				{
-					const EntityAttribute* att = *cur;
-					bool okatt = false;
-					EntityAttributeValue* val = erec->getAttributeValue(att, err, fContext, false);
-					if (newrec)
-						okatt = true;
-					else
-					{
-						EntityAttributeValue* oldval = oldrec->getAttributeValue(att, err, fContext, false);
-						okatt = true;
-					}
-
-					if (okatt)
-					{
-						outAtts.AddAttribute((EntityAttribute*)att);
-						atLeastOne = true;
-					}
-				}
-				if (atLeastOne)
-				*/
 				{
 					if (firstLevel)
 					{
@@ -2163,11 +2047,11 @@ VError RestTools::ImportEntityRecord(EntityModel* em, const VValueBag& bagData, 
 
 		}
 
-		QuickReleaseRefCountable(erec);
-		QuickReleaseRefCountable(oldrec);
 	}
 	else
 		toutok = false;
+
+	QuickReleaseRefCountable(erec);
 
 	if (err != VE_OK || !toutok)
 	{
@@ -2192,30 +2076,19 @@ VError RestTools::ImportEntityRecord(EntityModel* em, const VValueBag& bagData, 
 
 
 
-VError RestTools::DropEntities(EntityModel* em, Selection* sel)
+VError RestTools::DropEntities(EntityModel* em, EntityCollection* sel)
 {
 	VError err = VE_OK;
 
 	bool allsuccess = true;
-	SelectionIterator itersel(sel);
 
 	if (fImportAtomic)
 		fContext->StartTransaction(err);
 
-	sLONG i = itersel.FirstRecord();
-	while (i != -1)
-	{
-		EntityRecord* erec = em->LoadEntityRecord(i, err, DB4D_Do_Not_Lock, fContext, false);
-		if (erec != nil)
-		{
-			err = erec->Drop();
-			erec->Release();
-		}
-		if (err != VE_OK)
-			allsuccess = false;
 
-		i = itersel.NextRecord();
-	}
+	err = sel->DropEntities(fContext, nil, nil);
+	if (err != VE_OK)
+		allsuccess = false;
 
 	if (fImportAtomic)
 	{
@@ -2304,7 +2177,7 @@ bool RestTools::CalculateHtmlBaseURI(VString& outUri)
 	outUri += fHostName;
 	*/
 
-	outUri += L"/rest";
+	outUri += L"/"+VDBMgr::GetManager()->GetRestPrefix();
 	fURL->SetCurPartPos(0);
 	const VString* s = fURL->NextPart();
 	while (s != nil)

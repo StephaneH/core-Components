@@ -35,8 +35,13 @@ LOOP
 
 		CASE	operation_type = CreateBlob, ModifyBlob
 			Int32	blob_number
+			IF (blob_number == -2)	// blob in separate document
+				Int32	size_path
+				Int16	pathStringUtf16[size_path]
+			END IF
 			UUID	table_uuid
 			Int32	size
+			BYTE[size]	blob_data
 
 		CASE	operation_type = CreateContextWithUserUUID	/* deprecated */
 			UUID	user_uuid

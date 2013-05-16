@@ -60,7 +60,7 @@ XBOX::VError VStaticPagesHTTPRequestHandler::HandleRequest (IHTTPResponse *ioRes
 		httpResponse->GetRequestHeader().GetHeaderValue (STRING_HEADER_ACCEPT_ENCODING, acceptEncodingHeaderValue);
 
 		if ((ifModifiedField = httpResponse->GetIfModifiedSinceHeader (ifModifiedDate)) == false)
-			ifUnmodifiedField = httpResponse->GetIfModifiedSinceHeader (ifUnmodifiedDate);
+			ifUnmodifiedField = httpResponse->GetIfUnmodifiedSinceHeader (ifUnmodifiedDate); // YT 05-Oct-2012 - WAK0072943 - Oops silly typo was: GetIfModifiedSinceHeader
 
 		if (cacheManager && cacheManager->GetEnableDataCache())
 		{
@@ -133,9 +133,15 @@ XBOX::VError VStaticPagesHTTPRequestHandler::HandleRequest (IHTTPResponse *ioRes
 					if (method == HTTP_GET)
 					{
 						/*
-							Do NOT dispose body in ~VHTTPMessage(), the data belongs to VCacheManager
+						 *	Do NOT dispose body in ~VHTTPMessage(), the data belongs to VCacheManager
 						 */
 						httpResponse->SetDisposeBody (false);
+
+						/*
+						 *	YT 03-Oct-2012 - WAK0078597 & WAK0078598
+						 *	SetIsStaticResource to avoid charset parameter to be automatically set in Content-Type response header
+						 */
+						httpResponse->SetUseDefaultCharset (false);
 						httpResponse->GetResponseBody().SetDataPtr (cacheBuffer, cacheBufferSize);
 					}
 					else if(method == HTTP_HEAD)
@@ -211,6 +217,12 @@ XBOX::VError VStaticPagesHTTPRequestHandler::HandleRequest (IHTTPResponse *ioRes
 							XBOX::VString lastModifiedString;
 							HTTPProtocol::MakeRFC822GMTDateString (modificationDate, lastModifiedString);
 							httpResponse->AddResponseHeader (STRING_HEADER_LAST_MODIFIED, lastModifiedString);
+							
+							/*
+							 *	YT 03-Oct-2012 - WAK0078597 & WAK0078598
+							 *	SetIsStaticResource to avoid charset parameter to be automatically set in Content-Type response header
+							 */
+							httpResponse->SetUseDefaultCharset (false);
 
 							XBOX::VFileStream fileStream (file);
 							if (testAssert (fileStream.OpenReading() == VE_OK))

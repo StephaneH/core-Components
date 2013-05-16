@@ -39,16 +39,9 @@
 		E4AA2F69114E38EC004E1507 /* VTCPServer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E4AA2F68114E38EC004E1507 /* VTCPServer.cpp */; };
 		E4AA2F6A114E38EC004E1507 /* VTCPServer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E4AA2F68114E38EC004E1507 /* VTCPServer.cpp */; };
 		E4C04B2A1136F3CF00D45567 /* VHTTPConnectionHandlerFactory.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E4C04B291136F3CF00D45567 /* VHTTPConnectionHandlerFactory.cpp */; };
-		E4DD4B461117507600DB52CC /* VHTTPHeader.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E4DD4B411117507500DB52CC /* VHTTPHeader.cpp */; };
-		E4DD4B471117507600DB52CC /* VHTTPMessage.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E4DD4B421117507500DB52CC /* VHTTPMessage.cpp */; };
 		E4DD4B481117507600DB52CC /* VHTTPResponse.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E4DD4B431117507500DB52CC /* VHTTPResponse.cpp */; };
 		E4DDA2F3115A856C007E8AEF /* VHTTPError.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E4DDA2F2115A856C007E8AEF /* VHTTPError.cpp */; };
 		E4DDA2F4115A856C007E8AEF /* VHTTPError.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E4DDA2F2115A856C007E8AEF /* VHTTPError.cpp */; };
-		E4DF663C11592E1200458292 /* NameValueCollection.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E4DF663A11592E1200458292 /* NameValueCollection.cpp */; };
-		E4DF663D11592E1200458292 /* VHTMLForm.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E4DF663B11592E1200458292 /* VHTMLForm.cpp */; };
-		E4DF663E11592E1200458292 /* NameValueCollection.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E4DF663A11592E1200458292 /* NameValueCollection.cpp */; };
-		E4DF663F11592E1200458292 /* VHTMLForm.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E4DF663B11592E1200458292 /* VHTMLForm.cpp */; };
-		E4E83480112AD93B004D570C /* VHTTPCookie.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E4E8347F112AD93B004D570C /* VHTTPCookie.cpp */; };
 		E4F50D2A0F98884200588D90 /* HTTPServerSettings.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E4F50D290F98884200588D90 /* HTTPServerSettings.cpp */; };
 		E4FCCC21125260B30068A6FE /* VHTTPServerComponentLibrary.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E4FCCC20125260B30068A6FE /* VHTTPServerComponentLibrary.cpp */; };
 		E4FCCC22125260B30068A6FE /* VHTTPServerComponentLibrary.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E4FCCC20125260B30068A6FE /* VHTTPServerComponentLibrary.cpp */; };
@@ -74,12 +67,9 @@
 		F4643F04113EAA2600639653 /* HTTPServerSettings.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E4F50D290F98884200588D90 /* HTTPServerSettings.cpp */; };
 		F4643F05113EAA2600639653 /* VAuthenticationManager.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E49459A2108316DB00A6C1BB /* VAuthenticationManager.cpp */; };
 		F4643F06113EAA2600639653 /* VVirtualFolder.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E494E6C9108CA27800129FAF /* VVirtualFolder.cpp */; };
-		F4643F08113EAA2600639653 /* VHTTPHeader.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E4DD4B411117507500DB52CC /* VHTTPHeader.cpp */; };
-		F4643F09113EAA2600639653 /* VHTTPMessage.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E4DD4B421117507500DB52CC /* VHTTPMessage.cpp */; };
 		F4643F0A113EAA2600639653 /* VHTTPResponse.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E4DD4B431117507500DB52CC /* VHTTPResponse.cpp */; };
 		F4643F0C113EAA2600639653 /* VHTTPServerProject.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E40FA727111B4039001838D2 /* VHTTPServerProject.cpp */; };
 		F4643F0D113EAA2600639653 /* VStaticPagesHTTPRequestHandler.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E40FA728111B4039001838D2 /* VStaticPagesHTTPRequestHandler.cpp */; };
-		F4643F0E113EAA2600639653 /* VHTTPCookie.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E4E8347F112AD93B004D570C /* VHTTPCookie.cpp */; };
 		F4643F0F113EAA2600639653 /* VHTTPConnectionHandlerFactory.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E4C04B291136F3CF00D45567 /* VHTTPConnectionHandlerFactory.cpp */; };
 		F4643F11113EAA2600639653 /* System.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E417237D0F2F4DFF00D13F4F /* System.framework */; };
 		F4643F16113EAA2600639653 /* CoreFoundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 45A98C5E0F7A56C00073F7C8 /* CoreFoundation.framework */; };
@@ -339,20 +329,10 @@
 		E4AA2F68114E38EC004E1507 /* VTCPServer.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = VTCPServer.cpp; path = ../../Sources/VTCPServer.cpp; sourceTree = SOURCE_ROOT; };
 		E4C04B291136F3CF00D45567 /* VHTTPConnectionHandlerFactory.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = VHTTPConnectionHandlerFactory.cpp; path = ../../Sources/VHTTPConnectionHandlerFactory.cpp; sourceTree = SOURCE_ROOT; };
 		E4C04B2D1136F3E400D45567 /* VHTTPConnectionHandlerFactory.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = VHTTPConnectionHandlerFactory.h; path = ../../Headers/VHTTPConnectionHandlerFactory.h; sourceTree = SOURCE_ROOT; };
-		E4DD4B3C1117505A00DB52CC /* VHTTPHeader.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = VHTTPHeader.h; path = ../../Headers/VHTTPHeader.h; sourceTree = SOURCE_ROOT; };
-		E4DD4B3D1117505A00DB52CC /* VHTTPMessage.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = VHTTPMessage.h; path = ../../Headers/VHTTPMessage.h; sourceTree = SOURCE_ROOT; };
 		E4DD4B3E1117505A00DB52CC /* VHTTPResponse.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = VHTTPResponse.h; path = ../../Headers/VHTTPResponse.h; sourceTree = SOURCE_ROOT; };
-		E4DD4B411117507500DB52CC /* VHTTPHeader.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = VHTTPHeader.cpp; path = ../../Sources/VHTTPHeader.cpp; sourceTree = SOURCE_ROOT; };
-		E4DD4B421117507500DB52CC /* VHTTPMessage.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = VHTTPMessage.cpp; path = ../../Sources/VHTTPMessage.cpp; sourceTree = SOURCE_ROOT; };
 		E4DD4B431117507500DB52CC /* VHTTPResponse.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = VHTTPResponse.cpp; path = ../../Sources/VHTTPResponse.cpp; sourceTree = SOURCE_ROOT; };
 		E4DDA2F1115A8556007E8AEF /* VHTTPError.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = VHTTPError.h; path = ../../Headers/VHTTPError.h; sourceTree = SOURCE_ROOT; };
 		E4DDA2F2115A856C007E8AEF /* VHTTPError.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = VHTTPError.cpp; path = ../../Sources/VHTTPError.cpp; sourceTree = SOURCE_ROOT; };
-		E4DF663811592DB900458292 /* NameValueCollection.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = NameValueCollection.h; path = ../../Headers/NameValueCollection.h; sourceTree = SOURCE_ROOT; };
-		E4DF663911592DB900458292 /* VHTMLForm.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = VHTMLForm.h; path = ../../Headers/VHTMLForm.h; sourceTree = SOURCE_ROOT; };
-		E4DF663A11592E1200458292 /* NameValueCollection.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = NameValueCollection.cpp; path = ../../Sources/NameValueCollection.cpp; sourceTree = SOURCE_ROOT; };
-		E4DF663B11592E1200458292 /* VHTMLForm.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = VHTMLForm.cpp; path = ../../Sources/VHTMLForm.cpp; sourceTree = SOURCE_ROOT; };
-		E4E8347C112AD927004D570C /* VHTTPCookie.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = VHTTPCookie.h; path = ../../Headers/VHTTPCookie.h; sourceTree = SOURCE_ROOT; };
-		E4E8347F112AD93B004D570C /* VHTTPCookie.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = VHTTPCookie.cpp; path = ../../Sources/VHTTPCookie.cpp; sourceTree = SOURCE_ROOT; };
 		E4F50D280F98881B00588D90 /* HTTPServerSettings.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = HTTPServerSettings.h; path = ../../Headers/HTTPServerSettings.h; sourceTree = SOURCE_ROOT; };
 		E4F50D290F98884200588D90 /* HTTPServerSettings.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = HTTPServerSettings.cpp; path = ../../Sources/HTTPServerSettings.cpp; sourceTree = SOURCE_ROOT; };
 		E4FCCA260F5EE2CD0066B678 /* XML.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = XML.xcodeproj; path = ../../../../../XToolbox/Main/XML/Projects/Xcode/XML.xcodeproj; sourceTree = SOURCE_ROOT; };
@@ -429,7 +409,6 @@
 			isa = PBXGroup;
 			children = (
 				956572BA14ED5C0B004873F7 /* VHTTPWebsocketHandler.h */,
-				E4DF663811592DB900458292 /* NameValueCollection.h */,
 				E41722C40F2F02D900D13F4F /* HTTPErrors.h */,
 				E41722C50F2F02D900D13F4F /* HTTPNetworking.h */,
 				E4339B630F4021BF00CF0FEA /* HTTPProtocol.h */,
@@ -442,14 +421,10 @@
 				E49459A1108316C100A6C1BB /* VAuthenticationManager.h */,
 				E4167FA1116E248F0088C222 /* VAuthenticationReferee.h */,
 				F45A284F113EC31100A0C014 /* VDebugInfosHTTPRequestHandler.h */,
-				E4DF663911592DB900458292 /* VHTMLForm.h */,
 				E438B8B30F582C84004F7419 /* VHTTPConnectionHandler.h */,
 				E4C04B2D1136F3E400D45567 /* VHTTPConnectionHandlerFactory.h */,
 				E428CCB90F66CDA000ED45AE /* VHTTPConnectionListener.h */,
-				E4E8347C112AD927004D570C /* VHTTPCookie.h */,
 				E4DDA2F1115A8556007E8AEF /* VHTTPError.h */,
-				E4DD4B3C1117505A00DB52CC /* VHTTPHeader.h */,
-				E4DD4B3D1117505A00DB52CC /* VHTTPMessage.h */,
 				E41722C80F2F02D900D13F4F /* VHTTPRequest.h */,
 				F483AAB511932A0D000027C5 /* VHTTPResource.h */,
 				E4DD4B3E1117505A00DB52CC /* VHTTPResponse.h */,
@@ -544,7 +519,6 @@
 			children = (
 				9521E60514ED5A6D002F6205 /* VHTTPWebsocketHandler.cpp */,
 				F44E9E8D14692D0B009D4E40 /* ComponentStub.cpp */,
-				E4DF663A11592E1200458292 /* NameValueCollection.cpp */,
 				E41722B80F2F02A900D13F4F /* HTTPNetworking.cpp */,
 				E4339B6A0F40A5B300CF0FEA /* HTTPProtocol.cpp */,
 				E41722B90F2F02A900D13F4F /* HTTPServerCache.cpp */,
@@ -555,14 +529,10 @@
 				E49459A2108316DB00A6C1BB /* VAuthenticationManager.cpp */,
 				E4167FA2116E24AB0088C222 /* VAuthenticationReferee.cpp */,
 				F45A284C113EC30400A0C014 /* VDebugInfosHTTPRequestHandler.cpp */,
-				E4DF663B11592E1200458292 /* VHTMLForm.cpp */,
 				E438B8B40F582C9D004F7419 /* VHTTPConnectionHandler.cpp */,
 				E4C04B291136F3CF00D45567 /* VHTTPConnectionHandlerFactory.cpp */,
 				E428CCB70F66CD8700ED45AE /* VHTTPConnectionListener.cpp */,
-				E4E8347F112AD93B004D570C /* VHTTPCookie.cpp */,
 				E4DDA2F2115A856C007E8AEF /* VHTTPError.cpp */,
-				E4DD4B411117507500DB52CC /* VHTTPHeader.cpp */,
-				E4DD4B421117507500DB52CC /* VHTTPMessage.cpp */,
 				E41722BB0F2F02A900D13F4F /* VHTTPRequest.cpp */,
 				F483AAB611932A2B000027C5 /* VHTTPResource.cpp */,
 				E4DD4B431117507500DB52CC /* VHTTPResponse.cpp */,
@@ -876,18 +846,13 @@
 				F4643F04113EAA2600639653 /* HTTPServerSettings.cpp in Sources */,
 				F4643F05113EAA2600639653 /* VAuthenticationManager.cpp in Sources */,
 				F4643F06113EAA2600639653 /* VVirtualFolder.cpp in Sources */,
-				F4643F08113EAA2600639653 /* VHTTPHeader.cpp in Sources */,
-				F4643F09113EAA2600639653 /* VHTTPMessage.cpp in Sources */,
 				F4643F0A113EAA2600639653 /* VHTTPResponse.cpp in Sources */,
 				F4643F0C113EAA2600639653 /* VHTTPServerProject.cpp in Sources */,
 				F4643F0D113EAA2600639653 /* VStaticPagesHTTPRequestHandler.cpp in Sources */,
-				F4643F0E113EAA2600639653 /* VHTTPCookie.cpp in Sources */,
 				F4643F0F113EAA2600639653 /* VHTTPConnectionHandlerFactory.cpp in Sources */,
 				F413A250113EAC55007E38A6 /* VVirtualHostManager.cpp in Sources */,
 				F45A284E113EC30400A0C014 /* VDebugInfosHTTPRequestHandler.cpp in Sources */,
 				E4AA2F6A114E38EC004E1507 /* VTCPServer.cpp in Sources */,
-				E4DF663E11592E1200458292 /* NameValueCollection.cpp in Sources */,
-				E4DF663F11592E1200458292 /* VHTMLForm.cpp in Sources */,
 				E4DDA2F4115A856C007E8AEF /* VHTTPError.cpp in Sources */,
 				E4167FA4116E24AB0088C222 /* VAuthenticationReferee.cpp in Sources */,
 				E476F78B1180B7870082A1C3 /* VNonce.cpp in Sources */,
@@ -918,18 +883,13 @@
 				E4F50D2A0F98884200588D90 /* HTTPServerSettings.cpp in Sources */,
 				E49459A3108316DB00A6C1BB /* VAuthenticationManager.cpp in Sources */,
 				E494E6CA108CA27800129FAF /* VVirtualFolder.cpp in Sources */,
-				E4DD4B461117507600DB52CC /* VHTTPHeader.cpp in Sources */,
-				E4DD4B471117507600DB52CC /* VHTTPMessage.cpp in Sources */,
 				E4DD4B481117507600DB52CC /* VHTTPResponse.cpp in Sources */,
 				E40FA72A111B4039001838D2 /* VHTTPServerProject.cpp in Sources */,
 				E40FA72B111B4039001838D2 /* VStaticPagesHTTPRequestHandler.cpp in Sources */,
-				E4E83480112AD93B004D570C /* VHTTPCookie.cpp in Sources */,
 				E4C04B2A1136F3CF00D45567 /* VHTTPConnectionHandlerFactory.cpp in Sources */,
 				F413A24F113EAC55007E38A6 /* VVirtualHostManager.cpp in Sources */,
 				F45A284D113EC30400A0C014 /* VDebugInfosHTTPRequestHandler.cpp in Sources */,
 				E4AA2F69114E38EC004E1507 /* VTCPServer.cpp in Sources */,
-				E4DF663C11592E1200458292 /* NameValueCollection.cpp in Sources */,
-				E4DF663D11592E1200458292 /* VHTMLForm.cpp in Sources */,
 				E4DDA2F3115A856C007E8AEF /* VHTTPError.cpp in Sources */,
 				E4167FA3116E24AB0088C222 /* VAuthenticationReferee.cpp in Sources */,
 				E476F78A1180B7870082A1C3 /* VNonce.cpp in Sources */,

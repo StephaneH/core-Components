@@ -7,108 +7,100 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		12BB747E0AFB2BA600E2FCAB /* ServerNetDebug.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 12BB74570AFB296800E2FCAB /* ServerNetDebug.framework */; };
-		158BA5D110F39CA5004D64BF /* VCacheLog.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 158BA5CF10F39CA5004D64BF /* VCacheLog.cpp */; };
-		295549E515989F9D003059BD /* LocalModel.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 295549E115989F9D003059BD /* LocalModel.cpp */; };
-		295549E615989F9D003059BD /* RemoteModel.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 295549E315989F9D003059BD /* RemoteModel.cpp */; };
-		295549E715989F9D003059BD /* LocalModel.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 295549E115989F9D003059BD /* LocalModel.cpp */; };
-		295549E815989F9D003059BD /* RemoteModel.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 295549E315989F9D003059BD /* RemoteModel.cpp */; };
-		299939000EE93DB9007C7ED4 /* Rest.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 299938FC0EE93DB9007C7ED4 /* Rest.cpp */; };
-		299939010EE93DB9007C7ED4 /* Web.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 299938FE0EE93DB9007C7ED4 /* Web.cpp */; };
-		299E9C7A0EC1DE5E00A1ADDB /* EntityModel.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 299E9C780EC1DE5E00A1ADDB /* EntityModel.cpp */; };
-		29A0AE8C0ED4714500B916BF /* Export.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 29A0AE8A0ED4714500B916BF /* Export.cpp */; };
-		29B21D970A945F0800EB070A /* RechComplex.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 29B21D950A945F0800EB070A /* RechComplex.cpp */; };
-		29F81CAD0A24BEFA004547B1 /* XMLDebug.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 2975EE620A24B63200F6095A /* XMLDebug.framework */; };
-		396D4DF60947170400F673ED /* journal_parser.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 396D4DF40947170400F673ED /* journal_parser.cpp */; };
-		39D90C2A08E7F35600E8AC18 /* Base4D.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 39D90BEC08E7F35600E8AC18 /* Base4D.cpp */; };
-		39D90C2B08E7F35600E8AC18 /* BitTable.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 39D90BEE08E7F35600E8AC18 /* BitTable.cpp */; };
-		39D90C2C08E7F35600E8AC18 /* Blob4D.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 39D90BF008E7F35600E8AC18 /* Blob4D.cpp */; };
-		39D90C2D08E7F35600E8AC18 /* Cache.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 39D90BF208E7F35600E8AC18 /* Cache.cpp */; };
-		39D90C2E08E7F35600E8AC18 /* CheckAndRepair.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 39D90BF408E7F35600E8AC18 /* CheckAndRepair.cpp */; };
-		39D90C2F08E7F35600E8AC18 /* CodeReg.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 39D90BF608E7F35600E8AC18 /* CodeReg.cpp */; };
-		39D90C3008E7F35600E8AC18 /* DataSeg.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 39D90BF808E7F35600E8AC18 /* DataSeg.cpp */; };
-		39D90C3108E7F35600E8AC18 /* DataSource.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 39D90BFA08E7F35600E8AC18 /* DataSource.cpp */; };
-		39D90C3208E7F35600E8AC18 /* DB4DComponent.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 39D90BFC08E7F35600E8AC18 /* DB4DComponent.cpp */; };
-		39D90C3308E7F35700E8AC18 /* DB4DMgr.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 39D90BFE08E7F35600E8AC18 /* DB4DMgr.cpp */; };
-		39D90C3408E7F35700E8AC18 /* Fiche.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 39D90C0108E7F35600E8AC18 /* Fiche.cpp */; };
-		39D90C3508E7F35700E8AC18 /* Fichier.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 39D90C0308E7F35600E8AC18 /* Fichier.cpp */; };
-		39D90C3608E7F35700E8AC18 /* Flush.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 39D90C0508E7F35600E8AC18 /* Flush.cpp */; };
-		39D90C3708E7F35700E8AC18 /* ImpExp.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 39D90C0708E7F35600E8AC18 /* ImpExp.cpp */; };
-		39D90C3808E7F35700E8AC18 /* IndClust.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 39D90C0908E7F35600E8AC18 /* IndClust.cpp */; };
-		39D90C3A08E7F35700E8AC18 /* Index4D.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 39D90C0D08E7F35600E8AC18 /* Index4D.cpp */; };
-		39D90C3B08E7F35700E8AC18 /* InfoTask.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 39D90C0F08E7F35600E8AC18 /* InfoTask.cpp */; };
-		39D90C3C08E7F35700E8AC18 /* Journaling.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 39D90C1108E7F35600E8AC18 /* Journaling.cpp */; };
-		39D90C3D08E7F35700E8AC18 /* Rech4D.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 39D90C1308E7F35600E8AC18 /* Rech4D.cpp */; };
-		39D90C3E08E7F35700E8AC18 /* Relation.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 39D90C1508E7F35600E8AC18 /* Relation.cpp */; };
-		39D90C3F08E7F35700E8AC18 /* Scan.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 39D90C1808E7F35600E8AC18 /* Scan.cpp */; };
-		39D90C4008E7F35700E8AC18 /* Sels.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 39D90C1B08E7F35600E8AC18 /* Sels.cpp */; };
-		39D90C4108E7F35700E8AC18 /* Sort4D.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 39D90C1D08E7F35600E8AC18 /* Sort4D.cpp */; };
-		39D90C4208E7F35700E8AC18 /* sql.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 39D90C1F08E7F35600E8AC18 /* sql.cpp */; };
-		39D90C4308E7F35700E8AC18 /* TabAddr.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 39D90C2108E7F35600E8AC18 /* TabAddr.cpp */; };
-		39D90C4408E7F35700E8AC18 /* Transac.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 39D90C2308E7F35600E8AC18 /* Transac.cpp */; };
-		39D90C4508E7F35700E8AC18 /* util4d.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 39D90C2508E7F35600E8AC18 /* util4d.cpp */; };
-		39D90C4608E7F35700E8AC18 /* VTools.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 39D90C2708E7F35600E8AC18 /* VTools.cpp */; };
-		39D90C5408E7F4BA00E8AC18 /* System.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 39D90C5208E7F4BA00E8AC18 /* System.framework */; };
-		39D90C6D08E7F52E00E8AC18 /* KernelDebug.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 39D90C5E08E7F4E600E8AC18 /* KernelDebug.framework */; };
-		39D90C6F08E7F53300E8AC18 /* KernelIPCDebug.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 39D90C6808E7F4FC00E8AC18 /* KernelIPCDebug.framework */; };
-		42A61DF00FAF3DFD00C1E5E5 /* javascript_db4d.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 42A61DEE0FAF3DFD00C1E5E5 /* javascript_db4d.cpp */; };
-		42A61E3A0FAF419800C1E5E5 /* 4DJavaScript.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 42A61DF90FAF401C00C1E5E5 /* 4DJavaScript.framework */; };
-		42C325CB09B47E7A009E33D0 /* Server.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 42C325C909B47E7A009E33D0 /* Server.cpp */; };
-		45A98AC50F7A56740073F7C8 /* CoreFoundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 45A98AC40F7A56740073F7C8 /* CoreFoundation.framework */; };
-		5217912D1541BD76003CC2A0 /* Backup.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5217912B1541BD76003CC2A0 /* Backup.cpp */; };
-		5217912E1541BD76003CC2A0 /* Backup.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5217912B1541BD76003CC2A0 /* Backup.cpp */; };
-		54E22C19112EC3960066AFA7 /* GraphicsDebug.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 54E22BF7112EC24F0066AFA7 /* GraphicsDebug.framework */; };
-		C8E18D800C1D88E1000FB219 /* IndexTemplate.cpp in Sources */ = {isa = PBXBuildFile; fileRef = C8E18D7E0C1D88E0000FB219 /* IndexTemplate.cpp */; };
-		F4451FE211648405005984A9 /* Base4D.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 39D90BEC08E7F35600E8AC18 /* Base4D.cpp */; };
-		F4451FE311648405005984A9 /* BitTable.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 39D90BEE08E7F35600E8AC18 /* BitTable.cpp */; };
-		F4451FE411648405005984A9 /* Blob4D.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 39D90BF008E7F35600E8AC18 /* Blob4D.cpp */; };
-		F4451FE511648405005984A9 /* Cache.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 39D90BF208E7F35600E8AC18 /* Cache.cpp */; };
-		F4451FE611648405005984A9 /* CheckAndRepair.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 39D90BF408E7F35600E8AC18 /* CheckAndRepair.cpp */; };
-		F4451FE711648405005984A9 /* CodeReg.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 39D90BF608E7F35600E8AC18 /* CodeReg.cpp */; };
-		F4451FE811648405005984A9 /* DataSeg.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 39D90BF808E7F35600E8AC18 /* DataSeg.cpp */; };
-		F4451FE911648405005984A9 /* DataSource.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 39D90BFA08E7F35600E8AC18 /* DataSource.cpp */; };
-		F4451FEA11648405005984A9 /* DB4DComponent.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 39D90BFC08E7F35600E8AC18 /* DB4DComponent.cpp */; };
-		F4451FEB11648405005984A9 /* DB4DMgr.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 39D90BFE08E7F35600E8AC18 /* DB4DMgr.cpp */; };
-		F4451FEC11648405005984A9 /* Fiche.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 39D90C0108E7F35600E8AC18 /* Fiche.cpp */; };
-		F4451FED11648405005984A9 /* Fichier.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 39D90C0308E7F35600E8AC18 /* Fichier.cpp */; };
-		F4451FEE11648405005984A9 /* Flush.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 39D90C0508E7F35600E8AC18 /* Flush.cpp */; };
-		F4451FEF11648405005984A9 /* ImpExp.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 39D90C0708E7F35600E8AC18 /* ImpExp.cpp */; };
-		F4451FF011648405005984A9 /* IndClust.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 39D90C0908E7F35600E8AC18 /* IndClust.cpp */; };
-		F4451FF111648405005984A9 /* Index4D.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 39D90C0D08E7F35600E8AC18 /* Index4D.cpp */; };
-		F4451FF211648405005984A9 /* InfoTask.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 39D90C0F08E7F35600E8AC18 /* InfoTask.cpp */; };
-		F4451FF311648405005984A9 /* Journaling.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 39D90C1108E7F35600E8AC18 /* Journaling.cpp */; };
-		F4451FF411648405005984A9 /* Rech4D.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 39D90C1308E7F35600E8AC18 /* Rech4D.cpp */; };
-		F4451FF511648405005984A9 /* Relation.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 39D90C1508E7F35600E8AC18 /* Relation.cpp */; };
-		F4451FF611648405005984A9 /* Scan.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 39D90C1808E7F35600E8AC18 /* Scan.cpp */; };
-		F4451FF711648405005984A9 /* Sels.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 39D90C1B08E7F35600E8AC18 /* Sels.cpp */; };
-		F4451FF811648405005984A9 /* Sort4D.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 39D90C1D08E7F35600E8AC18 /* Sort4D.cpp */; };
-		F4451FF911648405005984A9 /* sql.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 39D90C1F08E7F35600E8AC18 /* sql.cpp */; };
-		F4451FFA11648405005984A9 /* TabAddr.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 39D90C2108E7F35600E8AC18 /* TabAddr.cpp */; };
-		F4451FFB11648405005984A9 /* Transac.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 39D90C2308E7F35600E8AC18 /* Transac.cpp */; };
-		F4451FFC11648405005984A9 /* util4d.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 39D90C2508E7F35600E8AC18 /* util4d.cpp */; };
-		F4451FFD11648405005984A9 /* VTools.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 39D90C2708E7F35600E8AC18 /* VTools.cpp */; };
-		F4451FFF11648405005984A9 /* journal_parser.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 396D4DF40947170400F673ED /* journal_parser.cpp */; };
-		F445200011648405005984A9 /* Server.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 42C325C909B47E7A009E33D0 /* Server.cpp */; };
-		F445200111648405005984A9 /* RechComplex.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 29B21D950A945F0800EB070A /* RechComplex.cpp */; };
-		F445200211648405005984A9 /* IndexTemplate.cpp in Sources */ = {isa = PBXBuildFile; fileRef = C8E18D7E0C1D88E0000FB219 /* IndexTemplate.cpp */; };
-		F445200311648405005984A9 /* EntityModel.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 299E9C780EC1DE5E00A1ADDB /* EntityModel.cpp */; };
-		F445200411648405005984A9 /* Export.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 29A0AE8A0ED4714500B916BF /* Export.cpp */; };
-		F445200511648405005984A9 /* Rest.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 299938FC0EE93DB9007C7ED4 /* Rest.cpp */; };
-		F445200611648405005984A9 /* Web.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 299938FE0EE93DB9007C7ED4 /* Web.cpp */; };
-		F445200711648405005984A9 /* javascript_db4d.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 42A61DEE0FAF3DFD00C1E5E5 /* javascript_db4d.cpp */; };
-		F445200811648405005984A9 /* VCacheLog.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 158BA5CF10F39CA5004D64BF /* VCacheLog.cpp */; };
-		F445200E11648405005984A9 /* System.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 39D90C5208E7F4BA00E8AC18 /* System.framework */; };
-		F445200F11648405005984A9 /* CoreFoundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 45A98AC40F7A56740073F7C8 /* CoreFoundation.framework */; };
-		F445203211648490005984A9 /* XercesDebug.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F4C946B711538AB100F7B26F /* XercesDebug.framework */; };
-		F445203511648495005984A9 /* GraphicsDebug.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F4C9469111538A8F00F7B26F /* GraphicsDebug.framework */; };
-		F445203811648499005984A9 /* 4DJavaScript.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F4C9469D11538A8F00F7B26F /* 4DJavaScript.framework */; };
-		F445203B1164849E005984A9 /* XMLDebug.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F4451FBB116482A1005984A9 /* XMLDebug.framework */; };
-		F445203E116484A2005984A9 /* KernelIPCDebug.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F4C946A111538A8F00F7B26F /* KernelIPCDebug.framework */; };
-		F4452041116484A8005984A9 /* KernelDebug.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F4C946A711538A8F00F7B26F /* KernelDebug.framework */; };
-		F4452044116484AD005984A9 /* ServerNetDebug.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F4C946AD11538A8F00F7B26F /* ServerNetDebug.framework */; };
-		F4C946B811538AB600F7B26F /* XercesDebug.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F4C946B511538AB100F7B26F /* XercesDebug.framework */; };
-		F4CB3F2814692A9C00F635F6 /* ComponentStub.cpp in Sources */ = {isa = PBXBuildFile; fileRef = F4CB3F2714692A9C00F635F6 /* ComponentStub.cpp */; };
-		F4CB3F2914692A9C00F635F6 /* ComponentStub.cpp in Sources */ = {isa = PBXBuildFile; fileRef = F4CB3F2714692A9C00F635F6 /* ComponentStub.cpp */; };
+		F48599F616D4C692005D43A1 /* Base4D.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 39D90BEC08E7F35600E8AC18 /* Base4D.cpp */; };
+		F48599F716D4C692005D43A1 /* BitTable.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 39D90BEE08E7F35600E8AC18 /* BitTable.cpp */; };
+		F48599F816D4C692005D43A1 /* Blob4D.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 39D90BF008E7F35600E8AC18 /* Blob4D.cpp */; };
+		F48599F916D4C692005D43A1 /* Cache.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 39D90BF208E7F35600E8AC18 /* Cache.cpp */; };
+		F48599FA16D4C692005D43A1 /* CheckAndRepair.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 39D90BF408E7F35600E8AC18 /* CheckAndRepair.cpp */; };
+		F48599FB16D4C692005D43A1 /* CodeReg.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 39D90BF608E7F35600E8AC18 /* CodeReg.cpp */; };
+		F48599FC16D4C692005D43A1 /* DataSeg.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 39D90BF808E7F35600E8AC18 /* DataSeg.cpp */; };
+		F48599FD16D4C692005D43A1 /* DataSource.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 39D90BFA08E7F35600E8AC18 /* DataSource.cpp */; };
+		F48599FE16D4C692005D43A1 /* DB4DComponent.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 39D90BFC08E7F35600E8AC18 /* DB4DComponent.cpp */; };
+		F48599FF16D4C692005D43A1 /* DB4DMgr.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 39D90BFE08E7F35600E8AC18 /* DB4DMgr.cpp */; };
+		F4859A0016D4C692005D43A1 /* Fiche.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 39D90C0108E7F35600E8AC18 /* Fiche.cpp */; };
+		F4859A0116D4C692005D43A1 /* Fichier.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 39D90C0308E7F35600E8AC18 /* Fichier.cpp */; };
+		F4859A0216D4C692005D43A1 /* Flush.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 39D90C0508E7F35600E8AC18 /* Flush.cpp */; };
+		F4859A0316D4C692005D43A1 /* ImpExp.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 39D90C0708E7F35600E8AC18 /* ImpExp.cpp */; };
+		F4859A0416D4C692005D43A1 /* IndClust.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 39D90C0908E7F35600E8AC18 /* IndClust.cpp */; };
+		F4859A0516D4C692005D43A1 /* Index4D.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 39D90C0D08E7F35600E8AC18 /* Index4D.cpp */; };
+		F4859A0616D4C692005D43A1 /* InfoTask.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 39D90C0F08E7F35600E8AC18 /* InfoTask.cpp */; };
+		F4859A0716D4C692005D43A1 /* Journaling.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 39D90C1108E7F35600E8AC18 /* Journaling.cpp */; };
+		F4859A0816D4C692005D43A1 /* Rech4D.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 39D90C1308E7F35600E8AC18 /* Rech4D.cpp */; };
+		F4859A0916D4C692005D43A1 /* Relation.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 39D90C1508E7F35600E8AC18 /* Relation.cpp */; };
+		F4859A0A16D4C692005D43A1 /* Scan.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 39D90C1808E7F35600E8AC18 /* Scan.cpp */; };
+		F4859A0B16D4C692005D43A1 /* Sels.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 39D90C1B08E7F35600E8AC18 /* Sels.cpp */; };
+		F4859A0C16D4C692005D43A1 /* Sort4D.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 39D90C1D08E7F35600E8AC18 /* Sort4D.cpp */; };
+		F4859A0D16D4C692005D43A1 /* sql.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 39D90C1F08E7F35600E8AC18 /* sql.cpp */; };
+		F4859A0E16D4C692005D43A1 /* TabAddr.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 39D90C2108E7F35600E8AC18 /* TabAddr.cpp */; };
+		F4859A0F16D4C692005D43A1 /* Transac.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 39D90C2308E7F35600E8AC18 /* Transac.cpp */; };
+		F4859A1016D4C692005D43A1 /* util4d.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 39D90C2508E7F35600E8AC18 /* util4d.cpp */; };
+		F4859A1116D4C692005D43A1 /* VTools.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 39D90C2708E7F35600E8AC18 /* VTools.cpp */; };
+		F4859A1216D4C692005D43A1 /* journal_parser.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 396D4DF40947170400F673ED /* journal_parser.cpp */; };
+		F4859A1316D4C692005D43A1 /* Server.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 42C325C909B47E7A009E33D0 /* Server.cpp */; };
+		F4859A1416D4C692005D43A1 /* RechComplex.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 29B21D950A945F0800EB070A /* RechComplex.cpp */; };
+		F4859A1516D4C692005D43A1 /* IndexTemplate.cpp in Sources */ = {isa = PBXBuildFile; fileRef = C8E18D7E0C1D88E0000FB219 /* IndexTemplate.cpp */; };
+		F4859A1616D4C692005D43A1 /* EntityModel.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 299E9C780EC1DE5E00A1ADDB /* EntityModel.cpp */; };
+		F4859A1716D4C692005D43A1 /* Export.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 29A0AE8A0ED4714500B916BF /* Export.cpp */; };
+		F4859A1816D4C692005D43A1 /* Rest.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 299938FC0EE93DB9007C7ED4 /* Rest.cpp */; };
+		F4859A1916D4C692005D43A1 /* Web.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 299938FE0EE93DB9007C7ED4 /* Web.cpp */; };
+		F4859A1A16D4C692005D43A1 /* javascript_db4d.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 42A61DEE0FAF3DFD00C1E5E5 /* javascript_db4d.cpp */; };
+		F4859A1B16D4C692005D43A1 /* VCacheLog.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 158BA5CF10F39CA5004D64BF /* VCacheLog.cpp */; };
+		F4859A1C16D4C692005D43A1 /* ComponentStub.cpp in Sources */ = {isa = PBXBuildFile; fileRef = F4CB3F2714692A9C00F635F6 /* ComponentStub.cpp */; };
+		F4859A1D16D4C692005D43A1 /* Backup.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5217912B1541BD76003CC2A0 /* Backup.cpp */; };
+		F4859A1E16D4C692005D43A1 /* LocalModel.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 295549E115989F9D003059BD /* LocalModel.cpp */; };
+		F4859A1F16D4C6A4005D43A1 /* Base4D.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 39D90BEC08E7F35600E8AC18 /* Base4D.cpp */; };
+		F4859A2016D4C6A4005D43A1 /* BitTable.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 39D90BEE08E7F35600E8AC18 /* BitTable.cpp */; };
+		F4859A2116D4C6A4005D43A1 /* Blob4D.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 39D90BF008E7F35600E8AC18 /* Blob4D.cpp */; };
+		F4859A2216D4C6A4005D43A1 /* Cache.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 39D90BF208E7F35600E8AC18 /* Cache.cpp */; };
+		F4859A2316D4C6A4005D43A1 /* CheckAndRepair.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 39D90BF408E7F35600E8AC18 /* CheckAndRepair.cpp */; };
+		F4859A2416D4C6A4005D43A1 /* CodeReg.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 39D90BF608E7F35600E8AC18 /* CodeReg.cpp */; };
+		F4859A2516D4C6A4005D43A1 /* DataSeg.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 39D90BF808E7F35600E8AC18 /* DataSeg.cpp */; };
+		F4859A2616D4C6A4005D43A1 /* DataSource.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 39D90BFA08E7F35600E8AC18 /* DataSource.cpp */; };
+		F4859A2716D4C6A4005D43A1 /* DB4DComponent.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 39D90BFC08E7F35600E8AC18 /* DB4DComponent.cpp */; };
+		F4859A2816D4C6A4005D43A1 /* DB4DMgr.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 39D90BFE08E7F35600E8AC18 /* DB4DMgr.cpp */; };
+		F4859A2916D4C6A4005D43A1 /* Fiche.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 39D90C0108E7F35600E8AC18 /* Fiche.cpp */; };
+		F4859A2A16D4C6A4005D43A1 /* Fichier.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 39D90C0308E7F35600E8AC18 /* Fichier.cpp */; };
+		F4859A2B16D4C6A4005D43A1 /* Flush.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 39D90C0508E7F35600E8AC18 /* Flush.cpp */; };
+		F4859A2C16D4C6A4005D43A1 /* ImpExp.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 39D90C0708E7F35600E8AC18 /* ImpExp.cpp */; };
+		F4859A2D16D4C6A4005D43A1 /* IndClust.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 39D90C0908E7F35600E8AC18 /* IndClust.cpp */; };
+		F4859A2E16D4C6A4005D43A1 /* Index4D.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 39D90C0D08E7F35600E8AC18 /* Index4D.cpp */; };
+		F4859A2F16D4C6A4005D43A1 /* InfoTask.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 39D90C0F08E7F35600E8AC18 /* InfoTask.cpp */; };
+		F4859A3016D4C6A4005D43A1 /* Journaling.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 39D90C1108E7F35600E8AC18 /* Journaling.cpp */; };
+		F4859A3116D4C6A4005D43A1 /* Rech4D.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 39D90C1308E7F35600E8AC18 /* Rech4D.cpp */; };
+		F4859A3216D4C6A4005D43A1 /* Relation.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 39D90C1508E7F35600E8AC18 /* Relation.cpp */; };
+		F4859A3316D4C6A4005D43A1 /* Scan.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 39D90C1808E7F35600E8AC18 /* Scan.cpp */; };
+		F4859A3416D4C6A4005D43A1 /* Sels.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 39D90C1B08E7F35600E8AC18 /* Sels.cpp */; };
+		F4859A3516D4C6A4005D43A1 /* Sort4D.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 39D90C1D08E7F35600E8AC18 /* Sort4D.cpp */; };
+		F4859A3616D4C6A4005D43A1 /* sql.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 39D90C1F08E7F35600E8AC18 /* sql.cpp */; };
+		F4859A3716D4C6A4005D43A1 /* TabAddr.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 39D90C2108E7F35600E8AC18 /* TabAddr.cpp */; };
+		F4859A3816D4C6A4005D43A1 /* Transac.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 39D90C2308E7F35600E8AC18 /* Transac.cpp */; };
+		F4859A3916D4C6A4005D43A1 /* util4d.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 39D90C2508E7F35600E8AC18 /* util4d.cpp */; };
+		F4859A3A16D4C6A4005D43A1 /* VTools.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 39D90C2708E7F35600E8AC18 /* VTools.cpp */; };
+		F4859A3B16D4C6A4005D43A1 /* journal_parser.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 396D4DF40947170400F673ED /* journal_parser.cpp */; };
+		F4859A3C16D4C6A4005D43A1 /* Server.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 42C325C909B47E7A009E33D0 /* Server.cpp */; };
+		F4859A3D16D4C6A4005D43A1 /* RechComplex.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 29B21D950A945F0800EB070A /* RechComplex.cpp */; };
+		F4859A3E16D4C6A4005D43A1 /* IndexTemplate.cpp in Sources */ = {isa = PBXBuildFile; fileRef = C8E18D7E0C1D88E0000FB219 /* IndexTemplate.cpp */; };
+		F4859A3F16D4C6A4005D43A1 /* EntityModel.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 299E9C780EC1DE5E00A1ADDB /* EntityModel.cpp */; };
+		F4859A4016D4C6A4005D43A1 /* Export.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 29A0AE8A0ED4714500B916BF /* Export.cpp */; };
+		F4859A4116D4C6A4005D43A1 /* Rest.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 299938FC0EE93DB9007C7ED4 /* Rest.cpp */; };
+		F4859A4216D4C6A4005D43A1 /* Web.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 299938FE0EE93DB9007C7ED4 /* Web.cpp */; };
+		F4859A4316D4C6A4005D43A1 /* javascript_db4d.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 42A61DEE0FAF3DFD00C1E5E5 /* javascript_db4d.cpp */; };
+		F4859A4416D4C6A4005D43A1 /* VCacheLog.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 158BA5CF10F39CA5004D64BF /* VCacheLog.cpp */; };
+		F4859A4516D4C6A4005D43A1 /* ComponentStub.cpp in Sources */ = {isa = PBXBuildFile; fileRef = F4CB3F2714692A9C00F635F6 /* ComponentStub.cpp */; };
+		F4859A4616D4C6A4005D43A1 /* Backup.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5217912B1541BD76003CC2A0 /* Backup.cpp */; };
+		F4859A4716D4C6A4005D43A1 /* LocalModel.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 295549E115989F9D003059BD /* LocalModel.cpp */; };
+		F4859A5816D4CB90005D43A1 /* KernelDebug.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 39D90C5E08E7F4E600E8AC18 /* KernelDebug.framework */; };
+		F4859A5916D4CB93005D43A1 /* KernelIPCDebug.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 39D90C6808E7F4FC00E8AC18 /* KernelIPCDebug.framework */; };
+		F4859A5D16D4CC14005D43A1 /* 4DJavaScriptDebug.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 42A61DF90FAF401C00C1E5E5 /* 4DJavaScriptDebug.framework */; };
+		F4859B4116D4CE36005D43A1 /* ServerNetDebug.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 12BB74570AFB296800E2FCAB /* ServerNetDebug.framework */; };
+		F4859B4C16D4CFF3005D43A1 /* GraphicsDebug.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 54E22BF7112EC24F0066AFA7 /* GraphicsDebug.framework */; };
+		F4859B5116D4D00A005D43A1 /* XMLDebug.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 2975EE620A24B63200F6095A /* XMLDebug.framework */; };
+		F4859B6216D4D06E005D43A1 /* ServerNetDebug.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F4C946AD11538A8F00F7B26F /* ServerNetDebug.framework */; };
+		F4859B6316D4D06E005D43A1 /* KernelDebug.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F4C946A711538A8F00F7B26F /* KernelDebug.framework */; };
+		F4859B6416D4D06E005D43A1 /* KernelIPCDebug.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F4C946A111538A8F00F7B26F /* KernelIPCDebug.framework */; };
+		F4859B6516D4D06E005D43A1 /* XMLDebug.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F4451FBB116482A1005984A9 /* XMLDebug.framework */; };
+		F4859B6616D4D06E005D43A1 /* 4DJavaScriptDebug.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F4C9469D11538A8F00F7B26F /* 4DJavaScriptDebug.framework */; };
+		F4859B6716D4D06E005D43A1 /* GraphicsDebug.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F4C9469111538A8F00F7B26F /* GraphicsDebug.framework */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -119,25 +111,11 @@
 			remoteGlobalIDString = 8D07F2C80486CC7A007CD1D0;
 			remoteInfo = ServerNet;
 		};
-		12BB74580AFB298C00E2FCAB /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 12BB74520AFB296800E2FCAB /* ServerNet.xcodeproj */;
-			proxyType = 1;
-			remoteGlobalIDString = 8D07F2BC0486CC7A007CD1D0;
-			remoteInfo = ServerNet;
-		};
 		2975EE610A24B63200F6095A /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 2975EE5D0A24B63200F6095A /* XML.xcodeproj */;
 			proxyType = 2;
 			remoteGlobalIDString = 8D07F2C80486CC7A007CD1D0;
-			remoteInfo = XML;
-		};
-		2975EEA30A24BBFE00F6095A /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 2975EE5D0A24B63200F6095A /* XML.xcodeproj */;
-			proxyType = 1;
-			remoteGlobalIDString = 8D07F2BC0486CC7A007CD1D0;
 			remoteInfo = XML;
 		};
 		39D90C5D08E7F4E600E8AC18 /* PBXContainerItemProxy */ = {
@@ -161,20 +139,6 @@
 			remoteGlobalIDString = 8D07F2C80486CC7A007CD1D0;
 			remoteInfo = KernelIPC;
 		};
-		39D90C6908E7F50C00E8AC18 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 39D90C6108E7F4FC00E8AC18 /* KernelIPC.xcodeproj */;
-			proxyType = 1;
-			remoteGlobalIDString = 8D07F2BC0486CC7A007CD1D0;
-			remoteInfo = KernelIPC;
-		};
-		39D90C6B08E7F50C00E8AC18 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 39D90C5708E7F4E600E8AC18 /* Kernel.xcodeproj */;
-			proxyType = 1;
-			remoteGlobalIDString = 8D07F2BC0486CC7A007CD1D0;
-			remoteInfo = Kernel;
-		};
 		39EDC90C0BF35A7800AD563D /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 39D90C6108E7F4FC00E8AC18 /* KernelIPC.xcodeproj */;
@@ -196,13 +160,6 @@
 			remoteGlobalIDString = 8D07F2C80486CC7A007CD1D0;
 			remoteInfo = 4DJavaScript;
 		};
-		42A61E360FAF415D00C1E5E5 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 42A61DF40FAF401C00C1E5E5 /* JavaScript.xcodeproj */;
-			proxyType = 1;
-			remoteGlobalIDString = 8D07F2BC0486CC7A007CD1D0;
-			remoteInfo = 4DJavaScript;
-		};
 		42E576E009BF4EA30007B1BF /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 39D90C5708E7F4E600E8AC18 /* Kernel.xcodeproj */;
@@ -217,13 +174,6 @@
 			remoteGlobalIDString = 8D07F2C80486CC7A007CD1D0;
 			remoteInfo = Graphics;
 		};
-		54E22BFB112EC26F0066AFA7 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 54E22BF2112EC24F0066AFA7 /* Graphics.xcodeproj */;
-			proxyType = 1;
-			remoteGlobalIDString = 8D07F2BC0486CC7A007CD1D0;
-			remoteInfo = Graphics;
-		};
 		F4451FBA116482A1005984A9 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 2975EE5D0A24B63200F6095A /* XML.xcodeproj */;
@@ -231,61 +181,96 @@
 			remoteGlobalIDString = F4B97CC6116351D800987AC0;
 			remoteInfo = "XML x64";
 		};
-		F445201D11648445005984A9 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 39D90C5708E7F4E600E8AC18 /* Kernel.xcodeproj */;
-			proxyType = 1;
-			remoteGlobalIDString = F464308B113E7A3E00639653;
-			remoteInfo = "Kernel x64";
-		};
-		F445201F1164844C005984A9 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 39D90C6108E7F4FC00E8AC18 /* KernelIPC.xcodeproj */;
-			proxyType = 1;
-			remoteGlobalIDString = F46431C0113E7CBD00639653;
-			remoteInfo = "KernelIPC x64";
-		};
-		F445202111648451005984A9 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 2975EE5D0A24B63200F6095A /* XML.xcodeproj */;
-			proxyType = 1;
-			remoteGlobalIDString = F4B97C8B116351D800987AC0;
-			remoteInfo = "XML x64";
-		};
-		F445202311648455005984A9 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 12BB74520AFB296800E2FCAB /* ServerNet.xcodeproj */;
-			proxyType = 1;
-			remoteGlobalIDString = F464342D113E8FB200639653;
-			remoteInfo = "ServerNet x64";
-		};
-		F44520251164845B005984A9 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 42A61DF40FAF401C00C1E5E5 /* JavaScript.xcodeproj */;
-			proxyType = 1;
-			remoteGlobalIDString = F46437CB113E9F6000639653;
-			remoteInfo = "4DJavaScript x64";
-		};
-		F44520271164845F005984A9 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 54E22BF2112EC24F0066AFA7 /* Graphics.xcodeproj */;
-			proxyType = 1;
-			remoteGlobalIDString = F464338C113E8E9700639653;
-			remoteInfo = "Graphics x64";
-		};
-		F445202911648463005984A9 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = F4C946AF11538AB100F7B26F /* XercesLib.xcodeproj */;
-			proxyType = 1;
-			remoteGlobalIDString = 855C1D641057A8BD00F2A7FC;
-			remoteInfo = "XercesLib x64";
-		};
 		F45FAAB212B8CD5D007B551A /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 39D90C6108E7F4FC00E8AC18 /* KernelIPC.xcodeproj */;
 			proxyType = 2;
 			remoteGlobalIDString = F9D1B73112436DB500E98EC6;
 			remoteInfo = "KernelIPC x64 BSD";
+		};
+		F4859A5416D4CB6B005D43A1 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 39D90C5708E7F4E600E8AC18 /* Kernel.xcodeproj */;
+			proxyType = 1;
+			remoteGlobalIDString = 8D07F2BC0486CC7A007CD1D0;
+			remoteInfo = Kernel;
+		};
+		F4859A5616D4CB77005D43A1 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 39D90C6108E7F4FC00E8AC18 /* KernelIPC.xcodeproj */;
+			proxyType = 1;
+			remoteGlobalIDString = 8D07F2BC0486CC7A007CD1D0;
+			remoteInfo = KernelIPC;
+		};
+		F4859A5E16D4CC1A005D43A1 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 42A61DF40FAF401C00C1E5E5 /* JavaScript.xcodeproj */;
+			proxyType = 1;
+			remoteGlobalIDString = 8D07F2BC0486CC7A007CD1D0;
+			remoteInfo = 4DJavaScript;
+		};
+		F4859B4216D4CE3F005D43A1 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 12BB74520AFB296800E2FCAB /* ServerNet.xcodeproj */;
+			proxyType = 1;
+			remoteGlobalIDString = 8D07F2BC0486CC7A007CD1D0;
+			remoteInfo = ServerNet;
+		};
+		F4859B4D16D4CFF8005D43A1 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 54E22BF2112EC24F0066AFA7 /* Graphics.xcodeproj */;
+			proxyType = 1;
+			remoteGlobalIDString = 8D07F2BC0486CC7A007CD1D0;
+			remoteInfo = Graphics;
+		};
+		F4859B5216D4D011005D43A1 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 2975EE5D0A24B63200F6095A /* XML.xcodeproj */;
+			proxyType = 1;
+			remoteGlobalIDString = 8D07F2BC0486CC7A007CD1D0;
+			remoteInfo = XML;
+		};
+		F4859B5616D4D023005D43A1 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 39D90C5708E7F4E600E8AC18 /* Kernel.xcodeproj */;
+			proxyType = 1;
+			remoteGlobalIDString = F464308B113E7A3E00639653;
+			remoteInfo = "Kernel x86_64";
+		};
+		F4859B5816D4D026005D43A1 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 54E22BF2112EC24F0066AFA7 /* Graphics.xcodeproj */;
+			proxyType = 1;
+			remoteGlobalIDString = F464338C113E8E9700639653;
+			remoteInfo = "Graphics x64";
+		};
+		F4859B5A16D4D029005D43A1 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 39D90C6108E7F4FC00E8AC18 /* KernelIPC.xcodeproj */;
+			proxyType = 1;
+			remoteGlobalIDString = F46431C0113E7CBD00639653;
+			remoteInfo = "KernelIPC x64";
+		};
+		F4859B5C16D4D02D005D43A1 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 12BB74520AFB296800E2FCAB /* ServerNet.xcodeproj */;
+			proxyType = 1;
+			remoteGlobalIDString = F464342D113E8FB200639653;
+			remoteInfo = "ServerNet x86_64";
+		};
+		F4859B5E16D4D032005D43A1 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 2975EE5D0A24B63200F6095A /* XML.xcodeproj */;
+			proxyType = 1;
+			remoteGlobalIDString = F4B97C8B116351D800987AC0;
+			remoteInfo = "XML x64";
+		};
+		F4859B6016D4D039005D43A1 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 42A61DF40FAF401C00C1E5E5 /* JavaScript.xcodeproj */;
+			proxyType = 1;
+			remoteGlobalIDString = F46437CB113E9F6000639653;
+			remoteInfo = "4DJavaScript x64";
 		};
 		F4C9469011538A8F00F7B26F /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -343,13 +328,6 @@
 			remoteGlobalIDString = 855C20C51057A8BD00F2A7FC;
 			remoteInfo = "XercesLib x64";
 		};
-		F4C948081157AAE700F7B26F /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = F4C946AF11538AB100F7B26F /* XercesLib.xcodeproj */;
-			proxyType = 1;
-			remoteGlobalIDString = 902F729A05417B7700353415;
-			remoteInfo = XercesLib;
-		};
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
@@ -359,8 +337,6 @@
 		158BA5D010F39CA5004D64BF /* VCacheLog.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = VCacheLog.h; sourceTree = "<group>"; };
 		295549E115989F9D003059BD /* LocalModel.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = LocalModel.cpp; sourceTree = "<group>"; };
 		295549E215989F9D003059BD /* LocalModel.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = LocalModel.h; sourceTree = "<group>"; };
-		295549E315989F9D003059BD /* RemoteModel.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = RemoteModel.cpp; sourceTree = "<group>"; };
-		295549E415989F9D003059BD /* RemoteModel.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RemoteModel.h; sourceTree = "<group>"; };
 		2975EE5D0A24B63200F6095A /* XML.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = XML.xcodeproj; path = ../../../../../XToolbox/Main/XML/Projects/Xcode/XML.xcodeproj; sourceTree = SOURCE_ROOT; };
 		299938FC0EE93DB9007C7ED4 /* Rest.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Rest.cpp; sourceTree = "<group>"; };
 		299938FD0EE93DB9007C7ED4 /* Rest.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Rest.h; sourceTree = "<group>"; };
@@ -452,7 +428,6 @@
 		54E22BF2112EC24F0066AFA7 /* Graphics.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = Graphics.xcodeproj; path = ../../../../../XToolbox/Main/Graphics/Projects/Xcode/Graphics.xcodeproj; sourceTree = SOURCE_ROOT; };
 		8558E1D00E1A1CB400FB0974 /* MacSocket.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = MacSocket.h; path = ../../../../../4eDimension/main/Network/NC/Mac/Src/MacSocket.h; sourceTree = SOURCE_ROOT; };
 		8D01CCD10486CAD60068D4B7 /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
-		8D01CCD20486CAD60068D4B7 /* DB4DDebug.bundle */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = DB4DDebug.bundle; sourceTree = BUILT_PRODUCTS_DIR; };
 		C83D469E0C212CC20014E917 /* IndexTemplatePart2.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = IndexTemplatePart2.h; sourceTree = "<group>"; };
 		C8E18D7E0C1D88E0000FB219 /* IndexTemplate.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = IndexTemplate.cpp; sourceTree = "<group>"; };
 		C8E18D7F0C1D88E0000FB219 /* IndexTemplate.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = IndexTemplate.h; sourceTree = "<group>"; };
@@ -461,42 +436,37 @@
 		D2471B510B7CB081007248D4 /* components_coverage.xcconfig */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text.xcconfig; name = components_coverage.xcconfig; path = ../../../components_coverage.xcconfig; sourceTree = SOURCE_ROOT; };
 		D2471B520B7CB081007248D4 /* components_debug.xcconfig */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text.xcconfig; name = components_debug.xcconfig; path = ../../../components_debug.xcconfig; sourceTree = SOURCE_ROOT; };
 		D2471B530B7CB081007248D4 /* components_release.xcconfig */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text.xcconfig; name = components_release.xcconfig; path = ../../../components_release.xcconfig; sourceTree = SOURCE_ROOT; };
-		F445201A11648405005984A9 /* DB4DDebug.bundle */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = DB4DDebug.bundle; sourceTree = BUILT_PRODUCTS_DIR; };
 		F445201C1164842A005984A9 /* components_x64.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; name = components_x64.xcconfig; path = ../../../components_x64.xcconfig; sourceTree = SOURCE_ROOT; };
+		F48599D716D4C533005D43A1 /* DB4DDebug.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = DB4DDebug.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		F48599F416D4C637005D43A1 /* DB4DDebug.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = DB4DDebug.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		F4C946AF11538AB100F7B26F /* XercesLib.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = XercesLib.xcodeproj; path = ../../../../../xerces/3.0.1/xerces/projects/MacOS/Xcode/XercesLib/XercesLib.xcodeproj; sourceTree = SOURCE_ROOT; };
 		F4CB3F2714692A9C00F635F6 /* ComponentStub.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ComponentStub.cpp; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
-		8D01CCCD0486CAD60068D4B7 /* Frameworks */ = {
+		F48599D516D4C533005D43A1 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				F4C946B811538AB600F7B26F /* XercesDebug.framework in Frameworks */,
-				54E22C19112EC3960066AFA7 /* GraphicsDebug.framework in Frameworks */,
-				42A61E3A0FAF419800C1E5E5 /* 4DJavaScript.framework in Frameworks */,
-				39D90C5408E7F4BA00E8AC18 /* System.framework in Frameworks */,
-				45A98AC50F7A56740073F7C8 /* CoreFoundation.framework in Frameworks */,
-				39D90C6D08E7F52E00E8AC18 /* KernelDebug.framework in Frameworks */,
-				39D90C6F08E7F53300E8AC18 /* KernelIPCDebug.framework in Frameworks */,
-				12BB747E0AFB2BA600E2FCAB /* ServerNetDebug.framework in Frameworks */,
-				29F81CAD0A24BEFA004547B1 /* XMLDebug.framework in Frameworks */,
+				F4859B5116D4D00A005D43A1 /* XMLDebug.framework in Frameworks */,
+				F4859B4C16D4CFF3005D43A1 /* GraphicsDebug.framework in Frameworks */,
+				F4859B4116D4CE36005D43A1 /* ServerNetDebug.framework in Frameworks */,
+				F4859A5D16D4CC14005D43A1 /* 4DJavaScriptDebug.framework in Frameworks */,
+				F4859A5816D4CB90005D43A1 /* KernelDebug.framework in Frameworks */,
+				F4859A5916D4CB93005D43A1 /* KernelIPCDebug.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		F445200911648405005984A9 /* Frameworks */ = {
+		F48599ED16D4C637005D43A1 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				F4452044116484AD005984A9 /* ServerNetDebug.framework in Frameworks */,
-				F4452041116484A8005984A9 /* KernelDebug.framework in Frameworks */,
-				F445203E116484A2005984A9 /* KernelIPCDebug.framework in Frameworks */,
-				F445203B1164849E005984A9 /* XMLDebug.framework in Frameworks */,
-				F445203811648499005984A9 /* 4DJavaScript.framework in Frameworks */,
-				F445203511648495005984A9 /* GraphicsDebug.framework in Frameworks */,
-				F445203211648490005984A9 /* XercesDebug.framework in Frameworks */,
-				F445200E11648405005984A9 /* System.framework in Frameworks */,
-				F445200F11648405005984A9 /* CoreFoundation.framework in Frameworks */,
+				F4859B6216D4D06E005D43A1 /* ServerNetDebug.framework in Frameworks */,
+				F4859B6316D4D06E005D43A1 /* KernelDebug.framework in Frameworks */,
+				F4859B6416D4D06E005D43A1 /* KernelIPCDebug.framework in Frameworks */,
+				F4859B6516D4D06E005D43A1 /* XMLDebug.framework in Frameworks */,
+				F4859B6616D4D06E005D43A1 /* 4DJavaScriptDebug.framework in Frameworks */,
+				F4859B6716D4D06E005D43A1 /* GraphicsDebug.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -539,8 +509,6 @@
 			children = (
 				295549E115989F9D003059BD /* LocalModel.cpp */,
 				295549E215989F9D003059BD /* LocalModel.h */,
-				295549E315989F9D003059BD /* RemoteModel.cpp */,
-				295549E415989F9D003059BD /* RemoteModel.h */,
 				5217912B1541BD76003CC2A0 /* Backup.cpp */,
 				5217912C1541BD76003CC2A0 /* Backup.h */,
 				F4CB3F2714692A9C00F635F6 /* ComponentStub.cpp */,
@@ -648,8 +616,8 @@
 		19C28FB4FE9D528D11CA2CBB /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				8D01CCD20486CAD60068D4B7 /* DB4DDebug.bundle */,
-				F445201A11648405005984A9 /* DB4DDebug.bundle */,
+				F48599D716D4C533005D43A1 /* DB4DDebug.framework */,
+				F48599F416D4C637005D43A1 /* DB4DDebug.framework */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -703,8 +671,8 @@
 		42A61DF50FAF401C00C1E5E5 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				42A61DF90FAF401C00C1E5E5 /* 4DJavaScript.framework */,
-				F4C9469D11538A8F00F7B26F /* 4DJavaScript.framework */,
+				42A61DF90FAF401C00C1E5E5 /* 4DJavaScriptDebug.framework */,
+				F4C9469D11538A8F00F7B26F /* 4DJavaScriptDebug.framework */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -750,56 +718,71 @@
 		};
 /* End PBXGroup section */
 
+/* Begin PBXHeadersBuildPhase section */
+		F48599D216D4C533005D43A1 /* Headers */ = {
+			isa = PBXHeadersBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		F48599EA16D4C637005D43A1 /* Headers */ = {
+			isa = PBXHeadersBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXHeadersBuildPhase section */
+
 /* Begin PBXNativeTarget section */
-		8D01CCC60486CAD60068D4B7 /* DB4D */ = {
+		F48599D616D4C533005D43A1 /* DB4D */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 39D90BD808E7F2BC00E8AC18 /* Build configuration list for PBXNativeTarget "DB4D" */;
+			buildConfigurationList = F48599DE16D4C534005D43A1 /* Build configuration list for PBXNativeTarget "DB4D" */;
 			buildPhases = (
-				8D01CCC90486CAD60068D4B7 /* Resources */,
-				8D01CCCB0486CAD60068D4B7 /* Sources */,
-				8D01CCCD0486CAD60068D4B7 /* Frameworks */,
+				F48599D216D4C533005D43A1 /* Headers */,
+				F48599D316D4C533005D43A1 /* Resources */,
+				F48599D416D4C533005D43A1 /* Sources */,
+				F48599D516D4C533005D43A1 /* Frameworks */,
 			);
 			buildRules = (
 			);
 			dependencies = (
-				39D90C6C08E7F50C00E8AC18 /* PBXTargetDependency */,
-				39D90C6A08E7F50C00E8AC18 /* PBXTargetDependency */,
-				2975EEA40A24BBFE00F6095A /* PBXTargetDependency */,
-				12BB74590AFB298C00E2FCAB /* PBXTargetDependency */,
-				42A61E370FAF415D00C1E5E5 /* PBXTargetDependency */,
-				54E22BFC112EC26F0066AFA7 /* PBXTargetDependency */,
-				F4C948091157AAE700F7B26F /* PBXTargetDependency */,
+				F4859A5516D4CB6B005D43A1 /* PBXTargetDependency */,
+				F4859A5716D4CB77005D43A1 /* PBXTargetDependency */,
+				F4859A5F16D4CC1A005D43A1 /* PBXTargetDependency */,
+				F4859B4316D4CE3F005D43A1 /* PBXTargetDependency */,
+				F4859B4E16D4CFF8005D43A1 /* PBXTargetDependency */,
+				F4859B5316D4D011005D43A1 /* PBXTargetDependency */,
 			);
 			name = DB4D;
-			productInstallPath = "$(HOME)/Library/Bundles";
 			productName = DB4D;
-			productReference = 8D01CCD20486CAD60068D4B7 /* DB4DDebug.bundle */;
-			productType = "com.apple.product-type.bundle";
+			productReference = F48599D716D4C533005D43A1 /* DB4DDebug.framework */;
+			productType = "com.apple.product-type.framework";
 		};
-		F4451FCE11648405005984A9 /* DB4D x64 */ = {
+		F48599E916D4C637005D43A1 /* DB4D x86_64 */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = F445201411648405005984A9 /* Build configuration list for PBXNativeTarget "DB4D x64" */;
+			buildConfigurationList = F48599EE16D4C637005D43A1 /* Build configuration list for PBXNativeTarget "DB4D x86_64" */;
 			buildPhases = (
-				F4451FDF11648405005984A9 /* Resources */,
-				F4451FE111648405005984A9 /* Sources */,
-				F445200911648405005984A9 /* Frameworks */,
+				F48599EA16D4C637005D43A1 /* Headers */,
+				F48599EB16D4C637005D43A1 /* Resources */,
+				F48599EC16D4C637005D43A1 /* Sources */,
+				F48599ED16D4C637005D43A1 /* Frameworks */,
 			);
 			buildRules = (
 			);
 			dependencies = (
-				F445201E11648445005984A9 /* PBXTargetDependency */,
-				F44520201164844C005984A9 /* PBXTargetDependency */,
-				F445202211648451005984A9 /* PBXTargetDependency */,
-				F445202411648455005984A9 /* PBXTargetDependency */,
-				F44520261164845B005984A9 /* PBXTargetDependency */,
-				F44520281164845F005984A9 /* PBXTargetDependency */,
-				F445202A11648463005984A9 /* PBXTargetDependency */,
+				F4859B5716D4D023005D43A1 /* PBXTargetDependency */,
+				F4859B5916D4D026005D43A1 /* PBXTargetDependency */,
+				F4859B5B16D4D029005D43A1 /* PBXTargetDependency */,
+				F4859B5D16D4D02D005D43A1 /* PBXTargetDependency */,
+				F4859B5F16D4D032005D43A1 /* PBXTargetDependency */,
+				F4859B6116D4D039005D43A1 /* PBXTargetDependency */,
 			);
-			name = "DB4D x64";
-			productInstallPath = "$(HOME)/Library/Bundles";
+			name = "DB4D x86_64";
 			productName = DB4D;
-			productReference = F445201A11648405005984A9 /* DB4DDebug.bundle */;
-			productType = "com.apple.product-type.bundle";
+			productReference = F48599F416D4C637005D43A1 /* DB4DDebug.framework */;
+			productType = "com.apple.product-type.framework";
 		};
 /* End PBXNativeTarget section */
 
@@ -853,8 +836,8 @@
 			);
 			projectRoot = ../..;
 			targets = (
-				8D01CCC60486CAD60068D4B7 /* DB4D */,
-				F4451FCE11648405005984A9 /* DB4D x64 */,
+				F48599D616D4C533005D43A1 /* DB4D */,
+				F48599E916D4C637005D43A1 /* DB4D x86_64 */,
 			);
 		};
 /* End PBXProject section */
@@ -909,10 +892,10 @@
 			remoteRef = 39EDC9110BF35A7800AD563D /* PBXContainerItemProxy */;
 			sourceTree = BUILT_PRODUCTS_DIR;
 		};
-		42A61DF90FAF401C00C1E5E5 /* 4DJavaScript.framework */ = {
+		42A61DF90FAF401C00C1E5E5 /* 4DJavaScriptDebug.framework */ = {
 			isa = PBXReferenceProxy;
 			fileType = wrapper.framework;
-			path = 4DJavaScript.framework;
+			path = 4DJavaScriptDebug.framework;
 			remoteRef = 42A61DF80FAF401C00C1E5E5 /* PBXContainerItemProxy */;
 			sourceTree = BUILT_PRODUCTS_DIR;
 		};
@@ -951,10 +934,10 @@
 			remoteRef = F4C9469011538A8F00F7B26F /* PBXContainerItemProxy */;
 			sourceTree = BUILT_PRODUCTS_DIR;
 		};
-		F4C9469D11538A8F00F7B26F /* 4DJavaScript.framework */ = {
+		F4C9469D11538A8F00F7B26F /* 4DJavaScriptDebug.framework */ = {
 			isa = PBXReferenceProxy;
 			fileType = wrapper.framework;
-			path = 4DJavaScript.framework;
+			path = 4DJavaScriptDebug.framework;
 			remoteRef = F4C9469C11538A8F00F7B26F /* PBXContainerItemProxy */;
 			sourceTree = BUILT_PRODUCTS_DIR;
 		};
@@ -1003,14 +986,14 @@
 /* End PBXReferenceProxy section */
 
 /* Begin PBXResourcesBuildPhase section */
-		8D01CCC90486CAD60068D4B7 /* Resources */ = {
+		F48599D316D4C533005D43A1 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		F4451FDF11648405005984A9 /* Resources */ = {
+		F48599EB16D4C637005D43A1 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -1020,186 +1003,168 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
-		8D01CCCB0486CAD60068D4B7 /* Sources */ = {
+		F48599D416D4C533005D43A1 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				39D90C2A08E7F35600E8AC18 /* Base4D.cpp in Sources */,
-				39D90C2B08E7F35600E8AC18 /* BitTable.cpp in Sources */,
-				39D90C2C08E7F35600E8AC18 /* Blob4D.cpp in Sources */,
-				39D90C2D08E7F35600E8AC18 /* Cache.cpp in Sources */,
-				39D90C2E08E7F35600E8AC18 /* CheckAndRepair.cpp in Sources */,
-				39D90C2F08E7F35600E8AC18 /* CodeReg.cpp in Sources */,
-				39D90C3008E7F35600E8AC18 /* DataSeg.cpp in Sources */,
-				39D90C3108E7F35600E8AC18 /* DataSource.cpp in Sources */,
-				39D90C3208E7F35600E8AC18 /* DB4DComponent.cpp in Sources */,
-				39D90C3308E7F35700E8AC18 /* DB4DMgr.cpp in Sources */,
-				39D90C3408E7F35700E8AC18 /* Fiche.cpp in Sources */,
-				39D90C3508E7F35700E8AC18 /* Fichier.cpp in Sources */,
-				39D90C3608E7F35700E8AC18 /* Flush.cpp in Sources */,
-				39D90C3708E7F35700E8AC18 /* ImpExp.cpp in Sources */,
-				39D90C3808E7F35700E8AC18 /* IndClust.cpp in Sources */,
-				39D90C3A08E7F35700E8AC18 /* Index4D.cpp in Sources */,
-				39D90C3B08E7F35700E8AC18 /* InfoTask.cpp in Sources */,
-				39D90C3C08E7F35700E8AC18 /* Journaling.cpp in Sources */,
-				39D90C3D08E7F35700E8AC18 /* Rech4D.cpp in Sources */,
-				39D90C3E08E7F35700E8AC18 /* Relation.cpp in Sources */,
-				39D90C3F08E7F35700E8AC18 /* Scan.cpp in Sources */,
-				39D90C4008E7F35700E8AC18 /* Sels.cpp in Sources */,
-				39D90C4108E7F35700E8AC18 /* Sort4D.cpp in Sources */,
-				39D90C4208E7F35700E8AC18 /* sql.cpp in Sources */,
-				39D90C4308E7F35700E8AC18 /* TabAddr.cpp in Sources */,
-				39D90C4408E7F35700E8AC18 /* Transac.cpp in Sources */,
-				39D90C4508E7F35700E8AC18 /* util4d.cpp in Sources */,
-				39D90C4608E7F35700E8AC18 /* VTools.cpp in Sources */,
-				396D4DF60947170400F673ED /* journal_parser.cpp in Sources */,
-				42C325CB09B47E7A009E33D0 /* Server.cpp in Sources */,
-				29B21D970A945F0800EB070A /* RechComplex.cpp in Sources */,
-				C8E18D800C1D88E1000FB219 /* IndexTemplate.cpp in Sources */,
-				299E9C7A0EC1DE5E00A1ADDB /* EntityModel.cpp in Sources */,
-				29A0AE8C0ED4714500B916BF /* Export.cpp in Sources */,
-				299939000EE93DB9007C7ED4 /* Rest.cpp in Sources */,
-				299939010EE93DB9007C7ED4 /* Web.cpp in Sources */,
-				42A61DF00FAF3DFD00C1E5E5 /* javascript_db4d.cpp in Sources */,
-				158BA5D110F39CA5004D64BF /* VCacheLog.cpp in Sources */,
-				F4CB3F2814692A9C00F635F6 /* ComponentStub.cpp in Sources */,
-				5217912D1541BD76003CC2A0 /* Backup.cpp in Sources */,
-				295549E515989F9D003059BD /* LocalModel.cpp in Sources */,
-				295549E615989F9D003059BD /* RemoteModel.cpp in Sources */,
+				F48599F616D4C692005D43A1 /* Base4D.cpp in Sources */,
+				F48599F716D4C692005D43A1 /* BitTable.cpp in Sources */,
+				F48599F816D4C692005D43A1 /* Blob4D.cpp in Sources */,
+				F48599F916D4C692005D43A1 /* Cache.cpp in Sources */,
+				F48599FA16D4C692005D43A1 /* CheckAndRepair.cpp in Sources */,
+				F48599FB16D4C692005D43A1 /* CodeReg.cpp in Sources */,
+				F48599FC16D4C692005D43A1 /* DataSeg.cpp in Sources */,
+				F48599FD16D4C692005D43A1 /* DataSource.cpp in Sources */,
+				F48599FE16D4C692005D43A1 /* DB4DComponent.cpp in Sources */,
+				F48599FF16D4C692005D43A1 /* DB4DMgr.cpp in Sources */,
+				F4859A0016D4C692005D43A1 /* Fiche.cpp in Sources */,
+				F4859A0116D4C692005D43A1 /* Fichier.cpp in Sources */,
+				F4859A0216D4C692005D43A1 /* Flush.cpp in Sources */,
+				F4859A0316D4C692005D43A1 /* ImpExp.cpp in Sources */,
+				F4859A0416D4C692005D43A1 /* IndClust.cpp in Sources */,
+				F4859A0516D4C692005D43A1 /* Index4D.cpp in Sources */,
+				F4859A0616D4C692005D43A1 /* InfoTask.cpp in Sources */,
+				F4859A0716D4C692005D43A1 /* Journaling.cpp in Sources */,
+				F4859A0816D4C692005D43A1 /* Rech4D.cpp in Sources */,
+				F4859A0916D4C692005D43A1 /* Relation.cpp in Sources */,
+				F4859A0A16D4C692005D43A1 /* Scan.cpp in Sources */,
+				F4859A0B16D4C692005D43A1 /* Sels.cpp in Sources */,
+				F4859A0C16D4C692005D43A1 /* Sort4D.cpp in Sources */,
+				F4859A0D16D4C692005D43A1 /* sql.cpp in Sources */,
+				F4859A0E16D4C692005D43A1 /* TabAddr.cpp in Sources */,
+				F4859A0F16D4C692005D43A1 /* Transac.cpp in Sources */,
+				F4859A1016D4C692005D43A1 /* util4d.cpp in Sources */,
+				F4859A1116D4C692005D43A1 /* VTools.cpp in Sources */,
+				F4859A1216D4C692005D43A1 /* journal_parser.cpp in Sources */,
+				F4859A1316D4C692005D43A1 /* Server.cpp in Sources */,
+				F4859A1416D4C692005D43A1 /* RechComplex.cpp in Sources */,
+				F4859A1516D4C692005D43A1 /* IndexTemplate.cpp in Sources */,
+				F4859A1616D4C692005D43A1 /* EntityModel.cpp in Sources */,
+				F4859A1716D4C692005D43A1 /* Export.cpp in Sources */,
+				F4859A1816D4C692005D43A1 /* Rest.cpp in Sources */,
+				F4859A1916D4C692005D43A1 /* Web.cpp in Sources */,
+				F4859A1A16D4C692005D43A1 /* javascript_db4d.cpp in Sources */,
+				F4859A1B16D4C692005D43A1 /* VCacheLog.cpp in Sources */,
+				F4859A1C16D4C692005D43A1 /* ComponentStub.cpp in Sources */,
+				F4859A1D16D4C692005D43A1 /* Backup.cpp in Sources */,
+				F4859A1E16D4C692005D43A1 /* LocalModel.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		F4451FE111648405005984A9 /* Sources */ = {
+		F48599EC16D4C637005D43A1 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				F4451FE211648405005984A9 /* Base4D.cpp in Sources */,
-				F4451FE311648405005984A9 /* BitTable.cpp in Sources */,
-				F4451FE411648405005984A9 /* Blob4D.cpp in Sources */,
-				F4451FE511648405005984A9 /* Cache.cpp in Sources */,
-				F4451FE611648405005984A9 /* CheckAndRepair.cpp in Sources */,
-				F4451FE711648405005984A9 /* CodeReg.cpp in Sources */,
-				F4451FE811648405005984A9 /* DataSeg.cpp in Sources */,
-				F4451FE911648405005984A9 /* DataSource.cpp in Sources */,
-				F4451FEA11648405005984A9 /* DB4DComponent.cpp in Sources */,
-				F4451FEB11648405005984A9 /* DB4DMgr.cpp in Sources */,
-				F4451FEC11648405005984A9 /* Fiche.cpp in Sources */,
-				F4451FED11648405005984A9 /* Fichier.cpp in Sources */,
-				F4451FEE11648405005984A9 /* Flush.cpp in Sources */,
-				F4451FEF11648405005984A9 /* ImpExp.cpp in Sources */,
-				F4451FF011648405005984A9 /* IndClust.cpp in Sources */,
-				F4451FF111648405005984A9 /* Index4D.cpp in Sources */,
-				F4451FF211648405005984A9 /* InfoTask.cpp in Sources */,
-				F4451FF311648405005984A9 /* Journaling.cpp in Sources */,
-				F4451FF411648405005984A9 /* Rech4D.cpp in Sources */,
-				F4451FF511648405005984A9 /* Relation.cpp in Sources */,
-				F4451FF611648405005984A9 /* Scan.cpp in Sources */,
-				F4451FF711648405005984A9 /* Sels.cpp in Sources */,
-				F4451FF811648405005984A9 /* Sort4D.cpp in Sources */,
-				F4451FF911648405005984A9 /* sql.cpp in Sources */,
-				F4451FFA11648405005984A9 /* TabAddr.cpp in Sources */,
-				F4451FFB11648405005984A9 /* Transac.cpp in Sources */,
-				F4451FFC11648405005984A9 /* util4d.cpp in Sources */,
-				F4451FFD11648405005984A9 /* VTools.cpp in Sources */,
-				F4451FFF11648405005984A9 /* journal_parser.cpp in Sources */,
-				F445200011648405005984A9 /* Server.cpp in Sources */,
-				F445200111648405005984A9 /* RechComplex.cpp in Sources */,
-				F445200211648405005984A9 /* IndexTemplate.cpp in Sources */,
-				F445200311648405005984A9 /* EntityModel.cpp in Sources */,
-				F445200411648405005984A9 /* Export.cpp in Sources */,
-				F445200511648405005984A9 /* Rest.cpp in Sources */,
-				F445200611648405005984A9 /* Web.cpp in Sources */,
-				F445200711648405005984A9 /* javascript_db4d.cpp in Sources */,
-				F445200811648405005984A9 /* VCacheLog.cpp in Sources */,
-				F4CB3F2914692A9C00F635F6 /* ComponentStub.cpp in Sources */,
-				5217912E1541BD76003CC2A0 /* Backup.cpp in Sources */,
-				295549E715989F9D003059BD /* LocalModel.cpp in Sources */,
-				295549E815989F9D003059BD /* RemoteModel.cpp in Sources */,
+				F4859A1F16D4C6A4005D43A1 /* Base4D.cpp in Sources */,
+				F4859A2016D4C6A4005D43A1 /* BitTable.cpp in Sources */,
+				F4859A2116D4C6A4005D43A1 /* Blob4D.cpp in Sources */,
+				F4859A2216D4C6A4005D43A1 /* Cache.cpp in Sources */,
+				F4859A2316D4C6A4005D43A1 /* CheckAndRepair.cpp in Sources */,
+				F4859A2416D4C6A4005D43A1 /* CodeReg.cpp in Sources */,
+				F4859A2516D4C6A4005D43A1 /* DataSeg.cpp in Sources */,
+				F4859A2616D4C6A4005D43A1 /* DataSource.cpp in Sources */,
+				F4859A2716D4C6A4005D43A1 /* DB4DComponent.cpp in Sources */,
+				F4859A2816D4C6A4005D43A1 /* DB4DMgr.cpp in Sources */,
+				F4859A2916D4C6A4005D43A1 /* Fiche.cpp in Sources */,
+				F4859A2A16D4C6A4005D43A1 /* Fichier.cpp in Sources */,
+				F4859A2B16D4C6A4005D43A1 /* Flush.cpp in Sources */,
+				F4859A2C16D4C6A4005D43A1 /* ImpExp.cpp in Sources */,
+				F4859A2D16D4C6A4005D43A1 /* IndClust.cpp in Sources */,
+				F4859A2E16D4C6A4005D43A1 /* Index4D.cpp in Sources */,
+				F4859A2F16D4C6A4005D43A1 /* InfoTask.cpp in Sources */,
+				F4859A3016D4C6A4005D43A1 /* Journaling.cpp in Sources */,
+				F4859A3116D4C6A4005D43A1 /* Rech4D.cpp in Sources */,
+				F4859A3216D4C6A4005D43A1 /* Relation.cpp in Sources */,
+				F4859A3316D4C6A4005D43A1 /* Scan.cpp in Sources */,
+				F4859A3416D4C6A4005D43A1 /* Sels.cpp in Sources */,
+				F4859A3516D4C6A4005D43A1 /* Sort4D.cpp in Sources */,
+				F4859A3616D4C6A4005D43A1 /* sql.cpp in Sources */,
+				F4859A3716D4C6A4005D43A1 /* TabAddr.cpp in Sources */,
+				F4859A3816D4C6A4005D43A1 /* Transac.cpp in Sources */,
+				F4859A3916D4C6A4005D43A1 /* util4d.cpp in Sources */,
+				F4859A3A16D4C6A4005D43A1 /* VTools.cpp in Sources */,
+				F4859A3B16D4C6A4005D43A1 /* journal_parser.cpp in Sources */,
+				F4859A3C16D4C6A4005D43A1 /* Server.cpp in Sources */,
+				F4859A3D16D4C6A4005D43A1 /* RechComplex.cpp in Sources */,
+				F4859A3E16D4C6A4005D43A1 /* IndexTemplate.cpp in Sources */,
+				F4859A3F16D4C6A4005D43A1 /* EntityModel.cpp in Sources */,
+				F4859A4016D4C6A4005D43A1 /* Export.cpp in Sources */,
+				F4859A4116D4C6A4005D43A1 /* Rest.cpp in Sources */,
+				F4859A4216D4C6A4005D43A1 /* Web.cpp in Sources */,
+				F4859A4316D4C6A4005D43A1 /* javascript_db4d.cpp in Sources */,
+				F4859A4416D4C6A4005D43A1 /* VCacheLog.cpp in Sources */,
+				F4859A4516D4C6A4005D43A1 /* ComponentStub.cpp in Sources */,
+				F4859A4616D4C6A4005D43A1 /* Backup.cpp in Sources */,
+				F4859A4716D4C6A4005D43A1 /* LocalModel.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
-		12BB74590AFB298C00E2FCAB /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			name = ServerNet;
-			targetProxy = 12BB74580AFB298C00E2FCAB /* PBXContainerItemProxy */;
-		};
-		2975EEA40A24BBFE00F6095A /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			name = XML;
-			targetProxy = 2975EEA30A24BBFE00F6095A /* PBXContainerItemProxy */;
-		};
-		39D90C6A08E7F50C00E8AC18 /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			name = KernelIPC;
-			targetProxy = 39D90C6908E7F50C00E8AC18 /* PBXContainerItemProxy */;
-		};
-		39D90C6C08E7F50C00E8AC18 /* PBXTargetDependency */ = {
+		F4859A5516D4CB6B005D43A1 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			name = Kernel;
-			targetProxy = 39D90C6B08E7F50C00E8AC18 /* PBXContainerItemProxy */;
+			targetProxy = F4859A5416D4CB6B005D43A1 /* PBXContainerItemProxy */;
 		};
-		42A61E370FAF415D00C1E5E5 /* PBXTargetDependency */ = {
+		F4859A5716D4CB77005D43A1 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			name = KernelIPC;
+			targetProxy = F4859A5616D4CB77005D43A1 /* PBXContainerItemProxy */;
+		};
+		F4859A5F16D4CC1A005D43A1 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			name = 4DJavaScript;
-			targetProxy = 42A61E360FAF415D00C1E5E5 /* PBXContainerItemProxy */;
+			targetProxy = F4859A5E16D4CC1A005D43A1 /* PBXContainerItemProxy */;
 		};
-		54E22BFC112EC26F0066AFA7 /* PBXTargetDependency */ = {
+		F4859B4316D4CE3F005D43A1 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			name = ServerNet;
+			targetProxy = F4859B4216D4CE3F005D43A1 /* PBXContainerItemProxy */;
+		};
+		F4859B4E16D4CFF8005D43A1 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			name = Graphics;
-			targetProxy = 54E22BFB112EC26F0066AFA7 /* PBXContainerItemProxy */;
+			targetProxy = F4859B4D16D4CFF8005D43A1 /* PBXContainerItemProxy */;
 		};
-		F445201E11648445005984A9 /* PBXTargetDependency */ = {
+		F4859B5316D4D011005D43A1 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			name = "Kernel x64";
-			targetProxy = F445201D11648445005984A9 /* PBXContainerItemProxy */;
+			name = XML;
+			targetProxy = F4859B5216D4D011005D43A1 /* PBXContainerItemProxy */;
 		};
-		F44520201164844C005984A9 /* PBXTargetDependency */ = {
+		F4859B5716D4D023005D43A1 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			name = "KernelIPC x64";
-			targetProxy = F445201F1164844C005984A9 /* PBXContainerItemProxy */;
+			name = "Kernel x86_64";
+			targetProxy = F4859B5616D4D023005D43A1 /* PBXContainerItemProxy */;
 		};
-		F445202211648451005984A9 /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			name = "XML x64";
-			targetProxy = F445202111648451005984A9 /* PBXContainerItemProxy */;
-		};
-		F445202411648455005984A9 /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			name = "ServerNet x64";
-			targetProxy = F445202311648455005984A9 /* PBXContainerItemProxy */;
-		};
-		F44520261164845B005984A9 /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			name = "4DJavaScript x64";
-			targetProxy = F44520251164845B005984A9 /* PBXContainerItemProxy */;
-		};
-		F44520281164845F005984A9 /* PBXTargetDependency */ = {
+		F4859B5916D4D026005D43A1 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			name = "Graphics x64";
-			targetProxy = F44520271164845F005984A9 /* PBXContainerItemProxy */;
+			targetProxy = F4859B5816D4D026005D43A1 /* PBXContainerItemProxy */;
 		};
-		F445202A11648463005984A9 /* PBXTargetDependency */ = {
+		F4859B5B16D4D029005D43A1 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			name = "XercesLib x64";
-			targetProxy = F445202911648463005984A9 /* PBXContainerItemProxy */;
+			name = "KernelIPC x64";
+			targetProxy = F4859B5A16D4D029005D43A1 /* PBXContainerItemProxy */;
 		};
-		F4C948091157AAE700F7B26F /* PBXTargetDependency */ = {
+		F4859B5D16D4D02D005D43A1 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			name = XercesLib;
-			targetProxy = F4C948081157AAE700F7B26F /* PBXContainerItemProxy */;
+			name = "ServerNet x86_64";
+			targetProxy = F4859B5C16D4D02D005D43A1 /* PBXContainerItemProxy */;
+		};
+		F4859B5F16D4D032005D43A1 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			name = "XML x64";
+			targetProxy = F4859B5E16D4D032005D43A1 /* PBXContainerItemProxy */;
+		};
+		F4859B6116D4D039005D43A1 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			name = "4DJavaScript x64";
+			targetProxy = F4859B6016D4D039005D43A1 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
-		126DA1600A4ACA1E00D639DA /* Coverage */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-			};
-			name = Coverage;
-		};
 		126DA1610A4ACA1E00D639DA /* Coverage */ = {
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = D2471B510B7CB081007248D4 /* components_coverage.xcconfig */;
@@ -1228,19 +1193,15 @@
 				HEADER_SEARCH_PATHS_QUOTED_3 = "\"${SRCROOT}/../../../../../XToolbox/Main\"";
 				HEADER_SEARCH_PATHS_QUOTED_4 = "\"${SRCROOT}/../../../../../4eDimension/main/Network/NC/COMMON\"";
 				HEADER_SEARCH_PATHS_QUOTED_5 = "\"${SRCROOT}/../../../../../xerces/2.8.0/xerces/src“";
+				INSTALL_PATH = "@executable_path/../Frameworks";
 				LIBRARY_SEARCH_PATHS = ../../../../../4eDimension/main/Libraries/MachO;
-				MACOSX_DEPLOYMENT_TARGET = 10.5;
 				OTHER_LDFLAGS = "-lgcov";
 				SEPARATE_STRIP = YES;
 				SKIP_INSTALL = YES;
+				SYMROOT = "$(SRCROOT)/../../../Frameworks $(ARCHS)";
+				WRAPPER_EXTENSION = framework;
 			};
 			name = Coverage;
-		};
-		39C391F30C280A690073EDA8 /* Performance */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-			};
-			name = Performance;
 		};
 		39C391F40C280A690073EDA8 /* Performance */ = {
 			isa = XCBuildConfiguration;
@@ -1263,18 +1224,14 @@
 					"$(HEADER_SEARCH_PATHS_XERCES)",
 					"$(HEADER_SEARCH_PATHS)",
 				);
+				INSTALL_PATH = "@executable_path/../Frameworks";
 				LIBRARY_SEARCH_PATHS = ../../../../../4eDimension/main/Libraries/MachO;
-				MACOSX_DEPLOYMENT_TARGET = 10.5;
 				SEPARATE_STRIP = YES;
 				SKIP_INSTALL = YES;
+				SYMROOT = "$(SRCROOT)/../../../Frameworks $(ARCHS)";
+				WRAPPER_EXTENSION = framework;
 			};
 			name = Performance;
-		};
-		39D90BDA08E7F2BC00E8AC18 /* Beta */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-			};
-			name = Beta;
 		};
 		39D90BDE08E7F2BC00E8AC18 /* Beta */ = {
 			isa = XCBuildConfiguration;
@@ -1297,24 +1254,14 @@
 					"$(HEADER_SEARCH_PATHS_XERCES)",
 					"$(HEADER_SEARCH_PATHS)",
 				);
+				INSTALL_PATH = "@executable_path/../Frameworks";
 				LIBRARY_SEARCH_PATHS = ../../../../../4eDimension/main/Libraries/MachO;
-				MACOSX_DEPLOYMENT_TARGET = 10.5;
 				SEPARATE_STRIP = YES;
 				SKIP_INSTALL = YES;
+				SYMROOT = "$(SRCROOT)/../../../Frameworks $(ARCHS)";
+				WRAPPER_EXTENSION = framework;
 			};
 			name = Beta;
-		};
-		39D90C4908E7F39900E8AC18 /* Debug */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-			};
-			name = Debug;
-		};
-		39D90C4A08E7F39900E8AC18 /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-			};
-			name = Release;
 		};
 		39D90C4B08E7F39900E8AC18 /* Debug */ = {
 			isa = XCBuildConfiguration;
@@ -1337,9 +1284,12 @@
 					"$(HEADER_SEARCH_PATHS_XERCES)",
 					"$(HEADER_SEARCH_PATHS)",
 				);
+				INSTALL_PATH = "@executable_path/../Frameworks";
 				LIBRARY_SEARCH_PATHS = ../../../../../4eDimension/main/Libraries/MachO;
 				SEPARATE_STRIP = YES;
 				SKIP_INSTALL = YES;
+				SYMROOT = "$(SRCROOT)/../../../Frameworks $(ARCHS)";
+				WRAPPER_EXTENSION = framework;
 			};
 			name = Debug;
 		};
@@ -1366,63 +1316,83 @@
 					"$(HEADER_SEARCH_PATHS_XERCES)",
 					"$(HEADER_SEARCH_PATHS)",
 				);
+				INSTALL_PATH = "@executable_path/../Frameworks";
 				LIBRARY_SEARCH_PATHS = ../../../../../4eDimension/main/Libraries/MachO;
-				MACOSX_DEPLOYMENT_TARGET = 10.5;
 				SEPARATE_STRIP = YES;
 				SKIP_INSTALL = YES;
+				SYMROOT = "$(SRCROOT)/../../../Frameworks $(ARCHS)";
+				WRAPPER_EXTENSION = framework;
 			};
 			name = Release;
 		};
-		F445201511648405005984A9 /* Debug */ = {
+		F48599D916D4C534005D43A1 /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = F445201C1164842A005984A9 /* components_x64.xcconfig */;
 			buildSettings = {
 			};
 			name = Debug;
 		};
-		F445201611648405005984A9 /* Coverage */ = {
+		F48599DA16D4C534005D43A1 /* Coverage */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = F445201C1164842A005984A9 /* components_x64.xcconfig */;
 			buildSettings = {
 			};
 			name = Coverage;
 		};
-		F445201711648405005984A9 /* Beta */ = {
+		F48599DB16D4C534005D43A1 /* Beta */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = F445201C1164842A005984A9 /* components_x64.xcconfig */;
 			buildSettings = {
 			};
 			name = Beta;
 		};
-		F445201811648405005984A9 /* Release */ = {
+		F48599DC16D4C534005D43A1 /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = F445201C1164842A005984A9 /* components_x64.xcconfig */;
 			buildSettings = {
 			};
 			name = Release;
 		};
-		F445201911648405005984A9 /* Performance */ = {
+		F48599DD16D4C534005D43A1 /* Performance */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = F445201C1164842A005984A9 /* components_x64.xcconfig */;
 			buildSettings = {
+			};
+			name = Performance;
+		};
+		F48599EF16D4C637005D43A1 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ARCHS = x86_64;
+			};
+			name = Debug;
+		};
+		F48599F016D4C637005D43A1 /* Coverage */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ARCHS = x86_64;
+			};
+			name = Coverage;
+		};
+		F48599F116D4C637005D43A1 /* Beta */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ARCHS = x86_64;
+			};
+			name = Beta;
+		};
+		F48599F216D4C637005D43A1 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ARCHS = x86_64;
+			};
+			name = Release;
+		};
+		F48599F316D4C637005D43A1 /* Performance */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ARCHS = x86_64;
 			};
 			name = Performance;
 		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		39D90BD808E7F2BC00E8AC18 /* Build configuration list for PBXNativeTarget "DB4D" */ = {
-			isa = XCConfigurationList;
-			buildConfigurations = (
-				39D90C4908E7F39900E8AC18 /* Debug */,
-				126DA1600A4ACA1E00D639DA /* Coverage */,
-				39D90BDA08E7F2BC00E8AC18 /* Beta */,
-				39D90C4A08E7F39900E8AC18 /* Release */,
-				39C391F30C280A690073EDA8 /* Performance */,
-			);
-			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Debug;
-		};
 		39D90BDC08E7F2BC00E8AC18 /* Build configuration list for PBXProject "DB4D" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
@@ -1435,14 +1405,26 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Debug;
 		};
-		F445201411648405005984A9 /* Build configuration list for PBXNativeTarget "DB4D x64" */ = {
+		F48599DE16D4C534005D43A1 /* Build configuration list for PBXNativeTarget "DB4D" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				F445201511648405005984A9 /* Debug */,
-				F445201611648405005984A9 /* Coverage */,
-				F445201711648405005984A9 /* Beta */,
-				F445201811648405005984A9 /* Release */,
-				F445201911648405005984A9 /* Performance */,
+				F48599D916D4C534005D43A1 /* Debug */,
+				F48599DA16D4C534005D43A1 /* Coverage */,
+				F48599DB16D4C534005D43A1 /* Beta */,
+				F48599DC16D4C534005D43A1 /* Release */,
+				F48599DD16D4C534005D43A1 /* Performance */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		F48599EE16D4C637005D43A1 /* Build configuration list for PBXNativeTarget "DB4D x86_64" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				F48599EF16D4C637005D43A1 /* Debug */,
+				F48599F016D4C637005D43A1 /* Coverage */,
+				F48599F116D4C637005D43A1 /* Beta */,
+				F48599F216D4C637005D43A1 /* Release */,
+				F48599F316D4C637005D43A1 /* Performance */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Debug;

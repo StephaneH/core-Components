@@ -22,7 +22,6 @@ JavaScriptParser::JavaScriptParser()
 : fLexer( NULL )
 , fWasError( false )
 , fDelegate( NULL )
-, fSyntaxCheckCookie( NULL )
 , kParsingError( -50 )
 , fSuggestions( NULL )
 , fCompletionSymbol( NULL )
@@ -84,13 +83,14 @@ void JavaScriptParser::RecoverFromError( int &tk )
 	}
 }
 
-JavaScriptAST::Node *JavaScriptParser::GetAST( VString *inInput, void *inCookie )
+JavaScriptAST::Node *JavaScriptParser::GetAST( VFilePath inFilePath, VString *inInput, bool& outError )
 {
+	fFilePath = inFilePath;
+	
 	// Set up the lexer with the input we've been given
 	fLexer->SetLexerInput( inInput );
 
 	fSuggestions = NULL;
-	fSyntaxCheckCookie = inCookie;
 	fWasError = false;
 	SetCompletionSymbol(NULL);
 
@@ -108,6 +108,8 @@ JavaScriptAST::Node *JavaScriptParser::GetAST( VString *inInput, void *inCookie 
 
 	// We're also done caring about suggestions, so clear it
 	fSuggestions = NULL;
+	
+	outError = fWasError;
 
 	return program;
 }
@@ -149,68 +151,6 @@ void JavaScriptParser::GetSuggestions( VString *inInput, SuggestionList *inSugge
 	fSuggestions = NULL;
 }
 
-bool JavaScriptParser::CheckSyntax( VString *inInput, void *inCookie )
-{
-	// Set up the lexer with the input we've been given
-	fLexer->SetLexerInput( inInput );
-
-	fWasError = false;
-	fSyntaxCheckCookie = inCookie;
-	SetCompletionSymbol(NULL);
-
-	// Now parse the document
-	try {
-		JavaScriptAST::Node *program = ParseProgram();
-		delete program;
-	} catch ( ParsingErrorException e ) {
-		// This means the exception would have otherwise been unhandled, which is a bug 
-		// in our code.  To prevent this exception from escaping, we handle it here, but
-		// are going to throw an assertion to bark at the programmer.  You need to ensure
-		// any statement or source element parsing handles exceptions!
-		xbox_assert( false );
-	}
-	
-	fSyntaxCheckCookie = NULL;
-
-	// We want to return true if there was no error, so we have to flip the meaning
-	// of the fWasError property
-	return !fWasError;
-}
-
-bool JavaScriptParser::ParseDeclarations( VString *inInput, ISymbolTable *inTable, Symbols::IFile *inOwnerFile, void *inCookie )
-{
-	bool ret = false;
-	// Set up the lexer with the input we've been given
-	fLexer->SetLexerInput( inInput );
-
-	fWasError = false;
-	fSyntaxCheckCookie = inCookie;
-	SetCompletionSymbol(NULL);
-
-	// Now we can begin parsing the document, looking for declarations to add to the table
-	try {
-		JavaScriptAST::Node *program = ParseProgram();
-		if (program)
-		{
-			if (!VTask::GetCurrent()->IsDying()) {
-				JavaScriptAST::Visitor *declParser = JavaScriptAST::Visitor::GetDeclarationParser( inTable, inOwnerFile, fDelegate, inCookie );
-				ret = program->Accept( declParser );
-				delete declParser;
-			}
-			delete program;
-		}
-	} catch ( ParsingErrorException e ) {
-		// This means the exception would have otherwise been unhandled, which is a bug 
-		// in our code.  To prevent this exception from escaping, we handle it here, but
-		// are going to throw an assertion to bark at the programmer.  You need to ensure
-		// any statement or source element parsing handles exceptions!
-		xbox_assert( false );
-	}
-	
-	fSyntaxCheckCookie = NULL;
-	return ret;
-}
-
 bool JavaScriptParser::ParseStatementCompletion( int &tk )
 {
 	// One the statement has completed, we need to reset our
@@ -234,7 +174,7 @@ bool JavaScriptParser::ParseStatementCompletion( int &tk )
 	// One or more line terminators preceeding this token, so we can insert the semi-colon
 	if (fLexer->ConsumedNewlineBeforeToken())	return true;
 
-	ThrowError( JavaScriptError::kSyntaxError );
+	ThrowError( "Syntax Error" );
 
 	return false;
 }
@@ -252,13 +192,12 @@ JavaScriptAST::Node *JavaScriptParser::ParseFunctionDeclaration( int &tk, const 
 	if (JavaScriptTokenValues::FUNCTION == tk)
 	{
 		int beginLineNumber = fLexer->GetCurrentLineNumber();
-
 		tk = fLexer->GetNextTokenForParser();
 
 		// No function identifier has been parsed. If no name parameter was given
 		// for the current function we assume there is a syntax error...
 		if (JavaScriptTokenValues::IDENTIFIER != tk && inFunctionName == "") {
-			ThrowError( JavaScriptError::kExpectedIdentifier );
+			ThrowError( "Expected Identifier" );
 			return NULL;
 		}
 
@@ -275,7 +214,7 @@ JavaScriptAST::Node *JavaScriptParser::ParseFunctionDeclaration( int &tk, const 
 
 		// After the identifier comes the parameter list, enclosed in parenthesis.
 		if ('(' != tk) {
-			ThrowError( JavaScriptError::kSyntaxError );
+			ThrowError( "Syntax Error" );
 			return NULL;
 		}
 
@@ -290,7 +229,7 @@ JavaScriptAST::Node *JavaScriptParser::ParseFunctionDeclaration( int &tk, const 
 		if (')' != tk)
 		{
 			delete args;
-			ThrowError( JavaScriptError::kSyntaxError );
+			ThrowError( "Syntax Error" );
 			return NULL;
 		}
 		tk = fLexer->GetNextTokenForParser();
@@ -300,12 +239,9 @@ JavaScriptAST::Node *JavaScriptParser::ParseFunctionDeclaration( int &tk, const 
 		if ('{' != tk)
 		{
 			delete args;
-			ThrowError( JavaScriptError::kSyntaxError );
+			ThrowError( "Syntax Error" );
 			return NULL;
 		}
-
-		if (fDelegate)
-			fDelegate->BlockOpener( fLexer->GetCurrentLineNumber(), fLexer->GetCurrentCharacterOffset(), fSyntaxCheckCookie );
 
 		// Before we parse the body, let's pull any ScriptDoc comments out of the lexer so that we
 		// can store them on the return node.
@@ -342,23 +278,17 @@ JavaScriptAST::Node *JavaScriptParser::ParseFunctionDeclaration( int &tk, const 
 		{
 			delete args;
 			delete body;
-			ThrowError( JavaScriptError::kSyntaxError );
+			ThrowError( "Syntax Error" );
 			return NULL;
 		}
 
 		int endLineNumber = fLexer->GetCurrentLineNumber();
-
-		if (fDelegate)
-			fDelegate->BlockCloser( endLineNumber, fLexer->GetCurrentCharacterOffset(), fSyntaxCheckCookie );
 
 		tk = fLexer->GetNextTokenForParser();
 
 		ret = new JavaScriptAST::FunctionDeclarationStatementNode( functionName, args, body, beginLineNumber, endLineNumber );
 		ret->AttachScriptDocComment( comment );
 	}
-
-	if (NULL == ret && fSuggestions && -1 == tk)
-		fSuggestions->Suggest( "function", SuggestionInfo::eKeyword );
 
 	return ret;
 }
@@ -473,7 +403,7 @@ JavaScriptAST::Node *JavaScriptParser::ParseVariableDeclaration( int &tk, bool n
 {
 	// The first thing we expect to see is an identifier
 	if (JavaScriptTokenValues::IDENTIFIER != tk) {
-		ThrowError( JavaScriptError::kExpectedIdentifier );
+		ThrowError( "Expected Identifier" );
 		return NULL;
 	}
 
@@ -547,6 +477,8 @@ JavaScriptAST::Node *JavaScriptParser::ParseLiteral( int &tk )
 		} break;
 		case JavaScriptTokenValues::REGEXP: {
 			VString	body, flags; // Aren't used for now
+            
+            VString szRegExpValue = fLexer->GetTokenText();
 
 			ret = new JavaScriptAST::RegExLiteralNode( body, flags, fLexer->GetCurrentLineNumber() );
 			tk = fLexer->GetNextTokenForParser();
@@ -603,7 +535,7 @@ JavaScriptAST::Node * JavaScriptParser::ParseArrayLiteral( int &tk )
 	ParseElision( tk );
 
 	if (']' != tk) {
-		ThrowError( JavaScriptError::kSyntaxError );
+		ThrowError( "Syntax Error" );
 		return NULL;
 	}
 
@@ -640,7 +572,7 @@ JavaScriptAST::Node *JavaScriptParser::ParsePropertyName( int &tk )
 		} break;
 	}
 
-	ThrowError( JavaScriptError::kSyntaxError );
+	ThrowError( "Syntax Error" );
 	return NULL;
 }
 
@@ -662,7 +594,7 @@ bool JavaScriptParser::ParsePropertyNameAndValueList( int &tk, JavaScriptAST::Ob
 		if (':' != tk)
 		{
 			delete ident;
-			ThrowError( JavaScriptError::kSyntaxError );
+			ThrowError( "Syntax Error" );
 			return false;
 		}
 
@@ -729,7 +661,6 @@ bool JavaScriptParser::ParsePropertyNameAndValueList( int &tk, JavaScriptAST::Ob
 JavaScriptAST::Node *JavaScriptParser::ParseObjectLiteral( int &tk )
 {
 	if ('{' != tk)	return NULL;
-	if (fDelegate)	fDelegate->BlockOpener( fLexer->GetCurrentLineNumber(), fLexer->GetCurrentCharacterOffset(), fSyntaxCheckCookie );
 
 	// An object literal can either be an empty pair of brackets, or it can 
 	// have a list of property names and values, followed by a closing bracket.  So
@@ -762,10 +693,9 @@ JavaScriptAST::Node *JavaScriptParser::ParseObjectLiteral( int &tk )
 
 	if ('}' != tk) {
 		delete node;
-		ThrowError( JavaScriptError::kSyntaxError );
+		ThrowError( "Syntax Error" );
 		return NULL;
 	}
-	if (fDelegate)	fDelegate->BlockCloser( fLexer->GetCurrentLineNumber(), fLexer->GetCurrentCharacterOffset(), fSyntaxCheckCookie );
 
 	tk = fLexer->GetNextTokenForParser();
 
@@ -829,7 +759,7 @@ JavaScriptAST::Node *JavaScriptParser::ParsePrimaryExpression( int &tk )
 		if (!ret)	return NULL;
 		if (')' != tk) {
 			delete ret;
-			ThrowError( JavaScriptError::kSyntaxError );
+			ThrowError( "Syntax Error" );
 			return NULL;
 		}
 		tk = fLexer->GetNextTokenForParser();
@@ -880,7 +810,7 @@ JavaScriptAST::Node *JavaScriptParser::ParseFunctionExpression( int &tk )
 	// next token since ParseFormalParameterList will do that for us
 	if ('(' != tk)
 	{
-		ThrowError( JavaScriptError::kSyntaxError );
+		ThrowError( "Syntax Error" );
 		return NULL;
 	}
 
@@ -891,7 +821,7 @@ JavaScriptAST::Node *JavaScriptParser::ParseFunctionExpression( int &tk )
 	if (')' != tk)
 	{
 		delete args;
-		ThrowError( JavaScriptError::kSyntaxError );
+		ThrowError( "Syntax Error" );
 		return NULL;
 	}
 	tk = fLexer->GetNextTokenForParser();
@@ -899,12 +829,9 @@ JavaScriptAST::Node *JavaScriptParser::ParseFunctionExpression( int &tk )
 	if ('{' != tk)
 	{
 		delete args;
-		ThrowError( JavaScriptError::kSyntaxError );
+		ThrowError( "Syntax Error" );
 		return NULL;
 	}
-
-	if (fDelegate)
-		fDelegate->BlockOpener( fLexer->GetCurrentLineNumber(), fLexer->GetCurrentCharacterOffset(), fSyntaxCheckCookie );
 
 	tk = fLexer->GetNextTokenForParser();
 
@@ -923,15 +850,12 @@ JavaScriptAST::Node *JavaScriptParser::ParseFunctionExpression( int &tk )
 	{
 		delete args;
 		delete body;
-		ThrowError( JavaScriptError::kSyntaxError );
+		ThrowError( "Syntax Error" );
 		return NULL;
 	}
 
 	
 	int endLineNumber = fLexer->GetCurrentLineNumber();
-
-	if (fDelegate)
-		fDelegate->BlockCloser( endLineNumber, fLexer->GetCurrentCharacterOffset(), fSyntaxCheckCookie );
 
 	tk = fLexer->GetNextTokenForParser();
 
@@ -942,7 +866,7 @@ JavaScriptAST::FunctionCallArgumentsNode *JavaScriptParser::ParseArguments( int 
 {
 	// We expect to see an open paren
 	if ('(' != tk) {
-		ThrowError( JavaScriptError::kSyntaxError );
+		ThrowError( "Syntax Error" );
 		return NULL;
 	}
 
@@ -954,7 +878,7 @@ JavaScriptAST::FunctionCallArgumentsNode *JavaScriptParser::ParseArguments( int 
 	if (')' != tk)
 	{
 		delete ret;
-		ThrowError( JavaScriptError::kSyntaxError );
+		ThrowError( "Syntax Error" );
 		return NULL;
 	}
 	tk = fLexer->GetNextTokenForParser();
@@ -970,10 +894,17 @@ JavaScriptAST::FunctionCallArgumentsNode *JavaScriptParser::ParseArgumentList( i
 	do {
 		tk = fLexer->GetNextTokenForParser();
 
-		// Check to see if we have an assignment expression
-		JavaScriptAST::Node *node = ParseAssignmentExpression( tk, false );
-		if (!node)	break;
-		ret->AddArgument( node );
+		// No need to parse assignment expression node if current token is "-1"
+		// because it will result in an incorrect suggestion list
+		if( -1 != tk )
+		{
+			// Check to see if we have an assignment expression
+			JavaScriptAST::Node *node = ParseAssignmentExpression( tk, false );
+			if (!node)	break;
+			ret->AddArgument( node );
+		}
+		else
+			break;
 	} while (',' == tk);
 
 	if (NULL != ret)
@@ -1119,7 +1050,7 @@ Symbols::ISymbol *JavaScriptParser::UnqualifiedLookup( const VString &inName )
 		// If we found a symbol from this pass, return it to the caller
 		if (ret)
 		{
-			Symbols::ISymbol* symRef = const_cast< Symbols::ISymbol * >( ret->Dereference() );
+			Symbols::ISymbol* symRef = const_cast< Symbols::ISymbol * >( ret->RetainReferencedSymbol() );
 			ret->Release();
 			return symRef;
 		}
@@ -1140,7 +1071,7 @@ Symbols::ISymbol *JavaScriptParser::QualifiedLookup( Symbols::ISymbol *inSym, co
 
 	Symbols::ISymbol *ret = NULL;
 	std::vector< Symbols::ISymbol * > lookup_list;
-	lookup_list.push_back( const_cast< Symbols::ISymbol * >( inSym->Dereference() ) );
+	lookup_list.push_back( const_cast< Symbols::ISymbol * >( inSym->RetainReferencedSymbol() ) );
 	Symbols::ISymbol *temp = lookup_list.back();
 	while (!lookup_list.empty()) {
 		Symbols::ISymbol *lookup = lookup_list.back();
@@ -1153,7 +1084,7 @@ Symbols::ISymbol *JavaScriptParser::QualifiedLookup( Symbols::ISymbol *inSym, co
 		{
 			// We only care about public properties, since this is a qualified lookup
 			if (!ret && ( (*iter)->IsPublicMethodKind() || (*iter)->IsPublicPropertyKind() ) )
-				ret = const_cast< Symbols::ISymbol * >( (*iter)->Dereference() );
+				ret = const_cast< Symbols::ISymbol * >( (*iter)->RetainReferencedSymbol() );
 			(*iter)->Release();
 		}
 
@@ -1176,7 +1107,7 @@ Symbols::ISymbol *JavaScriptParser::QualifiedLookup( Symbols::ISymbol *inSym, co
 
 
 void JavaScriptParser::SuggestAppropriateIdentifiers( bool inIsFunctionCall )
-{	
+{
 	if (!fSuggestions)
 		return;
 
@@ -1208,7 +1139,7 @@ void JavaScriptParser::SuggestAppropriateIdentifiers( bool inIsFunctionCall )
 	{
 		// Find all of the symbols associated with the lookup symbol
 		Symbols::ISymbol *lookupSym = lookup_list.back();
-		Symbols::ISymbol *refLookupSym = const_cast< Symbols::ISymbol * >( lookupSym->Dereference() );
+		Symbols::ISymbol *refLookupSym = const_cast< Symbols::ISymbol * >( lookupSym->RetainReferencedSymbol() );
 
 		bool	isaClass = lookupSym->IsaClass();
 		VString	currentClassName = lookupSym->GetClass();
@@ -1323,7 +1254,6 @@ void JavaScriptParser::SuggestAppropriateIdentifiers( bool inIsFunctionCall )
 	// all entries of each class table. Then we  will insert the main 
 	// class entries, then the others classes entries and finally 
 	//object class entries.
-	std::map<VString, bool>	mapOfSuggestions;
 	VectorOfVString			order;
 	bool					suggestObjectClass = false, suggestFunctionClass = false;
 
@@ -1357,11 +1287,7 @@ void JavaScriptParser::SuggestAppropriateIdentifiers( bool inIsFunctionCall )
 			if (parts.size() > 2)
 			{
 				VString displayText = parts[0] + JAVASCRIPT_PARSER_SUGGESTION_SEPARATOR + parts[1];
-				if ( mapOfSuggestions[displayText] != true)
-				{
-					mapOfSuggestions[displayText] = true;
-					fSuggestions->Suggest(displayText, parts[2], SuggestionInfo::eName );
-				}
+				fSuggestions->Suggest(displayText, parts[2], SuggestionInfo::eName );
 			}
 		}
 	}
@@ -1412,7 +1338,7 @@ std::vector< Symbols::ISymbol * > JavaScriptParser::GetSuggestionReturnTypes(sLO
 
 					if (entitySym)
 					{
-						Symbols::ISymbol *refLookupSym = const_cast< Symbols::ISymbol * >( entitySym->Dereference() );
+						Symbols::ISymbol *refLookupSym = const_cast< Symbols::ISymbol * >( entitySym->RetainReferencedSymbol() );
 						Symbols::ISymbol* entityPrototype = NULL;
 
 						if ( GetPrototypeSubSymbol(refLookupSym, &entityPrototype) )
@@ -1425,9 +1351,51 @@ std::vector< Symbols::ISymbol * > JavaScriptParser::GetSuggestionReturnTypes(sLO
 				file->Release();
 			}
 		}
-		// Else we add the symbol return types and their prototypes to the list
 		else
 		{
+            std::vector<Symbols::IFile*> files;
+            std::vector<Symbols::ISymbol*> modules;
+            
+            if( sym->GetName() == "require" )
+            {
+                // Try to get the module name
+                VString moduleName = this->fLexer->GetTokenText();
+                // Strip ' from module name
+                if( moduleName.BeginsWith("'") || moduleName.BeginsWith("\"") )  moduleName.Remove(1, 1);
+                if( moduleName.EndsWith("'") || moduleName.EndsWith("\"") )    moduleName.Remove(moduleName.GetLength(), 1);
+                
+                // Try to get the module file symbol
+                files = this->fSymbolTable->GetFilesByName(moduleName);
+                if( files.size() >= 1 )
+                {
+                    std::vector<Symbols::IFile*>::const_iterator file;
+                    for(file=files.begin(); file!=files.end(); file++)
+                    {
+						if(		(*file)->GetBaseFolder() == eSymbolFileBaseFolderServerModules ||
+								((*file)->GetBaseFolder() == eSymbolFileBaseFolderProject && (*file)->GetPath().BeginsWith("Modules/")) )
+                        {
+                            // Try to get the "exports" symbols of the specified module and add it to the return types list
+                            modules = this->fSymbolTable->GetSymbolsByName(NULL, "exports", (*file));
+                            if( modules.size() == 1 )
+                            {
+                                sym = modules.at(0);
+                                break;
+                            }
+                        }
+                    }
+					
+					// Release memory
+					for(file=files.begin(); file!=files.end(); file++)
+						(*file)->Release();
+                }
+                
+                // At this time, "exports" symbols do not have return types nor prototype, so the return type will be the "exports" symbo itself
+                // A better thing would be to think about "exports" creation, and must or mustn't we have to add information such as return type or prototype
+                returnTypes.insert(returnTypes.begin(), sym);
+                return returnTypes;
+            }
+            
+            // Else we add the symbol return types and their prototypes to the list
 			std::vector< Symbols::ISymbol * > currentReturnTypes = sym->GetReturnTypes();
 			for (std::vector<Symbols::ISymbol*>::iterator itRet = currentReturnTypes.begin(); itRet != currentReturnTypes.end(); ++itRet)
 			{
@@ -1558,7 +1526,7 @@ JavaScriptAST::Node *JavaScriptParser::ParseMemberExpression( int &tk, bool args
 				if (']' != tk) {
 					delete ret;
 					delete expr;
-					ThrowError( JavaScriptError::kSyntaxError );
+					ThrowError( "Syntax Error" );
 					return NULL;
 				}
 
@@ -1599,7 +1567,7 @@ JavaScriptAST::Node *JavaScriptParser::ParseMemberExpression( int &tk, bool args
 					if (fSuggestions)
 						SuggestAppropriateIdentifiers();
 					delete ret;
-					ThrowError( JavaScriptError::kExpectedIdentifier );
+					ThrowError( "Expected Identifier" );
 					return NULL;
 				}
 
@@ -1691,7 +1659,7 @@ JavaScriptAST::Node *JavaScriptParser::ParseCallExpressionSubscript( int &tk, Ja
 					{
 						delete ret;
 						delete expr;
-						ThrowError( JavaScriptError::kSyntaxError );
+						ThrowError( "Syntax Error" );
 						return NULL;
 					}
 
@@ -1703,8 +1671,10 @@ JavaScriptAST::Node *JavaScriptParser::ParseCallExpressionSubscript( int &tk, Ja
 
 			case '.':
 				{
-					if ( loop == 1 && dynamic_cast< JavaScriptAST::IdentifierNode * >( inNode ) )
+                    if( loop == 1 && dynamic_cast<JavaScriptAST::IdentifierNode*>(inNode) )
+                    {
 						ExpandCompletionSymbolList();
+                    }
 					else
 					{
 						std::vector<Symbols::ISymbol*> subSymbols;
@@ -1731,7 +1701,7 @@ JavaScriptAST::Node *JavaScriptParser::ParseCallExpressionSubscript( int &tk, Ja
 							SuggestAppropriateIdentifiers( dynamic_cast< JavaScriptAST::FunctionCallExpressionNode * >( ret ) ? true : false );
 
 						delete ret;
-						ThrowError( JavaScriptError::kExpectedIdentifier );
+						ThrowError( "Expected Identifier" );
 						return NULL;
 					}
 
@@ -1788,15 +1758,24 @@ void JavaScriptParser::ExpandCompletionSymbolList()
 {
 	if (fCompletionSymbol)
 	{
-		Symbols::ISymbol *refSym =  const_cast< Symbols::ISymbol * >( fCompletionSymbol->Dereference() );
+		Symbols::ISymbol *refSym =  const_cast< Symbols::ISymbol * >( fCompletionSymbol->RetainReferencedSymbol() );
 
 		// As we want to exclude JSF symbols duplication, we limit symbol search 
 		// extension to "named" symbols only defined in project
 		if ( !refSym->GetOwner() && 
-			refSym->GetName().GetLength() && refSym->GetFile() &&
-			refSym->GetFile()->GetBaseFolder() == eSymbolFileBaseFolderProject)
+			 refSym->GetName().GetLength() &&
+			 refSym->GetFile() &&
+			 refSym->GetFile()->GetBaseFolder() == eSymbolFileBaseFolderProject)
 		{
-			std::vector<Symbols::ISymbol *> projectSyms = fSymbolTable->GetSymbolsByName( refSym->GetOwner(), refSym->GetName() );
+			// WAK0079751 start
+			Symbols::IFile* pOwnerFile = refSym->GetFile();
+			std::vector<Symbols::ISymbol *> projectSyms = fSymbolTable->GetSymbolsByName( refSym->GetOwner(), refSym->GetName(), pOwnerFile );
+			if( projectSyms.size() == 0 )
+			{
+				// We extend the symbol search not only to the current file
+				projectSyms = fSymbolTable->GetSymbolsByName( refSym->GetOwner(), refSym->GetName(), NULL );
+			}
+			// WAK0079751 stop
 			SetCompletionSymbolList( projectSyms );
 			for (std::vector<Symbols::ISymbol*>::iterator it = projectSyms.begin(); it != projectSyms.end(); ++it)
 				(*it)->Release();
@@ -1939,7 +1918,8 @@ JavaScriptAST::Node *JavaScriptParser::ParseMultiplicativeExpression( int &tk )
 			case '*': {
 				HANDLE_CASE( MultiplicationExpressionNode );
 			} break;
-			case '/': {
+			case '/':
+            case JavaScriptTokenValues::REGEXP: {
 				HANDLE_CASE( DivisionExpressionNode );
 			} break;
 			case '%': {
@@ -2301,7 +2281,7 @@ JavaScriptAST::Node *JavaScriptParser::ParseConditionalExpression( int &tk, bool
 		if (tk != ':') {
 			delete ret;
 			delete trueNode;
-			ThrowError( JavaScriptError::kSyntaxError );
+			ThrowError( "Syntax Error" );
 			return NULL;
 		}
 		tk = fLexer->GetNextTokenForParser();
@@ -2350,7 +2330,7 @@ JavaScriptAST::Node *JavaScriptParser::ParseAssignmentExpression( int &tk, bool 
 					// The other test case we have to care about are assignments to literals.  While a literal
 					// is a left-hand side expression, it is not a legal left-hand side value.
 					delete lhs;
-					ThrowError( JavaScriptError::kIllegalLHS );
+					ThrowError( "Illegal Left Hand Side" );
 					return NULL;
 				} else {
 					// Before we parse the rhs, let's pull any ScriptDoc comments out of the lexer so that we
@@ -2442,7 +2422,6 @@ bool JavaScriptParser::IsStatementBlock( int tk )
 JavaScriptAST::Node *JavaScriptParser::ParseStatementBlock( int &tk )
 {
 	if ('{' != tk)	return NULL;
-	if (fDelegate)	fDelegate->BlockOpener( fLexer->GetCurrentLineNumber(), fLexer->GetCurrentCharacterOffset(), fSyntaxCheckCookie );
 	int lineNumber = fLexer->GetCurrentLineNumber();
 	int nextTk = fLexer->PeekAtNextTokenForParser();
 
@@ -2468,10 +2447,10 @@ JavaScriptAST::Node *JavaScriptParser::ParseStatementBlock( int &tk )
 
 	if ('}' != tk) {
 		delete ret;
-		ThrowError( JavaScriptError::kSyntaxError );
+		ThrowError( "Syntax Error" );
 		return NULL;
 	}
-	if (fDelegate)	fDelegate->BlockCloser( fLexer->GetCurrentLineNumber(), fLexer->GetCurrentCharacterOffset(), fSyntaxCheckCookie );
+
 	tk = fLexer->GetNextTokenForParser();
 
 	return ret;
@@ -2524,6 +2503,7 @@ JavaScriptAST::Node *JavaScriptParser::ParseStatement( int &tk )
 		// to happen before we parse any other statements because those statements
 		// may reach the end of input themselves and fail (such as ParseExpressionStatement),
 		// and we don't want to add statement openers in the middle of an expression statement.
+		fSuggestions->Suggest( "function", SuggestionInfo::eKeyword );
 		fSuggestions->Suggest( "var", SuggestionInfo::eKeyword );
 		fSuggestions->Suggest( "if", SuggestionInfo::eKeyword );
 		fSuggestions->Suggest( "do", SuggestionInfo::eKeyword );
@@ -2618,7 +2598,7 @@ JavaScriptAST::Node *JavaScriptParser::ParseIfStatement( int &tk )
 	tk = fLexer->GetNextTokenForParser();
 
 	if ('(' != tk) {
-		ThrowError( JavaScriptError::kSyntaxError );
+		ThrowError( "Syntax Error" );
 		return NULL;
 	}
 	tk = fLexer->GetNextTokenForParser();
@@ -2628,7 +2608,7 @@ JavaScriptAST::Node *JavaScriptParser::ParseIfStatement( int &tk )
 
 	if (')' != tk) {
 		delete expr;
-		ThrowError( JavaScriptError::kSyntaxError );
+		ThrowError( "Syntax Error" );
 		return NULL;
 	}
 	tk = fLexer->GetNextTokenForParser();
@@ -2636,7 +2616,7 @@ JavaScriptAST::Node *JavaScriptParser::ParseIfStatement( int &tk )
 	JavaScriptAST::Node *trueStatements = ParseStatement( tk );
 	if (!trueStatements) {
 		delete expr;
-		ThrowError( JavaScriptError::kSyntaxError );
+		ThrowError( "Syntax Error" );
 		return NULL;
 	}
 
@@ -2648,7 +2628,7 @@ JavaScriptAST::Node *JavaScriptParser::ParseIfStatement( int &tk )
 		if (!falseStatements) {
 			delete expr;
 			delete trueStatements;
-			ThrowError( JavaScriptError::kSyntaxError );
+			ThrowError( "Syntax Error" );
 			return NULL;
 		}
 	}
@@ -2671,7 +2651,7 @@ JavaScriptAST::Node *JavaScriptParser::ParseIterationStatement( int &tk )
 		tk = fLexer->GetNextTokenForParser();
 		JavaScriptAST::Node *statement = ParseStatement( tk );
 		if (!statement) {
-			ThrowError( JavaScriptError::kSyntaxError );
+			ThrowError( "Syntax Error" );
 			return NULL;
 		}
 		if (JavaScriptTokenValues::WHILE != tk) {
@@ -2679,14 +2659,14 @@ JavaScriptAST::Node *JavaScriptParser::ParseIterationStatement( int &tk )
 				fSuggestions->Suggest( "while", SuggestionInfo::eKeyword );
 			}
 			delete statement;
-			ThrowError( JavaScriptError::kSyntaxError );
+			ThrowError( "Syntax Error" );
 			return NULL;
 		}
 		tk = fLexer->GetNextTokenForParser();
 		
 		if ('(' != tk) {
 			delete statement;
-			ThrowError( JavaScriptError::kSyntaxError );
+			ThrowError( "Syntax Error" );
 			return NULL;
 		}
 		tk = fLexer->GetNextTokenForParser();
@@ -2700,7 +2680,7 @@ JavaScriptAST::Node *JavaScriptParser::ParseIterationStatement( int &tk )
 		if (')' != tk) {
 			delete statement;
 			delete expr;
-			ThrowError( JavaScriptError::kSyntaxError );
+			ThrowError( "Syntax Error" );
 			return NULL;
 		}
 		tk = fLexer->GetNextTokenForParser();
@@ -2715,7 +2695,7 @@ JavaScriptAST::Node *JavaScriptParser::ParseIterationStatement( int &tk )
 		tk = fLexer->GetNextTokenForParser();
 
 		if ('(' != tk) {
-			ThrowError( JavaScriptError::kSyntaxError );
+			ThrowError( "Syntax Error" );
 			return NULL;
 		}
 		tk = fLexer->GetNextTokenForParser();
@@ -2725,7 +2705,7 @@ JavaScriptAST::Node *JavaScriptParser::ParseIterationStatement( int &tk )
 
 		if (')' != tk) {
 			delete expr;
-			ThrowError( JavaScriptError::kSyntaxError );
+			ThrowError( "Syntax Error" );
 			return NULL;
 		}
 		tk = fLexer->GetNextTokenForParser();
@@ -2733,7 +2713,7 @@ JavaScriptAST::Node *JavaScriptParser::ParseIterationStatement( int &tk )
 		JavaScriptAST::Node *statement = ParseStatement( tk );
 		if (!statement) {
 			delete expr;
-			ThrowError( JavaScriptError::kSyntaxError );
+			ThrowError( "Syntax Error" );
 			return NULL;
 		}
 
@@ -2761,7 +2741,7 @@ JavaScriptAST::Node *JavaScriptParser::ParseForStatement( int &tk )
 	// So we are going to try to guess at the
 	int lineNumber = fLexer->GetCurrentLineNumber();
 	if ('(' != tk) {
-		ThrowError( JavaScriptError::kSyntaxError );
+		ThrowError( "Syntax Error" );
 		return NULL;
 	}
 	tk = fLexer->GetNextTokenForParser();
@@ -2816,14 +2796,14 @@ JavaScriptAST::Node *JavaScriptParser::ParseForStatement( int &tk )
 	// Now that we know which version of the for loop we're after, we can do some more straight-forward parsing
 	if (kInvalid == type) {
 		delete node;
-		ThrowError( JavaScriptError::kSyntaxError );
+		ThrowError( "Syntax Error" );
 		return NULL;
 	}
 	if (kVarNoIn == type || kExprNoIn == type) {
 		// We expect the next token we parse to be the semi-colon that separates the expressions.
 		if (';' != tk) {
 			delete node;
-			ThrowError( JavaScriptError::kSyntaxError );
+			ThrowError( "Syntax Error" );
 			return NULL;
 		}
 		tk = fLexer->GetNextTokenForParser();
@@ -2842,7 +2822,7 @@ JavaScriptAST::Node *JavaScriptParser::ParseForStatement( int &tk )
 		if (';' != tk) {
 			delete testExpr;
 			delete node;
-			ThrowError( JavaScriptError::kSyntaxError );
+			ThrowError( "Syntax Error" );
 			return NULL;
 		}
 		tk = fLexer->GetNextTokenForParser();
@@ -2867,7 +2847,7 @@ JavaScriptAST::Node *JavaScriptParser::ParseForStatement( int &tk )
 				fSuggestions->Suggest( "in", SuggestionInfo::eKeyword );
 			}
 			delete node;
-			ThrowError( JavaScriptError::kSyntaxError );
+			ThrowError( "Syntax Error" );
 			return NULL;
 		}
 		tk = fLexer->GetNextTokenForParser();
@@ -2884,7 +2864,7 @@ JavaScriptAST::Node *JavaScriptParser::ParseForStatement( int &tk )
 	// Now we expect the closing paren
 	if (')' != tk) {
 		delete node;
-		ThrowError( JavaScriptError::kSyntaxError );
+		ThrowError( "Syntax Error" );
 		return NULL;
 	}
 	tk = fLexer->GetNextTokenForParser();
@@ -2893,7 +2873,7 @@ JavaScriptAST::Node *JavaScriptParser::ParseForStatement( int &tk )
 	JavaScriptAST::Node *statement = ParseStatement( tk );
 	if (!statement) {
 		delete node;
-		ThrowError( JavaScriptError::kSyntaxError );
+		ThrowError( "Syntax Error" );
 		return NULL;
 	}
 	return new JavaScriptAST::ForStatementNode( node, statement, lineNumber );
@@ -3032,7 +3012,7 @@ JavaScriptAST::Node *JavaScriptParser::ParseWithStatement( int &tk )
 	tk = fLexer->GetNextTokenForParser();
 
 	if ('(' != tk) {
-		ThrowError( JavaScriptError::kSyntaxError );
+		ThrowError( "Syntax Error" );
 		return NULL;
 	}
 	tk = fLexer->GetNextTokenForParser();
@@ -3042,7 +3022,7 @@ JavaScriptAST::Node *JavaScriptParser::ParseWithStatement( int &tk )
 
 	if (')' != tk) {
 		delete expr;
-		ThrowError( JavaScriptError::kSyntaxError );
+		ThrowError( "Syntax Error" );
 		return NULL;
 	}
 	tk = fLexer->GetNextTokenForParser();
@@ -3050,7 +3030,7 @@ JavaScriptAST::Node *JavaScriptParser::ParseWithStatement( int &tk )
 	JavaScriptAST::Node *statement = ParseStatement( tk );
 	if (!statement) {
 		delete expr;
-		ThrowError( JavaScriptError::kSyntaxError );
+		ThrowError( "Syntax Error" );
 		return NULL;
 	}
 	return new JavaScriptAST::WithStatementNode( expr, statement, lineNumber );
@@ -3064,14 +3044,14 @@ JavaScriptAST::Node *JavaScriptParser::ParseLabeledStatement( int &tk )
 	tk = fLexer->GetNextTokenForParser();
 
 	if (':' != tk) {
-		ThrowError( JavaScriptError::kSyntaxError );
+		ThrowError( "Syntax Error" );
 		return NULL;
 	}
 	tk = fLexer->GetNextTokenForParser();
 
 	JavaScriptAST::Node *statement = ParseStatement( tk );
 	if (!statement) {
-		ThrowError( JavaScriptError::kSyntaxError );
+		ThrowError( "Syntax Error" );
 		return NULL;
 	}
 	
@@ -3090,7 +3070,7 @@ JavaScriptAST::Node *JavaScriptParser::ParseSwitchStatement( int &tk )
 	tk = fLexer->GetNextTokenForParser();
 
 	if ('(' != tk) {
-		ThrowError( JavaScriptError::kSyntaxError );
+		ThrowError( "Syntax Error" );
 		return NULL;
 	}
 	tk = fLexer->GetNextTokenForParser();
@@ -3100,7 +3080,7 @@ JavaScriptAST::Node *JavaScriptParser::ParseSwitchStatement( int &tk )
 	
 	if (')' != tk) {
 		delete expr;
-		ThrowError( JavaScriptError::kSyntaxError );
+		ThrowError( "Syntax Error" );
 		return NULL;
 	}
 	tk = fLexer->GetNextTokenForParser();
@@ -3116,10 +3096,9 @@ JavaScriptAST::Node *JavaScriptParser::ParseSwitchStatement( int &tk )
 bool JavaScriptParser::ParseCaseBlock( int &tk, JavaScriptAST::SwitchStatementNode *inSwitch )
 {
 	if ('{' != tk) {
-		ThrowError( JavaScriptError::kSyntaxError );
+		ThrowError( "Syntax Error" );
 		return false;
 	}
-	if (fDelegate)	fDelegate->BlockOpener( fLexer->GetCurrentLineNumber(), fLexer->GetCurrentCharacterOffset(), fSyntaxCheckCookie );
 	tk = fLexer->GetNextTokenForParser();
 
 	// The case clauses are optional
@@ -3135,10 +3114,9 @@ bool JavaScriptParser::ParseCaseBlock( int &tk, JavaScriptAST::SwitchStatementNo
 	}
 
 	if ('}' != tk) {
-		ThrowError( JavaScriptError::kSyntaxError );
+		ThrowError( "Syntax Error" );
 		return false;
 	}
-	if (fDelegate)	fDelegate->BlockCloser( fLexer->GetCurrentLineNumber(), fLexer->GetCurrentCharacterOffset(), fSyntaxCheckCookie );
 	tk = fLexer->GetNextTokenForParser();
 
 	return hadCaseClauses || (defaultNode != NULL);
@@ -3170,7 +3148,7 @@ JavaScriptAST::Node *JavaScriptParser::ParseCaseClause( int &tk )
 
 	if (':' != tk) {
 		delete expr;
-		ThrowError( JavaScriptError::kSyntaxError );
+		ThrowError( "Syntax Error" );
 		return NULL;
 	}
 	tk = fLexer->GetNextTokenForParser();
@@ -3190,7 +3168,7 @@ JavaScriptAST::Node *JavaScriptParser::ParseDefaultClause( int &tk )
 	tk = fLexer->GetNextTokenForParser();
 	
 	if (':' != tk) {
-		ThrowError( JavaScriptError::kSyntaxError );
+		ThrowError( "Syntax Error" );
 		return NULL;
 	}
 	tk = fLexer->GetNextTokenForParser();
@@ -3242,7 +3220,7 @@ JavaScriptAST::Node *JavaScriptParser::ParseTryStatement( int &tk )
 	if (-1 == tk) {
 		// We are out of tokens, which means this is not a legal try block.  So we
 		// will throw an error and bail out early.
-		ThrowError( JavaScriptError::kSyntaxError );
+		ThrowError( "Syntax Error" );
 		return NULL;
 	}
 
@@ -3271,7 +3249,7 @@ JavaScriptAST::Node *JavaScriptParser::ParseCatch( int &tk )
 	tk = fLexer->GetNextTokenForParser();
 
 	if ('(' != tk) {
-		ThrowError( JavaScriptError::kSyntaxError );
+		ThrowError( "Syntax Error" );
 		return NULL;
 	}
 	tk = fLexer->GetNextTokenForParser();
@@ -3280,7 +3258,7 @@ JavaScriptAST::Node *JavaScriptParser::ParseCatch( int &tk )
 		if (fSuggestions && -1 == tk) {
 			fSuggestions->SuggestJavaScriptIdentifiers();
 		}
-		ThrowError( JavaScriptError::kExpectedIdentifier );
+		ThrowError( "Syntax Error" );
 		return NULL;
 	}
 
@@ -3290,7 +3268,7 @@ JavaScriptAST::Node *JavaScriptParser::ParseCatch( int &tk )
 
 	if (')' != tk) {
 		delete ident;
-		ThrowError( JavaScriptError::kSyntaxError );
+		ThrowError( "Syntax Error" );
 		return NULL;
 	}
 	tk = fLexer->GetNextTokenForParser();
@@ -3363,10 +3341,7 @@ JavaScriptAST::Node * JavaScriptParser::ParseSourceElement( int &tk )
 	// We want the user to be able to generate block opener and closer
 	// statements if we processed a multiline comment before this statement.
 	int start, end;
-	if (fDelegate && fLexer->ProcessedMultilineComment( start, end ) && start != end) {
-		fDelegate->BlockOpener( start, 0, fSyntaxCheckCookie );
-		fDelegate->BlockCloser( end, 0, fSyntaxCheckCookie );
-	}
+	fLexer->ProcessedMultilineComment( start, end );
 
 	// Also, we want to handle the case where we've hit a start or end region token
 	if (fDelegate && fLexer->ProcessedRegionToken()) {
@@ -3374,12 +3349,6 @@ JavaScriptAST::Node * JavaScriptParser::ParseSourceElement( int &tk )
 		VString name;
 		int line = 0;
 		fLexer->GetRegionInformation( isStart, name, line );
-
-		if (isStart) {
-			fDelegate->BlockOpener( line, 0, fSyntaxCheckCookie );
-		} else {
-			fDelegate->BlockCloser( line, 0, fSyntaxCheckCookie );
-		}
 	}
 
 	// There are two reasons that ParseStatement can return a NULL node -- the first is that there wasn't a
@@ -3566,980 +3535,5 @@ void TestSubsymbolNames( SymbolTableAdapter *table, Symbols::ISymbol *owner, int
 	}
 
 	xbox_assert( numberFound == count );
-}
-
-void JavaScriptParser::Test()
-{
-	JavaScriptParser *parser = new JavaScriptParser;
-	xbox_assert( parser );
-
-	SymbolTableAdapter *symTable = new SymbolTableAdapter();
-
-	VString sourceString = "var test;";
-	parser->ParseDeclarations( &sourceString, symTable->GetBase(), symTable->GetFile() );
-	xbox_assert( symTable->GetSymbolCount() == 1 );
-	xbox_assert( symTable->GetSymbolByName( "test" ) );
-	symTable->EmptyTable();
-
-	sourceString = "var test1, test2;";
-	parser->ParseDeclarations( &sourceString, symTable->GetBase(), symTable->GetFile() );
-	xbox_assert( symTable->GetSymbolCount() == 2 );
-	xbox_assert( symTable->GetSymbolByName( "test1" ) );
-	xbox_assert( symTable->GetSymbolByName( "test2" ) );
-	symTable->EmptyTable();
-
-	sourceString = "var test1 = 12, test2;";
-	parser->ParseDeclarations( &sourceString, symTable->GetBase(), symTable->GetFile() );
-	xbox_assert( symTable->GetSymbolCount() == 2 );
-	xbox_assert( symTable->GetSymbolByName( "test1" ) );
-	xbox_assert( symTable->GetSymbolByName( "test2" ) );
-	symTable->EmptyTable();
-
-	sourceString = "var test1 = 12 * 5 + 13;";
-	parser->ParseDeclarations( &sourceString, symTable->GetBase(), symTable->GetFile() );
-	xbox_assert( symTable->GetSymbolCount() == 1 );
-	xbox_assert( symTable->GetSymbolByName( "test1" ) );
-	symTable->EmptyTable();
-
-	sourceString = "var test1 = 12 * 5 + 13, test2 = !true + ~15 | 'test', test3;";
-	parser->ParseDeclarations( &sourceString, symTable->GetBase(), symTable->GetFile() );
-	xbox_assert( symTable->GetSymbolCount() == 3 );
-	xbox_assert( symTable->GetSymbolByName( "test1" ) );
-	xbox_assert( symTable->GetSymbolByName( "test2" ) );
-	xbox_assert( symTable->GetSymbolByName( "test3" ) );
-	symTable->EmptyTable();
-
-	sourceString = "var test1 = ~1 ? true : null, test2;";
-	parser->ParseDeclarations( &sourceString, symTable->GetBase(), symTable->GetFile() );
-	xbox_assert( symTable->GetSymbolCount() == 2 );
-	xbox_assert( symTable->GetSymbolByName( "test1" ) );
-	xbox_assert( symTable->GetSymbolByName( "test2" ) );
-	symTable->EmptyTable();
-
-	sourceString = "var test = (12 + 5 * 8)++;\n"
-					"var test2;";
-	parser->ParseDeclarations( &sourceString, symTable->GetBase(), symTable->GetFile() );
-	xbox_assert( symTable->GetSymbolCount() == 2 );
-	xbox_assert( symTable->GetSymbolByName( "test" ) );
-	xbox_assert( symTable->GetSymbolByName( "test2" ) );
-	symTable->EmptyTable();
-
-	// Test object literals
-	sourceString = "var test = { 'name' : 12 };\n"
-					"var test2;";
-	parser->ParseDeclarations( &sourceString, symTable->GetBase(), symTable->GetFile() );
-	xbox_assert( symTable->GetSymbolCount() == 2 );
-	xbox_assert( symTable->GetSymbolByName( "test" ) );
-	xbox_assert( symTable->GetSymbolByName( "test2" ) );
-	symTable->EmptyTable();
-
-	sourceString = "var test = { 'name' : 12, someIdentifier : someOtherIdentifier };\n"
-					"var test2;";
-	parser->ParseDeclarations( &sourceString, symTable->GetBase(), symTable->GetFile() );
-	xbox_assert( symTable->GetSymbolCount() == 2 );
-	Symbols::ISymbol *jsSym = symTable->GetSymbolByName( "test" );
-	xbox_assert( jsSym );
-	xbox_assert( symTable->GetSymbolByName( "test2" ) );
-	TestSubsymbolNames( symTable, jsSym->GetPrototypes().front(), 2, "someIdentifier", "name" );
-	symTable->EmptyTable();
-
-	sourceString = "var test = {};\n"
-					"var test2;";
-	parser->ParseDeclarations( &sourceString, symTable->GetBase(), symTable->GetFile() );
-	xbox_assert( symTable->GetSymbolCount() == 2 );
-	xbox_assert( symTable->GetSymbolByName( "test" ) );
-	xbox_assert( symTable->GetSymbolByName( "test2" ) );
-	symTable->EmptyTable();
-
-	// Test to make sure whitespaces, newlines and whatnot don't matter.
-	sourceString = "var test       =      12;\n"
-					"var test2 = 'testing';";
-	parser->ParseDeclarations( &sourceString, symTable->GetBase(), symTable->GetFile() );
-	xbox_assert( symTable->GetSymbolCount() == 2 );
-	xbox_assert( symTable->GetSymbolByName( "test" ) );
-	xbox_assert( symTable->GetSymbolByName( "test2" ) );
-	symTable->EmptyTable();
-
-	sourceString = "var test = 12;\n"
-					"var test2 = 'testing';\n"
-					"var test4 = test, blah;";
-	parser->ParseDeclarations( &sourceString, symTable->GetBase(), symTable->GetFile() );
-	xbox_assert( symTable->GetSymbolCount() == 4 );
-	xbox_assert( symTable->GetSymbolByName( "test" ) );
-	xbox_assert( symTable->GetSymbolByName( "test2" ) );
-	xbox_assert( symTable->GetSymbolByName( "test4" ) );
-	xbox_assert( symTable->GetSymbolByName( "blah" ) );
-	symTable->EmptyTable();
-
-	sourceString = "var foo = new Bar( 1, 2, 3 );";
-	parser->ParseDeclarations( &sourceString, symTable->GetBase(), symTable->GetFile() );
-	xbox_assert( symTable->GetSymbolCount() == 1 );
-	xbox_assert( symTable->GetSymbolByName( "foo" ) );
-	symTable->EmptyTable();
-
-	sourceString = "var foo = new Bar();";
-	parser->ParseDeclarations( &sourceString, symTable->GetBase(), symTable->GetFile() );
-	xbox_assert( symTable->GetSymbolCount() == 1 );
-	xbox_assert( symTable->GetSymbolByName( "foo" ) );
-	symTable->EmptyTable();
-
-	sourceString = "var foo = bar.baz,\n"
-					"wahoo = bar[ 'testing' ];";
-	parser->ParseDeclarations( &sourceString, symTable->GetBase(), symTable->GetFile() );
-	xbox_assert( symTable->GetSymbolCount() == 2 );
-	xbox_assert( symTable->GetSymbolByName( "foo" ) );
-	xbox_assert( symTable->GetSymbolByName( "wahoo" ) );
-	symTable->EmptyTable();
-
-	sourceString = "var foo = new Bar;";
-	parser->ParseDeclarations( &sourceString, symTable->GetBase(), symTable->GetFile() );
-	xbox_assert( symTable->GetSymbolCount() == 1 );
-	xbox_assert( symTable->GetSymbolByName( "foo" ) );
-	symTable->EmptyTable();
-
-	sourceString = "var i = something( 1, 2, 3 );";
-	parser->ParseDeclarations( &sourceString, symTable->GetBase(), symTable->GetFile() );
-	xbox_assert( symTable->GetSymbolCount() == 1 );
-	xbox_assert( symTable->GetSymbolByName( "i" ) );
-	symTable->EmptyTable();
-
-	sourceString = "var i = something( 1, 2, 3 )[ 4 ];";
-	parser->ParseDeclarations( &sourceString, symTable->GetBase(), symTable->GetFile() );
-	xbox_assert( symTable->GetSymbolCount() == 1 );
-	xbox_assert( symTable->GetSymbolByName( "i" ) );
-	symTable->EmptyTable();
-
-	sourceString = "var i = something( 1, 2, 3 ).test;";
-	parser->ParseDeclarations( &sourceString, symTable->GetBase(), symTable->GetFile() );
-	xbox_assert( symTable->GetSymbolCount() == 1 );
-	xbox_assert( symTable->GetSymbolByName( "i" ) );
-	symTable->EmptyTable();
-
-	sourceString = "var i = something[ 12 ].foo;";
-	parser->ParseDeclarations( &sourceString, symTable->GetBase(), symTable->GetFile() );
-	xbox_assert( symTable->GetSymbolCount() == 1 );
-	xbox_assert( symTable->GetSymbolByName( "i" ) );
-	symTable->EmptyTable();
-
-	sourceString = "var i = something[ foo ][ 12 ];";
-	parser->ParseDeclarations( &sourceString, symTable->GetBase(), symTable->GetFile() );
-	xbox_assert( symTable->GetSymbolCount() == 1 );
-	xbox_assert( symTable->GetSymbolByName( "i" ) );
-	symTable->EmptyTable();
-
-	// Now we can test top-level function declarations
-	sourceString = "function foo() {}";
-	parser->ParseDeclarations( &sourceString, symTable->GetBase(), symTable->GetFile() );
-	xbox_assert( symTable->GetSymbolCount() == 1 );
-	xbox_assert( symTable->GetSymbolByName( "foo" ) );
-	symTable->EmptyTable();
-
-	sourceString = "function foo( i ) {}";
-	parser->ParseDeclarations( &sourceString, symTable->GetBase(), symTable->GetFile() );
-	xbox_assert( symTable->GetSymbolCount() == 1 );
-	Symbols::ISymbol *func = symTable->GetSymbolByName( "foo" );
-	xbox_assert( func );
-	TestSubsymbolNames( symTable, func, 1, "i" );
-	symTable->EmptyTable();
-
-	sourceString = "function foo( i, j, k ) {}";
-	parser->ParseDeclarations( &sourceString, symTable->GetBase(), symTable->GetFile() );
-	xbox_assert( symTable->GetSymbolCount() == 1 );
-	func = symTable->GetSymbolByName( "foo" );
-	xbox_assert( func );
-	TestSubsymbolNames( symTable, func, 3, "i", "j", "k" );
-	symTable->EmptyTable();
-
-	// Test a function with some newlines in it, as well
-	// as a local variable declaration.  This test fails
-	// because of the if block.  We cannot assume that the
-	// end of a statement happens when a newline happens.
-	sourceString = "function foo( i, j, k ) {\n"
-						"\tif (true) {\n"
-						"\t}\n"
-						"\tvar bar = 12;\n"
-					"}";
-	parser->ParseDeclarations( &sourceString, symTable->GetBase(), symTable->GetFile() );
-	xbox_assert( symTable->GetSymbolCount() == 1 );
-	func = symTable->GetSymbolByName( "foo" );
-	xbox_assert( func );
-	TestSubsymbolNames( symTable, func, 4, "i", "j", "k", "bar" );
-	xbox_assert( !symTable->GetSymbolByName( "bar" ) );
-	symTable->EmptyTable();
-
-	// Test the various iteration statements
-	sourceString = "function foo() {\n"
-						"\tdo {\n"
-						"\t} while( true );\n"
-						"\tvar bar = 12;\n"
-					"}";
-	parser->ParseDeclarations( &sourceString, symTable->GetBase(), symTable->GetFile() );
-	xbox_assert( symTable->GetSymbolCount() == 1 );
-	func = symTable->GetSymbolByName( "foo" );
-	xbox_assert( func );
-	TestSubsymbolNames( symTable, func, 1, "bar" );
-	symTable->EmptyTable();
-
-	sourceString = "function foo() {\n"
-						"\twhile( true ) {\n"
-						"\t}\n"
-						"\tvar bar = 12;\n"
-					"}";
-	parser->ParseDeclarations( &sourceString, symTable->GetBase(), symTable->GetFile() );
-	xbox_assert( symTable->GetSymbolCount() == 1 );
-	func = symTable->GetSymbolByName( "foo" );
-	xbox_assert( func );
-	TestSubsymbolNames( symTable, func, 1, "bar" );
-	symTable->EmptyTable();
-
-	sourceString = "function foo() {\n"
-						"\tfor( var i = 0; i < 10; i++) {\n"
-						"\t}\n"
-						"\tvar bar = 12;\n"
-					"}";
-	parser->ParseDeclarations( &sourceString, symTable->GetBase(), symTable->GetFile() );
-	xbox_assert( symTable->GetSymbolCount() == 1 );
-	func = symTable->GetSymbolByName( "foo" );
-	xbox_assert( func );
-	TestSubsymbolNames( symTable, func, 2, "bar", "i" );
-	symTable->EmptyTable();
-
-	// Test to make sure for loops without explicit loop variable
-	// declarations work
-	sourceString = "for ( i = 99 ; i >= 0 ; i-- ) {\n"
-					   "a=Math.round(Math.random()*26);\n"
-					"}";
-	xbox_assert( parser->CheckSyntax( &sourceString ) );
-
-	sourceString = "for ( s in someString.Match( /[0-9]/ )) {\n"
-					   "a=Math.round(Math.random()*26);\n"
-					"}";
-	xbox_assert( parser->CheckSyntax( &sourceString ) );
-
-	sourceString = "function foo() {\n"
-						"\tfor( var i in true) {\n"
-						"\t}\n"
-						"\tvar bar = 12;\n"
-					"}";
-	parser->ParseDeclarations( &sourceString, symTable->GetBase(), symTable->GetFile() );
-	xbox_assert( symTable->GetSymbolCount() == 1 );
-	func = symTable->GetSymbolByName( "foo" );
-	xbox_assert( func );
-	TestSubsymbolNames( symTable, func, 2, "bar", "i");
-	symTable->EmptyTable();
-
-	sourceString = "function foo() {\n"
-						"\tfor (i = 0; i < 10; i++) {\n"
-						"\t}\n"
-						"\tvar bar = 12;\n"
-					"}";
-	parser->ParseDeclarations( &sourceString, symTable->GetBase(), symTable->GetFile() );
-	xbox_assert( symTable->GetSymbolCount() == 2 );
-	xbox_assert( symTable->GetSymbolByName( "i" ) );
-	Symbols::ISymbol *sym = symTable->GetSymbolByName( "foo" );
-	xbox_assert( sym );
-	xbox_assert( sym->GetLineNumber() == 0 );
-	xbox_assert( sym->GetLineCompletionNumber() == 4 );
-	TestSubsymbolNames( symTable, symTable->GetSymbolByName( "foo" ), 1, "bar" );
-	symTable->EmptyTable();
-
-	sourceString = "function foo() {\n"
-						"\tfor( x in y ) {\n"
-						"\t}\n"
-						"\tvar bar = 12;\n"
-					"}";
-	parser->ParseDeclarations( &sourceString, symTable->GetBase(), symTable->GetFile() );
-	xbox_assert( symTable->GetSymbolCount() == 2 );
-	xbox_assert( symTable->GetSymbolByName( "x" ) );
-	func = symTable->GetSymbolByName( "foo" );
-	xbox_assert( func );
-	TestSubsymbolNames( symTable, func, 1, "bar" );
-	symTable->EmptyTable();
-
-	sourceString = "function foo() {\n"
-						"\tfor( var i = 0; i < 10; i++) {\n"
-						"\t\tbreak;"
-						"\t}\n"
-						"\tvar bar = 12;\n"
-					"}";
-	parser->ParseDeclarations( &sourceString, symTable->GetBase(), symTable->GetFile() );
-	xbox_assert( symTable->GetSymbolCount() == 1 );
-	func = symTable->GetSymbolByName( "foo" );
-	xbox_assert( func );
-	TestSubsymbolNames( symTable, func, 2, "bar", "i" );
-	xbox_assert( !symTable->GetSymbolByName( "i" ) );
-	symTable->EmptyTable();
-
-	sourceString = "function foo() {\n"
-						"\tfor( var i = 0; i < 10; i++) {\n"
-						"\t\tcontinue i;"
-						"\t}\n"
-						"\tvar bar = 12;\n"
-					"}";
-	parser->ParseDeclarations( &sourceString, symTable->GetBase(), symTable->GetFile() );
-	xbox_assert( symTable->GetSymbolCount() == 1 );
-	func = symTable->GetSymbolByName( "foo" );
-	xbox_assert( func );
-	TestSubsymbolNames( symTable, func, 2, "bar", "i" );
-	symTable->EmptyTable();
-
-	sourceString = "function foo() {\n"
-					  "\twith( wahoozle ) {\n"
-						"\t\tvar bar = 12;\n"
-					  "\t}\n"
-					"}";
-	parser->ParseDeclarations( &sourceString, symTable->GetBase(), symTable->GetFile() );
-	xbox_assert( symTable->GetSymbolCount() == 1 );
-	func = symTable->GetSymbolByName( "foo" );
-	xbox_assert( func );
-	TestSubsymbolNames( symTable, func, 1, "bar" );
-	symTable->EmptyTable();
-
-	sourceString = "function foo() { return 12; }";
-	parser->ParseDeclarations( &sourceString, symTable->GetBase(), symTable->GetFile() );
-	xbox_assert( symTable->GetSymbolCount() == 1 );
-	xbox_assert( symTable->GetSymbolByName( "foo" ) );
-	symTable->EmptyTable();
-
-	sourceString = "switch (12) {\n"
-						"\tcase 12: {\n"
-						"\t\tvar i = 100;\n"
-						"\t} break;\n"
-						"\tcase 100: {\n"
-						"\t\tvar j = 100;\n"
-						"\t} break;\n"
-					"}";
-	parser->ParseDeclarations( &sourceString, symTable->GetBase(), symTable->GetFile() );
-	xbox_assert( symTable->GetSymbolCount() == 2 );
-	xbox_assert( symTable->GetSymbolByName( "i" ) );
-	xbox_assert( symTable->GetSymbolByName( "j" ) );
-	symTable->EmptyTable();
-
-	sourceString = "switch (12) {\n"
-						"\tcase 12: {\n"
-						"\t\tvar i = 100;\n"
-						"\t} break;\n"
-						"\tcase 100: {\n"
-						"\t\tvar j = 100;\n"
-						"\t} break;\n"
-						"\tdefault: {\n"
-						"\t\tvar k = 100;\n"
-						"\t} break;\n"
-					"}";
-	parser->ParseDeclarations( &sourceString, symTable->GetBase(), symTable->GetFile() );
-	xbox_assert( symTable->GetSymbolCount() == 3 );
-	xbox_assert( symTable->GetSymbolByName( "i" ) );
-	xbox_assert( symTable->GetSymbolByName( "j" ) );
-	xbox_assert( symTable->GetSymbolByName( "k" ) );
-	symTable->EmptyTable();
-
-	sourceString = "switch (12) {\n"
-						"\tcase 12: {\n"
-						"\t\tvar i = 100;\n"
-						"\t} break;\n"
-						"\tcase 100: {\n"
-						"\t\tvar j = 100;\n"
-						"\t} break;\n"
-						"\tdefault: {\n"
-						"\t\tvar k = 100;\n"
-						"\t} break;\n"
-						"\tcase 200: {\n"
-						"\t\tvar l = 100;\n"
-						"\t} break;\n"
-					"}\n"
-					"var foo = 12;";
-	parser->ParseDeclarations( &sourceString, symTable->GetBase(), symTable->GetFile() );
-	xbox_assert( symTable->GetSymbolCount() == 5 );
-	xbox_assert( symTable->GetSymbolByName( "i" ) );
-	xbox_assert( symTable->GetSymbolByName( "j" ) );
-	xbox_assert( symTable->GetSymbolByName( "k" ) );
-	xbox_assert( symTable->GetSymbolByName( "l" ) );
-	xbox_assert( symTable->GetSymbolByName( "foo" ) );
-	symTable->EmptyTable();
-
-	sourceString = "function foo() {\n"
-					  "\tthrow new FooException();\n"
-					  "\tvar bar = 12;\n"
-					"}";
-	parser->ParseDeclarations( &sourceString, symTable->GetBase(), symTable->GetFile() );
-	xbox_assert( symTable->GetSymbolCount() == 1 );
-	func = symTable->GetSymbolByName( "foo" );
-	xbox_assert( func );
-	TestSubsymbolNames( symTable, func, 1, "bar" );
-	symTable->EmptyTable();
-
-	sourceString = "function foo() {\n"
-					  "\ttry {\n"
-						"\t\tvar bar = 12;\n"
-					  "\t} catch (FooException) {\n"
-					  "\t} finally {\n"
-					  "\t}\n"
-					  "\tvar test = 12;\n"
-					"}";
-	parser->ParseDeclarations( &sourceString, symTable->GetBase(), symTable->GetFile() );
-	xbox_assert( symTable->GetSymbolCount() == 1 );
-	xbox_assert( !symTable->GetSymbolByName( "FooException" ) );
-	func = symTable->GetSymbolByName( "foo" );
-	xbox_assert( func );
-	TestSubsymbolNames( symTable, func, 2, "bar", "test" );
-	symTable->EmptyTable();
-
-	sourceString = "function foo() {\n"
-					  "\ttry {\n"
-						"\t\tvar bar = 12;\n"
-					  "\t} finally {\n"
-					  "\t}\n"
-					  "\tvar test = 12;\n"
-					"}";
-	parser->ParseDeclarations( &sourceString, symTable->GetBase(), symTable->GetFile() );
-	xbox_assert( symTable->GetSymbolCount() == 1 );
-	func = symTable->GetSymbolByName( "foo" );
-	xbox_assert( func );
-	TestSubsymbolNames( symTable, func, 2, "bar", "test" );
-	symTable->EmptyTable();
-
-	sourceString = "function foo() {\n"
-					  "\ttry {\n"
-						"\t\tvar bar = 12;\n"
-					  "\t} catch (FooException) {\n"
-					  "\t\tvar i = 12;\n"
-					  "\t}\n"
-					  "\tvar test = 12;\n"
-					  "\ti = i + 1;\n"
-					"}";
-	parser->ParseDeclarations( &sourceString, symTable->GetBase(), symTable->GetFile() );
-	xbox_assert( symTable->GetSymbolCount() == 1 );
-	xbox_assert( !symTable->GetSymbolByName( "FooException" ) );
-	func = symTable->GetSymbolByName( "foo" );
-	xbox_assert( func );
-	TestSubsymbolNames( symTable, func, 3, "bar", "test", "i" );
-	symTable->EmptyTable();
-
-	// Make sure array literals work
-	sourceString = "var foo = [];";
-	parser->ParseDeclarations( &sourceString, symTable->GetBase(), symTable->GetFile() );
-	xbox_assert( symTable->GetSymbolCount() == 1 );
-	xbox_assert( symTable->GetSymbolByName( "foo" ) );
-	symTable->EmptyTable();
-
-	sourceString = "var foo = [,,,];";
-	parser->ParseDeclarations( &sourceString, symTable->GetBase(), symTable->GetFile() );
-	xbox_assert( symTable->GetSymbolCount() == 1 );
-	xbox_assert( symTable->GetSymbolByName( "foo" ) );
-	symTable->EmptyTable();
-
-	sourceString = "var foo = [4,4,4];";
-	parser->ParseDeclarations( &sourceString, symTable->GetBase(), symTable->GetFile() );
-	xbox_assert( symTable->GetSymbolCount() == 1 );
-	xbox_assert( symTable->GetSymbolByName( "foo" ) );
-	symTable->EmptyTable();
-
-	sourceString = "var foo = [4,,,4];";
-	parser->ParseDeclarations( &sourceString, symTable->GetBase(), symTable->GetFile() );
-	xbox_assert( symTable->GetSymbolCount() == 1 );
-	xbox_assert( symTable->GetSymbolByName( "foo" ) );
-	symTable->EmptyTable();
-
-	sourceString = "var foo = bar.baz[ quux ]();";
-	parser->ParseDeclarations( &sourceString, symTable->GetBase(), symTable->GetFile() );
-	xbox_assert( symTable->GetSymbolCount() == 1 );
-	xbox_assert( symTable->GetSymbolByName( "foo" ) );
-	symTable->EmptyTable();
-
-	sourceString = "var foo = bar.baz[ quux ][12];";
-	parser->ParseDeclarations( &sourceString, symTable->GetBase(), symTable->GetFile() );
-	xbox_assert( symTable->GetSymbolCount() == 1 );
-	xbox_assert( symTable->GetSymbolByName( "foo" ) );
-	symTable->EmptyTable();
-
-	sourceString = "var foo = bar.baz()[12];";
-	parser->ParseDeclarations( &sourceString, symTable->GetBase(), symTable->GetFile() );
-	xbox_assert( symTable->GetSymbolCount() == 1 );
-	xbox_assert( symTable->GetSymbolByName( "foo" ) );
-	symTable->EmptyTable();
-
-	sourceString = "var foo = bar().baz()[12];";
-	parser->ParseDeclarations( &sourceString, symTable->GetBase(), symTable->GetFile() );
-	xbox_assert( symTable->GetSymbolCount() == 1 );
-	xbox_assert( symTable->GetSymbolByName( "foo" ) );
-	symTable->EmptyTable();
-
-	sourceString = "var foo = new bar().baz()[12]();";
-	parser->ParseDeclarations( &sourceString, symTable->GetBase(), symTable->GetFile() );
-	xbox_assert( symTable->GetSymbolCount() == 1 );
-	xbox_assert( symTable->GetSymbolByName( "foo" ) );
-	symTable->EmptyTable();
-
-	sourceString = "var foo = new new bar()();";
-	parser->ParseDeclarations( &sourceString, symTable->GetBase(), symTable->GetFile() );
-	xbox_assert( symTable->GetSymbolCount() == 1 );
-	xbox_assert( symTable->GetSymbolByName( "foo" ) );
-	symTable->EmptyTable();
-
-	// We expect this one to succeed because the argument lists match up
-	sourceString = "var foo = new new new bar()();";
-	parser->ParseDeclarations( &sourceString, symTable->GetBase(), symTable->GetFile() );
-	xbox_assert( symTable->GetSymbolCount() == 1 );
-	xbox_assert( symTable->GetSymbolByName( "foo" ) );
-	symTable->EmptyTable();
-
-	// We expect this one to fail because the argument lists don't match up
-	sourceString = "var foo = new new new bar();";
-	xbox_assert( !parser->CheckSyntax( &sourceString ) );
-
-	// Check the syntax of some edge cases
-	sourceString = "return\n"
-					"a+b";
-	xbox_assert( parser->CheckSyntax( &sourceString ) );
-
-	sourceString = "{ 1 2 } 3";
-	xbox_assert( !parser->CheckSyntax( &sourceString ) );
-
-	sourceString = "{ 1\n"
-					"2 } 3";
-	xbox_assert( parser->CheckSyntax( &sourceString ) );
-
-	sourceString = "for(a;b\n"
-					")";
-	xbox_assert( !parser->CheckSyntax( &sourceString ) );
-
-	sourceString = "a = b\n"
-					"++c";
-	xbox_assert( parser->CheckSyntax( &sourceString ) );
-
-	sourceString = "if (a > b)\n"
-					"else c = d";
-	xbox_assert( !parser->CheckSyntax( &sourceString ) );
-
-	// Make sure that assignments only happen with vaid LHS expressions
-	sourceString = "foo.bar = 12;"; // Legal
-	xbox_assert( parser->CheckSyntax( &sourceString ) );
-
-	sourceString = "a || b = 12;";  // Illegal
-	xbox_assert( !parser->CheckSyntax( &sourceString ) );
-
-	sourceString = "a = b = c = 12;"; // Legal
-	xbox_assert( parser->CheckSyntax( &sourceString ) );
-
-	sourceString = "a = b || c = 12;"; // Illegal
-	xbox_assert( !parser->CheckSyntax( &sourceString ) );
-
-	// Here is a reasonable-sized code snippet I pulled from the
-	// internet.  We'll test it to make sure everything checks out properly
-	sourceString = "function getCookie(c_name)\n"
-					"{\n"
-						"\tif (document.cookie.length>0)\n"
-						"\t{\n"
-						"\tc_start=document.cookie.indexOf(c_name + \"=\");\n"
-						"\tif (c_start!=-1)\n"
-							"\t\t{\n"
-							"\t\tc_start=c_start + c_name.length+1 ;\n"
-							"\t\tc_end=document.cookie.indexOf(\";\",c_start);\n"
-							"\t\tif (c_end==-1) c_end=document.cookie.length\n"
-							"\t\treturn unescape(document.cookie.substring(c_start,c_end));\n"
-							"\t\t}\n"
-						"\t}\n"
-						"\treturn \"\"\n"
-					"}\n"
-					"\n"
-					"function setCookie(c_name,value,expiredays)\n"
-					"{\n"
-						"\tvar exdate=new Date();\n"
-						"\texdate.setDate(exdate.getDate()+expiredays);\n"
-						"\tdocument.cookie=c_name+ \"=\" +escape(value)+((expiredays==null) ? \"\" : \"; expires=\"+exdate.toGMTString());\n"
-					"}\n"
-					"\n"
-					"function checkCookie()\n"
-					"{\n"
-						"\tusername=getCookie('username');\n"
-						"\tif (username!=null && username!=\"\")\n"
-							"\t\t{\n"
-							"\t\talert('Welcome again '+username+'!');\n"
-							"\t\t}\n"
-						"\telse \n"
-							"\t\t{\n"
-							"\t\tusername=prompt('Please enter your name:',\"\");\n"
-							"\t\tif (username!=null && username!=\"\")\n"
-								"\t\t\t{\n"
-								"\t\t\tsetCookie('username',username,365);\n"
-								"\t\t\t}\n"
-							"\t\t}\n"
-					"}\n";
-
-	// This should be syntactically legal
-	xbox_assert( parser->CheckSyntax( &sourceString ) );
-
-	// It also contains a lot of declarations
-	parser->ParseDeclarations( &sourceString, symTable->GetBase(), symTable->GetFile() );
-	xbox_assert( symTable->GetSymbolCount() == 7 );
-	func = symTable->GetSymbolByName( "document" );
-	xbox_assert( func );
-	TestSubsymbolNames( symTable, func, 1, "cookie" );
-	xbox_assert( symTable->GetSymbolByName( "c_start" ) );
-	xbox_assert( symTable->GetSymbolByName( "c_end" ) );
-	xbox_assert( symTable->GetSymbolByName( "username" ) );
-	func = symTable->GetSymbolByName( "getCookie" );
-	xbox_assert( func );
-	TestSubsymbolNames( symTable, func, 1, "c_name" );
-	func = symTable->GetSymbolByName( "setCookie" );
-	xbox_assert( func );
-	TestSubsymbolNames( symTable, func, 4, "exdate", "c_name", "value", "expiredays" );
-	func = symTable->GetSymbolByName( "checkCookie" );
-	xbox_assert( func );
-	TestSubsymbolNames( symTable, func, 0 );
-	symTable->EmptyTable();
-
-	// These tests are failure cases from the nasty chunk of code below
-	sourceString = "document.getElementById(\"m\"+Math.floor((N-2)/20)).innerHTML=\"<pre>\"+K+\"</pre>\";";
-	xbox_assert( parser->CheckSyntax( &sourceString ) );
-
-	sourceString = "function sm(i){if(N>120)return;var j=\"abcdefgh\";if(N&1){if(N<19)K+=\" \";K+=(1+N>>1)+\". \";}else K+=\"   \";"
-					"if(i.f==3)K+=\"o-o  \";else if(i.f==5)K+=\"o-o-o\";else K+=j.charAt(i.x)+(8-i.y)+\" \"+j.charAt(i.X)+(8-i.Y);"
-					"if(++N&1)K+=\"\\n\";document.getElementById(\"m\"+Math.floor((N-2)/20)).innerHTML=\"<pre>\"+K+\"</pre>\";if(!((N-1)%20))K=\"\";}";
-	xbox_assert( parser->CheckSyntax( &sourceString ) );
-
-	sourceString = "function Z(b,x,y,p){b[x+y*8]=p;return b;}";
-	xbox_assert( parser->CheckSyntax( &sourceString ) );
-
-	sourceString = "function d(b){for(var y=0;y<8;++y)for(var x=0;x<8;++x){var i=\"<img src=\\\"\";if(F==1&&x==px&&y==py)i+=\"s\";i+=(x+y&1)?\"b\":\"w\";if(!em(b,x,y))i+=(sa(b,x,y,64)?\"w\":\"b\")+(ge(b,x,y)&7);document.getElementById(\"\"+x+y).innerHTML=i+\".png\\\">\";}}";
-	xbox_assert( parser->CheckSyntax( &sourceString ) );
-
-	// This chunk of nastiness was pulled directly off the web from an examples
-	// site, and is a chess game.  In theory.
-	sourceString = "N=1;K=\"\";F=px=py=0;function sm(i){if(N>120)return;var j=\"abcdefgh\";if(N&1){if(N<19)K+=\" \";"
-					"K+=(1+N>>1)+\". \";}else K+=\"   \";if(i.f==3)K+=\"o-o  \";else if(i.f==5)K+=\"o-o-o\";else "
-					"K+=j.charAt(i.x)+(8-i.y)+\" \"+j.charAt(i.X)+(8-i.Y);if(++N&1)K+=\"\\n\";"
-					"document.getElementById(\"m\"+Math.floor((N-2)/20)).innerHTML=\"<pre>\"+K+\"</pre>\";if(!((N-1)%20))K=\"\";}"
-					"function un(u,b){for(var i=u.x.length-1;i>=0;--i)Z(b,u.x[i],u.y[i],u.p[i]);}function au(u,b,x,y){u.x.push(x);"
-					"u.y.push(y);u.p.push(b[x+y*8]);}function st(x){document.getElementById(\"i\").innerHTML=x;}"
-					"function P(x,y,X,Y,f){this.x=x;this.y=y;this.X=X;this.Y=Y;this.f=f;}function U(){this.x=[];this.y=[];this.p=[];}"
-					"function em(b,x,y){return !b[x+y*8];}function ge(b,x,y){return b[x+y*8]&7;}function co(b,x,y){return b[x+y*8]&192;}"
-					"function sa(b,x,y,c){var i=b[x+y*8];return i&&(i&c);}function op(b,x,y,c){var i=b[x+y*8];return i&&!(i&c);}"
-					"function mo(b,x,y){var i=b[x+y*8];return i&&(i&32);}function la(b,x,y){var i=b[x+y*8];return i&&(i&16);}"
-					"function ra(x,y){return x>=0&&x<8&&y>=0&&y<8;}function di(c){return c==64?-1:1;}function Z(b,x,y,p){b[x+y*8]=p;return b;}"
-					"function t(b,x,y,i,j,c,l){var X=x;var Y=y;while(ra(X+=i,Y+=j)&&em(b,X,Y))l.push(new P(x,y,X,Y,0));if(ra(X,Y)&&op(b,X,Y,c))"
-					"l.push(new P(x,y,X,Y,0));return l;}function ro(b,x,y,c,l){t(b,x,y,1,0,c,t(b,x,y,-1,0,c,t(b,x,y,0,1,c,t(b,x,y,0,-1,c,l))));}"
-					"function bi(b,x,y,c,l){t(b,x,y,1,1,c,t(b,x,y,-1,-1,c,t(b,x,y,1,-1,c,t(b,x,y,-1,1,c,l))));}"
-					"function ki(b,x,y,c,l){for(var i=-1;i<2;++i)for(var j=-1;j<2;++j){var X=x+i;var Y=y+j;if((X||Y)&&ra(X,Y)&&!sa(b,X,Y,c))"
-					"l.push(new P(x,y,X,Y,0));}if(!mo(b,x,y))if(em(b,5,y)&&em(b,6,y)&&!em(b,7,y)&&!mo(b,7,y)){var u=new U();au(u,b,x,y);"
-					"Z(b,x,y,0);var i=fi(b,c^192);var j=0;var X=-1;while(!j&&++X!=i.length)j=i[X].Y==y&&i[X].X==5;if(!j)l.push(new P(x,y,6,y,3));"
-					"un(u,b);}else if(em(b,3,y)&&em(b,2,y)&&em(b,1,y)&&!em(b,0,y)&&!mo(b,0,y)){var u=new U();au(u,b,x,y);Z(b,x,y,0);"
-					"var i=fi(b,c^192);var j=0;var X=-1;while(!j&&++X!=i.length)j=i[X].Y==y&&i[X].X==3;if(!j)l.push(new P(x,y,2,y,5));un(u,b);}}"
-					"function kn(b,x,y,c,l){for(var i=-2;i<3;++i)for(var j=-2;j<3;++j)if(Math.abs(i)+Math.abs(j)==3){var X=x+i;var Y=y+j;"
-					"if(ra(X,Y)&&!sa(b,X,Y,c))l.push(new P(x,y,X,Y,0));}}function pa(b,x,y,c,l){var Y=y+di(c);var Z=y+di(c)*2;"
-					"if(!mo(b,x,y)&&em(b,x,Y)&&em(b,x,Z))l.push(new P(x,y,x,Z,2));if(em(b,x,Y)){if(!Y||Y==7)l.push(new P(x,y,x,Y,4));else "
-					"l.push(new P(x,y,x,Y,0));}for(var i=-1;i<2;i+=2){var X=x+i;if(ra(X,Y)){if(op(b,X,Y,c)){if(!Y||Y==7)l.push(new P(x,y,X,Y,4));"
-					"else l.push(new P(x,y,X,Y,0));}else if(em(b,X,Y)&&la(b,X,Y-di(c)))l.push(new P(x,y,X,Y,1));}}}function d(b){"
-					"for(var y=0;y<8;++y)for(var x=0;x<8;++x){var i=\"<img src=\\\"\";if(F==1&&x==px&&y==py)i+=\"s\";i+=(x+y&1)?\"b\":\"w\";"
-					"if(!em(b,x,y))i+=(sa(b,x,y,64)?\"w\":\"b\")+(ge(b,x,y)&7);document.getElementById(\"\"+x+y).innerHTML=i+\".png\\\">\";}}"
-					"function ma(b,m){u=new U();for(var x=0;x<8;++x)for(var y=0;y<8;++y)if(la(b,x,y)){au(u,b,x,y);Z(b,x,y,ge(b,x,y)|co(b,x,y)|"
-					"mo(b,x,y));}au(u,b,m.X,m.Y);if(m.f==4)Z(b,m.X,m.Y,37|co(b,m.x,m.y));else Z(b,m.X,m.Y,ge(b,m.x,m.y)|co(b,m.x,m.y)|32|"
-					"(m.f==2?16:0));au(u,b,m.x,m.y);Z(b,m.x,m.y,0);if(m.f==1){au(u,b,m.X,m.Y-di(c));Z(b,m.X,m.Y-di(c),0);}else if(m.f==3){"
-					"au(u,b,5,m.y);au(u,b,7,m.y);Z(Z(b,5,m.y,ge(b,7,m.y)|co(b,7,m.y)|32),7,m.y,0);}else if(m.f==5){au(u,b,3,m.y);au(u,b,0,m.y);"
-					"Z(Z(b,3,m.y,ge(b,0,m.y)|co(b,0,m.y)|32),0,m.y,0);}return u;}function fi(b,c){var l=[];for(var x=0;x<8;++x)for(var y=0;y<8;++y)"
-					"if(sa(b,x,y,c)){var i=ge(b,x,y);if(i==1)pa(b,x,y,c,l);else if(i==2)kn(b,x,y,c,l);else if(i==3)bi(b,x,y,c,l);else if(i==4)"
-					"ro(b,x,y,c,l);else if(i==5){bi(b,x,y,c,l);ro(b,x,y,c,l)}else if(i==6)ki(b,x,y,c,l);}for(var i=0;i<l.length/3;++i){var j="
-					"Math.floor(Math.random()*l.length);var k=Math.floor(Math.random()*l.length);var x=l[j];l[j]=l[k];l[k]=x;}return l;}var "
-					"Sp=[0,60,370,370,450,1000,5000];var Sb=[[0,0,0,0,0,0,0,0,2,3,4,0,0,4,3,2,4,6,12,12,12,4,6,4,4,7,18,25,25,16,7,4,6,11,18,27,"
-					"27,16,11,6,10,15,24,32,32,24,15,10,10,15,24,32,32,24,15,10,0,0,0,0,0,0,0,0],[-7,-3,1,3,3,1,-3,-7,2,6,14,20,20,14,6,2,6,14,22,"
-					"26,26,22,14,6,8,18,26,30,30,26,18,8,8,18,30,32,32,30,18,8,6,14,28,32,32,28,14,6,2,6,14,20,20,14,6,2,-7,-3,1,3,3,1,-3,-7],[16,"
-					"16,16,16,16,16,16,16,26,29,31,31,31,31,29,26,26,28,32,32,32,32,28,26,16,26,32,32,32,32,26,16,16,26,32,32,32,32,26,16,16,28,"
-					"32,32,32,32,28,16,16,29,31,31,31,31,29,16,16,16,16,16,16,16,16,16],[0,0,0,3,3,0,0,0,-2,0,0,0,0,0,0,-2,-2,0,0,0,0,0,0,-2,-2,0,"
-					"0,0,0,0,0,-2,-2,0,0,0,0,0,0,-2,-2,0,0,0,0,0,0,-2,10,10,10,10,10,10,10,10,0,0,0,0,0,0,0,0],[-2,-2,-2,0,0,-2,-2,-2,0,0,1,1,1,0,"
-					"0,0,0,1,1,1,1,0,0,0,0,0,0,2,2,0,0,0,0,0,0,2,2,0,0,0,-2,-2,0,0,0,0,0,0,-2,-2,0,0,0,0,0,0,-2,-2,0,0,0,0,0,0],[3,3,8,-12,-8,-12,"
-					"10,5,0,0,-5,-5,-12,-12,-12,-12,-5,-5,-7,-15,-15,-15,-15,-15,-15,-7,-20,-20,-20,-20,-20,-20,-20,-20,-20,-20,-20,-20,-20,-20,"
-					"-20,-20,-20,-20,-20,-20,-20,-20,-20,-20,-20,-20,-20,-20,-20,-20,-20,-20,-20,-20,-20,-20,-20,-20,-20,-20],[]];for(var x=0;x<8;"
-					"++x)for(var y=0;y<8;++y)Sb[6][x+y*8]=Sb[5][(7-x)+y*8];function sc(b,c){var s=0;for(var x=0;x<8;++x)for(var y=0;y<8;++y){var "
-					"i=ge(b,x,y);if(i)if(sa(b,x,y,128))s+=Sb[i==6?6:i-1][(7-x)+y*8]+Sp[i];else s-=Sb[i-1][x+(7-y)*8]+Sp[i];}return c==128?s:-s;}"
-					"function cpu(){if(F!=2)return;var now = new Date();var m=fi(b,c);var bs=-99999;var ws=bs;var bm=0;var C=c^192;var kx=0;var "
-					"ky=0;for(var i=0;i<m.length;++i){var u=ma(b,m[i]);if(ge(b,kx,ky)!=6||sa(b,kx,ky,C)){kx=ky=0;while(ge(b,kx,ky)!=6||sa(b,kx,ky,C)"
-					")if(++kx==8){kx=0;++ky;}}var om=fi(b,C);var obs=-99999;var ows=99999;for(var j=0;j<om.length;++j){if(kx==om[j].X&&ky==om[j].Y)"
-					"{obs=-99999;break;}var U=ma(b,om[j]);var r=sc(b,c);un(U,b);obs=Math.max(obs,r);ows=Math.min(ows,r);if(r<ws)break;}un(u,b);if("
-					"obs>bs&&ows>ws){bs=obs;ws=ows;bm=m[i];}}ma(b,bm);sm(bm);nx();st(\"Move took \"+(new Date()-now)/1000+\" secs\");}cpw=0;cpb=1;"
-					"function pw(e){cpw=e.checked;if(F<2&&cpw&&c==64){F=2;setTimeout(\"cpu()\",100);}}function pb(e){cpb=e.checked;if(F<2&&cpb&&c=="
-					"128){F=2;setTimeout(\"cpu()\",100);}}function l(){b=[];for(i=0;i<8;++i)Z(Z(b,i,6,65),i,1,129);d(Z(Z(Z(Z(Z(Z(Z(Z(Z(Z(Z(Z(Z(Z(Z("
-					"Z(b,0,0,132),1,0,130),2,0,131),3,0,133),4,0,134),5,0,131),6,0,130),7,0,132),0,7,68),1,7,66),2,7,67),3,7,69),4,7,70),5,7,67),6,"
-					"7,66),7,7,68));c=64;}function hu(x,y){if(F==0){if(sa(b,x,y,c)){px=x;py=y;F=1;d(b);}}else if(F==1){if(x==px&&y==py){F=0;d(b);"
-					"return;}var m=fi(b,c);for(var i=0;i<m.length;++i){if(m[i].x==px&&m[i].y==py&&m[i].X==x&&m[i].Y==y&ge(b,x,y)!=6){var u=ma(b,m[i]"
-					");var o=fi(b,c^192);for(var j=0;j<o.length;++j)if(ge(b,o[j].X,o[j].Y)==6&&sa(b,o[j].X,o[j].Y,c)){un(u,b);st(\"Invalid move\");"
-					"return;}sm(m[i]);nx();return;}}st(\"Invalid move\");}}function nx(){c^=192;F=0;d(b);for(var x=0;x<8;++x)for(var y=0;y<8;++y)"
-					"if(ge(b,x,y)==6&&sa(b,x,y,c)){var kx=x;var ky=y;}var m=fi(b,c^192);var ic=0;for(var i=0;i<m.length;++i)if(m[i].X==kx&&m[i].Y=="
-					"ky)ic=1;var m=fi(b,c);var cm=1;for(var i=0;i<m.length;++i){var u=ma(b,m[i]);for(var x=0;x<8;++x)for(var y=0;y<8;++y)if(ge(b,x,"
-					"y)==6&&sa(b,x,y,c)){var kx=x;var ky=y;}var om=fi(b,c^192);un(u,b);var hm=0;for(var j=0;j<om.length;++j)if(om[j].X==kx&&om[j].Y"
-					"==ky)hm=1;cm&=hm;}if(cm){alert((ic?\"Check\":\"Stale\")+\"mate!\");F=3;return;}if((cpw&&c==64)||(cpb&&c==128)){F=2;setTimeout"
-					"(\"cpu()\",500);}}";
-
-	xbox_assert( parser->CheckSyntax( &sourceString ) );
-
-	sourceString = "var timObject = {\n"
-						"property1 : \"Hello\",\n"
-						"property2 : \"MmmMMm\",\n"
-						"property3 : [\"mmm\", 2, 3, 6, \"kkk\"],\n"
-						"method1 : function(){alert(\"Method had been called\" + this.property1)}\n"
-					"};\n"
-					"timObject.method1();\n"
-					"alert(timObject.property3[2]) // will yield 3\n"
-					"var circle = { x : 0, y : 0, radius: 2 } // another example\n"
-					"// nesting is no problem.\n"
-					"var rectangle = { \n"
-						"upperLeft : { x : 2, y : 2 },\n"
-						"lowerRight : { x : 4, y : 4}\n"
-					"}\n"
-					"alert(rectangle.upperLeft.x) // will yield 2";
-
-	parser->ParseDeclarations( &sourceString, symTable->GetBase(), symTable->GetFile() );
-	xbox_assert( symTable->GetSymbolCount() == 3 );
-	xbox_assert( symTable->GetSymbolByName( "timObject" ) );
-	xbox_assert( symTable->GetSymbolByName( "circle" ) );
-	xbox_assert( symTable->GetSymbolByName( "rectangle" ) );
-	TestSubsymbolNames( symTable, symTable->GetSymbolByName( "timObject" )->GetPrototypes().front(), 4, "property1", "property2", "property3", "method1" );
-	TestSubsymbolNames( symTable, symTable->GetSymbolByName( "circle" )->GetPrototypes().front(), 3, "radius", "x", "y" );
-	TestSubsymbolNames( symTable, symTable->GetSymbolByName( "rectangle" )->GetPrototypes().front(), 2, "upperLeft", "lowerRight" );
-	TestSubsymbolNames( symTable, symTable->GetSymbolByName( symTable->GetSymbolByName( "rectangle" )->GetPrototypes().front(), "upperLeft" )->GetPrototypes().front(), 2, "x", "y" );
-	TestSubsymbolNames( symTable, symTable->GetSymbolByName( symTable->GetSymbolByName( "rectangle" )->GetPrototypes().front(), "lowerRight" )->GetPrototypes().front(), 2, "x", "y" );
-	symTable->EmptyTable();
-
-	sourceString = "function foo() {\n"
-					  "\tthrow 12;\n"
-					"}\n"
-					"var aaron = { func : foo };\n"
-					"try {"
-					  "\twith (aaron) {\n"
-							"\t\tfunc();\n"
-					  "\t}\n"
-					"} catch (e) {\n"
-					  "\talert( 'caught the exception' );\n"
-					"}";
-	xbox_assert( parser->CheckSyntax( &sourceString ) );
-
-	sourceString = "// loop through catalog and return entity model\n"
-				   "for (var entityModelCount = 0; entityModelCount < catalog.entityModel.length; entityModelCount++) {\n"
-					"var entityModel = catalog.entityModel[entityModelCount];\n"
-					"if (entityModel.name === name) {\n"
-					 "return entityModel;\n"
-					"}\n"
-				   "}";
-	xbox_assert( parser->CheckSyntax( &sourceString ) );
-
-	sourceString = "function circle(radius)\n"
-					"{\n"
-					  "this.radius = radius;\n"
-					  "this.getArea = function()\n"
-					  "{\n"
-						"return (this.radius * this.radius) * Math.PI;\n"
-					  "};\n"
-					  "return true;\n"
-					"}";
-	xbox_assert( parser->CheckSyntax( &sourceString ) );
-
-	sourceString = "/**\n"
-					"* Gets the current foo \n"
-					"* @param {String} fooId	The unique identifier for the foo.\n"
-					"* @return {Object}	Returns the current foo.\n"
-					"*/\n"
-					"function getFoo(fooID){\n"
-					"}";
-	parser->ParseDeclarations( &sourceString, symTable->GetBase(), symTable->GetFile() );
-	xbox_assert( symTable->GetSymbolCount() == 1 );
-	Symbols::ISymbol *fooSym = symTable->GetSymbolByName( "getFoo" );
-	xbox_assert( fooSym );
-	xbox_assert( fooSym->GetKind() == Symbols::ISymbol::kKindFunctionDeclaration );
-	ScriptDocComment *sdoc = ScriptDocComment::Create( fooSym->GetScriptDocComment() );
-	xbox_assert( sdoc );
-	xbox_assert( sdoc->ElementCount() == 3 );
-	xbox_assert( sdoc->GetElement( 0 )->Type() == IScriptDocCommentField::kComment );
-	xbox_assert( sdoc->GetElement( 1 )->Type() == IScriptDocCommentField::kParam );
-	xbox_assert( sdoc->GetElement( 2 )->Type() == IScriptDocCommentField::kReturn );
-	delete sdoc;
-	symTable->EmptyTable();
-
-	// We also want to make sure that malformed ScriptDoc comments do not wind up in the symbol table
-	sourceString = "/**\n"
-					"This ScriptDoc comment isn't well-formed because it is missing an asterisk\n"
-					"\n"
-					"* @see Nothing\n"
-					"*/\n"
-					"function foo() {}";
-	parser->ParseDeclarations( &sourceString, symTable->GetBase(), symTable->GetFile() );
-	xbox_assert( symTable->GetSymbolCount() == 1 );
-	fooSym = symTable->GetSymbolByName( "foo" );
-	xbox_assert( fooSym );
-	xbox_assert( fooSym->GetKind() == Symbols::ISymbol::kKindFunctionDeclaration );
-	xbox_assert( fooSym->GetScriptDocComment().GetLength() == 0 );
-	symTable->EmptyTable();
-
-	sourceString = "/**\n"
-					"* Controller\n"
-					"* @ author Jonathan Le\n"
-					"*/\n"
-					"var Controller;";
-	parser->ParseDeclarations( &sourceString, symTable->GetBase(), symTable->GetFile() );
-	xbox_assert( symTable->GetSymbolCount() == 1);
-	fooSym = symTable->GetSymbolByName( "Controller" );
-	xbox_assert( fooSym );
-	xbox_assert( fooSym->GetKind() == Symbols::ISymbol::kKindLocalVariableDeclaration );
-	xbox_assert( fooSym->GetScriptDocComment().GetLength() != 0 );
-	symTable->EmptyTable();
-
-	// Test to make sure that "this" processing behaves sensibly
-	sourceString = "function foobar() {\n"
-					"	this.test = 12;\n"
-					"	this.wahoo = \"This is a test string\";\n"
-					"}";
-	parser->ParseDeclarations( &sourceString, symTable->GetBase(), symTable->GetFile() );
-	xbox_assert( symTable->GetSymbolCount() == 1 );
-	func = symTable->GetSymbolByName( "foobar" );
-	xbox_assert( func );
-	TestSubsymbolNames( symTable, GetFunctionPrototype( symTable, func ), 2, "test", "wahoo" );
-	symTable->EmptyTable();
-
-	sourceString = "function outer() {\n"
-					"	this.test = function() {\n"
-					"		this.foobar = 12;\n"
-					"	}\n"
-					"	function inner() {\n"
-					"		this.anotherTest = 12;\n"
-					"	}\n"
-					"}";
-	parser->ParseDeclarations( &sourceString, symTable->GetBase(), symTable->GetFile() );
-	func = symTable->GetSymbolByName( "outer" );
-	xbox_assert( func );
-	std::vector< Symbols::ISymbol * > subSyms;
-	subSyms = symTable->GetBase()->GetSymbolsByName( func, "inner" );
-	TestSubsymbolNames( symTable, GetFunctionPrototype( symTable, func ), 1, "test" );
-	func = symTable->GetSymbolByName( GetFunctionPrototype( symTable, func ), "test" );
-	TestSubsymbolNames( symTable, GetFunctionPrototype( symTable, func->GetPrototypes().front() ), 1, "foobar" );
-	xbox_assert( subSyms.size() == 1 );
-	func = subSyms[ 0 ];
-	xbox_assert( func );
-	TestSubsymbolNames( symTable, GetFunctionPrototype( symTable, func ), 1, "anotherTest" );
-	symTable->EmptyTable();
-
-	sourceString = "var test = { bar : 12 };\n"
-					"var test2 = test;";
-	parser->ParseDeclarations( &sourceString, symTable->GetBase(), symTable->GetFile() );
-	xbox_assert( symTable->GetSymbolCount() == 2 );
-	xbox_assert( symTable->GetSymbolByName( "test" ) );
-	xbox_assert( symTable->GetSymbolByName( "test2" ) );
-	TestSubsymbolNames( symTable, symTable->GetSymbolByName( "test" )->GetPrototypes().front(), 1, "bar" );
-	TestSubsymbolNames( symTable, symTable->GetSymbolByName( "test2" )->GetPrototypes().front(), 1, "bar" );
-	symTable->EmptyTable();
-
-	sourceString = "function MyClass(config) {\r"																				// 0		// 0
-						"\tconfig.myParam = 42;  // autocompletion after typing \"config.\":  myParam\r"						// 1
-						"\tfoo = 42;	// global variable\r"																	// 2
-						"\tvar privateProperty = '';	// private property\r"													// 3
-						"\tthis.myProperty = 42;	// public property\r"														// 4
-						"\t\r"																									// 5
-						"\tvar privateMethod = function () { }	// private method\r"											// 6
-						"\tfunction privateMethod2  () { }	// private method\r"												// 7
-						"\tthis.myMethod = function (){ }	// privileged method\r"												// 8
-					"}\r"																										// 9
-					"\r"																										// 10
-					"MyClass.prototype.myMethod2 = function() { }	// myMethod2 is added to the constructor of MyClass\r"		// 11
-					"MyClass.myMethod3 = function() { }	// myMethod3 is added to the object MyClass\r"							// 12
-					"myObject = new MyClass();\r"																				// 13
-					"var obj = new MyClass(); \r"																				// 14
-					"obj.myMethod4 = function () { }";																			// 15
-	parser->ParseDeclarations( &sourceString, symTable->GetBase(), symTable->GetFile() );
-	xbox_assert( symTable->GetSymbolCount() == 4 );
-	xbox_assert( symTable->GetSymbolByName( "MyClass" ) );
-	xbox_assert( symTable->GetSymbolByName( "foo" ) );
-	xbox_assert( symTable->GetSymbolByName( "myObject" ) );
-	xbox_assert( symTable->GetSymbolByName( "obj" ) );
-	TestSubsymbolNames( symTable, symTable->GetSymbolByName( "MyClass" ), 6, "config", "privateProperty", "privateMethod", "privateMethod2", "myMethod3", "prototype" );
-	TestSubsymbolNames( symTable, GetFunctionPrototype( symTable, symTable->GetSymbolByName( "MyClass" ) ), 3, "myProperty", "myMethod", "myMethod2" );
-	TestSubsymbolNames( symTable, symTable->GetSymbolByName( symTable->GetSymbolByName( "MyClass" ), "config" ), 1, "myParam" );
-	TestSubsymbolNames( symTable, symTable->GetSymbolByName( "obj" ), 1, "myMethod4" );
-
-	sym = symTable->GetSymbolByName( "MyClass" );
-	xbox_assert( sym->GetLineNumber() == 0 );
-	xbox_assert( sym->GetLineCompletionNumber() == 9 );
-	symTable->EmptyTable();
-
-	sourceString = "function Structure() {\n"					// 0
-						"\tthis.getTable =\n"					// 1
-							"\t\tfunction(id)\n"				// 2
-							"\t\t{\n"							// 3
-								"\t\tvar tp = this;\n"			// 4
-								"\t\tthis.blah = 12;\n"			// 5
-								"\t\treturn null;\n"			// 6
-							"\t};\n"							// 7
-					"}";										// 8
-	parser->ParseDeclarations( &sourceString, symTable->GetBase(), symTable->GetFile() );
-	xbox_assert( symTable->GetSymbolCount() == 1 );
-	TestSubsymbolNames( symTable, GetFunctionPrototype( symTable, symTable->GetSymbolByName( "Structure" ) ), 1, "getTable" );
-	func = GetFunctionPrototype( symTable, symTable->GetSymbolByName( "Structure" ) );
-	func = symTable->GetSymbolByName( func, "getTable" );
-	xbox_assert( func->GetPrototypes().front()->GetLineNumber() == 2 );
-	xbox_assert( func->GetPrototypes().front()->GetLineCompletionNumber() == 7 );
-	TestSubsymbolNames( symTable, func->GetPrototypes().front(), 2, "id", "tp" );
-	TestSubsymbolNames( symTable, GetFunctionPrototype( symTable, func->GetPrototypes().front() ), 1, "blah" );
-	symTable->EmptyTable();
-
-	sourceString = "/**\r\n"																					// 0
-					"* @author admin\r\n"																		// 1
-					"*/\r\n"																					// 2
-					"\r\n"																						// 3
-					"\r\n"																						// 4
-					"function test(request, response)\r\n"														// 5
-					"{\r\n"																						// 6
-						"\tresponse.contentType = 'text/plain';\r\n"											// 7
-						"\treturn 'la communication avec le serveur fonctionne !';\r\n"							// 8
-					"}\r\n"																						// 9
-					"\r\n"																						// 10
-					"application.addHttpRequestHandler( '/test', './bootStraps/bootStrap.js', 'test');\r\n";	// 11
-
-	parser->ParseDeclarations( &sourceString, symTable->GetBase(), symTable->GetFile() );
-	xbox_assert( symTable->GetSymbolCount() == 1 );
-	func = symTable->GetSymbolByName( "test" );
-	xbox_assert( func );
-	xbox_assert( func->GetLineNumber() == 5 );
-	xbox_assert( func->GetLineCompletionNumber() == 9 );
-	TestSubsymbolNames( symTable, func, 2, "request", "response" );
-	symTable->EmptyTable();
-
-	// Test that return types actually work.  Note that we are going to add in some of the
-	// JS Core datatypes manually so that the return types can actually be tested.
-	sourceString = "function Number() {\n"
-					"}\n"
-					"function foo() {\n"
-						"\treturn 12;\n"
-					"}\n"
-					"var bar = foo();";
-	parser->ParseDeclarations( &sourceString, symTable->GetBase(), symTable->GetFile() );
-	xbox_assert( symTable->GetSymbolCount() == 3 );
-	xbox_assert( symTable->GetSymbolByName( "Number" ) );
-	func = symTable->GetSymbolByName( "foo" );
-	xbox_assert( func );
-	xbox_assert( !func->GetReturnTypes().empty() );
-
-	// Note that the return type is actually number's prototype -- that's because we assign
-	// the prototype over when processing the assignment.  This way, when the user says
-	// bar., they get all of the public properties on Number instead of the static properties.
-	xbox_assert( func->GetReturnTypes()[ 0 ]->GetOwner()->GetName() == "Number" );
-	func = symTable->GetSymbolByName( "bar" );
-	xbox_assert( func );
-	xbox_assert( !func->GetPrototypes().empty() );
-	xbox_assert( func->GetPrototypes().front()->GetOwner()->GetName() == "Number" );
-	symTable->EmptyTable();
-
-	sourceString = "function test() {\n"
-						"\tthis.wahoo = 12;\n"
-					"}\n"
-					"function blah() {\n"
-						"\treturn new test();\n"
-					"}\n"
-					"var foo = blah();";
-	parser->ParseDeclarations( &sourceString, symTable->GetBase(), symTable->GetFile() );
-	xbox_assert( symTable->GetSymbolCount() == 3 );
-	xbox_assert( symTable->GetSymbolByName( "test" ) );
-	xbox_assert( symTable->GetSymbolByName( "blah" ) );
-	func = symTable->GetSymbolByName( "foo" );
-	xbox_assert( func );
-	TestSubsymbolNames( symTable, func->GetPrototypes().front(), 1, "wahoo" );
-	symTable->EmptyTable();
-
-	delete symTable;
 }
 #endif // _DEBUG

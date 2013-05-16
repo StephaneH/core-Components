@@ -16,10 +16,22 @@
 #ifndef __DB4D__ 
 #define __DB4D__
 
+#define DB4D_AS_DLL 1
+
+#ifdef DB4D_AS_DLL
+	#define DB4DasDLL 1
+	#define DB4DasComponent 0
+#else
+	#define DB4DasDLL 0
+	#define DB4DasComponent 1
+#endif
+
+
 #include "KernelIPC/VKernelIPC.h"
 #include "ServerNet/VServerNet.h"
 #include "HTTPServer/Interfaces/CHTTPServer.h"
 #include "UsersAndGroups/Sources/UsersAndGroups.h"
+#include "KernelIPC/Sources/VComponentManager.h"
 
 #pragma pack( push, 8 )
 
@@ -27,13 +39,20 @@
 #ifndef DB4D_API
 // any class except components should use DB4D_API
 // this is necessary so that RTTI can work with gcc.
-#if COMPIL_GCC
-#define DB4D_API IMPORT_API
-#else
-#define DB4D_API
+	#if COMPIL_GCC
+		#define DB4D_API IMPORT_API
+	#else
+		#define DB4D_API
+	#endif
 #endif
 
+
+#ifdef DB4D_EXPORTS
+	#define ENTITY_API EXPORT_API
+#else
+	#define ENTITY_API IMPORT_API
 #endif
+
 
 typedef struct OpaqueRIApplicationRef* RIApplicationRef;
 
@@ -144,6 +163,37 @@ public:
 			/** @brief	The UAG session is retained. Pass NULL to remove the uag session */
 	virtual	XBOX::VError			SetUAGSession(const XBOX::VJSGlobalContext* inContext, CUAGSession *inUAGSession) = 0;
 			/** @brief	set the UAGSession for the context */
+
+	virtual bool					AcceptRestConnection(const XBOX::VString& inUserName, const XBOX::VString& inPassWord) = 0;
+			/** @brief	the application (usually 4D) should check is a REST connection
+						is accepted for this user/password
+			*/
+
+};
+
+// RetainView() and RetainViewField() return NULL if the base UUID and/or index are not incorrect.
+
+class DB4D_API IDB4D_SQLIntf
+{
+public:
+
+	// OpenBase() is of no use, except to check (in debugging mode) that no view for the base to open already exists.
+
+	virtual void			OpenBase (const XBOX::VUUID &inBaseUUID) = 0;
+
+	// CloseBase() will remove all view(s) of the base to close from view set.
+
+	virtual	void			CloseBase (const XBOX::VUUID &inBaseUUID) = 0;
+
+	// Method for information retrieval for _USER_VIEWS table.
+
+	virtual	sLONG			NumberViews (const XBOX::VUUID &inBaseUUID) = 0;
+	virtual XBOX::VValueBag	*RetainView (const XBOX::VUUID &inBaseUUID, sLONG inN) = 0;
+
+	// Method for information retrieval for _USER_VIEW_COLUMNS table.
+
+	virtual sLONG			NumberViewFields (const XBOX::VUUID &inBaseUUID) = 0;
+	virtual	XBOX::VValueBag	*RetainViewField (const XBOX::VUUID &inBaseUUID, sLONG inN) = 0;
 };
 
 /**
@@ -284,6 +334,32 @@ public:
 class CDB4DBaseContext;
 
 /**
+ * \brief Interface for journal-related services
+ */
+class DB4D_API IJournalTool
+{
+public:
+	IJournalTool(){}
+	virtual ~IJournalTool(){}
+
+	/**
+	 * \brief Opens the specified journal file and converts it into a JS object.
+	 * \param inJournalFile the journal to convert
+	 * \param outOperations the resulting array where each operation is stored as an entry
+	 * \return true on success
+	 */
+	virtual bool ParseJournal(XBOX::VFile& inJournalFile,XBOX::VJSArray& outOperations,IDB4D_DataToolsIntf* inProgressLog) = 0;
+
+	/**
+	 * \brief Opens a journal file and converts it into a text file
+	 * \param inJournalFile the journal to convert
+	 * \param inDestinationFile the resulting text file
+	 * \return true on success
+	 */
+	virtual bool ParseJournalToText(XBOX::VFile& inJournalFile,XBOX::VFile& inDestinationFile,IDB4D_DataToolsIntf* inProgressLog) = 0;
+};
+
+/**
  * \brief Interface for core backup related services
  * \details This class abstracts the backup processing for a database, in a variety of scenarii.
  * A backup is configured using backup settings (IBackupSettings) that control where and how backups are
@@ -415,6 +491,28 @@ public:
  	 */
 	virtual bool RestoreDataFolder(const XBOX::VFilePath& inBackupManifestPath,const XBOX::VFilePath& inRestoredDataFolderParentPath,XBOX::VFilePath& outRenamedDataFolderPath,IDB4D_DataToolsIntf* inProgress) = 0;
 
+	/**
+	 * \brief Restores the journal file from a backup archive
+	 * \param inBackupManifestPath the the backup manifest path  
+	 * \param inRestoreFolderPath Path of the folder where the journal file  
+	 * \param outRenamedJournalPath stores the name of any existing journal file in inRestoreFolderPath, if applicable.
+	 * \param inProgress the progress object to give feedback about the extraction
+	 * \return true if the restoration succeeded return false otherwise
+	 * Example
+	 * <pre>
+	 * VFilePath folder;
+	 * folder.FromFullPath(CVSTR("c:/MyProject/"));
+	 * backupTool->RestoreDataFolder(myManifest,folder,renamed,NULL);
+	 * 
+	 * Will create the following:
+	 * c:/
+	 * |-MyProject
+	 * |     |-journal.waJournal                                <--- this is the restored journal
+	 * |     |
+	 * |     |-journal_REPLACED_2012-12-25_09-36-23.waJournal   <--- that was the pre-existing journal file after being renamed and returned in outRenamedJournalPath
+	 * </pre>
+ 	 */
+	virtual bool RestoreJournal(const XBOX::VFilePath& inBackupManifestPath,const XBOX::VFilePath& inRestoreFolder,XBOX::VFilePath& outRenamedJournalPath,IDB4D_DataToolsIntf* inProgress) = 0;
 };
 
 // ----------  [12/4/2008 LR]
@@ -478,7 +576,8 @@ typedef enum {
 	DB4D_And = 1,
 	DB4D_OR,
 	DB4D_Except,
-	DB4D_Not
+	DB4D_Not,
+	DB4D_Intersect
 } DB4DConjunction;
 
 typedef enum {
@@ -1003,16 +1102,25 @@ typedef enum
 } DB4D_QueryParamElementType;
 
 
-class DB4D_API QueryParamElement
+class ENTITY_API QueryParamElement
 {
 	public:
 		QueryParamElement(XBOX::VValueSingle* inCV, bool ownsIt = true)
 		{
 			fScalar = inCV;
+			fSimpleDateScalar = nil;
 			fType = DB4D_QPE_scalar;
 			fArray = nil;
 		}
-		
+
+		QueryParamElement(XBOX::VValueSingle* inCV, XBOX::VValueSingle* inSimpleDate, bool ownsIt = true)
+		{
+			fScalar = inCV;
+			fSimpleDateScalar = inSimpleDate;
+			fType = DB4D_QPE_scalar;
+			fArray = nil;
+		}
+
 
 		QueryParamElement(XBOX::VJSArray& inArray);
 		
@@ -1020,6 +1128,7 @@ class DB4D_API QueryParamElement
 		QueryParamElement()
 		{
 			fScalar = nil;
+			fSimpleDateScalar = nil;
 			fType = DB4D_QPE_none;
 			fArray = nil;
 		}
@@ -1032,6 +1141,7 @@ class DB4D_API QueryParamElement
 		DB4D_QueryParamElementType fType;
 		XBOX::VJSArray* fArray;
 		XBOX::VValueSingle* fScalar;
+		XBOX::VValueSingle* fSimpleDateScalar;
 };
 
 class DB4D_API QueryParamElementVector : public std::vector<QueryParamElement>
@@ -1095,6 +1205,7 @@ typedef XBOX::VUUIDBuffer DB4D_RecordRef;
 
 typedef sLONG8 DB4D_BaseContextRef;
 
+
 /*!
 	@class	CDB4DManager
 	@abstract		The root for all sub components of DB4D.
@@ -1127,6 +1238,7 @@ const sLONG DB4D_Create_DO_NOT_Match_Data_And_Struct = 8;
 const sLONG DB4D_Create_As_XML_Definition = 128;
 const sLONG DB4D_Create_With_Own_UsersAndGroups = 512;
 const sLONG DB4D_Create_No_Respart = 1024;
+const sLONG DB4D_Create_Empty_Catalog = 2048;
 //const sLONG DB4D_Create_WITHOUT_JurnalFile = 16;		// pas necessaire	
 
 
@@ -1140,7 +1252,11 @@ class IBackupSettings;
 typedef void* (*GetCurrentSelectionFromContextMethod) (void* inContext, sLONG tablenum);
 typedef CDB4DRecord* (*GetCurrentRecordFromContextMethod) (void* inContext, sLONG tablenum);
 
+#if DB4DasComponent
 class CDB4DManager : public XBOX::CComponent
+#else
+class ENTITY_API CDB4DManager : public XBOX::IRefCountable
+#endif
 {
 public:
 	enum {Component_Type = 'dbmg'};
@@ -1150,6 +1266,8 @@ public:
 	virtual IBackupSettings* CreateBackupSettings() = 0;
 
 	virtual IBackupTool* CreateBackupTool() = 0;
+
+	virtual IJournalTool* CreateJournalTool() = 0;
 
 	virtual XBOX::VError GetJournalInfos(const XBOX::VFilePath& inDataFilePath,XBOX::VFilePath& journalPath,XBOX::VUUID& journalDataLink) = 0;
 
@@ -1164,8 +1282,9 @@ public:
 
 
 
-
+/*
 	virtual void* GetComponentLibrary() const = 0;
+*/
 
 	
 
@@ -1462,6 +1581,9 @@ public:
 	virtual	void					SetGraphicsInterface( IDB4D_GraphicsIntf *inGraphics) = 0;
 	virtual	IDB4D_GraphicsIntf*		GetGraphicsInterface() const = 0;
 
+	virtual	void					SetSQLInterface (IDB4D_SQLIntf *inSQLIntf) = 0;
+	virtual	IDB4D_SQLIntf			*GetSQLInterface () const = 0;
+
 	virtual void GetStaticRequiredJSFiles(std::vector<XBOX::VFilePath>& outFiles) = 0;
 
 	virtual IDB4D_DataToolsIntf* CreateJSDataToolsIntf(XBOX::VJSContext& jscontext, XBOX::VJSObject& paramObj) = 0;
@@ -1472,6 +1594,21 @@ public:
 		Call AddRestRequestHandler() to initialize the REST requests handler for the HTTP Server project. inBase can be NULL.
 	*/
 	virtual IHTTPRequestHandler*	AddRestRequestHandler( VErrorDB4D& outError, CDB4DBase *inBase, IHTTPServerProject *inHTTPServerProject, RIApplicationRef inApplicationRef, const XBOX::VString& inPattern, bool inEnabled) = 0;
+
+#if DB4DasComponent
+	static CDB4DManager* RetainManager(XBOX::VLocalizationManager* inLocalizationManager = NULL)
+	{
+		return XBOX::VComponentManager::RetainComponentOfType<CDB4DManager>();
+	}
+#endif
+
+#if DB4DasDLL
+	static CDB4DManager* RetainManager(XBOX::VLocalizationManager* inLocalizationManager = NULL);
+
+private:
+
+	static CDB4DManager* sManager;
+#endif
 };
 
 
@@ -1513,7 +1650,9 @@ class DB4D_API ExportOption
 		bool BinaryExport, CreateFolder, JSONExport, Import, ChangeIntegrityRules, DelayIndexes;
 };
 
-class CDB4DBase : public XBOX::CComponent
+class DB4DSQLExpression;
+
+class CDB4DBase/* : public XBOX::CComponent*/ : public XBOX::IRefCountable
 {
 public:
 	enum {Component_Type = 'dbba'};
@@ -1805,7 +1944,7 @@ public:
 
 	virtual VErrorDB4D ExecuteRestRequest(tempDB4DWebRequest& inRequest) = 0; // temporaire L.R le 4 dec 2008
 	
-	virtual sLONG CountEntityModels(CDB4DBaseContext* context, bool onlyRealOnes = true) const = 0;
+	//virtual sLONG CountEntityModels(CDB4DBaseContext* context, bool onlyRealOnes = true) const = 0;
 	
 	virtual VErrorDB4D RetainAllEntityModels(std::vector<XBOX::VRefPtr<CDB4DEntityModel> >& outList, CDB4DBaseContext* context, bool onlyRealOnes = true) const = 0;
 	
@@ -1843,11 +1982,10 @@ public:
 	virtual	XBOX::VJSObject CreateJSDatabaseObject( const XBOX::VJSContext& inContext) = 0;
 
 	virtual bool CatalogJSParsingError(XBOX::VFile* &outRetainedFile, XBOX::VString& outMessage, sLONG& outLineNumber) = 0;
-
 };
 
 
-class CDB4DSchema : public XBOX::CComponent
+class CDB4DSchema : public XBOX::IRefCountable
 {
 	public:
 		enum {Component_Type = 'dbsh'};
@@ -1876,7 +2014,7 @@ typedef enum { DB4D_QueryDescription_Text = 0,
 class CDB4DRemoteRecordCache;
 
 
-class CDB4DBaseContext : public XBOX::CComponent
+class CDB4DBaseContext : public XBOX::IRefCountable
 {
 public:
 	enum {Component_Type = 'dbcx'};
@@ -1976,7 +2114,7 @@ public:
 };
 
 
-class CDB4DFieldCacheCollection : public XBOX::CComponent
+class CDB4DFieldCacheCollection : public XBOX::IRefCountable
 {
 public:
 	enum {Component_Type = 'dbfc'};
@@ -1989,7 +2127,7 @@ public:
 };
 
 
-class CDB4DField : public XBOX::CComponent
+class CDB4DField : public XBOX::IRefCountable
 {
 public:
 	enum {Component_Type = 'dbFI'};
@@ -2038,6 +2176,9 @@ public:
 	virtual Boolean IsStyledText(CDB4DBaseContextPtr inContext = NULL) const = 0;
 	virtual VErrorDB4D SetStyledText(Boolean styledText, VDB4DProgressIndicator* InProgress = nil, CDB4DBaseContextPtr inContext = NULL) = 0;
 
+	virtual Boolean IsHiddenInRest(CDB4DBaseContextPtr inContext = NULL) const = 0;
+	virtual VErrorDB4D SetHideInRest(Boolean hideInRest, VDB4DProgressIndicator* InProgress = nil, CDB4DBaseContextPtr inContext = NULL) = 0;
+
 	virtual VErrorDB4D SetDefinition(const XBOX::VValueBag& inFieldDefinition, VDB4DProgressIndicator* InProgress = NULL, CDB4DBaseContextPtr inContext = NULL) = 0;
 	virtual XBOX::VValueBag* CreateDefinition(CDB4DBaseContextPtr inContext = NULL) const = 0;
 
@@ -2082,7 +2223,7 @@ public:
 };
 
 
-class CDB4DTable : public XBOX::CComponent
+class CDB4DTable : public XBOX::IRefCountable
 {
 public:
 	enum {Component_Type = 'dbTA'};
@@ -2250,6 +2391,10 @@ public:
 
 	virtual bool GetKeepRecordSyncInfo() const = 0;
 
+	virtual VErrorDB4D SetHideInRest(bool hideInRest, CDB4DBaseContextPtr inContext, VDB4DProgressIndicator* InProgress = nil) = 0;
+
+	virtual bool IsHiddenInRest(CDB4DBaseContextPtr inContext) const = 0;
+
 	virtual VErrorDB4D GetModificationsSinceStampWithPrimKey(uLONG8 stamp, XBOX::VStream& outStream, uLONG8& outLastStamp, sLONG& outNbRows, 
 																CDB4DBaseContextPtr inContext, std::vector<sLONG>& cols,
 																CDB4DSelection* filter, sLONG8 skip, sLONG8 top,
@@ -2285,7 +2430,7 @@ public:
 
 
 
-class CDB4DSelection : public XBOX::CComponent
+class CDB4DSelection : public XBOX::IRefCountable
 {
 public:
 	enum {Component_Type = 'dbsl'};
@@ -2306,7 +2451,6 @@ public:
 	// SortSelection runs on Server if it is a Remote Database
 	virtual Boolean SortSelection(DB4D_FieldID inFieldID, Boolean inAscending, VDB4DProgressIndicator* InProgress = NULL, CDB4DBaseContextPtr inContext = NULL) = 0;
 	virtual Boolean SortSelection(CDB4DSortingCriteriasPtr inCriterias, VDB4DProgressIndicator* InProgress = NULL, CDB4DBaseContextPtr inContext = NULL) = 0;
-	virtual Boolean SortSelection(const XBOX::VString orderString, VDB4DProgressIndicator* InProgress = NULL, CDB4DBaseContextPtr inContext = NULL) = 0;
 
 	// SortSelectionOnClient runs on Server if it is a Remote Database and there are no language formulas to execute
 	virtual Boolean SortSelectionOnClient(DB4D_FieldID inFieldID, Boolean inAscending, VDB4DProgressIndicator* InProgress = NULL, CDB4DBaseContextPtr inContext = NULL) = 0;
@@ -2385,9 +2529,6 @@ public:
 	virtual VErrorDB4D ExportToSQL(CDB4DBaseContext* inContext, XBOX::VFolder* inFolder, VDB4DProgressIndicator* inProgress, ExportOption& options) = 0;
 	
 	virtual void SetAssociatedModel(CDB4DEntityModel* em) = 0;
-	virtual CDB4DEntityModel* GetModel() const = 0;
-
-	virtual CDB4DEntityRecord* LoadEntity( RecIDType inEntityIndex, DB4D_Way_of_Locking HowToLock, CDB4DBaseContextPtr inContext, Boolean* outLockWasKeptInTrans = NULL) = 0;
 
 	virtual void SetQueryPlan(XBOX::VValueBag* queryplan) = 0;
 	virtual void SetQueryPath(XBOX::VValueBag* queryplan) = 0;
@@ -2395,7 +2536,7 @@ public:
 	virtual XBOX::VValueBag* GetQueryPlan() = 0;
 	virtual XBOX::VValueBag* GetQueryPath() = 0;
 
-	virtual VErrorDB4D ConvertToJSObject(CDB4DBaseContext* inContext, XBOX::VJSArray& outArr, const XBOX::VString& inAttributeList, bool withKey, bool allowEmptyAttList, sLONG from, sLONG count) = 0;
+	//virtual VErrorDB4D ConvertToJSObject(CDB4DBaseContext* inContext, XBOX::VJSArray& outArr, const XBOX::VString& inAttributeList, bool withKey, bool allowEmptyAttList, sLONG from, sLONG count) = 0;
 
 
 };
@@ -2406,7 +2547,7 @@ public:
 	@discussion
 */
 
-class CDB4DSet : public XBOX::CComponent
+class CDB4DSet : public XBOX::IRefCountable
 {
 public:
 	enum {Component_Type = 'dbbt'};
@@ -2506,7 +2647,7 @@ typedef sWORD DB4D_QueryDestination;
 
 
 
-class CDB4DQueryOptions : public XBOX::CComponent
+class CDB4DQueryOptions : public XBOX::IRefCountable
 {
 	public:
 		enum {Component_Type = 'dbqo'};
@@ -2527,7 +2668,7 @@ class CDB4DQueryOptions : public XBOX::CComponent
 };
 
 
-class CDB4DQueryResult : public XBOX::CComponent
+class CDB4DQueryResult : public XBOX::IRefCountable
 {
 	public:
 		enum {Component_Type = 'dbqr'};
@@ -2545,7 +2686,7 @@ class CDB4DQueryResult : public XBOX::CComponent
 
 
 
-class CDB4DQuery : public XBOX::CComponent
+class CDB4DQuery : public XBOX::IRefCountable
 {
 public:
 	enum {Component_Type = 'dbqu'};
@@ -2587,7 +2728,7 @@ public:
 };
 
 
-class CDB4DComplexSelection : public XBOX::CComponent
+class CDB4DComplexSelection : public XBOX::IRefCountable
 {
 	public:
 		enum {Component_Type = 'dbcs'};
@@ -2617,7 +2758,7 @@ class CDB4DComplexSelection : public XBOX::CComponent
 
 
 
-class CDB4DComplexQuery : public XBOX::CComponent
+class CDB4DComplexQuery : public XBOX::IRefCountable
 {
 	public:
 		enum {Component_Type = 'dbcq'};
@@ -2662,7 +2803,7 @@ class CDB4DComplexQuery : public XBOX::CComponent
 	@discussion
 */
 
-class CDB4DSortingCriterias : public XBOX::CComponent
+class CDB4DSortingCriterias : public XBOX::IRefCountable
 {
 public:
 	enum {Component_Type = 'dbst'};
@@ -2680,7 +2821,7 @@ public:
 	@discussion
 */
 
-class CDB4DSqlQuery : public XBOX::CComponent
+class CDB4DSqlQuery : public XBOX::IRefCountable
 {
 public:
 	enum {Component_Type = 'dbsq'};
@@ -2696,7 +2837,7 @@ public:
 	@discussion
 */
 
-class CDB4DRecord : public XBOX::CComponent
+class CDB4DRecord : public XBOX::IRefCountable
 {
 public:
 	enum {Component_Type = 'dbrc'};
@@ -2824,7 +2965,7 @@ public:
 
 
 
-class CDB4DImpExp : public XBOX::CComponent
+class CDB4DImpExp : public XBOX::IRefCountable
 {
 	public:
 		enum {Component_Type = 'dbio'};
@@ -2857,7 +2998,7 @@ class CDB4DImpExp : public XBOX::CComponent
 
 
 
-class CDB4DCheckAndRepairAgent : public XBOX::CComponent
+class CDB4DCheckAndRepairAgent : public XBOX::IRefCountable
 {
 	public:
 		enum {Component_Type = 'dbck'};
@@ -2878,7 +3019,7 @@ class CDB4DCheckAndRepairAgent : public XBOX::CComponent
 
 
 
-class CDB4DRelation : public XBOX::CComponent
+class CDB4DRelation : public XBOX::IRefCountable
 {
 	public:
 		enum {Component_Type = 'dbrl'};
@@ -2942,10 +3083,10 @@ class CDB4DRelation : public XBOX::CComponent
 };
 
 
-typedef enum { DB4D_Sum = 1, DB4D_Average, DB4D_Min, DB4D_Max, DB4D_Count, DB4D_Count_distinct, DB4D_Average_distinct, DB4D_Sum_distinct} DB4D_ColumnFormulae;
+typedef enum { DB4D_ColumnFormulae_none = 0, DB4D_Sum = 1, DB4D_Average, DB4D_Min, DB4D_Max, DB4D_Count, DB4D_Count_distinct, DB4D_Average_distinct, DB4D_Sum_distinct} DB4D_ColumnFormulae;
 
 
-class CDB4DColumnFormula : public XBOX::CComponent
+class CDB4DColumnFormula : public XBOX::IRefCountable
 {
 	public:
 		enum {Component_Type = 'dbfo'};
@@ -2964,7 +3105,7 @@ class CDB4DColumnFormula : public XBOX::CComponent
 
 class CDB4DIndexKey;
 
-class CDB4DIndex : public XBOX::CComponent
+class CDB4DIndex : public XBOX::IRefCountable
 {
 	public:
 		enum {Component_Type = 'dbin'};
@@ -3016,7 +3157,7 @@ class CDB4DIndex : public XBOX::CComponent
 };
 
 
-class CDB4DIndexKey : public XBOX::CComponent
+class CDB4DIndexKey : public XBOX::IRefCountable
 {
 	public:
 		enum {Component_Type = 'dbik'};
@@ -3032,7 +3173,7 @@ class CDB4DIndexKey : public XBOX::CComponent
 
 
 
-class CDB4DContext : public XBOX::CComponent
+class CDB4DContext : public XBOX::IRefCountable
 {
 public:
 	enum {Component_Type = 'dbcx'};
@@ -3095,7 +3236,7 @@ class StDBContext
 
 typedef uLONG8 DB4D_AutoSeqToken;
 
-class CDB4DAutoSeqNumber : public XBOX::CComponent
+class CDB4DAutoSeqNumber : public XBOX::IRefCountable
 {
 public:
 	enum {Component_Type = 'dbas'};
@@ -3142,7 +3283,7 @@ public:
 /* *************************************************************************************** */
 
 
-class CDB4DQueryPathModifiers : public XBOX::CComponent
+class CDB4DQueryPathModifiers : public XBOX::IRefCountable
 {
 	public:
 		enum {Component_Type = 'dbqm'};
@@ -3165,7 +3306,7 @@ class CDB4DQueryPathModifiers : public XBOX::CComponent
 };
 
 
-class CDB4DQueryPathNode : public XBOX::CComponent
+class CDB4DQueryPathNode : public XBOX::IRefCountable
 {
 	public:
 		enum {Component_Type = 'dbqq'};
@@ -3207,7 +3348,7 @@ class DB4D_API CDB4DJournalData : public XBOX::IRefCountable
 };
 
 
-class CDB4DJournalParser : public XBOX::CComponent
+class CDB4DJournalParser : public XBOX::IRefCountable
 {
 	public:
 		enum {Component_Type = 'dbjp'};
@@ -3306,7 +3447,7 @@ typedef std::pair<sLONG, CachedRelatedRecSel> CachedRelatedRecord;
 #endif
 
 
-class CDB4DRemoteRecordCache : public XBOX::CComponent
+class CDB4DRemoteRecordCache : public XBOX::IRefCountable
 {
 public:
 	enum {Component_Type = 'dbRc'};
@@ -3322,7 +3463,7 @@ struct DB4D_ToolsOptions
 	uBOOL CheckOverLapWithBittable;
 };
 
-class CDB4DRawDataBase : public XBOX::CComponent
+class CDB4DRawDataBase : public XBOX::IRefCountable
 {
 	public:
 		enum {Component_Type = 'dbzz'};
@@ -3442,17 +3583,18 @@ class VectorOfVValue : public std::vector<const XBOX::VValueSingle*>
 };
 */
 
+class CDB4DEntityCollection;
 
-class CDB4DEntityModel : public XBOX::CComponent
+class CDB4DEntityModel : public XBOX::IRefCountable
 {
 	public:
 		enum {Component_Type = 'dbem'};
 
-		virtual CDB4DBase* RetainDataBase() const = 0;
+		//virtual CDB4DBase* RetainDataBase() const = 0;
 
 		virtual sLONG CountAttributes() const = 0;
 
-		virtual CDB4DTable* RetainTable() const = 0;
+		//virtual CDB4DTable* RetainTable() const = 0;
 
 		virtual void GetEntityName(XBOX::VString& outName) const = 0;
 
@@ -3463,26 +3605,25 @@ class CDB4DEntityModel : public XBOX::CComponent
 		virtual CDB4DEntityAttribute* GetAttribute(sLONG pos) const = 0;
 		virtual CDB4DEntityAttribute* GetAttribute(const XBOX::VString& AttributeName) const = 0;
 
-		virtual CDB4DEntityMethod* GetMethod(const XBOX::VString& inMethodName) const = 0;
+		virtual CDB4DEntityMethod* GetMethod(const XBOX::VString& inMethodName, bool publicOnly = false) const = 0;
 
-		virtual CDB4DEntityRecord* LoadEntity(sLONG n, VErrorDB4D& err, DB4D_Way_of_Locking HowToLock, CDB4DBaseContext* context, bool autoexpand) = 0;
+		//virtual CDB4DEntityRecord* LoadEntity(sLONG n, VErrorDB4D& err, DB4D_Way_of_Locking HowToLock, CDB4DBaseContext* context, bool autoexpand) = 0;
 
-		virtual sLONG CountEntities(CDB4DBaseContext* inContext) = 0;
+		virtual RecIDType CountEntities(CDB4DBaseContext* inContext) = 0;
+
+		virtual CDB4DEntityCollection* NewSelection(bool ordered = false, bool safeRef = false) const = 0;
+
+		virtual CDB4DEntityRecord* NewEntity(CDB4DBaseContextPtr inContext) const = 0;
+
 		
-		virtual CDB4DSelection* SelectAllEntities(CDB4DBaseContextPtr inContext, VErrorDB4D* outErr = NULL, 
-												 DB4D_Way_of_Locking HowToLock = DB4D_Do_Not_Lock, CDB4DSet* outLockSet = NULL) = 0;
-		
-		virtual CDB4DQuery *NewQuery() = 0;
-		
-		virtual CDB4DSelection* ExecuteQuery( CDB4DQuery *inQuery, CDB4DBaseContextPtr inContext, CDB4DSelectionPtr Filter = NULL, 
+		virtual CDB4DEntityCollection* SelectAllEntities(CDB4DBaseContextPtr inContext, VErrorDB4D* outErr = NULL, 
+												 DB4D_Way_of_Locking HowToLock = DB4D_Do_Not_Lock, CDB4DEntityCollection* outLockSet = NULL) = 0;
+				
+		virtual CDB4DEntityCollection* ExecuteQuery( CDB4DQuery *inQuery, CDB4DBaseContextPtr inContext, CDB4DEntityCollection* Filter = NULL, 
 											   VDB4DProgressIndicator* InProgress = NULL, DB4D_Way_of_Locking HowToLock = DB4D_Do_Not_Lock, 
-											   sLONG limit = 0, CDB4DSet* outLockSet = NULL, VErrorDB4D *outErr = NULL) = 0;
+											   sLONG limit = 0, CDB4DEntityCollection* outLockSet = NULL, VErrorDB4D *outErr = NULL) = 0;
 	
 	
-		virtual CDB4DSelection* NewSelection(DB4D_SelectionType inSelectionType) const = 0;
-
-		virtual CDB4DEntityRecord* NewEntity(CDB4DBaseContextPtr inContext, DB4D_Way_of_Locking HowToLock) const = 0;
-
 		virtual bool HasPrimaryKey() const = 0;
 
 		virtual bool HasIdentifyingAttributes() const = 0;
@@ -3501,7 +3642,7 @@ class CDB4DEntityModel : public XBOX::CComponent
 
 		virtual CDB4DEntityRecord* FindEntityWithIdentifyingAtts(const XBOX::VectorOfVValue& idents, CDB4DBaseContext* inContext, VErrorDB4D& err, DB4D_Way_of_Locking HowToLock) = 0;
 
-		virtual CDB4DSelection* Query( const XBOX::VString& inQuery, CDB4DBaseContext* inContext, VErrorDB4D& err, const XBOX::VValueSingle* param1 = nil, const XBOX::VValueSingle* param2 = nil, const XBOX::VValueSingle* param3 = nil) = 0;
+		virtual CDB4DEntityCollection* Query( const XBOX::VString& inQuery, CDB4DBaseContext* inContext, VErrorDB4D& err, const XBOX::VValueSingle* param1 = nil, const XBOX::VValueSingle* param2 = nil, const XBOX::VValueSingle* param3 = nil) = 0;
 		virtual CDB4DEntityRecord* Find(const XBOX::VString& inQuery, CDB4DBaseContext* inContext, VErrorDB4D& err, const XBOX::VValueSingle* param1 = nil, const XBOX::VValueSingle* param2 = nil, const XBOX::VValueSingle* param3 = nil) = 0;
 
 		virtual VErrorDB4D SetPermission(DB4D_EM_Perm inPerm, const XBOX::VUUID& inGroupID, bool forced) = 0;
@@ -3512,13 +3653,10 @@ class CDB4DEntityModel : public XBOX::CComponent
 		// create a bag containing description of entity model with attributes.
 		// get resolved representation suitable for editors.
 		virtual XBOX::VValueBag *CreateDefinition() const = 0;
-
-		virtual CDB4DSelection* ProjectSelection(CDB4DSelection* sel, CDB4DEntityAttribute* att, VErrorDB4D& err, CDB4DBaseContext* context) = 0;
-
 };
 
 
-class CDB4DEntityMethod : public XBOX::CComponent
+class CDB4DEntityMethod : public XBOX::IRefCountable
 {
 	public:
 		enum {Component_Type = 'dbef'};
@@ -3532,18 +3670,18 @@ class CDB4DEntityMethod : public XBOX::CComponent
 };
 
 
-class CDB4DEntityAttribute : public XBOX::CComponent
+class CDB4DEntityAttribute : public XBOX::IRefCountable
 {
 	public:
 		enum {Component_Type = 'dbea'};
 
-		virtual CDB4DEntityModel* GetModel() const = 0;
+		//virtual CDB4DEntityModel* GetModel() const = 0;
 
 		virtual EntityAttributeKind GetAttributeKind() const = 0;
 
 		virtual const EntityAttributeScope GetScope() const = 0;
 
-		virtual sLONG GetPosInModel() const = 0;
+		//virtual sLONG GetPosInModel() const = 0;
 
 		virtual void GetAttibuteName(XBOX::VString& outName) const = 0;
 
@@ -3557,7 +3695,7 @@ class CDB4DEntityAttribute : public XBOX::CComponent
 };
 
 
-class CDB4DEntityAttributeValue : public XBOX::CComponent
+class CDB4DEntityAttributeValue : public XBOX::IRefCountable
 {
 	public:
 		enum {Component_Type = 'dbev'};
@@ -3570,7 +3708,7 @@ class CDB4DEntityAttributeValue : public XBOX::CComponent
 
 		virtual CDB4DEntityModel* GetRelatedEntityModel() const = 0;
 
-		virtual CDB4DSelection* GetRelatedSelection() const = 0;
+		virtual CDB4DEntityCollection* GetRelatedSelection() const = 0;
 
 		//virtual void SetExtraData(void* ExtraData) = 0;
 
@@ -3583,18 +3721,35 @@ class CDB4DEntityAttributeValue : public XBOX::CComponent
 };
 
 
-class CDB4DEntityRecord : public XBOX::CComponent
+
+
+
+class CDB4DEntityCollection : public XBOX::IRefCountable
+{
+public:
+	enum {Component_Type = 'dbec'};
+
+	virtual CDB4DEntityRecord* LoadEntityRecord(RecIDType posInCol, CDB4DBaseContext* context, VErrorDB4D& outError, DB4D_Way_of_Locking HowToLock = DB4D_Do_Not_Lock) = 0;
+	virtual RecIDType GetLength(CDB4DBaseContext* context) = 0;
+	virtual VErrorDB4D DeleteEntities(CDB4DBaseContext* context, VDB4DProgressIndicator* InProgress = nil, CDB4DEntityCollection* *outLocked = nil) = 0;
+
+};
+
+
+
+
+class CDB4DEntityRecord : public XBOX::IRefCountable
 {
 	public:
 		enum {Component_Type = 'dber'};
 
-		virtual CDB4DEntityModel* GetModel() const = 0;
+		//virtual CDB4DEntityModel* GetModel() const = 0;
 
-		virtual CDB4DRecord* GetRecord() const = 0;
+		//virtual CDB4DRecord* GetRecord() const = 0;
 
 		virtual CDB4DEntityAttributeValue* GetAttributeValue(const XBOX::VString& inAttributeName, VErrorDB4D& err) = 0;
 
-		virtual CDB4DEntityAttributeValue* GetAttributeValue(sLONG pos, VErrorDB4D& err) = 0;
+	//	virtual CDB4DEntityAttributeValue* GetAttributeValue(sLONG pos, VErrorDB4D& err) = 0;
 
 		virtual CDB4DEntityAttributeValue* GetAttributeValue(const CDB4DEntityAttribute* inAttribute, VErrorDB4D& err) = 0;
 
@@ -3614,8 +3769,10 @@ class CDB4DEntityRecord : public XBOX::CComponent
 		virtual VErrorDB4D SetAttributeValue(const XBOX::VString& inAttributeName, const XBOX::VJSObject& inJSObject) = 0;
 
 		virtual VErrorDB4D TouchAttributeValue(const CDB4DEntityAttribute* inAttribute) = 0;
+		virtual VErrorDB4D ResetAttributeValue(const CDB4DEntityAttribute* inAttribute) = 0;
+		virtual VErrorDB4D ResetAttributeValue(const XBOX::VString& inAttributeName) = 0;
 
-		virtual sLONG GetNum() const = 0;
+		// virtual sLONG GetNum() const = 0;
 
 		virtual sLONG GetModificationStamp() const = 0;
 	
@@ -3631,9 +3788,9 @@ class CDB4DEntityRecord : public XBOX::CComponent
 				
 		virtual VErrorDB4D Drop() = 0;
 
-		virtual VErrorDB4D SetIdentifyingAtts(const XBOX::VectorOfVValue& idents) = 0;
+		//virtual VErrorDB4D SetIdentifyingAtts(const XBOX::VectorOfVValue& idents) = 0;
 
-		virtual VErrorDB4D SetPrimKey(const XBOX::VectorOfVValue& primkey) = 0;
+		//virtual VErrorDB4D SetPrimKey(const XBOX::VectorOfVValue& primkey) = 0;
 
 		virtual void GetPrimKeyValue(XBOX::VectorOfVValue& outPrimkey) = 0;
 
@@ -3641,10 +3798,9 @@ class CDB4DEntityRecord : public XBOX::CComponent
 
 		//virtual void ReleaseExtraDatas() = 0;
 
-		virtual VErrorDB4D ConvertToJSObject(XBOX::VJSObject& outObj, const XBOX::VString& inAttributeList, bool withKey, bool allowEmptyAttList) = 0;
+		//virtual VErrorDB4D ConvertToJSObject(XBOX::VJSObject& outObj, const XBOX::VString& inAttributeList, bool withKey, bool allowEmptyAttList) = 0;
 
 };
-
 
 /* *************************************************************************************** */
 
@@ -4259,6 +4415,7 @@ namespace DB4DBagKeys
 	EXTERN_BAGKEY( primary_key);
 	EXTERN_BAGKEY( field_name);
 	EXTERN_BAGKEY( field_uuid);
+	EXTERN_BAGKEY_WITH_DEFAULT_SCALAR( hide_in_REST, XBOX::VBoolean, bool);
 	EXTERN_BAGKEY_WITH_DEFAULT_SCALAR( styled_text, XBOX::VBoolean, bool);
 	EXTERN_BAGKEY_WITH_DEFAULT_SCALAR( outside_blob, XBOX::VBoolean, bool);
 	EXTERN_BAGKEY_WITH_DEFAULT_SCALAR( enterable, XBOX::VBoolean, bool);
@@ -4369,6 +4526,7 @@ namespace d4
 	EXTERN_BAGKEY(indexed);
 	EXTERN_BAGKEY(identifying);
 	EXTERN_BAGKEY(multiLine);
+	EXTERN_BAGKEY(simpleDate);
 
 	EXTERN_BAGKEY(onGet);
 	EXTERN_BAGKEY(onSet);
@@ -4388,6 +4546,11 @@ namespace d4
 	EXTERN_BAGKEY(singleEntityName);
 	EXTERN_BAGKEY(className);
 	EXTERN_BAGKEY(collectionName);
+	EXTERN_BAGKEY(noEdit);
+	EXTERN_BAGKEY(noSave);
+	EXTERN_BAGKEY(allow);
+	EXTERN_BAGKEY(publishAsJSGlobal);
+	EXTERN_BAGKEY(allowOverrideStamp);
 
 	EXTERN_BAGKEY(queryStatement);
 	EXTERN_BAGKEY(applyToModel);
@@ -4464,6 +4627,10 @@ namespace d4
 	EXTERN_BAGKEY(extraProperties);
 
 	EXTERN_BAGKEY(events);
+
+	EXTERN_BAGKEY(outsideCatalogs);
+	EXTERN_BAGKEY(user);
+	EXTERN_BAGKEY(password);
 
 };
 

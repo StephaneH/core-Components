@@ -79,7 +79,7 @@ class TreeMem : public ObjInCacheMem, public IOccupable
 		bool TryToFreeMem(sLONG allocationBlockNumber, sLONG nbelem, VSize combien, VSize& outFreed);
 
 		VError PerformRech(Bittab* ReelFiltre, sLONG nbelem, RechNode* rn, Bittab *cursel, Bittab *filtre, VDB4DProgressIndicator* InProgress, BaseTaskInfo* context, 
-			DB4D_Way_of_Locking HowToLock, Bittab *exceptions, sLONG limit, sLONG& nbfound, Bittab &Nulls, Bittab* dejalocked, OccupableStack* curstack, EntityModel* model);
+			DB4D_Way_of_Locking HowToLock, Bittab *exceptions, sLONG limit, sLONG& nbfound, Bittab &Nulls, Bittab* dejalocked, OccupableStack* curstack, LocalEntityModel* model);
 
 		VError PerformRech(Bittab* ReelFiltre, sLONG nbelem, SimpleQueryNode* rn, Bittab *cursel, Bittab *filtre, VDB4DProgressIndicator* InProgress, BaseTaskInfo* context, 
 			DB4D_Way_of_Locking HowToLock, Bittab *exceptions, sLONG limit, sLONG& nbfound, Bittab &Nulls, Bittab* dejalocked, OccupableStack* curstack);
@@ -125,7 +125,7 @@ class TreeMemHeader : public ObjInCacheMem, public IOccupable
 		inline Boolean IsEmpty() const { return tmem == nil; };
 
 		VError PerformRech(Bittab* ReelFiltre, RechNode* rn, Bittab *cursel, Bittab *filtre, VDB4DProgressIndicator* InProgress, BaseTaskInfo* context, 
-			DB4D_Way_of_Locking HowToLock, Bittab *exceptions, sLONG limit, sLONG& nbfound, Bittab &Nulls, Bittab* dejalocked, OccupableStack* curstack, EntityModel* model);
+			DB4D_Way_of_Locking HowToLock, Bittab *exceptions, sLONG limit, sLONG& nbfound, Bittab &Nulls, Bittab* dejalocked, OccupableStack* curstack, LocalEntityModel* model);
 		VError PerformRech(Bittab* ReelFiltre, SimpleQueryNode* rn, Bittab *cursel, Bittab *filtre, VDB4DProgressIndicator* InProgress, BaseTaskInfo* context, 
 			DB4D_Way_of_Locking HowToLock, Bittab *exceptions, sLONG limit, sLONG& nbfound, Bittab &Nulls, Bittab* dejalocked, OccupableStack* curstack);
 

@@ -33,9 +33,9 @@ class IDocumentParserManager;
 class ICodeEditorDocument;
 class IDefinition;
 
-typedef XBOX::VSignalT_0													VSignal_UpdateParsingComplete;
 typedef XBOX::VSignalT_1< XBOX::VRefPtr<ICodeEditorDocument> >				VSignal_UpdateDirtyBit;
 
+typedef std::vector<sBYTE>	StylesVector;
 
 class ITipInfo : public XBOX::IRefCountable
 {
@@ -102,6 +102,8 @@ public:
 	virtual void				SetBaseFolder( const sLONG inBaseFolder ) = 0;
 	virtual sLONG				GetExecutionContext() = 0;
 	virtual void				SetExecutionContext( const sLONG inExecContext ) = 0;
+	
+	virtual void BreakPointsChanged() = 0;
 
 	virtual void SetLineEnding( XBOX::ECarriageReturnMode inCarriageReturnMode ) = 0;
 	virtual XBOX::ECarriageReturnMode GetLineEnding() const = 0;
@@ -127,7 +129,7 @@ public:
 	virtual UniChar GetChar( sLONG inIndex ) const = 0;
 	virtual void SetLineStyle( sLONG inLineIndex, sLONG inStart, sLONG inEnd, sBYTE inStyle ) = 0;
 	virtual void GetLine( sLONG inLineIndex, XBOX::VString& outString ) const = 0;
-	virtual void GetStyle( sLONG inLineIndex, const XBOX::VArrayByte*& outStyle ) const = 0;
+	virtual void GetStyle( sLONG inLineIndex, const StylesVector*& outStyle ) const = 0;
 	virtual void SetFoldable( sLONG inLineIndex, bool inFoldable, bool inMiddleOfBlock = false, bool inExpandOnCR = false ) = 0;
 	virtual bool IsFolded( sLONG inLineIndex ) const = 0;
 	virtual void SetFolded( sLONG inLineIndex, bool inFolded ) = 0;	// just change line status without changing undo
@@ -162,7 +164,7 @@ public:
 	virtual void OpenDocument( const XBOX::VString& inStream, ISymbolTable *inSymTable, ISyntaxInterface* inSyntax, XBOX::ECarriageReturnMode inLineEnding, XBOX::CharSet inCharset, bool inUseSuggestions = true ) = 0;
 	virtual bool CheckEncoding( XBOX::CharSet inCharSet ) = 0;
 	virtual void ResetOutline() = 0;
-	virtual sLONG AddToOutline( sLONG inRef, XBOX::VString& inText, XBOX::VArrayByte& inStyle ) = 0;
+	virtual sLONG AddToOutline( sLONG inRef, XBOX::VString& inText, StylesVector& inStyle ) = 0;
 	virtual sLONG GetLineIndex( sLONG inVisibleLine ) const = 0;
 	virtual sLONG LineNumberToLineIndex( sLONG inLineNumber ) const = 0;
 	virtual sLONG LineIndexToLineNumber( sLONG inLineIndex ) const = 0;
@@ -213,7 +215,8 @@ public:
 	virtual void GetCursorPosition( XBOX::VString& outString ) = 0;
 	virtual sLONG GetCursorTextOffset() const = 0;
 
-	virtual VSignal_UpdateParsingComplete&	GetSignalParsingComplete() = 0;
+	virtual bool IsLocked() const = 0;
+
 	virtual VSignal_UpdateDirtyBit&			GetSignalUpdateDirtyBit() = 0;
 
 	virtual IDocumentParserManager *GetParserManager() = 0;
@@ -292,6 +295,10 @@ public:
 	virtual void SetTabWidth( sLONG inTabWidth ) {}
 	virtual bool UseInsertSpacesForTabs() { return false; }		// insert tab or spaces when user hits tab key or when auto inserting tabs
 
+	// tell how the keypad decimal separator should be interpreted.
+	// as the UniChar provided by VKeyEvent (default) or as the decimal separator provided by the current VIntlMgr
+	virtual	bool	UseLocalizedKeypadDecimalSeparator() const	{ return false;}
+
 	// Given a position within a line, determine the boundaries of a word, as well as its length.  This is used to handle situations
 	// like double-clicks, Ctrl+Left Arrow, etc.  The behavior depends on the language being dealt with as to what is considered a morpheme.
 	// to get standard behaviour return false
@@ -314,6 +321,10 @@ public:
 	virtual bool GetBreakPoints( ICodeEditorDocument* inDocument, std::vector<sLONG>& outLineNumbers, std::vector<sWORD>& outIDs, std::vector<bool>& outDisabled ) = 0;
 	// appele chaque fois qu'une ligne contenant un breakpoint est modifie
 	virtual void UpdateBreakPointContent( ICodeEditorDocument* inDocument, sWORD inBreakID, const XBOX::VString& inNewLineContent ) = 0;
+	// permet de dire a la syntaxe si l'execution du code est possible, permet de definir l'affichage des breakpoints (breakpoints actifs ou inactifs)
+	virtual void SetBreakPointsActive( bool inActive ) {}
+	// permet a l'editeur d'afficher les breakpoints
+	virtual bool AreBreakPointsActive() { return true; }
 	// pour les langages compiles, permet de mettre a jour les erreurs de compilation
 	virtual void UpdateCompilerErrors( ICodeEditorDocument* inDocument ) = 0;
 	// pour passer a l'erreur suivante dans le meme langage mais dans une fenetre differente
@@ -354,18 +365,12 @@ public:
 	virtual void GetDefinitionsForTesting( XBOX::VString& inSelection, class ISymbolTable *inSymTable, const XBOX::VString &inFilePathStr, sLONG inLineNumber, std::vector<IDefinition>& outDefinitions ) = 0;
 };
 
-class ISourceControlInterface
-{
-	virtual bool CanEdit( const XBOX::VFilePath& inPath ) = 0;
-};
-
-
 class CCodeEditorComponent : public XBOX::CComponent
 {
 public:
 	enum { Component_Type = 'cecm' };
 	//cree un nouveau document, qui peut rester en memoire ou etre affecte a une zone
-	virtual ICodeEditorDocument* NewDocument( ISourceControlInterface* inSourceControl = NULL, IDocumentParserManager *inManager = NULL ) = 0;
+	virtual ICodeEditorDocument* NewDocument( IDocumentParserManager *inManager = NULL ) = 0;
 	virtual bool RunColorPicker( XBOX::VObject* inParentView, uBYTE& outRed, uBYTE& outGreen, uBYTE& outBlue ) = 0;
 	virtual bool RunGetFileDialog( XBOX::VObject* inParentView, const XBOX::VFilePath& inDefaultFilePath, XBOX::VString& outRelativePath ) = 0;
 };

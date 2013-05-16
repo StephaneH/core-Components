@@ -53,13 +53,18 @@ namespace rest
 	EXTERN_BAGKEY(progressinfo);
 	EXTERN_BAGKEY(stop);
 	EXTERN_BAGKEY(asArray);
+	EXTERN_BAGKEY(noKey);
 	EXTERN_BAGKEY(removeFromSet);
+	EXTERN_BAGKEY(removeRefOnly);
 	EXTERN_BAGKEY(addToSet);
 	EXTERN_BAGKEY(queryLimit);
 	EXTERN_BAGKEY(fromSel);
 	EXTERN_BAGKEY(keepSel);
 	EXTERN_BAGKEY(rawPict);
 	EXTERN_BAGKEY(findKey);
+	EXTERN_BAGKEY(compute);
+	EXTERN_BAGKEY(logicOperator);
+	EXTERN_BAGKEY(otherCollection);
 
 	enum
 	{
@@ -90,7 +95,11 @@ namespace rest
 	const VError method_not_applicable = MAKE_VERROR(rest_signature, 1813); 
 	const VError uag_db_does_not_exist = MAKE_VERROR(rest_signature, 1814); 
 	const VError subentityset_cannot_be_applied_here = MAKE_VERROR(rest_signature, 1815); 
-
+	const VError empty_attribute_list = MAKE_VERROR(rest_signature, 1816); 
+	const VError compute_action_does_not_exist = MAKE_VERROR(rest_signature, 1817); 
+	const VError wrong_logic_operator = MAKE_VERROR(rest_signature, 1818); 
+	const VError missing_other_collection_ref = MAKE_VERROR(rest_signature, 1819); 
+	const VError wrong_other_collection_ref = MAKE_VERROR(rest_signature, 1820); 
 
 };
 
@@ -144,7 +153,10 @@ class RestTools
 				labase = nil;
 			}
 
-			assert(inGlobalContext != NULL);
+#if debuglr
+			if (!VDBMgr::GetManager()->IsRunning4D())
+				assert(inGlobalContext != NULL);
+#endif
 
 			fInput = (VStream*)inputStream;
 			fOutput = outputStream;
@@ -185,7 +197,6 @@ class RestTools
 				fUAGDirectory = applicationIntf->RetainUAGDirectory( fApplicationRef, lError);
 			}
 
-			numrec = -2;
 			curdataset = nil;
 			getDef = false;
 			em = nil;
@@ -204,6 +215,7 @@ class RestTools
 			fQueryLimit = 0;
 			newwafkeepselptr = nil;
 			fAllowAutoModel = false;
+			selectedEntities = nil;
 		}
 
 
@@ -244,14 +256,14 @@ class RestTools
 		VError EntityRecordToJSON(EntityRecord* erec, EntityAttributeSortedSelection& whichAttributes, EntityAttributeSelection* expandAttributes, 
 									EntityAttributeSortedSelection* sortingAttributes, bool withheader = false, bool nofields = false, sLONG* errToSend = nil);
 
-		VError SelToJSON(EntityModel* em, Selection* inSel, EntityAttributeSortedSelection& whichAttributes, EntityAttributeSelection* expandAttributes, 
+		VError SelToJSON(EntityModel* em, EntityCollection* inSel, EntityAttributeSortedSelection& whichAttributes, EntityAttributeSelection* expandAttributes, 
 							EntityAttributeSortedSelection* sortingAttributes, bool withheader = true, sLONG from = 0, sLONG count = -1, DataSet* inDataSet = nil, bool dejatriee = false,
 							bool isAComposition = false);
 
 		VError EntityRecordToBag(VValueBag& outBag, EntityRecord* erec, EntityAttributeSortedSelection& whichAttributes, EntityAttributeSelection* expandAttributes, 
 									EntityAttributeSortedSelection* sortingAttributes, bool withheader = false, bool nofields = false, sLONG* errToSend = nil);
 
-		VError SelToBag(VValueBag& outBag, EntityModel* em, Selection* inSel, EntityAttributeSortedSelection& whichAttributes, EntityAttributeSelection* expandAttributes, 
+		VError SelToBag(VValueBag& outBag, EntityModel* em, EntityCollection* inSel, EntityAttributeSortedSelection& whichAttributes, EntityAttributeSelection* expandAttributes, 
 						EntityAttributeSortedSelection* sortingAttributes, bool withheader = true, sLONG from = 0, sLONG count = -1, DataSet* inDataSet = nil, bool dejatriee = false,
 						bool isAComposition = false, const VString* arrayname = nil);
 
@@ -295,7 +307,7 @@ class RestTools
 
 		VError PutHTMLString(const VString& inText);
 
-		VError SelToHTML(EntityModel* em, Selection* inSel, EntityAttributeSortedSelection& whichFields, bool withheader = true, sLONG from = 0, sLONG count = -1, DataSet* inDataSet = nil);
+		VError SelToHTML(EntityModel* em, EntityCollection* inSel, EntityAttributeSortedSelection& whichFields, bool withheader = true, sLONG from = 0, sLONG count = -1, DataSet* inDataSet = nil);
 
 		bool CalculateHtmlBaseURI(VString& outUri);
 
@@ -305,9 +317,9 @@ class RestTools
 
 		VError ImportEntities(EntityModel* em);
 		VError ImportEntitiesSel(EntityModel* em, const VValueBag& bagData, VValueBag& bagResult, EntityAttributeValue* parent, bool firstLevel);
-		VError ImportEntityRecord(EntityModel* em, const VValueBag& bagData, VValueBag& bagResult, EntityAttributeValue* parent, bool onlyone, Field* relDestField, VValueSingle* relValue, bool firstLevel);
+		VError ImportEntityRecord(EntityModel* em, const VValueBag& bagData, VValueBag& bagResult, EntityAttributeValue* parent, bool onlyone, const EntityAttribute* relDestAtt, EntityAttributeValue* relValue, bool firstLevel);
 
-		VError DropEntities(EntityModel* em, Selection* sel);
+		VError DropEntities(EntityModel* em, EntityCollection* sel);
 
 
 		inline void SetWithQueryPath(bool x)
@@ -406,14 +418,17 @@ class RestTools
 		void AnalyseGetOtherStuff();
 		void WorkOnCatalog();
 		void WorkOnData();
+		void RetrieveSelDelimiters();
 		void RetrieveOrDeleteOneEntity();
 		void RetrieveOrDeleteEntitySel();
-		void GetDistinctValues(Selection* sel);
-		void FindKeyInCollection(const VString& keyval, Selection* sel);
+		void GetDistinctValues(EntityCollection* sel);
+		void FindKeyInCollection(const VString& keyval, EntityCollection* sel);
+		void ComputeOnCollection(const VString& computeval, EntityCollection* sel);
+		bool MixCollection(EntityCollection* sel, const VString& logicOper, EntityCollection*& outSel);
 
 		void ExecuteStaticRestMethod(const VString& JSNameSpace);
 
-		void CallMethod(Selection* sel, EntityRecord* erec, DataSet* inDataSet);
+		void CallMethod(EntityCollection* sel, EntityRecord* erec, DataSet* inDataSet);
 		void ReturnJSResult(VError err, VJSValue& result, JS4D::ExceptionRef excep, DataSet* inDataSet);
 
 		VDB4DProgressIndicator* GetProgressIndicator();
@@ -481,7 +496,7 @@ class RestTools
 		bool fToArray;
 		bool fAllowAutoModel;
 		VString tablename;
-		sLONG numrec;
+		VString fEntityKey;
 		sLONG fQueryLimit;
 		const VString* s;
 		VString imageformatstring;
@@ -491,7 +506,7 @@ class RestTools
 		VectorOfVString methParams;
 		VString fJsonMethParams;
 		vector<CDB4DEntityModel*> allEMs;
-		Bittab selectedEntities;
+		EntityCollection* selectedEntities;
 		EntityAttributeSelection* expandattributes;
 		EntityAttributeSortedSelection attributes;
 		VString fSavedQuery;
@@ -506,7 +521,7 @@ class RestTools
 		CDB4DBase* xUAGBase;
 		Base4D* labase;
 
-		bool wasapost, dejaerror;
+		bool wasapost, wasaput, wasadelete, dejaerror;
 
 		static bool sIsInited;
 		static VValueBag sAllRestKeywords;

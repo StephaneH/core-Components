@@ -35,9 +35,8 @@ public:
 	virtual XBOX::VError				AddConnectionHandlerFactory (VConnectionHandlerFactory *inFactory);
 	virtual XBOX::VError				AddWorkerPool (XBOX::VWorkerPool *inPool);
 	virtual XBOX::VError				AddSelectIOPool (XBOX::VTCPSelectIOPool *inPool);
-	
-	// TODO: change VString by VFilePath for all file paths.
-	virtual void						SetSSLCertificatePaths (const XBOX::VFilePath& inCertificatePath, const XBOX::VFilePath& inKeyPath);
+
+	virtual void						SetSSLCertificatesFolderPath (const XBOX::VFilePath& inCertificatesFolderPath);
 
 	virtual XBOX::VError				GetPorts  (std::vector<PortNumber>& outPorts) { outPorts.push_back (GetPort()); return VE_OK; }
 	virtual PortNumber					GetPort() { return fPort; }
@@ -70,6 +69,8 @@ public:
 	void								SetSocketDescriptor (sLONG inValue) { fSocketDescriptor = inValue; }
 	void								SetSSLSocketDescriptor (sLONG inValue) { fSSLSocketDescriptor = inValue; }
 
+	void								SetReuseAddressSocketOption (bool inValue) { fReuseAddressSocketOption = inValue; }
+
 protected:
 	virtual Boolean						DoRun();
 	virtual void						DeInit();
@@ -77,8 +78,7 @@ protected:
 	VSockListener *						fServerListener;
 	XBOX::VWorkerPool *					fWorkerPool;
 	XBOX::VTCPSelectIOPool *			fSelectIOPool;
-	XBOX::VFilePath						fCertificatePath;
-	XBOX::VFilePath						fKeyPath;
+	XBOX::VFilePath						fCertificatesFolderPath;
 	IRequestLogger *					fRequestLogger;
 	bool								fAbortTask;
 
@@ -101,6 +101,8 @@ private:
 	/* for Sockets openened by HelperTools */
 	sLONG								fSocketDescriptor;
 	sLONG								fSSLSocketDescriptor;
+
+	bool								fReuseAddressSocketOption;
 };
 
 

@@ -19,11 +19,11 @@
 
 #include "JavaScript/VJavaScript.h"
 
-class CDB4DBase;
-class CDB4DTable;
-class CDB4DEntityModel;
+class Base4D;
+class Table;
+class EntityModel;
 class CDB4DEntityRecord;
-class CDB4DEntityAttribute;
+class EntityAttribute;
 class CDB4DEntityAttributeValue;
 
 
@@ -33,29 +33,31 @@ void SetDB4DContextInJSContext( const XBOX::VJSContext& inContext, CDB4DContext*
 
 CDB4DBaseContext *GetDB4DBaseContextFromJSContext( const XBOX::VJSContext& inContext, CDB4DBase* inBase);
 
+BaseTaskInfo *GetBaseTaskInfoFromJSContext( const XBOX::VJSContext& inContext, Base4D* inBase);
+
 
 
 //======================================================
 
 
 
-class EntitySelectionIterator
+class ENTITY_API EntitySelectionIterator
 {
 	public:
-		EntitySelectionIterator(CDB4DSelection* inSel, bool inReadOnly, bool inAutoSave, CDB4DBaseContext* inContext, CDB4DEntityModel* inModel);
-		EntitySelectionIterator(CDB4DEntityRecord* inRec, CDB4DBaseContext* inContext);
+		EntitySelectionIterator(EntityCollection* inSel, bool inReadOnly, bool inAutoSave, BaseTaskInfo* inContext, EntityModel* inModel);
+		EntitySelectionIterator(EntityRecord* inRec, BaseTaskInfo* inContext);
 		EntitySelectionIterator(const EntitySelectionIterator& from);
 		~EntitySelectionIterator();
 		
-		void First(CDB4DBaseContext* inContext);
-		void Next(CDB4DBaseContext* inContext);
-		void NextNotNull(CDB4DBaseContext* inContext);
+		void First(BaseTaskInfo* inContext);
+		void Next(BaseTaskInfo* inContext);
+		void NextNotNull(BaseTaskInfo* inContext);
 		
 		void ReleaseCurCurec(bool canautosave);
 		
-		CDB4DEntityRecord* GetCurRec(CDB4DBaseContext* inContext);
+		EntityRecord* GetCurRec(BaseTaskInfo* inContext);
 		
-		CDB4DEntityModel* GetModel() const
+		EntityModel* GetModel() const
 		{
 			return fModel;
 		}
@@ -65,14 +67,14 @@ class EntitySelectionIterator
 			return fCurPos;
 		}
 		
-		sLONG GetCurRecID();
+		//sLONG GetCurRecID();
 		
-		XBOX::VError ReLoadCurRec(CDB4DBaseContext* inContext, bool readonly, bool canautosave);
+		XBOX::VError ReLoadCurRec(BaseTaskInfo* inContext, bool readonly, bool canautosave);
 		
 	protected:
-		CDB4DEntityModel* fModel;
-		CDB4DSelection* fSel;
-		CDB4DEntityRecord* fCurRec;
+		EntityModel* fModel;
+		EntityCollection* fSel;
+		EntityRecord* fCurRec;
 		sLONG fCurPos, fSelSize;
 		bool fReadOnly, fAutoSave;
 };
@@ -84,7 +86,7 @@ class EntitySelectionIterator
 class JSCollectionManager : public DB4DCollectionManager
 {
 	public:
-		JSCollectionManager(JS4D::ContextRef inContext);
+		JSCollectionManager(JS4D::ContextRef inContext, bool simpleDate);
 		virtual ~JSCollectionManager();
 
 		virtual VErrorDB4D SetCollectionSize(RecIDType size, Boolean ClearData = true);
@@ -116,6 +118,7 @@ class JSCollectionManager : public DB4DCollectionManager
 		vector<VJSArray> fValues;
 		JS4D::ContextRef fContextRef;
 		sLONG fSize;
+		bool fSimpleDate;
 };
 
 
@@ -124,35 +127,35 @@ class JSCollectionManager : public DB4DCollectionManager
 
 
 
-class VJSTable : public XBOX::VJSClass<VJSTable, CDB4DTable>
+class VJSTable : public XBOX::VJSClass<VJSTable, Table>
 {
 public:
-	typedef VJSClass<VJSTable, CDB4DTable>	inherited;
+	typedef VJSClass<VJSTable, Table>	inherited;
 	
-	static	void			Initialize( const XBOX::VJSParms_initialize& inParms, CDB4DTable* inTable);
-	static	void			Finalize( const XBOX::VJSParms_finalize& inParms, CDB4DTable* inTable);
+	static	void			Initialize( const XBOX::VJSParms_initialize& inParms, Table* inTable);
+	static	void			Finalize( const XBOX::VJSParms_finalize& inParms, Table* inTable);
 	static	void			GetDefinition( ClassDefinition& outDefinition);
-	static	void			GetProperty( XBOX::VJSParms_getProperty& ioParms, CDB4DTable* inTable);
-	static	void			GetPropertyNames( XBOX::VJSParms_getPropertyNames& ioParms, CDB4DTable* inTable);
+	static	void			GetProperty( XBOX::VJSParms_getProperty& ioParms, Table* inTable);
+	static	void			GetPropertyNames( XBOX::VJSParms_getPropertyNames& ioParms, Table* inTable);
 
-	static void _isEntityModel(XBOX::VJSParms_callStaticFunction& ioParms, CDB4DTable* inTable);  // bool : isEntityModel()
-	static void _GetID(XBOX::VJSParms_callStaticFunction& ioParms, CDB4DTable* inTable);  // Number : GetID()
-	static void _GetName(XBOX::VJSParms_callStaticFunction& ioParms, CDB4DTable* inTable);  // String : GetName()
-	static void _SetName(XBOX::VJSParms_callStaticFunction& ioParms, CDB4DTable* inTable);  // void : SetName(String)
-	static void _CountFields(XBOX::VJSParms_callStaticFunction& ioParms, CDB4DTable* inTable); // Number : CountFields()
-	static void _Drop(XBOX::VJSParms_callStaticFunction& ioParms, CDB4DTable* inTable);  // Drop()
-	static void _CreateField(XBOX::VJSParms_callStaticFunction& ioParms, CDB4DTable* inTable);  // CreateField(String : name, Number : type, {Number : Size}, [{String : attribute}])
+	static void _isEntityModel(XBOX::VJSParms_callStaticFunction& ioParms, Table* inTable);  // bool : isEntityModel()
+	static void _GetID(XBOX::VJSParms_callStaticFunction& ioParms, Table* inTable);  // Number : GetID()
+	static void _GetName(XBOX::VJSParms_callStaticFunction& ioParms, Table* inTable);  // String : GetName()
+	static void _SetName(XBOX::VJSParms_callStaticFunction& ioParms, Table* inTable);  // void : SetName(String)
+	static void _CountFields(XBOX::VJSParms_callStaticFunction& ioParms, Table* inTable); // Number : CountFields()
+	static void _Drop(XBOX::VJSParms_callStaticFunction& ioParms, Table* inTable);  // Drop()
+	static void _CreateField(XBOX::VJSParms_callStaticFunction& ioParms, Table* inTable);  // CreateField(String : name, Number : type, {Number : Size}, [{String : attribute}])
 																					  // attribute : "Not Null", "Unique", "Auto Increment"
-	static void _keepSyncInfo(XBOX::VJSParms_callStaticFunction& ioParms, CDB4DTable* inTable);  // keepSyncInfo(bool)
-	static void _setPrimaryKey(XBOX::VJSParms_callStaticFunction& ioParms, CDB4DTable* inTable);  // _setPrimaryKey([field])
-	static void _dropPrimaryKey(XBOX::VJSParms_callStaticFunction& ioParms, CDB4DTable* inTable);  // _dropPrimaryKey()
+	static void _keepSyncInfo(XBOX::VJSParms_callStaticFunction& ioParms, Table* inTable);  // keepSyncInfo(bool)
+	static void _setPrimaryKey(XBOX::VJSParms_callStaticFunction& ioParms, Table* inTable);  // _setPrimaryKey([field])
+	static void _dropPrimaryKey(XBOX::VJSParms_callStaticFunction& ioParms, Table* inTable);  // _dropPrimaryKey()
 	
-	static void _AllRecords(XBOX::VJSParms_callStaticFunction& ioParms, CDB4DTable* inTable);  // Selection : AllRecords()
-	static void _Query(XBOX::VJSParms_callStaticFunction& ioParms, CDB4DTable* inTable);  // Selection : Query(string : query, { bool : lock })
-	static void _Find(XBOX::VJSParms_callStaticFunction& ioParms, CDB4DTable* inTable);  // SelectionIterator : Find(string : query, { bool : lock })
-	static void _NewRecord(XBOX::VJSParms_callStaticFunction& ioParms, CDB4DTable* inTable);  // Record : NewRecord()
-	static void _NewSelection(XBOX::VJSParms_callStaticFunction& ioParms, CDB4DTable* inTable);  // Selection : NewSelection(bool : keepsorted | string : "KeepSorted")
-	static void _setAutoSeqValue(XBOX::VJSParms_callStaticFunction& ioParms, CDB4DTable* inTable);  // setAutoSeqValue(number : newValue)
+	static void _AllRecords(XBOX::VJSParms_callStaticFunction& ioParms, Table* inTable);  // Selection : AllRecords()
+	static void _Query(XBOX::VJSParms_callStaticFunction& ioParms, Table* inTable);  // Selection : Query(string : query, { bool : lock })
+	static void _Find(XBOX::VJSParms_callStaticFunction& ioParms, Table* inTable);  // SelectionIterator : Find(string : query, { bool : lock })
+	static void _NewRecord(XBOX::VJSParms_callStaticFunction& ioParms, Table* inTable);  // Record : NewRecord()
+	static void _NewSelection(XBOX::VJSParms_callStaticFunction& ioParms, Table* inTable);  // Selection : NewSelection(bool : keepsorted | string : "KeepSorted")
+	static void _setAutoSeqValue(XBOX::VJSParms_callStaticFunction& ioParms, Table* inTable);  // setAutoSeqValue(number : newValue)
 
 };
 
@@ -161,41 +164,41 @@ public:
 
 
 
-class VJSField : public XBOX::VJSClass<VJSField, CDB4DField>
+class VJSField : public XBOX::VJSClass<VJSField, Field>
 {
 public:
-	typedef VJSClass<VJSField, CDB4DField>	inherited;
+	typedef VJSClass<VJSField, Field>	inherited;
 
-	static	void			Initialize( const XBOX::VJSParms_initialize& inParms, CDB4DField* inField);
-	static	void			Finalize( const XBOX::VJSParms_finalize& inParms, CDB4DField* inField);
+	static	void			Initialize( const XBOX::VJSParms_initialize& inParms, Field* inField);
+	static	void			Finalize( const XBOX::VJSParms_finalize& inParms, Field* inField);
 	static	void			GetDefinition( ClassDefinition& outDefinition);
 
-	static void _GetID(XBOX::VJSParms_callStaticFunction& ioParms, CDB4DField* inField);  // Number : GetID()
-	static void _GetName(XBOX::VJSParms_callStaticFunction& ioParms, CDB4DField* inField);  // String : GetName()
-	static void _SetName(XBOX::VJSParms_callStaticFunction& ioParms, CDB4DField* inField);  // void : SetName(String)
-	static void _Drop(XBOX::VJSParms_callStaticFunction& ioParms, CDB4DField* inField);  // Drop()
-	static void _CreateIndex(XBOX::VJSParms_callStaticFunction& ioParms, CDB4DField* inField);  // Index : CreateIndex({String : IndexType, String : Name})
-	static void _DropIndex(XBOX::VJSParms_callStaticFunction& ioParms, CDB4DField* inField);  // DropIndex({String : IndexType})
-	static void _Create_FullText_Index(XBOX::VJSParms_callStaticFunction& ioParms, CDB4DField* inField);  // Index : Create_FullText_Index({String : Name})
-	static void _Drop_FullText_Index(XBOX::VJSParms_callStaticFunction& ioParms, CDB4DField* inField);  // Drop_FullText_Index()
-	static void _SetType(XBOX::VJSParms_callStaticFunction& ioParms, CDB4DField* inField);  // SetType(Number : Type, {Number : Size})
-	static void _GetType(XBOX::VJSParms_callStaticFunction& ioParms, CDB4DField* inField);  // Number : GetType()
-	static void _IsIndexed(XBOX::VJSParms_callStaticFunction& ioParms, CDB4DField* inField);  // bool : IsIndexed()
-	static void _Is_FullText_Indexed(XBOX::VJSParms_callStaticFunction& ioParms, CDB4DField* inField);  // bool : Is_FullText_Indexed()
-	static void _IsUnique(XBOX::VJSParms_callStaticFunction& ioParms, CDB4DField* inField);  // bool : IsUnique()
-	static void _IsNotNull(XBOX::VJSParms_callStaticFunction& ioParms, CDB4DField* inField);  // bool : IsNotNull()
-	static void _IsAutoIncrement(XBOX::VJSParms_callStaticFunction& ioParms, CDB4DField* inField);  // bool : IsAutoIncrement()
-	static void _SetNotNull(XBOX::VJSParms_callStaticFunction& ioParms, CDB4DField* inField);  // SetNotNull(bool)
-	static void _SetAutoIncrement(XBOX::VJSParms_callStaticFunction& ioParms, CDB4DField* inField);  // SetAutoIncrement(bool)
-	static void _SetUnique(XBOX::VJSParms_callStaticFunction& ioParms, CDB4DField* inField);  // SetUnique(bool)
-	static void _IsAutoGenerate(XBOX::VJSParms_callStaticFunction& ioParms, CDB4DField* inField);  // bool : IsAutogenerate()
-	static void _SetAutoGenerate(XBOX::VJSParms_callStaticFunction& ioParms, CDB4DField* inField);  // SetAutoGenerate(bool)
-	static void _IsStoredAsUUID(XBOX::VJSParms_callStaticFunction& ioParms, CDB4DField* inField);  // bool : IsStoredAsUUID()
-	static void _SetStoredAsUUID(XBOX::VJSParms_callStaticFunction& ioParms, CDB4DField* inField);  // SetStoredAsUUID(bool)
-	static void _isStoredAsUTF8(XBOX::VJSParms_callStaticFunction& ioParms, CDB4DField* inField);  // bool : IsStoredAsUTF8()
-	static void _SetStoredAsUTF8(XBOX::VJSParms_callStaticFunction& ioParms, CDB4DField* inField);  // SetStoredAsUTF8(bool)
-	static void _isStoredOutside(XBOX::VJSParms_callStaticFunction& ioParms, CDB4DField* inField);  // bool : isStoredOutside()
-	static void _setStoreOutside(XBOX::VJSParms_callStaticFunction& ioParms, CDB4DField* inField);  // setStoreOutside(bool)
+	static void _GetID(XBOX::VJSParms_callStaticFunction& ioParms, Field* inField);  // Number : GetID()
+	static void _GetName(XBOX::VJSParms_callStaticFunction& ioParms, Field* inField);  // String : GetName()
+	static void _SetName(XBOX::VJSParms_callStaticFunction& ioParms, Field* inField);  // void : SetName(String)
+	static void _Drop(XBOX::VJSParms_callStaticFunction& ioParms, Field* inField);  // Drop()
+	static void _CreateIndex(XBOX::VJSParms_callStaticFunction& ioParms, Field* inField);  // Index : CreateIndex({String : IndexType, String : Name})
+	static void _DropIndex(XBOX::VJSParms_callStaticFunction& ioParms, Field* inField);  // DropIndex({String : IndexType})
+	static void _Create_FullText_Index(XBOX::VJSParms_callStaticFunction& ioParms, Field* inField);  // Index : Create_FullText_Index({String : Name})
+	static void _Drop_FullText_Index(XBOX::VJSParms_callStaticFunction& ioParms, Field* inField);  // Drop_FullText_Index()
+	static void _SetType(XBOX::VJSParms_callStaticFunction& ioParms, Field* inField);  // SetType(Number : Type, {Number : Size})
+	static void _GetType(XBOX::VJSParms_callStaticFunction& ioParms, Field* inField);  // Number : GetType()
+	static void _IsIndexed(XBOX::VJSParms_callStaticFunction& ioParms, Field* inField);  // bool : IsIndexed()
+	static void _Is_FullText_Indexed(XBOX::VJSParms_callStaticFunction& ioParms, Field* inField);  // bool : Is_FullText_Indexed()
+	static void _IsUnique(XBOX::VJSParms_callStaticFunction& ioParms, Field* inField);  // bool : IsUnique()
+	static void _IsNotNull(XBOX::VJSParms_callStaticFunction& ioParms, Field* inField);  // bool : IsNotNull()
+	static void _IsAutoIncrement(XBOX::VJSParms_callStaticFunction& ioParms, Field* inField);  // bool : IsAutoIncrement()
+	static void _SetNotNull(XBOX::VJSParms_callStaticFunction& ioParms, Field* inField);  // SetNotNull(bool)
+	static void _SetAutoIncrement(XBOX::VJSParms_callStaticFunction& ioParms, Field* inField);  // SetAutoIncrement(bool)
+	static void _SetUnique(XBOX::VJSParms_callStaticFunction& ioParms, Field* inField);  // SetUnique(bool)
+	static void _IsAutoGenerate(XBOX::VJSParms_callStaticFunction& ioParms, Field* inField);  // bool : IsAutogenerate()
+	static void _SetAutoGenerate(XBOX::VJSParms_callStaticFunction& ioParms, Field* inField);  // SetAutoGenerate(bool)
+	static void _IsStoredAsUUID(XBOX::VJSParms_callStaticFunction& ioParms, Field* inField);  // bool : IsStoredAsUUID()
+	static void _SetStoredAsUUID(XBOX::VJSParms_callStaticFunction& ioParms, Field* inField);  // SetStoredAsUUID(bool)
+	static void _isStoredAsUTF8(XBOX::VJSParms_callStaticFunction& ioParms, Field* inField);  // bool : IsStoredAsUTF8()
+	static void _SetStoredAsUTF8(XBOX::VJSParms_callStaticFunction& ioParms, Field* inField);  // SetStoredAsUTF8(bool)
+	static void _isStoredOutside(XBOX::VJSParms_callStaticFunction& ioParms, Field* inField);  // bool : isStoredOutside()
+	static void _setStoreOutside(XBOX::VJSParms_callStaticFunction& ioParms, Field* inField);  // setStoreOutside(bool)
 
 };
 
@@ -222,20 +225,20 @@ public:
 //======================================================
 
 
-class VJSDatabase : public XBOX::VJSClass<VJSDatabase, CDB4DBase >
+class VJSDatabase : public XBOX::VJSClass<VJSDatabase, Base4D>
 {
 public:
-	typedef VJSClass<VJSDatabase, CDB4DBase >	inherited;
+	typedef VJSClass<VJSDatabase, Base4D>	inherited;
 
-	static	void			PutAllModelsInGlobalObject(VJSObject& globalObject, CDB4DBase* inDatabase, CDB4DBaseContext* context);
-	static	VJSObject		CreateJSEMObject( const VString& emName, const VJSContext& inContext, CDB4DBaseContext *inBaseContext);
+	static	void			PutAllModelsInGlobalObject(VJSObject& globalObject, Base4D* inDatabase, BaseTaskInfo* context);
+	static	VJSObject		CreateJSEMObject( const VString& emName, const VJSContext& inContext, BaseTaskInfo *inBaseContext);
 	
-	static	void			Initialize( const XBOX::VJSParms_initialize& inParms, CDB4DBase* inDatabase);
-	static	void			Finalize( const XBOX::VJSParms_finalize& inParms, CDB4DBase* inDatabase);
-	static	void			GetProperty( XBOX::VJSParms_getProperty& ioParms, CDB4DBase* inTables);
-	static	void			GetPropertyNames( XBOX::VJSParms_getPropertyNames& ioParms, CDB4DBase* inTables);
+	static	void			Initialize( const XBOX::VJSParms_initialize& inParms, Base4D* inDatabase);
+	static	void			Finalize( const XBOX::VJSParms_finalize& inParms, Base4D* inDatabase);
+	static	void			GetProperty( XBOX::VJSParms_getProperty& ioParms, Base4D* inTables);
+	static	void			GetPropertyNames( XBOX::VJSParms_getPropertyNames& ioParms, Base4D* inTables);
 	static	void			GetDefinition( ClassDefinition& outDefinition);
-	static	VJSObject		CreateInstance( JS4D::ContextRef inContext, CDB4DBase *inDatabase);
+	static	VJSObject		CreateInstance( JS4D::ContextRef inContext, Base4D *inDatabase);
 	static IDB4D_DataToolsIntf* CreateJSDataToolsIntf(VJSContext& jscontext, VJSObject& paramObj);
 
 	/**
@@ -243,33 +246,33 @@ public:
 	 * \return NULL if an error occured
 	 * \return a File object leading to the backup manifest file for this backup
 	 */
-	static void	_Backup(XBOX::VJSParms_callStaticFunction& ioParms, CDB4DBase* inDatabase);
+	static void	_Backup(XBOX::VJSParms_callStaticFunction& ioParms, Base4D* inDatabase);
 	
 	/**
 	 * \brief Returns the journal file as a File object or NULL if no journal is available
 	 */
-	static void	_GetJournalFile(XBOX::VJSParms_callStaticFunction& ioParms, CDB4DBase* inDatabase);
+	static void	_GetJournalFile(XBOX::VJSParms_callStaticFunction& ioParms, Base4D* inDatabase);
 
 	/**
 	 * \brief Indicates whether journal is enabled
 	 * \return true if journaling is enabled
 	 * \return false otherwise
 	 */
-	static void	_IsJournalEnabled(XBOX::VJSParms_callStaticFunction& ioParms, CDB4DBase* inDatabase);
+	static void	_IsJournalEnabled(XBOX::VJSParms_callStaticFunction& ioParms, Base4D* inDatabase);
 
 	/**
 	 * \brief disables journaling for the current database
 	 * \return true if the journal was disabled
 	 * \return false if an error occured
 	 */
-	static void	_DisableJournal(XBOX::VJSParms_callStaticFunction& ioParms, CDB4DBase* inDatabase);
+	static void	_DisableJournal(XBOX::VJSParms_callStaticFunction& ioParms, Base4D* inDatabase);
 
 	/**
 	 * \brief Queries the datastore backup settings
 	 * \return an object containing the backup settings
 	 * \return a NULL value if the backup settings are not available
 	 */
-	static void	_GetBackupSettings(XBOX::VJSParms_callStaticFunction& ioParms, CDB4DBase* inDatabase);
+	static void	_GetBackupSettings(XBOX::VJSParms_callStaticFunction& ioParms, Base4D* inDatabase);
 
 	
 	
@@ -278,38 +281,41 @@ public:
 	 * \return NULL if an error occured
 	 * \return a File object leading to the backup manifest file for this backup
 	 */
-	static void	_BackupAndChangeJournal(XBOX::VJSParms_callStaticFunction& ioParms, CDB4DBase* inDatabase);
+	static void	_BackupAndChangeJournal(XBOX::VJSParms_callStaticFunction& ioParms, Base4D* inDatabase);
 	
 	
-	static void _GetName(XBOX::VJSParms_callStaticFunction& ioParms, CDB4DBase* inDatabase);  // String : GetName()
-	static void _SetName(XBOX::VJSParms_callStaticFunction& ioParms, CDB4DBase* inDatabase);  // SetName(String)
-	static void _CountTables(XBOX::VJSParms_callStaticFunction& ioParms, CDB4DBase* inDatabase);  // Number : CountTables()
-	static void _GetPath(XBOX::VJSParms_callStaticFunction& ioParms, CDB4DBase* inDatabase);  // String : GetPath()
-	static void _CreateTable(XBOX::VJSParms_callStaticFunction& ioParms, CDB4DBase* inDatabase);  // Table : CreateTable(String:name)
-	static void _CreateIndex(XBOX::VJSParms_callStaticFunction& ioParms, CDB4DBase* inDatabase);  // Index : CreateIndex(array of fields : fields, String : IndexType, String : Name) // IndexType : "Btree", "Cluster", "Hash"
-	static void _DropIndex(XBOX::VJSParms_callStaticFunction& ioParms, CDB4DBase* inDatabase);  // DropIndex(array of fields)
-	static void _StartTransaction(XBOX::VJSParms_callStaticFunction& ioParms, CDB4DBase* inDatabase);  // StartTransaction()
-	static void _Commit(XBOX::VJSParms_callStaticFunction& ioParms, CDB4DBase* inDatabase);  // Commit()
-	static void _RollBack(XBOX::VJSParms_callStaticFunction& ioParms, CDB4DBase* inDatabase);  // RollBack()
-	static void _TransactionLevel(XBOX::VJSParms_callStaticFunction& ioParms, CDB4DBase* inDatabase);  // Number : TransactionLevel()
-	static void _GetStructure(XBOX::VJSParms_callStaticFunction& ioParms, CDB4DBase* inDatabase);  		
-	static void _FlushCache(XBOX::VJSParms_callStaticFunction& ioParms, CDB4DBase* inDatabase);  // FlushCache(bool : waitUntilDone)
-	static void _ExportAsSQL(XBOX::VJSParms_callStaticFunction& ioParms, CDB4DBase* inDatabase);  // _ExportAsSQL(Folder | StringURL, number : nbBlobsPerLevel, number : maxExportFileSize)
-	static void _clearErrs(XBOX::VJSParms_callStaticFunction& ioParms, CDB4DBase* inDatabase);  // clearErrs() // temporaire
-	static void _GetSyncInfo(XBOX::VJSParms_callStaticFunction& ioParms, CDB4DBase* inDatabase);  		
-	static void _loadModelsDefinition(XBOX::VJSParms_callStaticFunction& ioParms, CDB4DBase* inDatabase);  // loadModelsDefinition(File : XMLDefinitionFile)
-	static void _setCacheSize(XBOX::VJSParms_callStaticFunction& ioParms, CDB4DBase* inDatabase);  // setCacheSize(number : newCacheSize, {bool inPhysicalMemOnly})
-	static void _getCacheSize(XBOX::VJSParms_callStaticFunction& ioParms, CDB4DBase* inDatabase);  // number : getCacheSize()
-	static void _getDataFolder(XBOX::VJSParms_callStaticFunction& ioParms, CDB4DBase* inDatabase);  // Folder : getDataFolder()
-	static void _getCatalogFolder(XBOX::VJSParms_callStaticFunction& ioParms, CDB4DBase* inDatabase);  // Folder : getCatalogFolder()
-	static void _getTempFolder(XBOX::VJSParms_callStaticFunction& ioParms, CDB4DBase* inDatabase);  // Folder : getTempFolder()
-	static void _getCacheInfo(XBOX::VJSParms_callStaticFunction& ioParms, CDB4DBase* inDatabase);
-	static void _freeCacheMem(XBOX::VJSParms_callStaticFunction& ioParms, CDB4DBase* inDatabase);
-	static void _getDBList(XBOX::VJSParms_callStaticFunction& ioParms, CDB4DBase* inDatabase);
-	static void _getIndices(XBOX::VJSParms_callStaticFunction& ioParms, CDB4DBase* inDatabase); // Array : getIndices()
-	static void _close(XBOX::VJSParms_callStaticFunction& ioParms, CDB4DBase* inDatabase); // close(SyncEventName) : returns null or a SyncEvent
+	static void _GetName(XBOX::VJSParms_callStaticFunction& ioParms, Base4D* inDatabase);  // String : GetName()
+	static void _SetName(XBOX::VJSParms_callStaticFunction& ioParms, Base4D* inDatabase);  // SetName(String)
+	static void _CountTables(XBOX::VJSParms_callStaticFunction& ioParms, Base4D* inDatabase);  // Number : CountTables()
+	static void _GetPath(XBOX::VJSParms_callStaticFunction& ioParms, Base4D* inDatabase);  // String : GetPath()
+	static void _CreateTable(XBOX::VJSParms_callStaticFunction& ioParms, Base4D* inDatabase);  // Table : CreateTable(String:name)
+	static void _CreateIndex(XBOX::VJSParms_callStaticFunction& ioParms, Base4D* inDatabase);  // Index : CreateIndex(array of fields : fields, String : IndexType, String : Name) // IndexType : "Btree", "Cluster", "Hash"
+	static void _DropIndex(XBOX::VJSParms_callStaticFunction& ioParms, Base4D* inDatabase);  // DropIndex(array of fields)
+	static void _StartTransaction(XBOX::VJSParms_callStaticFunction& ioParms, Base4D* inDatabase);  // StartTransaction()
+	static void _Commit(XBOX::VJSParms_callStaticFunction& ioParms, Base4D* inDatabase);  // Commit()
+	static void _RollBack(XBOX::VJSParms_callStaticFunction& ioParms, Base4D* inDatabase);  // RollBack()
+	static void _TransactionLevel(XBOX::VJSParms_callStaticFunction& ioParms, Base4D* inDatabase);  // Number : TransactionLevel()
+	static void _GetStructure(XBOX::VJSParms_callStaticFunction& ioParms, Base4D* inDatabase);  		
+	static void _FlushCache(XBOX::VJSParms_callStaticFunction& ioParms, Base4D* inDatabase);  // FlushCache(bool : waitUntilDone)
+	static void _ExportAsSQL(XBOX::VJSParms_callStaticFunction& ioParms, Base4D* inDatabase);  // _ExportAsSQL(Folder | StringURL, number : nbBlobsPerLevel, number : maxExportFileSize)
+	static void _clearErrs(XBOX::VJSParms_callStaticFunction& ioParms, Base4D* inDatabase);  // clearErrs() // temporaire
+	static void _GetSyncInfo(XBOX::VJSParms_callStaticFunction& ioParms, Base4D* inDatabase);  		
+	static void _loadModelsDefinition(XBOX::VJSParms_callStaticFunction& ioParms, Base4D* inDatabase);  // loadModelsDefinition(File : XMLDefinitionFile)
+	static void _setCacheSize(XBOX::VJSParms_callStaticFunction& ioParms, Base4D* inDatabase);  // setCacheSize(number : newCacheSize, {bool inPhysicalMemOnly})
+	static void _getCacheSize(XBOX::VJSParms_callStaticFunction& ioParms, Base4D* inDatabase);  // number : getCacheSize()
+	static void _getDataFolder(XBOX::VJSParms_callStaticFunction& ioParms, Base4D* inDatabase);  // Folder : getDataFolder()
+	static void _getCatalogFolder(XBOX::VJSParms_callStaticFunction& ioParms, Base4D* inDatabase);  // Folder : getCatalogFolder()
+	static void _getTempFolder(XBOX::VJSParms_callStaticFunction& ioParms, Base4D* inDatabase);  // Folder : getTempFolder()
+	static void _getCacheInfo(XBOX::VJSParms_callStaticFunction& ioParms, Base4D* inDatabase);
+	static void _freeCacheMem(XBOX::VJSParms_callStaticFunction& ioParms, Base4D* inDatabase);
+	static void _getDBList(XBOX::VJSParms_callStaticFunction& ioParms, Base4D* inDatabase);
+	static void _getIndices(XBOX::VJSParms_callStaticFunction& ioParms, Base4D* inDatabase); // Array : getIndices()
+	static void _close(XBOX::VJSParms_callStaticFunction& ioParms, Base4D* inDatabase); // close(SyncEventName) : returns null or a SyncEvent
+	static void _fixForV4(XBOX::VJSParms_callStaticFunction& ioParms, Base4D* inDatabase); // fixForV4()
 
-	static void _verify(XBOX::VJSParms_callStaticFunction& ioParms, CDB4DBase* inDatabase); // bool : verify(Object: paramObj)
+	static void _verify(XBOX::VJSParms_callStaticFunction& ioParms, Base4D* inDatabase); // bool : verify(Object: paramObj)
+
+	static void _tempSetIndexNewFourche(XBOX::VJSParms_callStaticFunction& ioParms, Base4D* inDatabase); 
 
 
 	/*
@@ -322,42 +328,45 @@ public:
 	}
 	*/
 
-	static void _queryOptions(XBOX::VJSParms_callStaticFunction& ioParms, CDB4DBase* inDatabase); // bool : queryOptions(object options ) options: { queryPlan: bool, queryPath: bool }
-	static void _setSortMaxMem(XBOX::VJSParms_callStaticFunction& ioParms, CDB4DBase* inDatabase);  // setSortMaxMem(number : memSize)
+	static void _queryOptions(XBOX::VJSParms_callStaticFunction& ioParms, Base4D* inDatabase); // bool : queryOptions(object options ) options: { queryPlan: bool, queryPath: bool }
+	static void _setSortMaxMem(XBOX::VJSParms_callStaticFunction& ioParms, Base4D* inDatabase);  // setSortMaxMem(number : memSize)
 
-	static void _getTables( XBOX::VJSParms_getProperty& ioParms, CDB4DBase* inDatabase);
-	static void _getEntityModels( XBOX::VJSParms_getProperty& ioParms, CDB4DBase* inDatabase);
+	static void _getModelDefinition(XBOX::VJSParms_callStaticFunction& ioParms, Base4D* inDatabase);  // Object : getModelDefinition()
+
+
+	static void _getTables( XBOX::VJSParms_getProperty& ioParms, Base4D* inDatabase);
+	static void _getEntityModels( XBOX::VJSParms_getProperty& ioParms, Base4D* inDatabase);
 
 };
 
 
 
-class VJSDatabaseTableEnumerator : public XBOX::VJSClass<VJSDatabaseTableEnumerator, CDB4DBase >
+class VJSDatabaseTableEnumerator : public XBOX::VJSClass<VJSDatabaseTableEnumerator, Base4D>
 {
 public:
-	typedef VJSClass<VJSDatabaseTableEnumerator, CDB4DBase >	inherited;
+	typedef VJSClass<VJSDatabaseTableEnumerator, Base4D>	inherited;
 
-	static	void			Initialize( const XBOX::VJSParms_initialize& inParms, CDB4DBase* inDatabase);
-	static	void			Finalize( const XBOX::VJSParms_finalize& inParms, CDB4DBase* inDatabase);
-	static	void			GetProperty( XBOX::VJSParms_getProperty& ioParms, CDB4DBase* inTables);
-	static	void			GetPropertyNames( XBOX::VJSParms_getPropertyNames& ioParms, CDB4DBase* inTables);
+	static	void			Initialize( const XBOX::VJSParms_initialize& inParms, Base4D* inDatabase);
+	static	void			Finalize( const XBOX::VJSParms_finalize& inParms, Base4D* inDatabase);
+	static	void			GetProperty( XBOX::VJSParms_getProperty& ioParms, Base4D* inTables);
+	static	void			GetPropertyNames( XBOX::VJSParms_getPropertyNames& ioParms, Base4D* inTables);
 	static	void			GetDefinition( ClassDefinition& outDefinition);
-	static	VJSObject		CreateInstance( JS4D::ContextRef inContext, CDB4DBase *inDatabase);
+	static	VJSObject		CreateInstance( JS4D::ContextRef inContext, Base4D *inDatabase);
 
 };
 
 
-class VJSDatabaseEMEnumerator : public XBOX::VJSClass<VJSDatabaseEMEnumerator, CDB4DBase >
+class VJSDatabaseEMEnumerator : public XBOX::VJSClass<VJSDatabaseEMEnumerator, Base4D >
  {
  public:
-	 typedef VJSClass<VJSDatabaseEMEnumerator, CDB4DBase >	inherited;
+	 typedef VJSClass<VJSDatabaseEMEnumerator, Base4D >	inherited;
 
-	 static	void			Initialize( const XBOX::VJSParms_initialize& inParms, CDB4DBase* inDatabase);
-	 static	void			Finalize( const XBOX::VJSParms_finalize& inParms, CDB4DBase* inDatabase);
-	 static	void			GetProperty( XBOX::VJSParms_getProperty& ioParms, CDB4DBase* inTables);
-	 static	void			GetPropertyNames( XBOX::VJSParms_getPropertyNames& ioParms, CDB4DBase* inTables);
+	 static	void			Initialize( const XBOX::VJSParms_initialize& inParms, Base4D* inDatabase);
+	 static	void			Finalize( const XBOX::VJSParms_finalize& inParms, Base4D* inDatabase);
+	 static	void			GetProperty( XBOX::VJSParms_getProperty& ioParms, Base4D* inTables);
+	 static	void			GetPropertyNames( XBOX::VJSParms_getPropertyNames& ioParms, Base4D* inTables);
 	 static	void			GetDefinition( ClassDefinition& outDefinition);
-	 static	VJSObject		CreateInstance( JS4D::ContextRef inContext, CDB4DBase *inDatabase);
+	 static	VJSObject		CreateInstance( JS4D::ContextRef inContext, Base4D *inDatabase);
 
  };
 
@@ -367,59 +376,61 @@ class VJSDatabaseEMEnumerator : public XBOX::VJSClass<VJSDatabaseEMEnumerator, C
 //======================================================
 
 
-class VJSEntityModel : public XBOX::VJSClass<VJSEntityModel, CDB4DEntityModel>
+class ENTITY_API VJSEntityModel : public XBOX::VJSClass<VJSEntityModel, EntityModel>
 {
 public:
-	typedef VJSClass<VJSEntityModel, CDB4DEntityModel> inherited;
+	typedef VJSClass<VJSEntityModel, EntityModel> inherited;
 	
-	static	void			Initialize( const XBOX::VJSParms_initialize& inParms, CDB4DEntityModel* inModel);
-	static	void			Finalize( const XBOX::VJSParms_finalize& inParms, CDB4DEntityModel* inModel);
+	static	void			Initialize( const XBOX::VJSParms_initialize& inParms, EntityModel* inModel);
+	static	void			Finalize( const XBOX::VJSParms_finalize& inParms, EntityModel* inModel);
 	static	void			GetDefinition( ClassDefinition& outDefinition);
-	static	void			GetProperty( XBOX::VJSParms_getProperty& ioParms, CDB4DEntityModel* inModel);
-	static	void			GetPropertyNames( XBOX::VJSParms_getPropertyNames& ioParms, CDB4DEntityModel* inModel);
+	static	void			GetProperty( XBOX::VJSParms_getProperty& ioParms, EntityModel* inModel);
+	static	void			GetPropertyNames( XBOX::VJSParms_getPropertyNames& ioParms, EntityModel* inModel);
 	static	void			CallAsFunction(VJSParms_callAsFunction& ioParms);
 	static	void			CallAsConstructor(VJSParms_callAsConstructor& ioParms);
 	
-	static void _getDataStore(XBOX::VJSParms_callStaticFunction& ioParms, CDB4DEntityModel* inModel); // dataStore : getDataStore()
-	static void _getName(XBOX::VJSParms_callStaticFunction& ioParms, CDB4DEntityModel* inModel); // string : getName()
-	static void _isEntityModel(XBOX::VJSParms_callStaticFunction& ioParms, CDB4DEntityModel* inModel); // bool : isEntityModel()
-	static void _getScope(XBOX::VJSParms_callStaticFunction& ioParms, CDB4DEntityModel* inModel); // string : getScope()
+	static void _getDataStore(XBOX::VJSParms_callStaticFunction& ioParms, EntityModel* inModel); // dataStore : getDataStore()
+	static void _getName(XBOX::VJSParms_callStaticFunction& ioParms, EntityModel* inModel); // string : getName()
+	static void _isEntityModel(XBOX::VJSParms_callStaticFunction& ioParms, EntityModel* inModel); // bool : isEntityModel()
+	static void _getScope(XBOX::VJSParms_callStaticFunction& ioParms, EntityModel* inModel); // string : getScope()
 	
-	static void _AllEntities(XBOX::VJSParms_callStaticFunction& ioParms, CDB4DEntityModel* inModel);  // EntitySelection : AllEntities()  // alias all()
-	static void _Query(XBOX::VJSParms_callStaticFunction& ioParms, CDB4DEntityModel* inModel);  // EntitySelection : Query(string : query, { bool : lock })
-	static void _Find(XBOX::VJSParms_callStaticFunction& ioParms, CDB4DEntityModel* inModel);  // EntitySelectionIterator : Find(string : query, { bool : lock })
-	static void _NewEntity(XBOX::VJSParms_callStaticFunction& ioParms, CDB4DEntityModel* inModel);  // EntitySelectionIterator : _NewEntity()
-	static void _NewSelection(XBOX::VJSParms_callStaticFunction& ioParms, CDB4DEntityModel* inModel);  // EntitySelection : NewSelection(bool : keepsorted | string : "KeepSorted")
+	static void _AllEntities(XBOX::VJSParms_callStaticFunction& ioParms, EntityModel* inModel);  // EntitySelection : AllEntities()  // alias all()
+	static void _Query(XBOX::VJSParms_callStaticFunction& ioParms, EntityModel* inModel);  // EntitySelection : Query(string : query, { bool : lock })
+	static void _Find(XBOX::VJSParms_callStaticFunction& ioParms, EntityModel* inModel);  // EntitySelectionIterator : Find(string : query, { bool : lock })
+	static void _NewEntity(XBOX::VJSParms_callStaticFunction& ioParms, EntityModel* inModel);  // EntitySelectionIterator : _NewEntity()
+	static void _NewSelection(XBOX::VJSParms_callStaticFunction& ioParms, EntityModel* inModel);  // EntitySelection : NewSelection(bool : keepsorted | string : "KeepSorted")
 
-	static void _First(XBOX::VJSParms_callStaticFunction& ioParms, CDB4DEntityModel* inModel);  // EntityRecord : First({bool ReadOnly})
-	static void _Count(XBOX::VJSParms_callStaticFunction& ioParms, CDB4DEntityModel* inModel);  // Number : _Count()
-	static void _OrderBy(XBOX::VJSParms_callStaticFunction& ioParms, CDB4DEntityModel* inModel);  // selection : OrderBy(string | attribute, {"asc|desc"} , attribute, attribute) 
-	static void _Each(XBOX::VJSParms_callStaticFunction& ioParms, CDB4DEntityModel* inModel);  // each(function)
-	static void _dropEntities(XBOX::VJSParms_callStaticFunction& ioParms, CDB4DEntityModel* inModel);  // selection : dropEntities()  // result is the locked set
-	static void _distinctValues(XBOX::VJSParms_callStaticFunction& ioParms, CDB4DEntityModel* inModel); // array : distinctValues(EntityAttribute | string)
-	static void _toArray(XBOX::VJSParms_callStaticFunction& ioParms, CDB4DEntityModel* inModel); // array : toArray(string : attributeList | ( EntityAttribute, EntityAttribute, EntityAttribute...))
-	static void _fromArray(XBOX::VJSParms_callStaticFunction& ioParms, CDB4DEntityModel* inModel); // selection : fromArray(array)
+	static void _First(XBOX::VJSParms_callStaticFunction& ioParms, EntityModel* inModel);  // EntityRecord : First({bool ReadOnly})
+	static void _Count(XBOX::VJSParms_callStaticFunction& ioParms, EntityModel* inModel);  // Number : _Count()
+	static void _OrderBy(XBOX::VJSParms_callStaticFunction& ioParms, EntityModel* inModel);  // selection : OrderBy(string | attribute, {"asc|desc"} , attribute, attribute) 
+	static void _Each(XBOX::VJSParms_callStaticFunction& ioParms, EntityModel* inModel);  // each(function)
+	static void _dropEntities(XBOX::VJSParms_callStaticFunction& ioParms, EntityModel* inModel);  // selection : dropEntities()  // result is the locked set
+	static void _distinctValues(XBOX::VJSParms_callStaticFunction& ioParms, EntityModel* inModel); // array : distinctValues(EntityAttribute | string)
+	static void _toArray(XBOX::VJSParms_callStaticFunction& ioParms, EntityModel* inModel); // array : toArray(string : attributeList | ( EntityAttribute, EntityAttribute, EntityAttribute...))
+	static void _fromArray(XBOX::VJSParms_callStaticFunction& ioParms, EntityModel* inModel); // selection : fromArray(array)
 
-	static void _setAutoSequenceNumber(XBOX::VJSParms_callStaticFunction& ioParms, CDB4DEntityModel* inModel); // setAutoSequenceNumber(number)
-	static void _getFragmentation(XBOX::VJSParms_callStaticFunction& ioParms, CDB4DEntityModel* inModel); // getFragmentation()
+	static void _setAutoSequenceNumber(XBOX::VJSParms_callStaticFunction& ioParms, EntityModel* inModel); // setAutoSequenceNumber(number)
+	static void _getFragmentation(XBOX::VJSParms_callStaticFunction& ioParms, EntityModel* inModel); // getFragmentation()
 
-	static void _sum(XBOX::VJSParms_callStaticFunction& ioParms, CDB4DEntityModel* inModel);  // number : sum(attribute)
-	static void _min(XBOX::VJSParms_callStaticFunction& ioParms, CDB4DEntityModel* inModel);  // number : min(attribute)
-	static void _max(XBOX::VJSParms_callStaticFunction& ioParms, CDB4DEntityModel* inModel);  // number : max(attribute)
-	static void _average(XBOX::VJSParms_callStaticFunction& ioParms, CDB4DEntityModel* inModel);  // number : average(attribute)
-	static void _compute(XBOX::VJSParms_callStaticFunction& ioParms, CDB4DEntityModel* inModel);  // object : compute(string : attributeList | ( EntityAttribute, EntityAttribute, EntityAttribute...))
+	static void _sum(XBOX::VJSParms_callStaticFunction& ioParms, EntityModel* inModel);  // number : sum(attribute)
+	static void _min(XBOX::VJSParms_callStaticFunction& ioParms, EntityModel* inModel);  // number : min(attribute)
+	static void _max(XBOX::VJSParms_callStaticFunction& ioParms, EntityModel* inModel);  // number : max(attribute)
+	static void _average(XBOX::VJSParms_callStaticFunction& ioParms, EntityModel* inModel);  // number : average(attribute)
+	static void _compute(XBOX::VJSParms_callStaticFunction& ioParms, EntityModel* inModel);  // object : compute(string : attributeList | ( EntityAttribute, EntityAttribute, EntityAttribute...))
 
-	static void _getAttributes( XBOX::VJSParms_getProperty& ioParms, CDB4DEntityModel* inModel);
-	static void _getLength( XBOX::VJSParms_getProperty& ioParms, CDB4DEntityModel* inModel);
+	static void _callMethod(XBOX::VJSParms_callStaticFunction& ioParms, EntityModel* inModel);  // jsvalue : callMethod(string : funcName, array : params, object: this)
+
+	static void _getAttributes( XBOX::VJSParms_getProperty& ioParms, EntityModel* inModel);
+	static void _getLength( XBOX::VJSParms_getProperty& ioParms, EntityModel* inModel);
 };
 
 /*
-class VJSEntityConstructor : public XBOX::VJSClass<VJSEntityConstructor, CDB4DEntityModel>
+class VJSEntityConstructor : public XBOX::VJSClass<VJSEntityConstructor, EntityModel>
 {
 	public:
-		typedef VJSClass<VJSEntityConstructor, CDB4DEntityModel> inherited;
-		static	void			Initialize( const XBOX::VJSParms_initialize& inParms, CDB4DEntityModel* inModel);
-		static	void			Finalize( const XBOX::VJSParms_finalize& inParms, CDB4DEntityModel* inModel);
+		typedef VJSClass<VJSEntityConstructor, EntityModel> inherited;
+		static	void			Initialize( const XBOX::VJSParms_initialize& inParms, EntityModel* inModel);
+		static	void			Finalize( const XBOX::VJSParms_finalize& inParms, EntityModel* inModel);
 		static	void			GetDefinition( ClassDefinition& outDefinition);
 		static	void			CallAsFunction(VJSParms_callAsFunction& ioParms);
 		static	void			CallAsConstructor(VJSParms_callAsConstructor& ioParms);
@@ -428,50 +439,50 @@ class VJSEntityConstructor : public XBOX::VJSClass<VJSEntityConstructor, CDB4DEn
 */
 
 
-class VJSEntityAttributeEnumerator : public XBOX::VJSClass<VJSEntityAttributeEnumerator, CDB4DEntityModel >
+class VJSEntityAttributeEnumerator : public XBOX::VJSClass<VJSEntityAttributeEnumerator, EntityModel>
 {
 public:
-	typedef VJSClass<VJSEntityAttributeEnumerator, CDB4DEntityModel >	inherited;
+	typedef VJSClass<VJSEntityAttributeEnumerator, EntityModel>	inherited;
 
-	static	void			Initialize( const XBOX::VJSParms_initialize& inParms, CDB4DEntityModel* inModel);
-	static	void			Finalize( const XBOX::VJSParms_finalize& inParms, CDB4DEntityModel* inModel);
-	static	void			GetProperty( XBOX::VJSParms_getProperty& ioParms, CDB4DEntityModel* inModel);
-	static	void			GetPropertyNames( XBOX::VJSParms_getPropertyNames& ioParms, CDB4DEntityModel* inModel);
+	static	void			Initialize( const XBOX::VJSParms_initialize& inParms, EntityModel* inModel);
+	static	void			Finalize( const XBOX::VJSParms_finalize& inParms, EntityModel* inModel);
+	static	void			GetProperty( XBOX::VJSParms_getProperty& ioParms, EntityModel* inModel);
+	static	void			GetPropertyNames( XBOX::VJSParms_getPropertyNames& ioParms, EntityModel* inModel);
 	static	void			GetDefinition( ClassDefinition& outDefinition);
 
 };
 
 
-class VJSEntityAttribute : public XBOX::VJSClass<VJSEntityAttribute, CDB4DEntityAttribute>
+class VJSEntityAttribute : public XBOX::VJSClass<VJSEntityAttribute, EntityAttribute>
 {
 public:
-	typedef VJSClass<VJSEntityAttribute, CDB4DEntityAttribute> inherited;
+	typedef VJSClass<VJSEntityAttribute, EntityAttribute> inherited;
 	
-	static	void			Initialize( const XBOX::VJSParms_initialize& inParms, CDB4DEntityAttribute* inAttribute);
-	static	void			Finalize( const XBOX::VJSParms_finalize& inParms, CDB4DEntityAttribute* inAttribute);
+	static	void			Initialize( const XBOX::VJSParms_initialize& inParms, EntityAttribute* inAttribute);
+	static	void			Finalize( const XBOX::VJSParms_finalize& inParms, EntityAttribute* inAttribute);
 	static	void			GetDefinition( ClassDefinition& outDefinition);
 	
-	static void _getName(XBOX::VJSParms_callStaticFunction& ioParms, CDB4DEntityAttribute* inAttribute); // string : getName()
+	static void _getName(XBOX::VJSParms_callStaticFunction& ioParms, EntityAttribute* inAttribute); // string : getName()
 
-	static void _getPropName( XBOX::VJSParms_getProperty& ioParms, CDB4DEntityAttribute* inAttribute);
-	static void _getKind( XBOX::VJSParms_getProperty& ioParms, CDB4DEntityAttribute* inAttribute);
-	static void _getType( XBOX::VJSParms_getProperty& ioParms, CDB4DEntityAttribute* inAttribute);
-	static void _getScope( XBOX::VJSParms_getProperty& ioParms, CDB4DEntityAttribute* inAttribute);
+	static void _getPropName( XBOX::VJSParms_getProperty& ioParms, EntityAttribute* inAttribute);
+	static void _getKind( XBOX::VJSParms_getProperty& ioParms, EntityAttribute* inAttribute);
+	static void _getType( XBOX::VJSParms_getProperty& ioParms, EntityAttribute* inAttribute);
+	static void _getScope( XBOX::VJSParms_getProperty& ioParms, EntityAttribute* inAttribute);
 
-//	static void _getUnique( XBOX::VJSParms_getProperty& ioParms, CDB4DEntityAttribute* inAttribute);
-	static void _getIndexed( XBOX::VJSParms_getProperty& ioParms, CDB4DEntityAttribute* inAttribute);
-	static void _getFullTextIndexed( XBOX::VJSParms_getProperty& ioParms, CDB4DEntityAttribute* inAttribute);
-	static void _getIndexType( XBOX::VJSParms_getProperty& ioParms, CDB4DEntityAttribute* inAttribute);
-	static void _getDataClass( XBOX::VJSParms_getProperty& ioParms, CDB4DEntityAttribute* inAttribute);
-	static void _getRelatedDataClass( XBOX::VJSParms_getProperty& ioParms, CDB4DEntityAttribute* inAttribute);
-//	static void _getReadOnly( XBOX::VJSParms_getProperty& ioParms, CDB4DEntityAttribute* inAttribute);
+//	static void _getUnique( XBOX::VJSParms_getProperty& ioParms, EntityAttribute* inAttribute);
+	static void _getIndexed( XBOX::VJSParms_getProperty& ioParms, EntityAttribute* inAttribute);
+	static void _getFullTextIndexed( XBOX::VJSParms_getProperty& ioParms, EntityAttribute* inAttribute);
+	static void _getIndexType( XBOX::VJSParms_getProperty& ioParms, EntityAttribute* inAttribute);
+	static void _getDataClass( XBOX::VJSParms_getProperty& ioParms, EntityAttribute* inAttribute);
+	static void _getRelatedDataClass( XBOX::VJSParms_getProperty& ioParms, EntityAttribute* inAttribute);
+//	static void _getReadOnly( XBOX::VJSParms_getProperty& ioParms, EntityAttribute* inAttribute);
 
 };
 
 
 
 
-class VJSEntitySelectionIterator : public XBOX::VJSClass<VJSEntitySelectionIterator, EntitySelectionIterator>
+class ENTITY_API VJSEntitySelectionIterator : public XBOX::VJSClass<VJSEntitySelectionIterator, EntitySelectionIterator>
 {
 public:
 	typedef VJSClass<VJSEntitySelectionIterator, EntitySelectionIterator>	inherited;
@@ -484,7 +495,6 @@ public:
 	static	void			GetDefinition( ClassDefinition& outDefinition);
 	
 	static void _GetModel(XBOX::VJSParms_callStaticFunction& ioParms, EntitySelectionIterator* inSelIter);  // EntityModel : GetModel()
-	static void _GetID(XBOX::VJSParms_callStaticFunction& ioParms, EntitySelectionIterator* inSelIter);  // Number : GetID()
 	static void _Next(XBOX::VJSParms_callStaticFunction& ioParms, EntitySelectionIterator* inSelIter);  // bool : Next()
 	static void _Valid(XBOX::VJSParms_callStaticFunction& ioParms, EntitySelectionIterator* inSelIter);  // bool : Valid()
 	static void _Loaded(XBOX::VJSParms_callStaticFunction& ioParms, EntitySelectionIterator* inSelIter);  // bool : Loaded()
@@ -501,49 +511,50 @@ public:
 	static void _toJSON(XBOX::VJSParms_callStaticFunction& ioParms, EntitySelectionIterator* inSelIter);   // string : _toJSON
 	static void _getKey(XBOX::VJSParms_callStaticFunction& ioParms, EntitySelectionIterator* inSelIter);   // value : getKey()
 	static void _getStamp(XBOX::VJSParms_callStaticFunction& ioParms, EntitySelectionIterator* inSelIter);   // long : getStamp()
+	static void _getModifiedAttributes(XBOX::VJSParms_callStaticFunction& ioParms, EntitySelectionIterator* inSelIter);  // Array of string : getModifiedAttributes()
 	
 };
 
 
 
-class VJSEntitySelection : public XBOX::VJSClass<VJSEntitySelection, CDB4DSelection>
+class ENTITY_API VJSEntitySelection : public XBOX::VJSClass<VJSEntitySelection, EntityCollection>
 {
 public:
-	typedef VJSClass<VJSEntitySelection, CDB4DSelection>	inherited;
+	typedef VJSClass<VJSEntitySelection, EntityCollection>	inherited;
 	
-	static	void			Initialize( const XBOX::VJSParms_initialize& inParms, CDB4DSelection* inSelection);
-	static	void			Finalize( const XBOX::VJSParms_finalize& inParms, CDB4DSelection* inSelection);
-	static	void			GetProperty( XBOX::VJSParms_getProperty& ioParms, CDB4DSelection* inSelection);
+	static	void			Initialize( const XBOX::VJSParms_initialize& inParms, EntityCollection* inSelection);
+	static	void			Finalize( const XBOX::VJSParms_finalize& inParms, EntityCollection* inSelection);
+	static	void			GetProperty( XBOX::VJSParms_getProperty& ioParms, EntityCollection* inSelection);
 	static	void			GetDefinition( ClassDefinition& outDefinition);
 	
-	static void _First(XBOX::VJSParms_callStaticFunction& ioParms, CDB4DSelection* inSelection);  // EntityRecord : First({bool ReadOnly})
-	static void _Count(XBOX::VJSParms_callStaticFunction& ioParms, CDB4DSelection* inSelection);  // Number : _Count()
-	static void _OrderBy(XBOX::VJSParms_callStaticFunction& ioParms, CDB4DSelection* inSelection);  // selection : OrderBy(string | attribute, {"asc|desc"} , attribute, attribute) 
-	static void _Add(XBOX::VJSParms_callStaticFunction& ioParms, CDB4DSelection* inSelection);  // _Add(Selection | Entity | Number)
-	static void _GetModel(XBOX::VJSParms_callStaticFunction& ioParms, CDB4DSelection* inSelection);  // EntityModel : GetModel()
-	static void _Each(XBOX::VJSParms_callStaticFunction& ioParms, CDB4DSelection* inSelection);  // each(function)
-	static void _dropEntities(XBOX::VJSParms_callStaticFunction& ioParms, CDB4DSelection* inSelection);  // selection : dropEntities()  // result is the locked set
-	//static void _orderBy(XBOX::VJSParms_callStaticFunction& ioParms, CDB4DSelection* inSelection);  // selection : OrderBy(string | field, {"asc|desc"} , field, field) 
-	static void _toString(XBOX::VJSParms_callStaticFunction& ioParms, CDB4DSelection* inSelection);
-	static void _distinctValues(XBOX::VJSParms_callStaticFunction& ioParms, CDB4DSelection* inSelection); // array : distinctValues(EntityAttribute | string)
-	static void _toArray(XBOX::VJSParms_callStaticFunction& ioParms, CDB4DSelection* inSelection); // array : toArray(string : attributeList | ( EntityAttribute, EntityAttribute, EntityAttribute...))
-	static void _Query(XBOX::VJSParms_callStaticFunction& ioParms, CDB4DSelection* inSelection);  // EntitySelection : Query(string : query)
-	static void _Find(XBOX::VJSParms_callStaticFunction& ioParms, CDB4DSelection* inSelection);  // EntitySelectionIterator : Find(string : query)
-	static void _sum(XBOX::VJSParms_callStaticFunction& ioParms, CDB4DSelection* inSelection);  // number : sum(attribute)
-	static void _min(XBOX::VJSParms_callStaticFunction& ioParms, CDB4DSelection* inSelection);  // number : min(attribute)
-	static void _max(XBOX::VJSParms_callStaticFunction& ioParms, CDB4DSelection* inSelection);  // number : max(attribute)
-	static void _average(XBOX::VJSParms_callStaticFunction& ioParms, CDB4DSelection* inSelection);  // number : average(attribute)
-	static void _compute(XBOX::VJSParms_callStaticFunction& ioParms, CDB4DSelection* inSelection);  // object : compute(string : attributeList | ( EntityAttribute, EntityAttribute, EntityAttribute...))
+	static void _First(XBOX::VJSParms_callStaticFunction& ioParms, EntityCollection* inSelection);  // EntityRecord : First({bool ReadOnly})
+	static void _Count(XBOX::VJSParms_callStaticFunction& ioParms, EntityCollection* inSelection);  // Number : _Count()
+	static void _OrderBy(XBOX::VJSParms_callStaticFunction& ioParms, EntityCollection* inSelection);  // selection : OrderBy(string | attribute, {"asc|desc"} , attribute, attribute) 
+	static void _Add(XBOX::VJSParms_callStaticFunction& ioParms, EntityCollection* inSelection);  // _Add(Selection | Entity | Number)
+	static void _GetModel(XBOX::VJSParms_callStaticFunction& ioParms, EntityCollection* inSelection);  // EntityModel : GetModel()
+	static void _Each(XBOX::VJSParms_callStaticFunction& ioParms, EntityCollection* inSelection);  // each(function)
+	static void _dropEntities(XBOX::VJSParms_callStaticFunction& ioParms, EntityCollection* inSelection);  // selection : dropEntities()  // result is the locked set
+	//static void _orderBy(XBOX::VJSParms_callStaticFunction& ioParms, EntityCollection* inSelection);  // selection : OrderBy(string | field, {"asc|desc"} , field, field) 
+	static void _toString(XBOX::VJSParms_callStaticFunction& ioParms, EntityCollection* inSelection);
+	static void _distinctValues(XBOX::VJSParms_callStaticFunction& ioParms, EntityCollection* inSelection); // array : distinctValues(EntityAttribute | string)
+	static void _toArray(XBOX::VJSParms_callStaticFunction& ioParms, EntityCollection* inSelection); // array : toArray(string : attributeList | ( EntityAttribute, EntityAttribute, EntityAttribute...))
+	static void _Query(XBOX::VJSParms_callStaticFunction& ioParms, EntityCollection* inSelection);  // EntitySelection : Query(string : query)
+	static void _Find(XBOX::VJSParms_callStaticFunction& ioParms, EntityCollection* inSelection);  // EntitySelectionIterator : Find(string : query)
+	static void _sum(XBOX::VJSParms_callStaticFunction& ioParms, EntityCollection* inSelection);  // number : sum(attribute)
+	static void _min(XBOX::VJSParms_callStaticFunction& ioParms, EntityCollection* inSelection);  // number : min(attribute)
+	static void _max(XBOX::VJSParms_callStaticFunction& ioParms, EntityCollection* inSelection);  // number : max(attribute)
+	static void _average(XBOX::VJSParms_callStaticFunction& ioParms, EntityCollection* inSelection);  // number : average(attribute)
+	static void _compute(XBOX::VJSParms_callStaticFunction& ioParms, EntityCollection* inSelection);  // object : compute(string : attributeList | ( EntityAttribute, EntityAttribute, EntityAttribute...))
 
-	static void _and(XBOX::VJSParms_callStaticFunction& ioParms, CDB4DSelection* inSelection);  // Collection : and(otherCollection)
-	static void _or(XBOX::VJSParms_callStaticFunction& ioParms, CDB4DSelection* inSelection);  // Collection : or(otherCollection)
-	static void _minus(XBOX::VJSParms_callStaticFunction& ioParms, CDB4DSelection* inSelection);  // Collection : minus(otherCollection)
+	static void _and(XBOX::VJSParms_callStaticFunction& ioParms, EntityCollection* inSelection);  // Collection : and(otherCollection)
+	static void _or(XBOX::VJSParms_callStaticFunction& ioParms, EntityCollection* inSelection);  // Collection : or(otherCollection)
+	static void _minus(XBOX::VJSParms_callStaticFunction& ioParms, EntityCollection* inSelection);  // Collection : minus(otherCollection)
 
-	static void _getLength( XBOX::VJSParms_getProperty& ioParms, CDB4DSelection* inSelection);
-	static void _getQueryPlan( XBOX::VJSParms_getProperty& ioParms, CDB4DSelection* inSelection);
-	static void _getQueryPath( XBOX::VJSParms_getProperty& ioParms, CDB4DSelection* inSelection);
+	static void _getLength( XBOX::VJSParms_getProperty& ioParms, EntityCollection* inSelection);
+	static void _getQueryPlan( XBOX::VJSParms_getProperty& ioParms, EntityCollection* inSelection);
+	static void _getQueryPath( XBOX::VJSParms_getProperty& ioParms, EntityCollection* inSelection);
 
-	static void _toJSON(XBOX::VJSParms_callStaticFunction& ioParms, CDB4DSelection* inSelection);   // string : _toJSON
+	static void _toJSON(XBOX::VJSParms_callStaticFunction& ioParms, EntityCollection* inSelection);   // string : _toJSON
 
 	
 };

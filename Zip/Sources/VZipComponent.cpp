@@ -59,20 +59,19 @@ VComponentLibrary* VZipComponent::GetComponentLibrary()
 							CompressMemoryBlock 
 ************************************************************************************************** */
 
-VError VZipComponent::CompressMemoryBlock(void* inBlockToCompress, sLONG8 blockSize, EZipCompressionLevel inCompressionLevel, XBOX::VStream* outCompressedStream )
+VError VZipComponent::CompressMemoryBlock(void* inBlockToCompress, sLONG8 inBlockSize, EZipCompressionLevel inCompressionLevel, XBOX::VStream* outCompressedStream )
 {
 	if(!testAssert(inBlockToCompress != NULL))
 		return VE_INVALID_PARAMETER;
 	if(!testAssert(outCompressedStream != NULL))
 		return VE_INVALID_PARAMETER;
-	if(!testAssert(blockSize > 0))
+	if(!testAssert(inBlockSize > 0))
 		return VE_INVALID_PARAMETER;	
 	
 	VError errorToReturn = VE_OK;
 	
-	if(!outCompressedStream->IsWriting()){
+	if(!outCompressedStream->IsWriting())
 		errorToReturn = vThrowError(VE_STREAM_NOT_OPENED);
-	}
 		
 	
 	if (errorToReturn == VE_OK)
@@ -82,49 +81,49 @@ VError VZipComponent::CompressMemoryBlock(void* inBlockToCompress, sLONG8 blockS
 		// If best shrunk is required, the buffer size is 500Ko, but it will compress more slowly. 
 		// Otherwise, the buffer size is 1Mo.
 		sLONG8 bufferMaxSize = 500000;
+		sLONG8 remainingDataSize = inBlockSize;
 		
 		bool useGzip = false;
-		switch(inCompressionLevel){
-			
-			case  eCompressionLevel_BestCompression:
-			case  eCompressionLevel_Store:
+		switch(inCompressionLevel)
+		{
+		case  eCompressionLevel_BestCompression:
+		case  eCompressionLevel_Store:
+			bufferMaxSize = 500000;
+			break;
+
+		case  eCompressionLevel_Default:
+			bufferMaxSize = 1000000;
+			break;
+
+		case  eCompressionLevel_BestSpeed:
+			bufferMaxSize = 5000000;
+			break;
+
+		case  eCompressionLevel_GZip_BestCompression:
+			{
+				useGzip = true;
 				bufferMaxSize = 500000;
-				break;
-			
-			case  eCompressionLevel_Default:
-				bufferMaxSize = 1000000;
-				break;
-			
-			case  eCompressionLevel_BestSpeed:
+			}
+			break;
+
+		case  eCompressionLevel_GZip_BestSpeed:
+			{
+				useGzip = true;
 				bufferMaxSize = 5000000;
-				break;
+			}
+			break;
 
-			case  eCompressionLevel_GZip_BestCompression:
-				{
-					useGzip = true;
-					bufferMaxSize = 500000;
-				}
-				break;
-
-			case  eCompressionLevel_GZip_BestSpeed:
-				{
-					useGzip = true;
-					bufferMaxSize = 5000000;
-				}
-				break;
-
-			default:
-				bufferMaxSize = ((sLONG)inCompressionLevel <= 3) ? 5000000 : 1000000; // see deflate.c (zlib)
-				break;
+		default:
+			bufferMaxSize = ((sLONG)inCompressionLevel <= 3) ? 5000000 : 1000000; // see deflate.c (zlib)
+			break;
 		}
 		
-		sLONG8 sizeToCompressOnSingleStep = blockSize;
+		sLONG8 sizeToCompressOnSingleStep = remainingDataSize;
 		
 		// if the size of the block to compress is bigger than the bufferSizeMax, the compression will be done in several times, compressing  bufferMaxSize of data each time. 
 		// Otherwise, it will be done on a single step.
-		if (sizeToCompressOnSingleStep > bufferMaxSize){
+		if (sizeToCompressOnSingleStep > bufferMaxSize)
 			sizeToCompressOnSingleStep = bufferMaxSize;
-		}
 		
 		
 		// The destination buffer must be bigger than the source buffer (see the libzip doc)
@@ -132,12 +131,12 @@ VError VZipComponent::CompressMemoryBlock(void* inBlockToCompress, sLONG8 blockS
 		
 		
 		Bytef * compressedBuffer = (Bytef *) malloc(compressedBufferLength * sizeof(Bytef));					
-		if(compressedBuffer == NULL){
+		if(compressedBuffer == NULL)
 			errorToReturn = VE_MEMORY_FULL;
-		}			
 		
 		
-		if  (errorToReturn == VE_OK){
+		if  (errorToReturn == VE_OK)
+		{
 			
 			/* initialization of the zlib structure. For info:
 			- next_in/out =  adress of inBlockToCompress/compressedBuffer
@@ -149,7 +148,7 @@ VError VZipComponent::CompressMemoryBlock(void* inBlockToCompress, sLONG8 blockS
 			z_stream zlib_streamToCompress = {0}; 
 			
 			zlib_streamToCompress.next_in = (Bytef*)inBlockToCompress;
-			zlib_streamToCompress.avail_in = 0;
+			zlib_streamToCompress.avail_in = zlib_streamToCompress.total_in = 0;
 			
 			zlib_streamToCompress.next_out = compressedBuffer;
 			zlib_streamToCompress.avail_out = compressedBufferLength;
@@ -157,73 +156,70 @@ VError VZipComponent::CompressMemoryBlock(void* inBlockToCompress, sLONG8 blockS
 			zlib_streamToCompress.zalloc = Z_NULL;
 			zlib_streamToCompress.zfree = Z_NULL;
 			zlib_streamToCompress.opaque = NULL;		
-			
-			
-			if (errorToReturn == VE_OK){
 				
-				// initializing compression
-				int compressionError = Z_OK;
-				if (useGzip) //JQ 05/02/2009: added Gzip compression
-					compressionError = deflateInit2(&zlib_streamToCompress, ((int)inCompressionLevel) & (~16), Z_DEFLATED, 15+16, 8, Z_DEFAULT_STRATEGY);
-				else
-					compressionError = deflateInit(&zlib_streamToCompress, inCompressionLevel);
+			// initializing compression
+			int compressionError = Z_OK;
+			if (useGzip) //JQ 05/02/2009: added Gzip compression
+				compressionError = deflateInit2(&zlib_streamToCompress, ((int)inCompressionLevel) & (~16), Z_DEFLATED, 15+16, 8, Z_DEFAULT_STRATEGY);
+			else
+				compressionError = deflateInit(&zlib_streamToCompress, inCompressionLevel);
 
-				if (compressionError == Z_OK){
-					
-					do{
-						
-						// the remaining size of data to compress must always be ranging between 0 and blockSize.
-						assert(zlib_streamToCompress.total_in >= 0);
-						assert(zlib_streamToCompress.total_in <= blockSize);
-						
-						
-						// For large streams, after several steps for exemple, we want to compress only the remaining data to compress in the inBlockToCompress 
-						if (blockSize - zlib_streamToCompress.total_in < sizeToCompressOnSingleStep){
-							sizeToCompressOnSingleStep = blockSize - zlib_streamToCompress.total_in;
-						}
-						
-						// if there are still data to compress, we update avail_in.
-						if (blockSize - zlib_streamToCompress.total_in > 0) {
-							zlib_streamToCompress.avail_in = (uInt)sizeToCompressOnSingleStep;
-						}
-						
-						
-						compressionError = deflate(&zlib_streamToCompress, Z_FINISH); // YT 06-Jul-2011 - was: Z_SYNC_FLUSH
-						
-						
-						if (compressionError != Z_OK && compressionError != Z_STREAM_END) {
-							if (compressionError == Z_VERSION_ERROR)
-								errorToReturn = vThrowError(VE_ZIP_BAD_VERSION);
-							else
-								errorToReturn = vThrowError(VE_ZIP_COMPRESSION_FAILED);
-						}
-						
-						
-						// the remaining free space in the compressedBuffer must always be ranging between 0 and compressedBufferLength 
-						assert(zlib_streamToCompress.avail_out >= 0);
-						assert(zlib_streamToCompress.avail_out <= compressedBufferLength);
-						
-						
-						// if there is some compressed data in the compressed buffer, they must be written in the outCompressedStream.
-						if (zlib_streamToCompress.avail_out < compressedBufferLength){
-							errorToReturn = outCompressedStream -> PutData(compressedBuffer, compressedBufferLength - zlib_streamToCompress.avail_out);
-							if (errorToReturn != VE_OK){
-								errorToReturn = vThrowError(VE_STREAM_CANNOT_WRITE);
-								break;
-							}
-							
-							zlib_streamToCompress.next_out = (Bytef *)compressedBuffer;
-							zlib_streamToCompress.avail_out = compressedBufferLength;
-						}
-						blockSize-=zlib_streamToCompress.total_in;
+			int flushOption = Z_NO_FLUSH;
+			while ((compressionError == Z_OK) && (remainingDataSize > 0))
+			{
+				// the remaining size of data to compress must always be ranging between 0 and inBlockSize.
+				assert(zlib_streamToCompress.total_in >= 0);
+				assert(zlib_streamToCompress.total_in <= inBlockSize);
+
+				// For large streams, after several steps for exemple, we want to compress only the remaining data to compress in the inBlockToCompress 
+				if (inBlockSize - zlib_streamToCompress.total_in < sizeToCompressOnSingleStep)
+					sizeToCompressOnSingleStep = inBlockSize - zlib_streamToCompress.total_in;
+
+				// if there are still data to compress, we update avail_in.
+				if (inBlockSize - zlib_streamToCompress.total_in > 0)
+					zlib_streamToCompress.avail_in = (uInt)sizeToCompressOnSingleStep;
+
+				flushOption = ((remainingDataSize - sizeToCompressOnSingleStep) > 0) ? Z_NO_FLUSH : Z_FINISH; // YT 10-Dec-2012 - ACI0079552
+				compressionError = deflate(&zlib_streamToCompress, flushOption);
+
+
+				if (compressionError != Z_OK && compressionError != Z_STREAM_END)
+				{
+					if (compressionError == Z_VERSION_ERROR)
+						errorToReturn = vThrowError(VE_ZIP_BAD_VERSION);
+					else
+						errorToReturn = vThrowError(VE_ZIP_COMPRESSION_FAILED);
+				}
+
+
+				// the remaining free space in the compressedBuffer must always be ranging between 0 and compressedBufferLength 
+				assert(zlib_streamToCompress.avail_out >= 0);
+				assert(zlib_streamToCompress.avail_out <= compressedBufferLength);
+
+
+				// if there is some compressed data in the compressed buffer, they must be written in the outCompressedStream.
+				if (zlib_streamToCompress.avail_out < compressedBufferLength)
+				{
+					errorToReturn = outCompressedStream -> PutData(compressedBuffer, compressedBufferLength - zlib_streamToCompress.avail_out);
+					if (errorToReturn != VE_OK)
+					{
+						errorToReturn = vThrowError(VE_STREAM_CANNOT_WRITE);
+						break;
 					}
-					//we loop until an error occured or the size of data to compress is null.
-					while(errorToReturn == VE_OK && blockSize > 0);
-					
-					
-					deflateEnd(&zlib_streamToCompress);
-				}	
-			}
+
+					zlib_streamToCompress.next_out = (Bytef *)compressedBuffer;
+					zlib_streamToCompress.avail_out = compressedBufferLength;
+				}
+				remainingDataSize -= sizeToCompressOnSingleStep;
+			} // while ((compressionError == Z_OK) && (remainingDataSize > 0))
+
+			deflateEnd(&zlib_streamToCompress);
+
+
+			if ((compressionError == Z_OK || compressionError == Z_STREAM_END) && remainingDataSize<=0 )
+				errorToReturn = VE_OK;
+			else
+				errorToReturn = VE_UNKNOWN_ERROR;
 		}
 		
 		if (compressedBuffer != NULL)
@@ -346,7 +342,8 @@ VError VZipComponent::ExpandMemoryBlock(void* inCompressedBlock, sLONG8 blockSiz
 					
 				}
 				// we stop looping if there are no more data to expand, or if an error occured in decompression 
-				while(errorToReturn == VE_OK  &&  (blockSize - zlib_compressedStream.total_in) > 0);
+				while(errorToReturn == VE_OK  && decompressionError != Z_STREAM_END);
+				// DH 22-Feb-2013 In case the blob is corrupted we have to stop on Z_STREAM_END even if blockSize>zlib_compressedStream.total_in otherwise we loop indefinitely (see http://www.zlib.net/zlib_how.html for usage example)
 				
 				inflateEnd(&zlib_compressedStream);	// YT 13-Mar-2009 - ACI0060740
 			}

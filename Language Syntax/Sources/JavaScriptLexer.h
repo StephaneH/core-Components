@@ -129,13 +129,6 @@ private:
 	int SkipSemiColons();
 	int ConsumePossiblePunctuation( UniChar inChar, TokenList *outTokens );
 
-	#if _DEBUG
-		// The VJavaScriptSyntax constructor has friend acess to the JavaScriptLexer
-		// class so that it can call the Test static function to do unit testing.
-		friend class VJavaScriptSyntax;
-		static void Test( void );
-	#endif
-
 	VString fLastTokenText, fScriptDocText, fRegionName, fLastCommentText;
 	bool fPeeked;
 	bool fConsumedNewLine;

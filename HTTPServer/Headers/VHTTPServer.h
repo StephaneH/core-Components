@@ -45,7 +45,8 @@ public:
 	virtual XBOX::VError					RemoveHTTPServerProject (IHTTPServerProject *inHTTPServerProject);
 	virtual XBOX::VError					AppendHTTPServerProject (IHTTPServerProject *inHTTPServerProject);
 	virtual void							SetRequestLogger (IRequestLogger * inRequestLogger) { fRequestLogger = inRequestLogger; }
-	virtual IHTTPWebsocketHandler *			NewHTTPWebsocketHandler();
+	virtual IHTTPWebsocketServer*			NewHTTPWebsocketServerHandler();
+	virtual IHTTPWebsocketClient*			NewHTTPWebsocketClientHandler();
 	virtual VCacheManager *					GetCacheManager() const { return fCacheManager; }
 
 	IConnectionListener *					FindConnectionListener (const VHTTPServerProjectSettings *inSettings);

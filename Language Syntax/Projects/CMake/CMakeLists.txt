@@ -20,4 +20,4 @@ include_directories(${ComponentsRoot}
   ${XmlIncludeDir})
 
 
-add_dependencies(LanguageSyntax Icu Kernel KernelIPC JavaScript JsCore)
+target_link_libraries(LanguageSyntax JavaScript Kernel KernelIPC)

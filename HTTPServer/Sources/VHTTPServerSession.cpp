@@ -400,7 +400,13 @@ XBOX::VError VHTTPServerSession::HandleRequest()
 	if (XBOX::VE_OK != error)
 	{
 		if (COMPONENT_FROM_VERROR (error) != CHTTPServer::Component_Type)
-			error = VHTTPServer::ThrowError (VE_HTTP_PROTOCOL_INTERNAL_SERVER_ERROR, STRING_ERROR_INVALID_PARAMETER);
+		{
+			XBOX::VString errorString;
+			XBOX::VString componentSignature;
+			componentSignature.FromOsType ((OsType)COMPONENT_FROM_VERROR (error));
+			errorString.Printf ("Component \'%S\' throw an error: %d", &componentSignature, ERRCODE_FROM_VERROR (error));
+			error = VHTTPServer::ThrowError (VE_HTTP_PROTOCOL_INTERNAL_SERVER_ERROR, errorString);
+		}
 
 		error = fHTTPResponse->ReplyWithStatusCode ((HTTPStatusCode)ERRCODE_FROM_VERROR (error)); // YT 31-Aug-2010 - Reset error value (to prevent VTCPEndPoint to be closed)
 	}
@@ -424,7 +430,7 @@ XBOX::VError VHTTPServerSession::HandleRequest()
 
 	/* No Keep-Live for redirections, authentications or erroneous responses */
 	if (fKeepAlive)
-		fKeepAlive = (HTTP_OK == fHTTPResponse->GetResponseStatusCode());
+		fKeepAlive = ((HTTP_OK == fHTTPResponse->GetResponseStatusCode()) || (HTTP_CONTINUE == fHTTPResponse->GetResponseStatusCode()));
 
 	/* Reset Keep-Live when limit is reached */
 	if (IsMaxConnectionsReached())
@@ -461,7 +467,7 @@ XBOX::VError VHTTPServerSession::HandleRequest()
 	/* Set Connection header */
 	if (fKeepAlive)
 	{
-		fHTTPResponse->AddResponseHeader (STRING_HEADER_CONNECTION, STRING_HEADER_VALUE_KEEP_ALIVE);
+		fHTTPResponse->AddResponseHeader (STRING_HEADER_CONNECTION, STRING_HEADER_VALUE_KEEP_ALIVE, false);
 
 #if HTTP_SERVER_VERBOSE_MODE
 		/* The Keep-Alive field is NOT a standard HTTP header field and may not be supported by all clients. */
@@ -472,7 +478,7 @@ XBOX::VError VHTTPServerSession::HandleRequest()
 	}
 	else
 	{
-		fHTTPResponse->AddResponseHeader (STRING_HEADER_CONNECTION, STRING_HEADER_VALUE_CLOSE);
+		fHTTPResponse->AddResponseHeader (STRING_HEADER_CONNECTION, STRING_HEADER_VALUE_CLOSE, false);
 	}
 
 #if HTTP_SERVER_VERBOSE_MODE && HTTP_SERVER_DETAILED_OPERATIONS_TIMES
@@ -562,10 +568,11 @@ XBOX::VError VHTTPServerSession::HandleRequest()
 		}
 		else
 		{
-			logMessage.AppendCString ("Error:");
+			logMessage.AppendCString ("Error: ");
 			logMessage.AppendLong (ERRCODE_FROM_VERROR (error));
-			logMessage.AppendCString (" Component:");
-			logMessage.AppendLong (COMPONENT_FROM_VERROR (error));
+			logMessage.AppendCString (" Component: \'");
+			logMessage.AppendOsType ((OsType)COMPONENT_FROM_VERROR (error));
+			logMessage.AppendCString ("\'");
 
 #if LOG_IN_CONSOLE
 			::DebugMsg ("\tVHTTPNetworkConnection::HandleRequest() returns error %d\n", ERRCODE_FROM_VERROR(error));

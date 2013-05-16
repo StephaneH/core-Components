@@ -16,4 +16,5 @@ include_directories(${ComponentsRoot}
   ${SecurityManagerRoot}/Interfaces
   ${XBoxRoot})
 
-#add_dependencies(SecurityManager Icu Kernel KernelIPC )
+
+target_link_libraries(SecurityManager JavaScript Kernel KernelIPC)

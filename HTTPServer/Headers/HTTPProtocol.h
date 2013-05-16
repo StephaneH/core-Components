@@ -47,6 +47,7 @@ public:
 	static void									GetBestQualifiedValueUsingQFactor (const XBOX::VString& inFieldValue, XBOX::VString& outValue);
 
 	static XBOX::CharSet						NegotiateCharSet (XBOX::VString& inAcceptCharsetHeaderValue);
+	static bool									IsAcceptableCharSet (const XBOX::VString& inAcceptValue, const XBOX::CharSet inCharSet);
 
 	static bool									IsValidRequestLine (const XBOX::VString& inRequestLine);
 	static bool									IsAcceptableMediaType (const XBOX::VString& inAcceptValue, const XBOX::VString& inContentType);

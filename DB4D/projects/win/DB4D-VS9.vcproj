@@ -64,6 +64,8 @@
 				Name="VCLinkerTool"
 				AdditionalDependencies="ws2_32.lib WinMM.Lib"
 				OutputFile="$(OutDir)DB4DDebug.bundle\DB4DDebug.dll"
+				AdditionalLibraryDirectories=""
+				DelayLoadDLLs=""
 				RandomizedBaseAddress="1"
 				DataExecutionPrevention="0"
 			/>
@@ -134,6 +136,8 @@
 				Name="VCLinkerTool"
 				AdditionalDependencies="ws2_32.lib"
 				OutputFile="$(OutDir)DB4DDebug.bundle\DB4DDebug.dll"
+				AdditionalLibraryDirectories=""
+				DelayLoadDLLs=""
 				RandomizedBaseAddress="1"
 				DataExecutionPrevention="0"
 			/>
@@ -206,6 +210,8 @@
 				Name="VCLinkerTool"
 				AdditionalDependencies="ws2_32.lib WinMM.Lib"
 				OutputFile="$(OutDir)DB4D.bundle\DB4D.dll"
+				AdditionalLibraryDirectories=""
+				DelayLoadDLLs=""
 				OptimizeReferences="2"
 				EnableCOMDATFolding="2"
 				RandomizedBaseAddress="1"
@@ -281,6 +287,8 @@
 				Name="VCLinkerTool"
 				AdditionalDependencies="ws2_32.lib"
 				OutputFile="$(OutDir)DB4D.bundle\DB4D.dll"
+				AdditionalLibraryDirectories=""
+				DelayLoadDLLs=""
 				OptimizeReferences="2"
 				EnableCOMDATFolding="2"
 				RandomizedBaseAddress="1"
@@ -355,6 +363,8 @@
 				Name="VCLinkerTool"
 				AdditionalDependencies="ws2_32.lib WinMM.Lib"
 				OutputFile="$(OutDir)DB4DBeta.bundle\DB4DBeta.dll"
+				AdditionalLibraryDirectories=""
+				DelayLoadDLLs=""
 				OptimizeReferences="2"
 				EnableCOMDATFolding="2"
 				RandomizedBaseAddress="1"
@@ -430,6 +440,8 @@
 				Name="VCLinkerTool"
 				AdditionalDependencies="ws2_32.lib"
 				OutputFile="$(OutDir)DB4DBeta.bundle\DB4DBeta.dll"
+				AdditionalLibraryDirectories=""
+				DelayLoadDLLs=""
 				OptimizeReferences="2"
 				EnableCOMDATFolding="2"
 				RandomizedBaseAddress="1"
@@ -810,14 +822,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\Sources\RemoteModel.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\..\Sources\RemoteModel.h"
-				>
-			</File>
-			<File
 				RelativePath="..\..\Sources\Rest.cpp"
 				>
 			</File>
@@ -948,6 +952,10 @@
 			</File>
 			<File
 				RelativePath="..\..\Resources\ModelLoadTime.js"
+				>
+			</File>
+			<File
+				RelativePath="..\..\Resources\RemoteMethodCall.js"
 				>
 			</File>
 			<File

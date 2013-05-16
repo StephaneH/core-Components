@@ -50,13 +50,6 @@ private:
 
 	VLexerStringInput *fStrLexerInput;
 
-	#if _DEBUG
-		// The VJavaScriptSyntax constructor has friend acess to the ScriptDocLexer
-		// class so that it can call the Test static function to do unit testing.
-		friend class VJavaScriptSyntax;
-		static void Test( void );
-	#endif
-
 protected:
 	virtual void ReportLexerError( VError inError, const char *inMessage ) {}
 

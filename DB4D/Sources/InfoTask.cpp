@@ -57,7 +57,11 @@ void BaseTaskInfo::xinit()
 	fRemoteTransactionLevel = 0;
 	fParent = nil;
 	fRetainsParent = false;
+	#if WITH_ASSERT
+	fMustDescribeQuery = true;
+	#else
 	fMustDescribeQuery = false;
+	#endif
 	fWaitForLockTimer = 0;
 	curtrans = nil;
 	curtransForNeedsByte = nil;
@@ -146,7 +150,7 @@ void BaseTaskInfo::DoCallOnRefCount0()
 		{
 			if (fParent->GetRefCount() > 1)
 			{
-				VImpCreator<VDB4DContext>::GetImpObject(fParent)->NowOwns(this);
+				dynamic_cast<VDB4DContext*>(fParent)->NowOwns(this);
 			}
 			fParent->Release();
 		}
@@ -2204,7 +2208,7 @@ UniChar GetWildChar(const BaseTaskInfo* context)
 
 Boolean BaseTaskInfo::MatchBaseInContext(CDB4DBaseContextPtr InBaseContext) const
 {
-	if (GetBase() == VImpCreator<BaseTaskInfo>::GetImpObject(InBaseContext)->GetBase()) 
+	if (GetBase() == dynamic_cast<BaseTaskInfo*>(InBaseContext)->GetBase()) 
 		return true;
 	else 
 		return false;
@@ -2302,7 +2306,7 @@ VError BaseTaskInfo::SetRelationAutoLoadNto1(const CDB4DRelation* inRel, DB4D_Re
 		return VE_DB4D_WRONG_RELATIONREF;
 	else
 	{
-		const Relation* rel = VImpCreator<VDB4DRelation>::GetImpObject(inRel)->GetRel();
+		const Relation* rel = dynamic_cast<const VDB4DRelation*>(inRel)->GetRel();
 		return SetRelationAutoLoadNto1(rel, inAutoLoadState);
 	}
 }
@@ -2314,7 +2318,7 @@ VError BaseTaskInfo::SetRelationAutoLoad1toN(const CDB4DRelation* inRel, DB4D_Re
 		return VE_DB4D_WRONG_RELATIONREF;
 	else
 	{
-		const Relation* rel = VImpCreator<VDB4DRelation>::GetImpObject(inRel)->GetRel();
+		const Relation* rel = dynamic_cast<const VDB4DRelation*>(inRel)->GetRel();
 		return SetRelationAutoLoad1toN(rel, inAutoLoadState);
 	}
 }
@@ -2326,7 +2330,7 @@ Boolean BaseTaskInfo::IsRelationAutoLoadNto1(const CDB4DRelation* inRel) const
 	if (inRel != nil)
 	{
 		Boolean unknown;
-		const Relation* rel = VImpCreator<VDB4DRelation>::GetImpObject(inRel)->GetRel();
+		const Relation* rel = dynamic_cast<const VDB4DRelation*>(inRel)->GetRel();
 		res = IsRelationAutoLoadNto1(rel, unknown);
 	}
 
@@ -2340,7 +2344,7 @@ Boolean BaseTaskInfo::IsRelationAutoLoad1toN(const CDB4DRelation* inRel) const
 	if (inRel != nil)
 	{
 		Boolean unknown;
-		const Relation* rel = VImpCreator<VDB4DRelation>::GetImpObject(inRel)->GetRel();
+		const Relation* rel = dynamic_cast<const VDB4DRelation*>(inRel)->GetRel();
 		res = IsRelationAutoLoad1toN(rel, unknown);
 	}
 
@@ -2355,7 +2359,7 @@ DB4D_Rel_AutoLoadState BaseTaskInfo::GetRelationAutoLoadNto1State(const CDB4DRel
 	if (inRel != nil)
 	{
 		Boolean unknown;
-		const Relation* rel = VImpCreator<VDB4DRelation>::GetImpObject(inRel)->GetRel();
+		const Relation* rel = dynamic_cast<const VDB4DRelation*>(inRel)->GetRel();
 		Boolean res2 = IsRelationAutoLoadNto1(rel, unknown);
 		if (!unknown)
 			if (res2)
@@ -2375,7 +2379,7 @@ DB4D_Rel_AutoLoadState BaseTaskInfo::GetRelationAutoLoad1toNState(const CDB4DRel
 	if (inRel != nil)
 	{
 		Boolean unknown;
-		const Relation* rel = VImpCreator<VDB4DRelation>::GetImpObject(inRel)->GetRel();
+		const Relation* rel = dynamic_cast<const VDB4DRelation*>(inRel)->GetRel();
 		Boolean res2 = IsRelationAutoLoad1toN(rel, unknown);
 		if (!unknown)
 			if (res2)
@@ -2390,19 +2394,19 @@ DB4D_Rel_AutoLoadState BaseTaskInfo::GetRelationAutoLoad1toNState(const CDB4DRel
 
 void BaseTaskInfo::ExcludeTableFromAutoRelationDestination(CDB4DTable* inTableToExclude)
 {
-	ExcludeTableFromAutoRelationDestination(VImpCreator<VDB4DTable>::GetImpObject(inTableToExclude)->GetTable());
+	ExcludeTableFromAutoRelationDestination(dynamic_cast<VDB4DTable*>(inTableToExclude)->GetTable());
 }
 
 
 void BaseTaskInfo::IncludeBackTableToAutoRelationDestination(CDB4DTable* inTableToInclude)
 {
-	IncludeBackTableToAutoRelationDestination(VImpCreator<VDB4DTable>::GetImpObject(inTableToInclude)->GetTable());
+	IncludeBackTableToAutoRelationDestination(dynamic_cast<VDB4DTable*>(inTableToInclude)->GetTable());
 }
 
 
 Boolean BaseTaskInfo::IsTableExcludedFromAutoRelationDestination(CDB4DTable* inTableToCheck) const
 {
-	return IsTableExcludedFromAutoRelationDestination(VImpCreator<VDB4DTable>::GetImpObject(inTableToCheck)->GetTable());
+	return IsTableExcludedFromAutoRelationDestination(dynamic_cast<VDB4DTable*>(inTableToCheck)->GetTable());
 }
 
 /*
@@ -2433,7 +2437,7 @@ const VValueBag* VDB4DBaseContext::RetainExtraData() const
 LockPtr BaseTaskInfo::LockDataBaseDef(const CDB4DBase* inBase, sLONG inTimeOut, Boolean inForReadOnly, const VValueBag **outLockerExtraData)
 {
 	if (testAssert(inBase != nil))
-		return (LockPtr)LockDataBaseDef(VImpCreator<VDB4DBase>::GetImpObject(inBase)->GetBase(), inTimeOut, inForReadOnly, outLockerExtraData);
+		return (LockPtr)LockDataBaseDef(dynamic_cast<const VDB4DBase*>(inBase)->GetBase(), inTimeOut, inForReadOnly, outLockerExtraData);
 	else
 		return nil;
 }
@@ -2442,7 +2446,7 @@ LockPtr BaseTaskInfo::LockDataBaseDef(const CDB4DBase* inBase, sLONG inTimeOut, 
 LockPtr BaseTaskInfo::LockTableDef(const CDB4DTable* inTable, Boolean inWithFields, sLONG inTimeOut, Boolean inForReadOnly, const VValueBag **outLockerExtraData)
 {
 	if (testAssert(inTable != nil))
-		return (LockPtr)LockTableDef(VImpCreator<VDB4DTable>::GetImpObject(inTable)->GetTable(), inWithFields, inTimeOut, inForReadOnly, outLockerExtraData);
+		return (LockPtr)LockTableDef(dynamic_cast<const VDB4DTable*>(inTable)->GetTable(), inWithFields, inTimeOut, inForReadOnly, outLockerExtraData);
 	else
 		return nil;
 }
@@ -2451,7 +2455,7 @@ LockPtr BaseTaskInfo::LockTableDef(const CDB4DTable* inTable, Boolean inWithFiel
 LockPtr BaseTaskInfo::LockFieldDef(const CDB4DField* inField, sLONG inTimeOut, Boolean inForReadOnly, const VValueBag **outLockerExtraData)
 {
 	if (testAssert(inField != nil))
-		return (LockPtr)LockFieldDef(VImpCreator<VDB4DField>::GetImpObject(inField)->GetField(), inTimeOut, inForReadOnly, outLockerExtraData);
+		return (LockPtr)LockFieldDef(dynamic_cast<const VDB4DField*>(inField)->GetField(), inTimeOut, inForReadOnly, outLockerExtraData);
 	else
 		return nil;
 }
@@ -2460,7 +2464,7 @@ LockPtr BaseTaskInfo::LockFieldDef(const CDB4DField* inField, sLONG inTimeOut, B
 LockPtr BaseTaskInfo::LockRelationDef(const CDB4DRelation* inRelation, Boolean inWithRelatedFields, sLONG inTimeOut, Boolean inForReadOnly, const VValueBag **outLockerExtraData)
 {
 	if (testAssert(inRelation != nil))
-		return (LockPtr)LockRelationDef(VImpCreator<VDB4DRelation>::GetImpObject(inRelation)->GetRel(), inWithRelatedFields, inTimeOut, inForReadOnly, outLockerExtraData);
+		return (LockPtr)LockRelationDef(dynamic_cast<const VDB4DRelation*>(inRelation)->GetRel(), inWithRelatedFields, inTimeOut, inForReadOnly, outLockerExtraData);
 	else
 		return nil;
 }
@@ -2469,7 +2473,7 @@ LockPtr BaseTaskInfo::LockRelationDef(const CDB4DRelation* inRelation, Boolean i
 LockPtr BaseTaskInfo::LockIndexDef(const CDB4DIndex* inIndex, sLONG inTimeOut, Boolean inForReadOnly, const VValueBag **outLockerExtraData)
 {
 	if (testAssert(inIndex != nil))
-		return (LockPtr)LockIndexDef(VImpCreator<VDB4DIndex>::GetImpObject(inIndex)->GetInd(), inTimeOut, inForReadOnly, outLockerExtraData);
+		return (LockPtr)LockIndexDef(dynamic_cast<const VDB4DIndex*>(inIndex)->GetInd(), inTimeOut, inForReadOnly, outLockerExtraData);
 	else
 		return nil;
 }
@@ -2670,7 +2674,7 @@ CDB4DRemoteRecordCache* BaseTaskInfo::StartCachingRemoteRecords(CDB4DSelection* 
 		{
 			RemoteRecordCache* remoterecords = result->GetRemoteRecordCache();
 
-			err = remoterecords->StartCachingRemoteRecords(VImpCreator<VDB4DSelection>::GetImpObject(inSel)->GetSel(), FromRecIndex, ToRecIndex, inWayOfLocking);
+			err = remoterecords->StartCachingRemoteRecords(dynamic_cast<VDB4DSelection*>(inSel)->GetSel(), FromRecIndex, ToRecIndex, inWayOfLocking);
 		}
 
 		if (err != VE_OK)
@@ -2706,6 +2710,8 @@ CDB4DContext* BaseTaskInfo::GetContextOwner()
 	if (fParent == nil)
 	{
 		VDB4DContext* xcontext = new VDB4DContext(fUserSession, fJSContext, fIsLocal);
+		VDBMgr::GetManager()->RegisterContext(xcontext);
+		
 		fParent = xcontext;
 		//BaseTaskInfo* thethis = const_cast<BaseTaskInfo*>(this);
 		xcontext->ContainButDoesNotOwn(this);
@@ -2730,7 +2736,7 @@ VDB4DContext* BaseTaskInfo::getContextOwner() const
 	if (fParent == nil)
 		return nil;
 	else
-		return VImpCreator<VDB4DContext>::GetImpObject(fParent);
+		return dynamic_cast<VDB4DContext*>(fParent);
 }
 
 
@@ -2806,7 +2812,40 @@ void BaseTaskInfo::CleanUpForReuse()
 	StErrorContextInstaller errs(false);
 	while (curtrans != nil)
 		RollBackTransaction();
+	fRemotePages.clear();
+	for (DataMap::iterator cur = fDataMap.begin(), end = fDataMap.end(); cur != end; ++cur)
+	{
+		IRefCountable* session = cur->second;
+		if (session == nil)
+		{
+			assert(false);
+			sLONG xdebug = 1; // put a break here
+		}
+		else
+			session->Release();
+	}
+	fDataMap.clear();
 }
+
+
+RemotePage* BaseTaskInfo::GetRemotePage(RemoteEntityCollection* sel)
+{
+	// no need for a mutex
+	return &(fRemotePages[sel]);
+}
+
+
+IRefCountable* BaseTaskInfo::GetExtraData(void* selector)
+{
+	return fDataMap[selector];
+}
+
+
+void BaseTaskInfo::SetExtraData(void* selector, IRefCountable* data)
+{
+	fDataMap[selector] = data;
+}
+
 
 
 
@@ -2922,7 +2961,7 @@ BaseTaskInfo* ConvertContext(CDB4DBaseContext *inContext)
 	BaseTaskInfo* context = nil;
 	if (inContext != nil)
 	{
-		context = (VImpCreator<BaseTaskInfo>::GetImpObject(inContext));
+		context = (dynamic_cast<BaseTaskInfo*>(inContext));
 	}
 
 	return context;

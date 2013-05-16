@@ -887,6 +887,9 @@ class DB4DArrayOfConstDirectValues : public DB4DArrayOfConstValues
 
 		virtual Boolean Find(XBOX::VValueSingle& inValue, const XBOX::VCompareOptions& inOptions) const
 		{
+#if COMPIL_VISUAL
+			tagada++;
+#endif
 			assert(false);  // must be specialized
 			return false;
 		}
@@ -958,6 +961,10 @@ DB4DArrayOfConstValues* DB4DArrayOfDirectValues<Type>::GenerateConstArrayOfValue
 
 
 template <>
+Boolean DB4DArrayOfConstDirectValues<uBYTE>::Find(XBOX::VValueSingle& inValue, const XBOX::VCompareOptions& inOptions) const;
+
+
+template <>
 inline DB4DArrayOfConstDirectValues<uBYTE>::DB4DArrayOfConstDirectValues(DB4DArrayOfValues* inSource, sLONG inDataKind, const VCompareOptions& inOptions)
 {
 	typedef struct LE_BOOL
@@ -989,6 +996,9 @@ inline DB4DArrayOfConstDirectValues<uBYTE>::DB4DArrayOfConstDirectValues(DB4DArr
 
 
 						/* ---------------------- */
+
+template <>
+Boolean DB4DArrayOfConstDirectValues<Real>::Find(XBOX::VValueSingle& inValue, const XBOX::VCompareOptions& inOptions) const;
 
 
 template <>
@@ -1062,6 +1072,10 @@ inline Boolean DB4DArrayOfConstDirectValues<QuickString>::FindWithDataPtr(void* 
 }
 
 
+template <>
+Boolean DB4DArrayOfConstDirectValues<QuickString>::Find(XBOX::VValueSingle& inValue, const XBOX::VCompareOptions& inOptions) const;
+
+
 						/* ---------------------- */
 
 
@@ -1127,16 +1141,32 @@ inline bool DB4DArrayOfConstDirectValues<VInlineString>::MyLess::operator ()(con
 
 
 template <>
-inline Boolean DB4DArrayOfConstDirectValues<VInlineString>::Find(XBOX::VValueSingle& inValue, const XBOX::VCompareOptions& inOptions) const
-{
-	VInlineString val;
-	VString ss;
-	inValue.GetString(ss);
-	val.InitWithString(ss);
-	MyLess pred(inOptions);
-	MyLess& predref = pred;
-	return binary_search(fDataArray, fDataArray + fSize, val, predref);
-}
+Boolean DB4DArrayOfConstDirectValues<VInlineString>::Find(XBOX::VValueSingle& inValue, const XBOX::VCompareOptions& inOptions) const;
+
+
+						// -------------------------------------------
+
+template <>
+Boolean DB4DArrayOfConstDirectValues<sBYTE>::Find(XBOX::VValueSingle& inValue, const XBOX::VCompareOptions& inOptions) const;
+
+template <>
+Boolean DB4DArrayOfConstDirectValues<sWORD>::Find(XBOX::VValueSingle& inValue, const XBOX::VCompareOptions& inOptions) const;
+
+template <>
+Boolean DB4DArrayOfConstDirectValues<sLONG>::Find(XBOX::VValueSingle& inValue, const XBOX::VCompareOptions& inOptions) const;
+
+template <>
+Boolean DB4DArrayOfConstDirectValues<sLONG8>::Find(XBOX::VValueSingle& inValue, const XBOX::VCompareOptions& inOptions) const;
+
+template <>
+Boolean DB4DArrayOfConstDirectValues<uLONG8>::Find(XBOX::VValueSingle& inValue, const XBOX::VCompareOptions& inOptions) const;
+
+template <>
+Boolean DB4DArrayOfConstDirectValues<xTime>::Find(XBOX::VValueSingle& inValue, const XBOX::VCompareOptions& inOptions) const;
+
+
+template <>
+Boolean DB4DArrayOfConstDirectValues<VUUIDBuffer>::Find(XBOX::VValueSingle& inValue, const XBOX::VCompareOptions& inOptions) const;
 
 
 						// -------------------------------------------
@@ -1196,6 +1226,19 @@ class AutoSeqNumber : public ObjAlmostInCache
 		virtual void InvalidateValue(DB4D_AutoSeqToken inToken) = 0;
 
 		inline sLONG GetNum() const { return fNum; };
+
+#if debugLeaksAll
+		virtual bool OKToTrackDebug() const
+		{
+			return false;
+		}
+
+		virtual void GetDebugInfo(VString& outText) const
+		{
+			outText = "AutoSequence";
+		}
+
+#endif
 
 	protected:
 		VUUID fID;
@@ -1368,7 +1411,7 @@ public:
 };
 
 
-class VBlob4DWithPtr : public VBlob
+class ENTITY_API VBlob4DWithPtr : public VBlob
 {
 public:
 	typedef VBlob4DWithPtrInfo	InfoType;

@@ -1223,13 +1223,13 @@ void FicheInMem::ClearSaving()
 #if debuglr == 111
 sLONG		FicheInMem::Retain(const char* DebugInfo) const
 {
-	return IRefCountable::Retain(DebugInfo);
+	return IDebugRefCountable::Retain(DebugInfo);
 }
 
 
 sLONG		FicheInMem::Release(const char* DebugInfo) const
 {
-	return IRefCountable::Release(DebugInfo);
+	return IDebugRefCountable::Release(DebugInfo);
 }
 #endif
 
@@ -1338,6 +1338,34 @@ uBOOL FicheInMem::IsModif(sLONG n)
 	{
 		return GetFieldModificationStamp(n) != 0;
 	}
+}
+
+
+ValPtr FicheInMem::GetFieldValue(const EntityAttribute* att, VError& err, bool touch)
+{
+	ValPtr chp = nil;
+	sLONG n;
+	Field* cri = nil;
+
+	if (att != nil)
+	{
+		LocalEntityModel* localModel = dynamic_cast<LocalEntityModel*>(att->GetModel());
+		if (localModel != nil)
+		{
+			cri = localModel->RetainField(att, true);
+		}
+	}
+
+	if (IsFieldValid(cri, &n))
+	{
+		chp = GetNthField(n, err);
+		if (touch)
+			Touch(n);
+	}
+	else
+		err = ThrowError(VE_DB4D_WRONGFIELDREF_IN_RECORD, DBactionFinale);
+
+	return chp;
 }
 
 
@@ -2083,7 +2111,6 @@ ValPtr FicheInMem::GetNthField(sLONG n, VError& err, bool pictAsRaw, bool forQue
 
 				if (chp==nil && !fIsRemote)
 				{
-				
 					cri=asscrit->RetainField(n);
 					if (cri != nil) {
 						if (cri->GetOutsideData())
@@ -2231,6 +2258,39 @@ ValPtr FicheInMem::GetNthField(sLONG n, VError& err, bool pictAsRaw, bool forQue
 					}
 					{
 						// faut il remvoyer une vvalue empty si le champ est detruit ou bien nil comme maintenant ?
+					}
+				}
+				else
+				{
+					if (chp != nil)
+					{
+						if (chp->IsNull())
+						{
+							cri=asscrit->RetainField(n);
+							if (cri != nil)
+							{
+								if (cri->GetAutoSeq() && IsNew() && !fAllAlwaysNull)
+								{
+									StErrorContextInstaller errs(true);
+									AutoSeqNumber* seq = asscrit->GetSeqNum(nil);
+									if (seq != nil)
+									{
+										sLONG8 val = seq->GetNewValue(fToken);
+										if (val != -1)
+											chp->FromLong8(val);
+									}
+									else
+										errs.Flush();
+								}
+								if (cri->GetTyp() == VK_UUID && cri->GetAutoGenerate() && !fAllAlwaysNull)
+								{
+									((VUUID*)chp)->Regenerate();
+									Touch(n);
+								}
+								cri->Release();
+							}
+
+						}
 					}
 				}
 

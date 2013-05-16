@@ -248,7 +248,7 @@ public:
 	/**
 	 * \brief Restores the data file from a backup archive
 	 * \param inBackupManifestPath the the backup manifest path  
-	 * \param inRestoredDataFolderParentPath Path of the folder where the data folder will be restored 
+	 * \param inRestoreFolder Path of the folder where the data folder will be restored 
 	 * \param outRenamedDataFolderPath stores the name of the existing data folder in @inRestoredDataFolderPath, if any.
 	 * \param inProgress the progress object to give feedback about the extraction
 	 * \return true if the restoration succeeded return false otherwise
@@ -270,8 +270,32 @@ public:
 	 * |     |    |-index.waIndex
 	 * </pre>
  	 */
-	virtual bool RestoreDataFolder(const XBOX::VFilePath& inBackupManifestPath,const XBOX::VFilePath& inRestoredDataFolderParentPath,XBOX::VFilePath& outRenamedDataFolderPath,IDB4D_DataToolsIntf* inProgress);
+	virtual bool RestoreDataFolder(const XBOX::VFilePath& inBackupManifestPath,const XBOX::VFilePath& inRestoreFolderPath,XBOX::VFilePath& outRenamedDataFolderPath,IDB4D_DataToolsIntf* inProgress);
 
+	/**
+	 * \brief Restores the journal file from a backup archive
+	 * \param inBackupManifestPath the the backup manifest path  
+	 * \param inRestoreFolderPath Path of the folder where the journal file  
+	 * \param outRenamedJournalPath stores the name of any existing journal file in inRestoreFolderPath, if applicable.
+	 * \param inProgress the progress object to give feedback about the extraction
+	 * \return true if the restoration succeeded return false otherwise
+	 * Example
+	 * <pre>
+	 * VFilePath folder;
+	 * folder.FromFullPath(CVSTR("c:/MyProject/"));
+	 * backupTool->RestoreDataFolder(myManifest,folder,renamed,NULL);
+	 * 
+	 * Will create the following:
+	 * c:/
+	 * |-MyProject
+	 * |     |-journal.waJournal                                <--- this is the restored journal
+	 * |     |
+	 * |     |-journal_REPLACED_2012-12-25_09-36-23.waJournal   <--- that was the pre-existing journal file after being renamed and returned in outRenamedJournalPath
+	 * </pre>
+ 	 */
+	virtual bool RestoreJournal(const XBOX::VFilePath& inBackupManifestPath,const XBOX::VFilePath& inRestoreFolder,XBOX::VFilePath& outRenamedJournalPath,IDB4D_DataToolsIntf* inProgress);
+
+	
 protected:
 	/**
 	 * \brief Backs up the database and sets the specified new journal
@@ -313,6 +337,22 @@ protected:
 	 */
 	bool _RestoreFile(const VBackupManifest& manifest,const IBackupTool::BackupItem& inItem,const XBOX::VFilePath& inRestoredFilePath,IDB4D_DataToolsIntf* inProgress,bool inOverwrite);
 
+	
+	/**
+	 * \brief Restores a file item  from a backup
+	 * \param inPathOfFileToRestore path of the file to be restored
+	 * \param inRestoreFolder path of the folder where the file will be restored  
+	 * \param outFormerFilePath path if @c inPathOfFileToRestore exists in @ inRestoreFolder before restoration, then it will be renamed and the resuting name
+	 * is stored in that parameter
+	 * \param inProgress the operation progress object where extraction progress is notified
+	 * \return true for success or false otherwise
+	 * \throws VE_INVALID_PARAMETER if @c inItem is actually a folder and not a file
+	 * \throws VE_FILE_NOT_FOUND if @c inItem cannot be retrieved from the backup archive
+	 * \throws any file-related error code in case of error
+	 */
+	bool _RestoreFile(const XBOX::VFilePath& inPathOfFileToRestore,const XBOX::VFilePath& inRestoreFolder,XBOX::VFilePath& outFormerFilePath,IDB4D_DataToolsIntf* inProgress);
+
+	
 	/**
 	 * \brief Restores a folder item  from a backup archive
 	 * \param manifest the target backup manifest
@@ -368,7 +408,43 @@ protected:
 	 * \return VE_FILE_NOT_FOUND if no regisry was found
 	 */
 	 XBOX::VError _ReadManifestRegistry(const IBackupSettings& inBackupSettings,XBOX::VectorOfVString& outRegistry);
+};
+
+/**
+ * \brief Journal utility class
+ * \details This class gathers several utility methods to parse and convert DB4D journal file to a couple of formats
+ */
+class VJournalTool: public XBOX::VObject, public IJournalTool
+{
+public:
+	VJournalTool();
+	virtual ~VJournalTool();
+
+	/**
+	 * \brief Opens the specified journal file and converts it into a JS object.
+	 * \param inJournalFile the journal to convert
+	 * \param outOperations the resulting array where each operation is stored as an entry
+	 * \return true on success
+	 */
+	virtual bool ParseJournal(XBOX::VFile& inJournalFile,XBOX::VJSArray& outOperations,IDB4D_DataToolsIntf* inProgressLog);
+
+	/**
+	 * \brief Opens a journal file and converts it into a text file
+	 * \param inJournalFile the journal to convert
+	 * \param inDestinationFile the resulting text file
+	 * \return true on success
+	 */
+	virtual bool ParseJournalToText(XBOX::VFile& inJournalFile,XBOX::VFile& inDestinationFile,IDB4D_DataToolsIntf* inProgressLog);
+
+protected:
+
+	///Converts a journal operation into a VJSObject
+	void _ConvertJournalOperationToJSObject(CDB4DJournalData& inOp,XBOX::VJSObject& ioObject);
+	
+	///Converts a journal operation into a VJSONObject
+	void _ConvertJournalOperationToJSONObject(CDB4DJournalData& inOp,XBOX::VJSONObject& ioObject);
 
 };
+
 #endif //__DB_BACKUP__
 

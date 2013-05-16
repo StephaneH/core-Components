@@ -37,6 +37,42 @@ bool _RemoveProjectPatternFromURL (const XBOX::VString& inProjectPattern, XBOX::
 }
 
 
+static 
+bool _GetCheckRFC822DateValue (const VHTTPHeader& inHeader, const XBOX::VString& inHeaderName, XBOX::VTime& outDateTimeValue, bool bCheckDateValidity = false)
+{
+	XBOX::VString dateTimeString;
+
+	outDateTimeValue.Clear();
+
+	if (inHeader.GetHeaderValue (inHeaderName, dateTimeString) && !dateTimeString.IsEmpty())
+	{
+		outDateTimeValue.FromRfc822String (dateTimeString);
+
+		bool bIsValid = IsVTimeValid (outDateTimeValue);
+
+		/*
+		 *	Check VTime validity. Here, just make an RFC822 Date string and compare to 
+		 *	original header value (More efficient than using a regex pattern...I guess)
+		 */
+		if (bIsValid && bCheckDateValidity)
+		{
+			XBOX::VString tempString;
+			outDateTimeValue.GetRfc822String (tempString);
+
+			if (!HTTPServerTools::EqualASCIIVString (dateTimeString, tempString))
+			{
+				outDateTimeValue.Clear();
+				bIsValid = false;
+			}
+		}
+
+		return bIsValid;
+	}
+
+	return false;
+}
+
+
 //--------------------------------------------------------------------------------------------------
 
 
@@ -58,6 +94,7 @@ VHTTPResponse::VHTTPResponse (VHTTPServer *inServer, XBOX::VTCPEndPoint* inEndPo
 , fMaxCompressionThreshold (-1) // -1 means: Use Default Threshold defined in project settings
 , fHeaderSent (false)
 , fForceCloseSession (false)
+, fUseDefaultCharset (true)
 {
 	fStartRequestTime = XBOX::VSystem::GetCurrentTime();
 }
@@ -102,6 +139,7 @@ void VHTTPResponse::Reset()
 	fMinCompressionThreshold = -1;
 	fMaxCompressionThreshold = -1;
 	fHeaderSent = false;
+	fUseDefaultCharset = true;
 }
 
 
@@ -311,33 +349,13 @@ MimeTypeKind VHTTPResponse::GetContentTypeKind() const
 
 bool VHTTPResponse::GetIfModifiedSinceHeader (XBOX::VTime& outTime)
 {
-	XBOX::VString timeString;
-
-	if (!GetRequestHeader().GetHeaderValue (STRING_HEADER_IF_MODIFIED_SINCE, timeString))
-	{
-		outTime.Clear();
-		return false;
-	}
-
-	outTime.FromRfc822String (timeString);
-
-	return true;
+	return _GetCheckRFC822DateValue (fRequest->GetHTTPHeaders(), STRING_HEADER_IF_MODIFIED_SINCE, outTime);
 }
 
 
 bool VHTTPResponse::GetIfUnmodifiedSinceHeader (XBOX::VTime& outTime)
 {
-	XBOX::VString timeString;
-
-	if (!GetRequestHeader().GetHeaderValue (STRING_HEADER_IF_UNMODIFIED_SINCE, timeString))
-	{
-		outTime.Clear();
-		return false;
-	}
-
-	outTime.FromRfc822String (timeString);
-
-	return true;
+	return _GetCheckRFC822DateValue (fRequest->GetHTTPHeaders(), STRING_HEADER_IF_UNMODIFIED_SINCE, outTime, true); // YT 18-Oct-2012 - WAK0078811
 }
 
 
@@ -399,12 +417,38 @@ XBOX::VError VHTTPResponse::_CompressData()
 
 bool VHTTPResponse::_NormalizeResponseHeader()
 {
-/*
-	HTTP automatic fixes: (to mimic Apache's behavior for CGIs (m.c)
-*/
+	/*
+	 *	Do NOT send additional header with 100-Continue Status
+	 */
+	if (fResponseStatusCode == HTTP_CONTINUE)
+	{
+		GetHeaders().Clear();
+		return true;
+	}
+
+	/*
+	 *	HTTP automatic fixes: to mimic Apache's behavior for CGIs
+	 */
 	XBOX::VString fieldValue;
-	
-	// Special CGI case: the cgi author can use the Status field to set the response code
+
+	/*
+	 *	Write Server Header
+	 */
+	HTTPProtocol::MakeServerString (fieldValue, false, false);
+	GetHeaders().SetHeaderValue (STRING_HEADER_SERVER, fieldValue, true);
+
+	/*
+	 *	Write Date Header
+	 */
+	if (!GetHeaders().IsHeaderSet (STRING_HEADER_DATE))
+	{
+		HTTPProtocol::MakeRFC822GMTDateString (GMT_NOW, fieldValue, false);
+		GetHeaders().SetHeaderValue (STRING_HEADER_DATE, fieldValue);
+	}
+
+	/*
+	 *	Special CGI case: the CGI author can use the Status or X-Status headers to set the response code
+	 */
 	if (GetHeaders().IsHeaderSet (STRING_HEADER_STATUS))
 	{
 		if (GetHeaders().GetHeaderValue (STRING_HEADER_STATUS, fieldValue))
@@ -414,7 +458,9 @@ bool VHTTPResponse::_NormalizeResponseHeader()
 		}
 	}
 
-	// We still support some legacy, non standard special token:
+	/*
+	 *	We still support some legacy, non standard special token:
+	 */
 	if (GetHeaders().IsHeaderSet (STRING_HEADER_X_STATUS))
 	{
 		if (GetHeaders().GetHeaderValue (STRING_HEADER_X_STATUS, fieldValue))
@@ -436,26 +482,36 @@ bool VHTTPResponse::_NormalizeResponseHeader()
 		}
 	}
 
-	// Classic Redirect trick
+	/*
+	 *	Classic Redirect trick
+	 */
 	if (GetHeaders().IsHeaderSet (STRING_HEADER_LOCATION) && (((sLONG)fResponseStatusCode / 100) != 3))
 		SetResponseStatusCode (HTTP_FOUND);
 
 
-	// Best practice see: http://developer.yahoo.com/performance/rules.html#expires
 	/*
-	if (fCanCacheBody && fResponseStatusCode == 200 && !GetHeaders().IsHeaderSet (STRING_HEADER_EXPIRES))
+	 *	Best practice see: http://developer.yahoo.com/performance/rules.html#expires
+	 */
+	/*
+	if (fCanCacheBody && (fResponseStatusCode == 200) && !GetHeaders().IsHeaderSet (STRING_HEADER_EXPIRES))
 	{
 		HTTPProtocol::MakeRFC822GMTDateString (GMT_FAR_FUTURE, fieldValue);
 		GetHeaders().SetHeaderValue (STRING_HEADER_EXPIRES, fieldValue);
 	}
 	*/
 
-	if (!GetHeaders().IsHeaderSet (STRING_HEADER_CONTENT_LENGTH) && GetBody().GetDataSize())
+	/*
+	 *	Fix Content-Length when missing
+	 */
+	if (!GetHeaders().IsHeaderSet (STRING_HEADER_CONTENT_LENGTH) && (GetBody().GetDataSize() >= 0)) // YT 30-Nov-2012 - ACI0079288 - Set Content-Length even if body is empty (to prevent browser waiting a nonexistent body)
 	{
 		fieldValue.FromLong8 (GetBody().GetDataSize());
 		GetHeaders().SetHeaderValue (STRING_HEADER_CONTENT_LENGTH, fieldValue);
 	}
 
+	/*
+	 *	Fix the generic "application/octet-stream" Content-Type when missing
+	 */
 	if (!GetHeaders().IsHeaderSet (STRING_HEADER_CONTENT_TYPE) && GetBody().GetDataSize())
 		GetHeaders().SetHeaderValue (STRING_HEADER_CONTENT_TYPE, STRING_CONTENT_TYPE_BINARY);
 
@@ -516,29 +572,12 @@ XBOX::VError VHTTPResponse::_SendResponseHeader()
 
 	_NormalizeResponseHeader();
 
-	// Write Status-Line
 	XBOX::VString string;
-	XBOX::VString fieldValue;
 
+	// Make Status-Line
 	HTTPProtocol::MakeStatusLine (fHTTPVersion, fResponseStatusCode, string);
 
-	/* Write Server Header */
-	if (GetHeaders().IsHeaderSet (STRING_HEADER_SERVER))
-		GetHeaders().RemoveHeader (STRING_HEADER_SERVER);
-
-	HTTPProtocol::MakeServerString (fieldValue, false, true);
-	string.AppendString (fieldValue);
-	string.AppendCString (HTTP_CRLF);
-
-	/* Write Date Header */
-	if (!GetHeaders().IsHeaderSet (STRING_HEADER_DATE))
-	{
-		HTTPProtocol::MakeRFC822GMTDateString (GMT_NOW, fieldValue, true);
-		string.AppendString (fieldValue);
-		string.AppendCString (HTTP_CRLF);
-	}
-
-	// Write Headers
+	// Write Status-Line + Headers
 	GetHeaders().ToString (string);
 	string.AppendCString (HTTP_CRLF);
 
@@ -605,11 +644,25 @@ XBOX::VError VHTTPResponse::SendResponse()
 	}
 	else
 	{
-		XBOX::VString contentType;
-		XBOX::VString contentEncoding;
+		XBOX::VString		contentType;
+		XBOX::VString		contentEncoding;
+		XBOX::CharSet		charset = XBOX::VTC_UNKNOWN;
+		XBOX::MimeTypeKind	mimeTypeKind = MIMETYPE_UNDEFINED;
 
-		GetHeaders().GetContentType (contentType);
-		
+		if (GetHeaders().GetContentType (contentType, &charset))
+		{
+			mimeTypeKind = VMimeTypeManager::GetMimeTypeKind (contentType);
+			/*
+			 *	Check if Content-Type charset parameter is missing, and for MIMETYPE_TEXT only, 
+			 *	automatically set charset using VHTTPMessage.fBody's charset... (not sure I'm clear :)
+			 */
+			if (fUseDefaultCharset && (XBOX::MIMETYPE_TEXT == mimeTypeKind) && (XBOX::VTC_UNKNOWN == charset))
+			{
+				charset = GetBody().GetCharSet();
+				GetHeaders().SetContentType (contentType, charset);
+			}
+		}
+
 		if (GetHeaders().GetHeaderValue (HEADER_CONTENT_ENCODING, contentEncoding) && !contentEncoding.IsEmpty())
 		{
 			if (HTTPProtocol::NegotiateEncodingMethod (contentEncoding) != COMPRESSION_UNKNOWN)
@@ -633,7 +686,7 @@ XBOX::VError VHTTPResponse::SendResponse()
 
 				if ((size > minThreshold) && (size <= maxThreshold))
 				{
-					if (!contentType.IsEmpty() && (VMimeTypeManager::IsMimeTypeCompressible (contentType)))
+					if (!contentType.IsEmpty() && (XBOX::MIMETYPE_TEXT == mimeTypeKind))
 					{
 						error = _CompressData();
 					}
@@ -820,7 +873,7 @@ XBOX::VError VHTTPResponse::ReplyWithStatusCode (HTTPStatusCode inValue, XBOX::V
 	if (HTTP_UNDEFINED == fResponseStatusCode)
 		fResponseStatusCode = inValue;
 
-	if ((HTTP_UNAUTHORIZED == inValue) || (HTTP_NOT_MODIFIED == inValue) || ((3 == (sLONG)inValue / 100)))
+	if ((HTTP_UNAUTHORIZED == inValue) || (HTTP_NOT_MODIFIED == inValue) || ((3 == (sLONG)inValue / 100)) || (HTTP_CONTINUE == inValue))
 	{
 		if (HTTP_UNAUTHORIZED == inValue)
 		{
@@ -982,7 +1035,7 @@ bool VHTTPResponse::SetCookie (const XBOX::VString& inName, const XBOX::VString&
 }
 
 
-bool VHTTPResponse::AddCookie (const XBOX::VString& inName, const XBOX::VString& inValue, const XBOX::VString& inComment, const XBOX::VString& inDomain, const XBOX::VString& inPath, bool inSecure, bool inHTTPOnly, sLONG inMaxAge)
+bool VHTTPResponse::AddCookie (const XBOX::VString& inName, const XBOX::VString& inValue, const XBOX::VString& inComment, const XBOX::VString& inDomain, const XBOX::VString& inPath, bool inSecure, bool inHTTPOnly, sLONG inMaxAge, bool inAlwaysUseExpires)
 {
 	VHTTPCookie cookie;
 
@@ -997,7 +1050,7 @@ bool VHTTPResponse::AddCookie (const XBOX::VString& inName, const XBOX::VString&
 	cookie.SetHttpOnly (inHTTPOnly);
 
 	if (cookie.IsValid() && !IsCookieSet (inName))
-		return GetHeaders().SetHeaderValue (HEADER_SET_COOKIE, cookie.ToString(), false);
+		return GetHeaders().SetHeaderValue (HEADER_SET_COOKIE, cookie.ToString (inAlwaysUseExpires), false);
 
 	return false;
 }
@@ -1031,6 +1084,16 @@ IVirtualHost *VHTTPResponse::GetVirtualHost()
 		if (NULL != fVirtualHost)
 			_UpdateRequestURL (fVirtualHost->GetProject()->GetSettings()->GetProjectPattern());	// YT 26-Nov-2010 - ACI0068972
 #endif
+
+		if (NULL != fVirtualHost)
+		{
+			/*
+			 *	Set VHTTPMessage.fBody's charset using project's default charset.
+			 */
+			XBOX::CharSet charset = fVirtualHost->GetSettings()->GetDefaultCharSet();
+			if (!GetBody().IsReadOnly() && !GetBody().IsWriteOnly())
+				GetBody().SetCharSet (charset);
+		}
 	}
 
 	return fVirtualHost;

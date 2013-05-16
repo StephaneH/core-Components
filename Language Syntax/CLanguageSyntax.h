@@ -53,9 +53,9 @@ enum EStyleValues {
 enum
 {
 	eSymbolFileBaseFolderStudio = 1,
-	eSymbolFileBaseFolderServer,
-	eSymbolFileBaseFolderSolution,
-	eSymbolFileBaseFolderProject
+	eSymbolFileBaseFolderStudioJSResources,
+	eSymbolFileBaseFolderProject,
+	eSymbolFileBaseFolderServerModules
 };
 typedef sLONG ESymbolFileBaseFolder;
 
@@ -65,7 +65,6 @@ enum
 	eSymbolFileExecContextServer,
 	eSymbolFileExecContextClientServer
 };
-
 typedef sLONG ESymbolFileExecContext;
 
 namespace xbox
@@ -116,21 +115,10 @@ public:
 
 class IDocumentParserManager : public XBOX::IRefCountable {
 public:
-	typedef struct TaskCookie {
-		sLONG fIdentifier;
-		void *fCookie;
-	} TaskCookie;
-
-	static TaskCookie CreateCookie( sLONG inIdent, void *inCookie = NULL ) {
-		TaskCookie ret;
-		ret.fIdentifier = inIdent;
-		ret.fCookie = inCookie;
-		return ret;
-	}
-	
-	typedef XBOX::VSignalT_3< XBOX::VFilePath, sLONG, TaskCookie > ParsingCompleteSignal;		// VFilePath inFile, sLONG inStatus, void *inCookie
-	typedef XBOX::VSignalT_4< XBOX::VFilePath, sLONG, sLONG, TaskCookie > CompileErrorSignal;	// VFilePath inFile, sLONG inLineNumber, sLONG inStatus, void *inCookie
-	typedef XBOX::VSignalT_1< TaskCookie > JobCompleteSignal;									// void *inCookie
+	typedef XBOX::VSignalT_1< XBOX::VFilePath >									ParsingStartSignal;				// VFilePath inFile
+	typedef XBOX::VSignalT_2< XBOX::VFilePath, sLONG >							ParsingCompleteSignal;			// VFilePath inFile, sLONG inStatus
+	typedef XBOX::VSignalT_3< XBOX::VFilePath, sLONG, XBOX::VString >			CompileErrorSignal;				// VFilePath inFile, sLONG inLineNumber,VString inErrorMessage
+	typedef XBOX::VSignalT_1< sLONG >											PendingParsingRequestSignal;	// sLONG inPendindRequestCount
 
 	typedef enum Priority {
 		kPriorityLow,
@@ -160,24 +148,29 @@ public:
 	// you to pass in the contents of the file you wish to have parsed.  You might wish to do this if you are processing a file that exists
 	// on disk, but before it has been saved.  The file path identifies which file to associate symbols with, but it doesn't require the data
 	// to live on disk.
-	virtual void ScheduleTask( const void *inCaller, const VSymbolFileInfos &inFileInfos, const XBOX::VString &inContents, TaskCookie inCookie, class ISymbolTable *inTable, Priority inPriority = kPriorityNormal ) = 0;
-	virtual void ScheduleTask( const void *inCaller, const VSymbolFileInfos &inFileInfos, TaskCookie inCookie, class ISymbolTable *inTable, Priority inPriority = kPriorityNormal ) = 0;
-	virtual void ScheduleTask( const void *inCaller, IEntityModelCatalog *inCatalog, TaskCookie inCookie, class ISymbolTable *inTable, Priority inPriority = kPriorityNormal ) = 0;
+	virtual bool ScheduleTask( const void *inCaller, const VSymbolFileInfos &inFileInfos, const XBOX::VString &inContents, class ISymbolTable *inTable, Priority inPriority = kPriorityNormal, const bool& inParsingMandatory = false ) = 0;
+	virtual bool ScheduleTask( const void *inCaller, const VSymbolFileInfos &inFileInfos, class ISymbolTable *inTable, Priority inPriority = kPriorityNormal, const bool& inParsingMandatory = false ) = 0;
+	virtual bool ScheduleTask( const void *inCaller, IEntityModelCatalog *inCatalog, class ISymbolTable *inTable, Priority inPriority = kPriorityNormal, const bool& inParsingMandatory = false ) = 0;
 	// You can also schedule a batch of tasks to be formed in the form of a job.  This allows you to get a notification once the entire batch
 	// has been processed, as well as individual items
-	virtual void ScheduleTask( const void *inCaller, IJob *inJob, TaskCookie inCookie, class ISymbolTable *inTable, Priority inPriority = kPriorityNormal ) = 0;
+	virtual bool ScheduleTask( const void *inCaller, IJob *inJob, class ISymbolTable *inTable, Priority inPriority = kPriorityNormal, const bool& inParsingMandatory = false ) = 0;
 	// This also removes tasks associated with a job
 	virtual void UnscheduleTasksForHandler( const void *inCaller ) = 0;
 
+	virtual XBOX::VCriticalSection* GetLockForParseOrOutline(const XBOX::VFilePath&) = 0;
+
+	virtual ParsingStartSignal &GetParsingStartSignal() = 0;
 	virtual ParsingCompleteSignal &GetParsingCompleteSignal() = 0;
 	virtual CompileErrorSignal &GetCompileErrorSignal() = 0;
-	virtual JobCompleteSignal &GetJobCompleteSignal() = 0;
+	virtual PendingParsingRequestSignal &GetPendingParsingRequestSignal() = 0;
 
 	virtual sLONG8	GetCurrentSize() { return fCurrentSize; }
 	virtual void	SetCurrentSize(sLONG inCurrentSize) { fCurrentSize = inCurrentSize; }
 	virtual sLONG8	GetTotalSize()   { return fTotalSize; }
 	virtual void	SetTotalSize(sLONG inTotalSize) { fTotalSize = inTotalSize; }
 	virtual sLONG	GetComputedPercentDone() { SmallReal result = fTotalSize ? (SmallReal) fCurrentSize / (SmallReal) fTotalSize * 100 : 100; return result; }
+	
+	virtual sLONG	GetFilesToParseCount() const = 0;
 
 protected:
 	sLONG8 fTotalSize;
@@ -376,7 +369,7 @@ namespace Symbols {
 		// provide a helper function to dereference a symbol -- if the symbol isn't actually a reference, then
 		// the deref will just return "this", so it's safe to call on any symbol.  However, because this call
 		// can return an unrelated symbol, it is up to you to call Release on the returned value!
-		virtual const Symbols::ISymbol *Dereference() const = 0;
+		virtual const Symbols::ISymbol *RetainReferencedSymbol() const = 0;
 		virtual void SetReferenceSymbol( Symbols::ISymbol *inReferences ) = 0;
 		
 		virtual bool IsFunctionKind() const = 0;
@@ -400,6 +393,10 @@ namespace Symbols {
 		virtual bool IsPrivate() const = 0;
 
 		virtual bool GetParamValue(sLONG inIndex, std::vector<XBOX::VString>& outValues) const = 0;
+		
+#if VERSIONDEBUG
+		virtual void DebugDump() const = 0;
+#endif
 	};
 
 	class IFile : public XBOX::IRefCountable
@@ -549,7 +546,7 @@ public:
 			if ( outSignature.IsEmpty() )
 				outSignature = inSym->GetName();
 
-			Symbols::ISymbol *refSym = const_cast< Symbols::ISymbol * >( inSym->Dereference() );
+			Symbols::ISymbol *refSym = const_cast< Symbols::ISymbol * >( inSym->RetainReferencedSymbol() );
 
 			// Function symbols will generally have some extra information associated with them to give
 			// us the function's signature.  We will try to grab that now, and change our item's text.
@@ -599,6 +596,7 @@ public:
 		return functionSym;
 	}
 
+	virtual void SetBaseFolderPathStr(const ESymbolFileBaseFolder& inType, const XBOX::VString& inPathStr, const bool& inPosixConvert) = 0;
 };
 
 // This is meant as a helper class for the auto-complete engine
@@ -684,7 +682,7 @@ public:
 		}
 
 		VColumnSymbol( class CDB4DField *field, bool inIsSemiHidden = false ) : IAutoCompleteSymbol() { 
-			assert( field );
+			xbox_assert( field );
 			SetSemiHidden( inIsSemiHidden ); 
 			field->GetName( fName );
 		}
@@ -705,7 +703,7 @@ public:
 
 	public:
 		static VTableSymbol *TemporaryFrom( IAutoCompleteSymbol *other, XBOX::VString renameTo = "" ) {
-			assert( other );
+			xbox_assert( other );
 			if (other->GetType() != eTable)		return NULL;
 
 			VTableSymbol *otherTable = static_cast< VTableSymbol * >( other );
@@ -721,7 +719,7 @@ public:
 		}
 
 		VTableSymbol( class CDB4DTable *table, bool inIsSemiHidden = false ) : IAutoCompleteSymbol() { 
-			assert( table );
+			xbox_assert( table );
 			SetSemiHidden( inIsSemiHidden ); 
 			table->GetName( fName );
 			sLONG fieldCount = table->CountFields();
@@ -750,7 +748,7 @@ public:
 
 	public:
 		VIndexSymbol( class CDB4DIndex *index ) : IAutoCompleteSymbol() {
-			assert( index );
+			xbox_assert( index );
 			fName = index->GetName();
 		}
 
@@ -765,7 +763,7 @@ public:
 
 	public:
 		VSchemaSymbol( class CDB4DSchema *schema ) : IAutoCompleteSymbol() {
-			assert( schema ); 
+			xbox_assert( schema ); 
 			fName = schema->GetName();
 		}
 

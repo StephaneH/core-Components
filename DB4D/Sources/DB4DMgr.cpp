@@ -25,7 +25,7 @@ VCriticalSection	VDBMgr::fMutex;
 #if oldtempmem
 VDBMgr::VDBMgr():fTempMemMgr( VCppMemMgr::kAllocator_xbox)
 #else
-VDBMgr::VDBMgr()
+VDBMgr::VDBMgr(VLocalizationManager* inLocalizationManager)
 #endif
 {
 	fLimitPerSort = 500; // 500 mega
@@ -37,8 +37,15 @@ VDBMgr::VDBMgr()
 	//sWildChar = '@';
 	fProgress_Flush = nil;
 	fProgress_Indexes = nil;
-	fDefaultLocalization = nil;
+	fDefaultLocalization = RetainRefCountable(inLocalizationManager);
+#if DB4DasComponent
 	fComponentFolder = nil;
+#else
+	fResourceFolder = nil;
+#endif
+	fInsideResourceFolder = nil;
+	fJSCodeResourceFolder = nil;
+
 	fDefaultServer = nil;
 	fServerPort = 0;
 	fServerProgressTask = nil;
@@ -46,6 +53,7 @@ VDBMgr::VDBMgr()
 	fRunningMode = DB4D_Running4D;	// will be set afterwards by calling application
 	fGraphicsIntf = nil;
 	fApplicationIntf = nil;
+	fSQLIntf = NULL;
 	fGarbageTask = nil;
 #if oldtempmem
 	fTempMemSize = 0;
@@ -97,8 +105,17 @@ VDBMgr::~VDBMgr()
 
 	ReleaseRefCountable( &fDefaultLocalization);
 
+#if DB4DasComponent
 	if (fComponentFolder != nil)
 		fComponentFolder->Release();
+#else
+	QuickReleaseRefCountable(fResourceFolder);
+
+#endif
+
+	QuickReleaseRefCountable(fInsideResourceFolder);
+	QuickReleaseRefCountable(fJSCodeResourceFolder);
+
 	if (fCacheMgr != nil) {
 		delete fCacheMgr;
 		fCacheMgr = nil;
@@ -488,38 +505,44 @@ XBOX::VError VDBMgr::GetJournalInfo(const XBOX::VFilePath& inDataFilePath,XBOX::
 	XBOX::VFile* extraPropsFile = new VFile(extraPropsPath);
 	XBOX::VFileStream extraPropsStream(extraPropsFile);
 	error  = VE_FILE_NOT_FOUND;
-	if (extraPropsStream.OpenReading() == VE_OK)
+	
+	//WAK0078901: avoid causing unnecessary throws and test that the extra props file actully exists
+	if (extraPropsFile->Exists())
 	{
-		VString jsonString;
-		if (extraPropsStream.GetText(jsonString) == VE_OK)
+		error = VE_OK;
+		error = extraPropsStream.OpenReading();
+		if ( error == VE_OK)
 		{
-			VValueBag *extraBag = new VValueBag();
-			extraBag->FromJSONString(jsonString);
-			const VValueBag* journal_bag = extraBag->RetainUniqueElement( LogFileBagKey::journal_file );
-			error  = VE_OK;
-			if ( journal_bag != NULL )
+			VString jsonString;
+			error = extraPropsStream.GetText(jsonString);
+			if (error == VE_OK)
 			{
-				VString logFilePath;
-				journal_bag->GetString( LogFileBagKey::filepath, logFilePath );
-				journal_bag->GetVUUID( LogFileBagKey::datalink, outDataLink );
-				if( !logFilePath.IsEmpty() )
+				VValueBag *extraBag = new VValueBag();
+				extraBag->FromJSONString(jsonString);
+				const VValueBag* journal_bag = extraBag->RetainUniqueElement( LogFileBagKey::journal_file );
+				if ( journal_bag != NULL )
 				{
-					if ( logFilePath.BeginsWith(CVSTR(".")))
+					VString logFilePath;
+					journal_bag->GetString( LogFileBagKey::filepath, logFilePath );
+					journal_bag->GetVUUID( LogFileBagKey::datalink, outDataLink );
+					if( !logFilePath.IsEmpty() )
 					{
-						outJournalPath.FromRelativePath(inDataFilePath,logFilePath);
-					}
-					else
-					{
-						outJournalPath.FromFullPath(logFilePath);
+						if ( logFilePath.BeginsWith(CVSTR(".")))
+						{
+							outJournalPath.FromRelativePath(inDataFilePath,logFilePath);
+						}
+						else
+						{
+							outJournalPath.FromFullPath(logFilePath);
+						}
 					}
 				}
+				XBOX::ReleaseRefCountable(&journal_bag);
+				XBOX::ReleaseRefCountable(&extraBag);
 			}
-			XBOX::ReleaseRefCountable(&journal_bag);
-			XBOX::ReleaseRefCountable(&extraBag);
 		}
-		
+		extraPropsStream.CloseReading();
 	}
-	extraPropsStream.CloseReading();
 	XBOX::ReleaseRefCountable(&extraPropsFile);
 	return error;
 }
@@ -528,6 +551,11 @@ XBOX::VError VDBMgr::GetJournalInfo(const XBOX::VFilePath& inDataFilePath,XBOX::
 IBackupTool* VDBMgr::CreateBackupTool()
 {
 	return new VBackupTool();
+}
+
+IJournalTool* VDBMgr::CreateJournalTool()
+{
+	return new VJournalTool();
 }
 
 CDB4DBase* VDBMgr::OpenBase( const VFile& inStructureFile, sLONG inParameters, VError* outErr, FileAccess inAccess, VString* EntityFileExt, 
@@ -611,6 +639,42 @@ void VDBMgr::DeleteDeadBlobPaths()
 	}
 }
 
+
+VFolder* VDBMgr::RetainInsideResourceFolder()
+{
+	if (fInsideResourceFolder == nil)
+	{
+#if DB4DasComponent
+		fInsideResourceFolder = RetainResourceFolder();
+#else
+		VFolder* folder = RetainResourceFolder();
+		if (folder != nil)
+		{
+			fInsideResourceFolder = new VFolder(*folder, "DB4D");
+			folder->Release();
+		}
+#endif
+	}
+	return RetainRefCountable(fInsideResourceFolder);
+}
+
+VFolder* VDBMgr::RetainJSCodeResourceFolder()
+{
+	if (fJSCodeResourceFolder == nil)
+	{
+#if DB4DasComponent
+		fJSCodeResourceFolder = RetainResourceFolder();
+#else
+		VFolder* folder = RetainResourceFolder();
+		if (folder != nil)
+		{
+			fJSCodeResourceFolder = new VFolder(*folder, "DB4D");
+			folder->Release();
+		}
+#endif
+	}
+	return RetainRefCountable(fJSCodeResourceFolder);
+}
 
 
 VError VDBMgr::RebuildStructure( const VFile& inStructureFile, const VFile& inDataFile)
@@ -733,7 +797,14 @@ CDB4DBase* VDBMgr::xOpenCreateBase( const VFile& inStructureFile, Boolean inCrea
 		{
 			basd->Release();
 			basd = nil;
+		} else {
+
+			if (fSQLIntf != NULL)
+
+				fSQLIntf->OpenBase(basd->GetUUID());
+
 		}
+
 	}
 	
 	if (outErr != nil)
@@ -824,7 +895,12 @@ VError VDBMgr::SetTempMemSize(VSize inSize, VSize *outActualSize)
 #endif
 
 
+#if DB4DasDLL
+VDBMgr *VDBMgr::RetainManager(VLocalizationManager* inLocalizationManager)
+#else
 VDBMgr *VDBMgr::RetainManager(VComponentLibrary* DB4DCompLib)
+#endif
+
 {
 	VTaskLock lock( &fMutex);
 	
@@ -832,8 +908,14 @@ VDBMgr *VDBMgr::RetainManager(VComponentLibrary* DB4DCompLib)
 	if (sDB4DMgr != nil) {
 		sDB4DMgr->Retain();
 	} else {
-		manager = new VDBMgr;
-		if (!manager->Init(DB4DCompLib)) {
+#if DB4DasDLL
+		manager = new VDBMgr(inLocalizationManager);
+		if (!manager->Init())
+#else
+            manager = new VDBMgr(nil);
+		if (!manager->Init(DB4DCompLib))
+#endif
+		{
 			manager->Release();
 			manager = nil;
 		}
@@ -1074,6 +1156,7 @@ DB4DActivityManager* VDBMgr::SetActivityManager(DB4DActivityManager* inNewActivi
 	return old;
 }
 
+typedef VError (*initCodeFunc)();
 
 DB4DNetworkManager* VDBMgr::SetNetworkManager(DB4DNetworkManager* inNewNetworkManager)
 {
@@ -1083,12 +1166,26 @@ DB4DNetworkManager* VDBMgr::SetNetworkManager(DB4DNetworkManager* inNewNetworkMa
 	return old;
 }
 
-
+#if DB4DasDLL
+Boolean VDBMgr::Init()
+#else
 Boolean VDBMgr::Init(VComponentLibrary* DB4DCompLib)
+#endif
 {
+	gOccPool.init();
+
+	/*
+	VString test1 = "public";
+	VString test2 = "publicOnServer";
+	CompareLessVStringNoIntl test;
+	bool lessx = test(test1, test2);
+	*/
+
 	fLastDataSetPurge = 0;
 	fRequestLogger = nil;
+#if DB4DasComponent
 	fDB4DCompLib = DB4DCompLib;
+#endif
 	gCppMem = VObject::GetMainMemMgr();
 	if (sDB4DMgr == nil)
 		sDB4DMgr = this;
@@ -1098,10 +1195,21 @@ Boolean VDBMgr::Init(VComponentLibrary* DB4DCompLib)
 	sLONG taille = sizeof(TypeSortElem<sWORD>);
 	sLONG taille2 = sizeof(sWORD);
 	
+	fRestPrefix = "rest";
+#if DB4DasComponent
 	fComponentFolder = DB4DCompLib->GetLibrary()->RetainFolder(kBF_BUNDLE_FOLDER);
 	fDefaultLocalization = new VLocalizationManager(VComponentManager::GetLocalizationLanguage(fComponentFolder,true));
 	if (fComponentFolder != nil)
 		fDefaultLocalization->LoadDefaultLocalizationFoldersForComponentOrPlugin(fComponentFolder);
+#else
+	fResourceFolder = VProcess::Get()->RetainFolder(VProcess::eFS_Resources);
+	assert(fDefaultLocalization != nil);
+	/*
+	fDefaultLocalization = new VLocalizationManager(VComponentManager::GetLocalizationLanguage(fResourceFolder,true));
+	if (fResourceFolder != nil)
+		fDefaultLocalization->LoadDefaultLocalizationFolders(fResourceFolder);
+		*/
+#endif
 
 	VErrorBase::RegisterLocalizer(CDB4DManager::Component_Type, fDefaultLocalization);
 
@@ -1172,6 +1280,60 @@ Boolean VDBMgr::Init(VComponentLibrary* DB4DCompLib)
 	fGarbageTask->SetName( CVSTR( "Garbage Handler"));
 	fGarbageTask->Run();
 
+	{
+		VFilePath path = VProcess::Get()->GetExecutableFolderPath();
+#if VERSIONWIN
+#if VERSIONDEBUG
+		path.ToSubFile("RemoteEntityDebug.dll");
+#else
+		path.ToSubFile("RemoteEntity.dll");
+#endif
+#else
+		path.ToSubFolder("Libs");
+
+#if VERSIONDEBUG
+		path.ToSubFile("RemoteEntityDebug.so");
+#else
+		path.ToSubFile("RemoteEntity.so");
+#endif
+#endif
+		VFile libfile(path);
+		if (libfile.Exists())
+		{
+			VLibrary* remoteModelLib = new VLibrary(path);
+			if (remoteModelLib->Load())
+			{
+				initCodeFunc initCode = (initCodeFunc) remoteModelLib->GetProcAddress("InitRemoteEntityComponent");
+				if (initCode == nil)
+					initCode = (initCodeFunc) remoteModelLib->GetProcAddress("_InitRemoteEntityComponent@0");
+				if (initCode != nil)
+					initCode();
+			}
+		}
+	}
+
+	{
+		VFilePath path = VProcess::Get()->GetExecutableFolderPath();
+#if VERSIONDEBUG
+		path.ToSubFile("SQLEntityDebug.dll");
+#else
+		path.ToSubFile("SQLEntity.dll");
+#endif
+		VFile libfile(path);
+		if (libfile.Exists())
+		{
+			VLibrary* sqlModelLib = new VLibrary(path);
+			if (sqlModelLib->Load())
+			{
+				initCodeFunc initCode = (initCodeFunc) sqlModelLib->GetProcAddress("InitSQLEntityComponent");
+				if (initCode == nil)
+					initCode = (initCodeFunc) sqlModelLib->GetProcAddress("_InitSQLEntityComponent@0");
+				if (initCode != nil)
+					initCode();
+			}
+		}
+	}
+
 	return isOK;
 }
 
@@ -1221,6 +1383,10 @@ void VDBMgr::UnRegisterBase(Base4D* base) // means CloseDatabase
 			if (fBases[i].base == base)
 			{
 				fBases[i].isClosing = true;
+				if (fSQLIntf != NULL)
+
+					fSQLIntf->CloseBase(base->GetUUID());
+
 				base->Release();
 				// attention, je fais expres de ne pas mettre fBases[i].base a nil
 				// fBases[i].base est donc une reference instable qui ne dois plus etre utilisee que pour comparer son pointeur
@@ -1458,7 +1624,7 @@ CDB4DContext* VDBMgr::RetainOrCreateContext(const VUUID& inID, CUAGSession* inUs
 		result = new VDB4DContext(inUserSession, inJSContext, islocal);
 		if (result != nil)
 		{
-			VImpCreator<VDB4DContext>::GetImpObject(result)->SetID(inID);
+			dynamic_cast<VDB4DContext*>(result)->SetID(inID);
 			try
 			{
 				fAllContexts[inID.GetBuffer()] = result;
@@ -1481,6 +1647,24 @@ CDB4DContext* VDBMgr::RetainOrCreateContext(const VUUID& inID, CUAGSession* inUs
 
 	return result;
 
+}
+
+
+void VDBMgr::RegisterContext( VDB4DContext *inContext)
+{
+	if (inContext != nil)
+	{
+		VTaskLock lock(&fAllContextsMutex);
+		if (inContext->GetID().IsNull())
+			inContext->GenerateID();
+		try
+		{
+			fAllContexts[inContext->GetID().GetBuffer()] = inContext;
+		}
+		catch (...)
+		{
+		}
+	}
 }
 
 
@@ -2000,7 +2184,11 @@ void VDBMgr::ExecuteRequest( sWORD inRequestID, IRequestReply *inRequest, CDB4DB
 		case Req_SetTableKeepRecordSyncInfo:
 			ExecSetTableKeepRecordSyncInfo( inRequest, inContext);
 			break;
-			
+
+		case Req_SetTableHideInRest:
+			ExecSetTableHideInRest( inRequest, inContext);
+			break;
+
 		case Req_SetTablePrimaryKey:
 			ExecSetTablePrimaryKey( inRequest, inContext);
 			break;
@@ -2043,6 +2231,10 @@ void VDBMgr::ExecuteRequest( sWORD inRequestID, IRequestReply *inRequest, CDB4DB
 
 		case Req_SetFieldStyledText:
 			ExecSetFieldStyledText( inRequest, inContext);
+			break;
+
+		case Req_SetFieldHideInRest:
+			ExecSetFieldHideInRest( inRequest, inContext);
 			break;
 
 		case Req_SetOutsideData:
@@ -2347,7 +2539,7 @@ void VDBMgr::ExecuteRequest( sWORD inRequestID, IStreamRequestReply *inStreamReq
 			context = inContext->RetainDataBaseContext(base);
 
 #if VERSIONDEBUG
-		Base4D *thebase = (base == nil) ? nil : VImpCreator<VDB4DBase>::GetImpObject(base)->GetBase();
+		Base4D *thebase = (base == nil) ? nil : dynamic_cast<VDB4DBase*>(base)->GetBase();
 		sLONG old_refcount1 = (thebase == nil) ? 0 : thebase->GetRefCount();
 		sLONG old_refcount2 = (context == nil) ? 0 : context->GetRefCount();
 #endif
@@ -2590,7 +2782,7 @@ void VDBMgr::ExecOpenOrCreateBase(IRequestReply *inRequest, CDB4DContext *inCont
 			}
 			if (cdb != nil)
 			{
-				bd = VImpCreator<VDB4DBase>::GetImpObject(cdb)->GetBase();
+				bd = dynamic_cast<VDB4DBase*>(cdb)->GetBase();
 				cdb->Release();
 			}
 
@@ -2918,6 +3110,48 @@ void VDBMgr::ExecSetTableKeepRecordSyncInfo( IRequestReply *inRequest, CDB4DBase
 }
 
 
+
+void VDBMgr::ExecSetTableHideInRest( IRequestReply *inRequest, CDB4DBaseContext *inContext)
+{
+	VError err = VE_OK;
+	Boolean alreadysend = false;
+	Base4D *base = inRequest->RetainBaseParam( err);
+	if (err == VE_OK && base != nil)
+	{
+		Table *tt = inRequest->RetainTableParam( base, err);
+		if (err == VE_OK && tt != nil)
+		{
+			Boolean keepStamp = inRequest->GetBooleanParam( err);
+			if (err == VE_OK)
+			{
+				VDB4DProgressIndicator *progress = inRequest->RetainProgressParam( inContext);
+				ObjLocker locker( inContext, tt);
+				if (locker.CanWork())
+				{
+					err = tt->SetHideInRest( inContext, keepStamp, progress);
+				}
+				else
+				{
+					err = ThrowBaseError( VE_DB4D_OBJECT_IS_LOCKED_BY_OTHER_CONTEXT, DBaction_ChangingTableProperties);
+				}
+
+				if (err == VE_OK)
+				{
+					alreadysend = true;
+					inRequest->InitReply(0);
+				}
+				QuickReleaseRefCountable( progress);
+			}
+		}
+		QuickReleaseRefCountable( tt);
+	}
+	QuickReleaseRefCountable( base);
+
+	if (!alreadysend)
+		SendError( inRequest, inContext, err);
+}
+
+
 void VDBMgr::ExecSetTablePrimaryKey( IRequestReply *inRequest, CDB4DBaseContext *inContext)
 {
 	VError err = VE_OK;
@@ -3179,6 +3413,51 @@ void VDBMgr::ExecSetFieldStyledText( IRequestReply *inRequest, CDB4DBaseContext 
 					if (locker.CanWork())
 					{
 						field->SetStyledText( styledText, inContext, progress);
+						inRequest->InitReply(0);
+						alreadysend = true;
+					}
+					else
+					{
+						err = base->ThrowError( VE_DB4D_OBJECT_IS_LOCKED_BY_OTHER_CONTEXT, DBaction_ChangingFieldProperties);
+					}
+
+					ReleaseRefCountable( &progress);
+				}
+			}
+			ReleaseRefCountable( &field);
+		}
+		ReleaseRefCountable( &table);
+	}
+	ReleaseRefCountable( &base);
+
+	if (!alreadysend)
+		SendError( inRequest, inContext, err);
+}
+
+
+void VDBMgr::ExecSetFieldHideInRest( IRequestReply *inRequest, CDB4DBaseContext *inContext)
+{
+	VError err = VE_OK;
+	Boolean alreadysend = false;
+
+	Base4D *base = inRequest->RetainBaseParam( err);
+	if (err == VE_OK && base != NULL)
+	{
+		Table *table = inRequest->RetainTableParam( base, err);
+		if (err == VE_OK && table != NULL)
+		{
+			Field *field = inRequest->RetainFieldParam( table, err);
+			if (err == VE_OK && field != NULL)
+			{
+				Boolean hidden = inRequest->GetBooleanParam( err);
+				if (err == VE_OK)
+				{
+					VDB4DProgressIndicator *progress = inRequest->RetainProgressParam(inContext);
+
+					ObjLocker locker( inContext, field);
+					if (locker.CanWork())
+					{
+						field->SetHideInRest( hidden, inContext, progress);
 						inRequest->InitReply(0);
 						alreadysend = true;
 					}
@@ -6021,9 +6300,9 @@ void VDBMgr::ExecActivateAllAutomaticRelations(IRequestReply *inRequest, CDB4DBa
 									else
 									{
 										inRequest->PutByteReply('+');
-										inRequest->PutFicheInMemReply(VImpCreator<VDB4DRecord>::GetImpObject(cur->GetRecord())->GetRec(), inContext);
+										inRequest->PutFicheInMemReply(dynamic_cast<VDB4DRecord*>(cur->GetRecord())->GetRec(), inContext);
 									}
-									inRequest->PutSelectionReply(VImpCreator<VDB4DSelection>::GetImpObject(cur->GetSelection())->GetSel(), inContext);
+									inRequest->PutSelectionReply(dynamic_cast<VDB4DSelection*>(cur->GetSelection())->GetSel(), inContext);
 								}
 								for (vector<CachedRelatedRecord>::iterator cur = result2.begin(), end = result2.end(); cur != end; cur++)
 								{
@@ -6033,9 +6312,9 @@ void VDBMgr::ExecActivateAllAutomaticRelations(IRequestReply *inRequest, CDB4DBa
 									else
 									{
 										inRequest->PutByteReply('+');
-										inRequest->PutFicheInMemReply(VImpCreator<VDB4DRecord>::GetImpObject(cur->GetRecord())->GetRec(), inContext);
+										inRequest->PutFicheInMemReply(dynamic_cast<VDB4DRecord*>(cur->GetRecord())->GetRec(), inContext);
 									}
-									inRequest->PutSelectionReply(VImpCreator<VDB4DSelection>::GetImpObject(cur->GetSelection())->GetSel(), inContext);
+									inRequest->PutSelectionReply(dynamic_cast<VDB4DSelection*>(cur->GetSelection())->GetSel(), inContext);
 								}
 							}
 						}
@@ -6096,9 +6375,9 @@ void VDBMgr::ExecActivateAutomaticRelations_N_To_1(IRequestReply *inRequest, CDB
 									else
 									{
 										inRequest->PutByteReply('+');
-										inRequest->PutFicheInMemReply(VImpCreator<VDB4DRecord>::GetImpObject(cur->GetRecord())->GetRec(), inContext);
+										inRequest->PutFicheInMemReply(dynamic_cast<VDB4DRecord*>(cur->GetRecord())->GetRec(), inContext);
 									}
-									inRequest->PutSelectionReply(VImpCreator<VDB4DSelection>::GetImpObject(cur->GetSelection())->GetSel(), inContext);
+									inRequest->PutSelectionReply(dynamic_cast<VDB4DSelection*>(cur->GetSelection())->GetSel(), inContext);
 								}
 							}
 						}
@@ -6174,9 +6453,9 @@ void VDBMgr::ExecActivateAutomaticRelations_1_To_N(IRequestReply *inRequest, CDB
 													else
 													{
 														inRequest->PutByteReply('+');
-														inRequest->PutFicheInMemReply(VImpCreator<VDB4DRecord>::GetImpObject(cur->GetRecord())->GetRec(), inContext);
+														inRequest->PutFicheInMemReply(dynamic_cast<VDB4DRecord*>(cur->GetRecord())->GetRec(), inContext);
 													}
-													inRequest->PutSelectionReply(VImpCreator<VDB4DSelection>::GetImpObject(cur->GetSelection())->GetSel(), inContext);
+													inRequest->PutSelectionReply(dynamic_cast<VDB4DSelection*>(cur->GetSelection())->GetSel(), inContext);
 												}
 											}
 										}
@@ -6791,12 +7070,13 @@ static void addStaticRequiredJSFile(vector<VFilePath>& outFiles, const VFolder* 
 void VDBMgr::GetStaticRequiredJSFiles(vector<VFilePath>& outFiles)
 {
 	outFiles.clear();
-	VFolder* compfolder = RetainResourceFolder();
+	VFolder* compfolder = RetainJSCodeResourceFolder();
 	if (compfolder != nil)
 	{
 		addStaticRequiredJSFile(outFiles, compfolder, "directoryRest.js");
 		addStaticRequiredJSFile(outFiles, compfolder, "ImpExpRest.js");
 		addStaticRequiredJSFile(outFiles, compfolder, "reporting.js");
+		addStaticRequiredJSFile(outFiles, compfolder, "ModelLoadTime.js");
 
 		/*
 		VFile scriptfile(*compfolder, "directoryRest.js");

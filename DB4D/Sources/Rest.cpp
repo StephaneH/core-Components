@@ -315,7 +315,7 @@ void RestTools::GetWAFFiles()
 
 	if (err != VE_OK)
 	{
-		fResponse->AddResponseHeader(L"Content-Type", L"application/json", true);
+		fResponse->AddResponseHeader(L"Content-Type", L"application/json; charset=UTF-8", true);
 		SetHTTPError(rest::http_bad_request);
 		fOutput->SetPos(0);
 	}
@@ -330,7 +330,7 @@ void RestTools::GetServerAndBaseInfo()
 
 	if (s == nil || *s == "cacheInfo")
 	{
-		CDB4DManager* db4D = XBOX::VComponentManager::RetainComponentOfType<CDB4DManager>();
+		CDB4DManager* db4D = CDB4DManager::RetainManager();
 		if (db4D != nil)
 		{
 			VCppMemMgr* cachemgr = db4D->GetCacheMemoryManager();
@@ -422,8 +422,10 @@ void RestTools::SetRequestFormat()
 void RestTools::SetVerb()
 {
 	restmethod = RestMethodeRetrieve;
-	if (wasapost)
+	if (wasapost || wasaput)
 		restmethod = RestMethodeUpdate;
+	if (wasadelete)
+		restmethod = RestMethodeDelete;
 
 	if (url.GetValue(rest::method,restmethodName) && err == VE_OK)
 	{
@@ -508,7 +510,8 @@ void RestTools::AnalyseGetCatalog()
 						else
 						{
 #if AllowDefaultEMBasedOnTables
-							em = EntityModel::BuildEntityModel(tt);
+							if (!tt->GetHideInRest())
+								em = EntityModel::BuildLocalEntityModel(tt);
 #endif
 							tt->Release();
 						}
@@ -525,7 +528,7 @@ void RestTools::AnalyseGetCatalog()
 					}
 					if (!allEMs.empty())
 					{
-						em = VImpCreator<EntityModel>::GetImpObject(allEMs[0]);
+						em = dynamic_cast<EntityModel*>(allEMs[0]);
 						em->Retain();
 					}
 				}
@@ -602,7 +605,8 @@ void RestTools::AnalyseGetModelAndEntities()
 		else
 		{
 #if AllowDefaultEMBasedOnTables
-			em = EntityModel::BuildEntityModel(tt);
+			if (!tt->GetHideInRest())
+				em = EntityModel::BuildLocalEntityModel(tt);
 #endif
 			tt->Release();
 		}
@@ -614,57 +618,17 @@ void RestTools::AnalyseGetModelAndEntities()
 		}
 		else
 		{
-			if (newRec)
-				numrec = -3;
-			else if (withkeys)
+			if (withkeys && !newRec)
 			{
-				if (em->HasPrimKey())
-				{
-					if (allIDs.size() <= 1)
-					{
-						//VectorOfVString allPartOfKey;
-						//valstr.GetSubStrings(';', allPartOfKey, false, true);
-						numrec = em->getEntityNumWithPrimKey(allIDs[0], fContext, err);
-						if (numrec == -1)
-							err = em->ThrowError(VE_DB4D_PRIMKEY_NOT_FOUND, &valstr);
-					}
-					else
-					{
-						dejaselected = true;
-						for (VectorOfVString::iterator cur = allIDs.begin(), end = allIDs.end(); cur != end && err == VE_OK; cur++)
-						{
-							//VectorOfVString allPartOfKey;
-							//cur->GetSubStrings(';', allPartOfKey, false, true);
-							sLONG n = em->getEntityNumWithPrimKey(*cur, fContext, err);
-							if (n >= 0)
-							{
-								err = selectedEntities.Set(n);
-							}
-							else
-							{
-								err = em->ThrowError(VE_DB4D_PRIMKEY_NOT_FOUND, &(*cur));
-							}
-						}
-					}
-
-				}
+				if (allIDs.size() <= 1)
+					fEntityKey = allIDs[0];
 				else
 				{
-					if (allIDs.size() <= 1)
-						numrec = valstr.GetLong();
-					else
-					{
-						dejaselected = true;
-						for (VectorOfVString::iterator cur = allIDs.begin(), end = allIDs.end(); cur != end && err == VE_OK; cur++)
-						{
-							sLONG n = cur->GetLong();
-							if (n >= 0)
-							{
-								err = selectedEntities.Set(n);
-							}
-						}
-					}
+					selectedEntities = em->NewCollection(allIDs, err, fContext);
+					dejaselected = true;
 				}
+
+
 				if (err != VE_OK)
 				{
 					SetHTTPError(rest::http_not_found);
@@ -691,7 +655,7 @@ void RestTools::AnalyseGetAttributes()
 					curdataset = VDBMgr::GetManager()->RetainKeptDataSet(xID);
 					if (curdataset != nil)
 					{
-						if (em->GetMainTable() != curdataset->GetTable())
+						if (em != curdataset->GetModel())
 						{
 							err = ThrowError(rest::dataset_not_matching_entitymodel, *s, em->GetName());
 							SetHTTPError(rest::http_not_found);
@@ -704,17 +668,17 @@ void RestTools::AnalyseGetAttributes()
 						if (url.GetValue(rest::savedfilter, fSavedQuery) || url.GetValue(rest::savedorderby, ss))
 						{
 							
-							Selection* sel = nil;
+							EntityCollection* sel = nil;
 							VString querystring = fSavedQuery;
 							VString orderbystring;
 							if (querystring != L"$all" && !querystring.IsEmpty())
 							{
-								SearchTab search(em->GetMainTable());
+								SearchTab search(em);
 								err = search.BuildFromString(querystring, orderbystring, fContext, em);
 								if (err == VE_OK)
 								{
 									{
-										sel = em->ExecuteQuery(&search, fContext, nil,  GetProgressIndicator(), DB4D_Do_Not_Lock, 0, nil, &err);
+										sel = em->executeQuery(&search, fContext, nil,  GetProgressIndicator(), DB4D_Do_Not_Lock, 0, nil, &err);
 									}
 								}
 							}
@@ -750,7 +714,7 @@ void RestTools::AnalyseGetAttributes()
 											SetHTTPError(rest::http_not_found);
 										}
 									}
-									Selection* truesel = sel->SortSel(err, em, SortingAtt, fContext,  GetProgressIndicator());
+									EntityCollection* truesel = sel->SortSel(err, SortingAtt, fContext, GetProgressIndicator());
 
 									if (truesel == nil)
 									{
@@ -771,7 +735,7 @@ void RestTools::AnalyseGetAttributes()
 								{
 									timeout = stimeout.GetLong() * 1000;
 								}
-								curdataset = new DataSet(em->GetMainTable(), sel, timeout);
+								curdataset = new DataSet(em, sel, timeout);
 								curdataset->SetID(xID);
 								if (!VDBMgr::GetManager()->AddKeptDataSet(curdataset))
 								{
@@ -821,7 +785,7 @@ void RestTools::AnalyseGetAttributes()
 				{
 					if (restmethod != RestMethodeBuildDataSet && restmethod != RestMethodeBuildSubDataSet)
 						restmethod = RestMethodeRetrieve;				
-					if (wasapost)
+					if (wasapost || wasaput)
 					{
 						{
 							if (methParams.empty())
@@ -848,7 +812,7 @@ void RestTools::AnalyseGetAttributes()
 			{
 				if (restmethod != RestMethodeBuildDataSet && restmethod != RestMethodeBuildSubDataSet)
 					restmethod = RestMethodeRetrieve;				
-				if (wasapost)
+				if (wasapost || wasaput)
 				{
 					fJsonMethParams = GetInputString();
 				}
@@ -863,7 +827,7 @@ void RestTools::AnalyseGetExpandAttributes()
 	VString ss;
 	if (attributes.size() == 1 && !getDef && err == VE_OK)
 	{
-		EntityAttribute* att = attributes.begin()->fAttribute;
+		const EntityAttribute* att = attributes.begin()->fAttribute;
 		if (att->GetDataKind() == VK_IMAGE)
 		{
 			onepictfield = true;
@@ -886,7 +850,7 @@ void RestTools::AnalyseGetExpandAttributes()
 
 	if (em != nil && err == VE_OK)
 	{
-		if (url.GetValue(rest::expand, ss))
+		if ((meth == nil) && url.GetValue(rest::expand, ss))
 		{
 			if (fToArray)
 			{
@@ -909,7 +873,7 @@ void RestTools::AnalyseGetExpandAttributes()
 					
 					if (!em->BuildListOfAttributes(ss, *expandattributes, false, this))
 					{
-						err = ThrowError(rest::cannot_build_list_of_attribute_for_expand, *s, em->GetName());
+						err = ThrowError(rest::cannot_build_list_of_attribute_for_expand, ss, em->GetName());
 						SetHTTPError(rest::http_not_found);
 					}
 				}
@@ -952,41 +916,6 @@ void RestTools::WorkOnCatalog()
 				break;
 			case RestMethodeRefresh:
 			case RestMethodeRetrieve:
-				/*
-				if (getdatabasedef)
-				{
-					bool metadata = url.GetValue(rest::metadata, ss);
-					VValueBag bag;
-					for (sLONG i = 1, nb = labase->GetNBTable(); i <= nb && err == VE_OK; i++)
-					{
-						Table* tt = labase->RetainTable(i);
-						if (tt != nil)
-						{
-							EntityModel* em = EntityModel::BuildEntityModel(tt);
-							if (em != nil)
-							{
-								BagElement subbag(bag, d4::dataClasses);
-								em->ToBag(*subbag, false, metadata, !fToXML, this);
-								em->Release();
-							}
-							tt->Release();
-						}
-					}
-					if (fToXML)
-					{
-						VString xml;
-						SaveBagToXML(bag, L"Catalog", xml, IsPrettyFormatting(), nil, true);
-						PutText(xml);
-					}
-					else
-					{
-						VString jsonStr;
-						bag.GetJSONString(jsonStr, IsPrettyFormatting() ? JSON_PrettyFormatting : JSON_Default);
-						PutText(jsonStr);
-					}
-				}
-				else
-				*/
 				{
 					if (em != nil && allEMs.size() == 1)
 					{
@@ -1027,7 +956,7 @@ void RestTools::WorkOnCatalog()
 								for (vector<CDB4DEntityModel*>::iterator cur = allEMs.begin(), end = allEMs.end(); cur != end; cur++)
 								{
 									CDB4DEntityModel* xem = *cur;
-									EntityModel* em1 = VImpCreator<EntityModel>::GetImpObject(xem);
+									EntityModel* em1 = dynamic_cast<EntityModel*>(xem);
 									if (em1->getScope() == escope_public)
 									{
 										BagElement subbag(bag, d4::dataClasses);
@@ -1050,15 +979,15 @@ void RestTools::WorkOnCatalog()
 								for (vector<CDB4DEntityModel*>::iterator cur = allEMs.begin(), end = allEMs.end(); cur != end; cur++)
 								{
 									CDB4DEntityModel* xem = *cur;
-									EntityModel* em1 = VImpCreator<EntityModel>::GetImpObject(xem);
+									EntityModel* em1 = dynamic_cast<EntityModel*>(xem);
 									if (em1->getScope() == escope_public)
 									{
 										BagElement subbag(bag, d4::dataClasses);
 										subbag->SetAttribute(d4::name, xem->GetEntityName());
 										VString uri;
-										CalculateURI(uri, VImpCreator<EntityModel>::GetImpObject(xem), L"", false, false);
+										CalculateURI(uri, dynamic_cast<EntityModel*>(xem), L"", false, false);
 										subbag->SetAttribute(d4::uri, uri);
-										CalculateDataURI(uri, VImpCreator<EntityModel>::GetImpObject(xem), L"", false, false);
+										CalculateDataURI(uri, dynamic_cast<EntityModel*>(xem), L"", false, false);
 										subbag->SetAttribute(d4::dataURI, uri);
 									}
 								}
@@ -1084,7 +1013,7 @@ void RestTools::WorkOnCatalog()
 			case RestMethodeUpdate:
 			case RestMethodeValidate:
 				{
-					EntityModelCatalog* newcat = new EntityModelCatalog(labase);
+					LocalEntityModelCatalog* newcat = new LocalEntityModelCatalog(labase);
 					VValueBag bagData;
 					if (fToXML)
 					{
@@ -1110,6 +1039,8 @@ void RestTools::WorkOnCatalog()
 						SetHTTPError(rest::http_bad_request);
 					}
 
+					QuickReleaseRefCountable(newcat);
+
 				}
 
 				break;
@@ -1122,7 +1053,7 @@ void RestTools::WorkOnCatalog()
 	}
 }
 
-void RestTools::CallMethod(Selection* sel, EntityRecord* erec, DataSet* inDataSet)
+void RestTools::CallMethod(EntityCollection* sel, EntityRecord* erec, DataSet* inDataSet)
 {
 	VJSContext jscontext( fJSGlobalContext);
 	VJSValue result(jscontext);
@@ -1159,120 +1090,6 @@ void RestTools::CallMethod(Selection* sel, EntityRecord* erec, DataSet* inDataSe
 
 	ReturnJSResult(err, result, nil, inDataSet);
 
-	/*
-	if (err == VE_OK)
-	{
-		EntitySelectionIterator* xrec = result.GetObjectPrivateData<VJSEntitySelectionIterator>();
-		if (xrec != nil)
-		{
-			CDB4DEntityRecord* xerec = xrec->GetCurRec(fContext->GetEncapsuleur());
-			if (xerec == nil)
-			{
-				PutJsonBeginObject();
-				PutJsonPropertyName(L"result");
-				PutText(L"null");
-				PutJsonEndObject();			
-			}
-			else
-				err = EntityRecordToJSON(VImpCreator<EntityRecord>::GetImpObject(xerec), attributes, expandattributes, nil, true);
-		}
-		else
-		{
-			CDB4DSelection* xsel = result.GetObjectPrivateData<VJSEntitySelection>();
-			if (xsel != nil)
-			{
-				CDB4DEntityModel* resModel = xsel->GetModel();
-				if (testAssert(resModel != nil))
-				{
-					EntityModel* resEM = VImpCreator<EntityModel>::GetImpObject(resModel);
-					EntityAttributeSortedSelection resAtts(resEM);
-					EntityAttributeSelection* resExpandAttributes = nil;
-
-					uLONG timeout = 2 * 60 * 60 * 1000; // 2 heures
-					VString stimeout;
-					if (url.GetValue(rest::timeout, stimeout))
-					{
-						timeout = stimeout.GetLong() * 1000;
-					}
-					Selection* sel = VImpCreator<VDB4DSelection>::GetImpObject(xsel)->GetSel();
-					DataSet* newset = nil;
-					
-					if (restmethod == RestMethodeBuildDataSet)
-					{
-						newset = new DataSet(resEM->GetMainTable(), sel, timeout);
-						if (!VDBMgr::GetManager()->AddKeptDataSet(newset))
-						{
-							newset->Release();
-							newset = nil;
-						}
-						else
-						{
-							VString uri;
-							CalculateURI(uri, newset, resEM, L"", false, false);
-							fResponse->AddResponseHeader(L"Content-Location", uri, true);
-						}
-					}
-
-					err = SelToJSON(resEM, sel, resAtts, resExpandAttributes, nil, true, 0 , -1 , newset, true);
-				}
-
-			}
-			else
-			{
-				PutJsonBeginObject();
-
-				if (inDataSet != nil)
-				{
-					PutJsonPropertyName(L"__ENTITYSET");
-					VString uri;
-					CalculateURI(uri, inDataSet, em, L"", false, true);
-					PutText(uri);
-					PutJsonSeparator();
-					NewLine();	
-				}
-
-				PutJsonPropertyName(L"result");
-				VJSJSON JSON(jscontext);
-				VString outJson;
-				//VValueSingle* xresult = result.CreateVValue();
-				JSON.Stringify(result, outJson, nil);
-				if (outJson == L"undefined")
-					outJson = L"null";
-				PutText(outJson);
-
-				PutJsonEndObject();
-			}
-		}
-	}
-	else
-	{
-		PutJsonBeginObject();
-
-		if (inDataSet != nil)
-		{
-			PutJsonPropertyName(L"__ENTITYSET");
-			VString uri;
-			CalculateURI(uri, inDataSet, em, L"", false, true);
-			PutText(uri);
-			PutJsonSeparator();
-			NewLine();	
-		}
-
-		VValueBag errbag;
-		BuildErrorStack(errbag);
-		dejaerror = true;
-		VBagArray* errors = errbag.GetElements(d4::__ERROR);
-		if (errors != nil)
-		{
-			VString errjson;
-			sLONG level = 0;
-			errors->_GetJSONString(errjson, level, false, JSON_Default);
-			PutJsonPropertyName(L"__ERROR");
-			PutText(errjson);			
-		}
-		PutJsonEndObject();
-	}
-*/
 }
 
 
@@ -1284,7 +1101,7 @@ void RestTools::ReturnJSResult(VError err, VJSValue& result, JS4D::ExceptionRef 
 		EntitySelectionIterator* xrec = result.GetObjectPrivateData<VJSEntitySelectionIterator>();
 		if (xrec != nil)
 		{
-			CDB4DEntityRecord* xerec = xrec->GetCurRec(fContext->GetEncapsuleur());
+			EntityRecord* xerec = xrec->GetCurRec(fContext);
 			if (xerec == nil)
 			{
 				PutJsonBeginObject();
@@ -1293,19 +1110,38 @@ void RestTools::ReturnJSResult(VError err, VJSValue& result, JS4D::ExceptionRef 
 				PutJsonEndObject();			
 			}
 			else
-				err = EntityRecordToJSON(VImpCreator<EntityRecord>::GetImpObject(xerec), attributes, expandattributes, nil, true);
+				err = EntityRecordToJSON(dynamic_cast<EntityRecord*>(xerec), attributes, expandattributes, nil, true);
 		}
 		else
 		{
-			CDB4DSelection* xsel = result.GetObjectPrivateData<VJSEntitySelection>();
+			EntityCollection* xsel = result.GetObjectPrivateData<VJSEntitySelection>();
 			if (xsel != nil)
 			{
-				CDB4DEntityModel* resModel = xsel->GetModel();
+				EntityModel* resModel = xsel->GetModel();
 				if (testAssert(resModel != nil))
 				{
-					EntityModel* resEM = VImpCreator<EntityModel>::GetImpObject(resModel);
+					RetrieveSelDelimiters();
+					EntityModel* resEM = resModel;
 					EntityAttributeSortedSelection resAtts(resEM);
 					EntityAttributeSelection* resExpandAttributes = nil;
+					VString ss;
+					if (url.GetValue(rest::expand, ss))
+					{
+						resExpandAttributes = new EntityAttributeSelection(resModel);
+						if (ss == L"$all")
+						{
+							resModel->GetAllAttributes(*resExpandAttributes, this);
+						}
+						else
+						{
+							
+							if (!resModel->BuildListOfAttributes(ss, *resExpandAttributes, false, this))
+							{
+								err = ThrowError(rest::cannot_build_list_of_attribute_for_expand, ss, resModel->GetName());
+								SetHTTPError(rest::http_not_found);
+							}
+						}
+					}
 
 					uLONG timeout = 2 * 60 * 60 * 1000; // 2 heures
 					VString stimeout;
@@ -1313,12 +1149,11 @@ void RestTools::ReturnJSResult(VError err, VJSValue& result, JS4D::ExceptionRef 
 					{
 						timeout = stimeout.GetLong() * 1000;
 					}
-					Selection* sel = VImpCreator<VDB4DSelection>::GetImpObject(xsel)->GetSel();
 					DataSet* newset = nil;
 
 					if (restmethod == RestMethodeBuildDataSet)
 					{
-						newset = new DataSet(resEM->GetMainTable(), sel, timeout);
+						newset = new DataSet(resEM, xsel, timeout);
 						if (!VDBMgr::GetManager()->AddKeptDataSet(newset))
 						{
 							newset->Release();
@@ -1332,7 +1167,7 @@ void RestTools::ReturnJSResult(VError err, VJSValue& result, JS4D::ExceptionRef 
 						}
 					}
 
-					err = SelToJSON(resEM, sel, resAtts, resExpandAttributes, nil, true, 0 /*skipfirst*/, -1 /*countelem*/, newset, true);
+					err = SelToJSON(resEM, xsel, resAtts, resExpandAttributes, nil, true, skipfirst, countelem, newset, true);
 				}
 
 			}
@@ -1346,9 +1181,8 @@ void RestTools::ReturnJSResult(VError err, VJSValue& result, JS4D::ExceptionRef 
 					{
 						VJSValue valStream(resultObj.GetProperty("HTTPStream"));
 
-#if !VERSION_LINUX   // Postponed Linux Implementation !
-
 						VJSPictureContainer* piccontainer = valStream.GetObjectPrivateData<VJSImage>();
+
 						if ( piccontainer != nil)
 						{
 							alreadyTaken = true;
@@ -1358,7 +1192,6 @@ void RestTools::ReturnJSResult(VError err, VJSValue& result, JS4D::ExceptionRef 
 							fResponse->AddResponseHeader(L"Content-Type", mime, true);
 						}
 						else
-#endif   // Postponed Linux Implementation !
 						{
 							bool mustdeleteStream = false;
 							VStream* stream = valStream.GetObjectPrivateData<VJSStream>();
@@ -1488,6 +1321,32 @@ void RestTools::ReturnJSResult(VError err, VJSValue& result, JS4D::ExceptionRef 
 }
 
 
+void RestTools::RetrieveSelDelimiters()
+{
+	VString ss;
+	countelem = -1;
+	skipfirst = 0;
+	if (url.GetValue(rest::top, ss) || url.GetValue(rest::limit, ss))
+	{
+		countelem = ss.GetLong();
+	}
+	else
+	{
+		if (!fToArray && em != nil)
+		{
+			countelem = em->GetDefaultTopSizeInUse();
+			if (countelem <= 0)
+				countelem = -1;
+		}
+	}
+
+	if (url.GetValue(rest::skip, ss))
+	{
+		skipfirst = ss.GetLong();
+	}
+}
+
+
 void RestTools::RetrieveOrDeleteEntitySel()
 {
 	if (meth != nil && meth->GetKind() == emeth_static)
@@ -1496,8 +1355,11 @@ void RestTools::RetrieveOrDeleteEntitySel()
 	}
 	else
 	{
-		Selection* sel = nil;
+		EntityCollection* sel = nil;
 		VString ss;
+		RetrieveSelDelimiters();
+
+		/*
 		countelem = -1;
 		skipfirst = 0;
 		if (url.GetValue(rest::top, ss) || url.GetValue(rest::limit, ss))
@@ -1518,11 +1380,12 @@ void RestTools::RetrieveOrDeleteEntitySel()
 		{
 			skipfirst = ss.GetLong();
 		}
+		*/
 		EntityAttributeSortedSelection* SortingAtt = nil;
 
 
 		if (dejaselected)
-			sel = new BitSel(em->GetMainTable()->GetDF(), &selectedEntities);
+			sel = RetainRefCountable(selectedEntities);
 		else
 		{
 			if (curdataset != nil)
@@ -1538,119 +1401,157 @@ void RestTools::RetrieveOrDeleteEntitySel()
 				SetWithQueryPlan(ss == L"true" || ss == L"1");
 
 
-			Boolean olddescribe = fContext->ShouldDescribeQuery();
-			fContext->MustDescribeQuery(WithQueryPath() || WithQueryPlan());
-
-			QueryParamElementVector qparams;
+			if (em->QueriesAreProcessedRemotely())
 			{
+				VJSONArray* params = nil;
 				VString paramstring;
 				if (url.GetValue(rest::params, paramstring))
 				{
-					VJSContext jscontext( fJSGlobalContext);
-					VJSJSON json(jscontext);
-					JS4D::ExceptionRef except = nil;
-					VJSValue params(json.Parse(paramstring, &except));
-					if (!params.IsNull() && !params.IsUndefined() && params.IsInstanceOf("Array"))
+					VJSONImporter json(paramstring);
+					VJSONValue paramsVal;
+					err = json.Parse(paramsVal);
+					if (err == VE_OK)
 					{
-						VJSObject valobj(jscontext);
-						params.GetObject(valobj);
-						VJSArray paramArr(valobj);
-						for (sLONG i = 0, nb = paramArr.GetLength(); i < nb; i++)
+						if (paramsVal.IsArray())
+							params = RetainRefCountable(paramsVal.GetArray());
+					}
+				}
+				if (err == VE_OK)
+				{
+					EntityCollection* oldsel = sel;
+					sel = em->executeQuery(querystring, params, fContext, oldsel, GetProgressIndicator(), DB4D_Do_Not_Lock, 0, nil, &err);
+					QuickReleaseRefCountable(oldsel);
+				}
+				QuickReleaseRefCountable(params);
+			}
+			else
+			{
+				Boolean olddescribe = fContext->ShouldDescribeQuery();
+				fContext->MustDescribeQuery(WithQueryPath() || WithQueryPlan());
+
+				QueryParamElementVector qparams;
+				{
+					VString paramstring;
+					if (url.GetValue(rest::params, paramstring))
+					{
+						VJSContext jscontext( fJSGlobalContext);
+						VJSJSON json(jscontext);
+						JS4D::ExceptionRef except = nil;
+						VJSValue params(json.Parse(paramstring, &except));
+						if (!params.IsNull() && !params.IsUndefined() && params.IsInstanceOf("Array"))
 						{
-							VJSValue jsval(paramArr.GetValueAt(i));
-							if (jsval.IsArray())
+							VJSObject valobj(jscontext);
+							params.GetObject(valobj);
+							VJSArray paramArr(valobj);
+							for (sLONG i = 0, nb = paramArr.GetLength(); i < nb; i++)
 							{
-								VJSArray arr(jsval, false);
-								qparams.push_back(QueryParamElement(arr));
-							}
-							else
-							{
-								VValueSingle* cv = jsval.CreateVValue();
-								if (cv == nil)
+								VJSValue jsval(paramArr.GetValueAt(i));
+								if (jsval.IsArray())
 								{
-									cv = new VString();
-									cv->SetNull(true);
+									VJSArray arr(jsval, false);
+									qparams.push_back(QueryParamElement(arr));
 								}
-								qparams.push_back(QueryParamElement(cv));
+								else
+								{
+									VValueSingle* cv = jsval.CreateVValue();
+									if (cv == nil)
+									{
+										cv = new VString();
+										cv->SetNull(true);
+									}
+									if (cv->GetValueKind() == VK_TIME)
+									{
+										VValueSingle* cv2 = jsval.CreateVValue(nil, true);
+										qparams.push_back(QueryParamElement(cv, cv2));
+									}
+									else
+										qparams.push_back(QueryParamElement(cv));
+								}
 							}
 						}
 					}
 				}
-			}
-
-			SearchTab search(em->GetMainTable());
-			err = search.BuildFromString(querystring, orderbystring, fContext, em, false, &qparams);
-			if (err == VE_OK)
-			{
-				VString paramstring;
-				if (url.GetValue(rest::params, paramstring))
+				
+				SearchTab search(em);
+				err = search.BuildFromString(querystring, orderbystring, fContext, em, false, &qparams);
+				if (err == VE_OK)
 				{
-					VJSContext jscontext( fJSGlobalContext);
-					VJSJSON json(jscontext);
-					JS4D::ExceptionRef except = nil;
-					VJSValue params(json.Parse(paramstring, &except));
-					if (!params.IsNull() && !params.IsUndefined() && params.IsInstanceOf("Array"))
+					VString paramstring;
+					if (url.GetValue(rest::params, paramstring))
 					{
-						VJSObject valobj(jscontext);
-						params.GetObject(valobj);
-						VJSArray paramArr(valobj);
-						vector<VString> ParamNames;
-						QueryParamElementVector ParamValues;
-
-						err = search.GetParams(ParamNames, ParamValues);
-						if (err == VE_OK)
+						VJSContext jscontext( fJSGlobalContext);
+						VJSJSON json(jscontext);
+						JS4D::ExceptionRef except = nil;
+						VJSValue params(json.Parse(paramstring, &except));
+						if (!params.IsNull() && !params.IsUndefined() && params.IsInstanceOf("Array"))
 						{
-							QueryParamElementVector::iterator curvalue = ParamValues.begin();
-							for (vector<VString>::iterator curname = ParamNames.begin(), endname = ParamNames.end(); curname != endname; curname++, curvalue++)
+							VJSObject valobj(jscontext);
+							params.GetObject(valobj);
+							VJSArray paramArr(valobj);
+							vector<VString> ParamNames;
+							QueryParamElementVector ParamValues;
+
+							err = search.GetParams(ParamNames, ParamValues);
+							if (err == VE_OK)
 							{
-								const VString& s = *curname;
-								if (s.GetLength() == 1)
+								QueryParamElementVector::iterator curvalue = ParamValues.begin();
+								for (vector<VString>::iterator curname = ParamNames.begin(), endname = ParamNames.end(); curname != endname; curname++, curvalue++)
 								{
-									UniChar c = s[0];
-									if (c >= '1' && c <= '9')
+									const VString& s = *curname;
+									if (s.GetLength() == 1)
 									{
-										sLONG paramnum = s.GetLong()-1;
-										VJSValue jsval(paramArr.GetValueAt(paramnum));
-										if (jsval.IsArray())
+										UniChar c = s[0];
+										if (c >= '1' && c <= '9')
 										{
-											VJSArray jarr(jsval, false);
-											curvalue->Dispose();
-											*curvalue = QueryParamElement(jarr);
-										}
-										else
-										{
-											VValueSingle* cv = jsval.CreateVValue();
-											if (cv != nil)
+											sLONG paramnum = s.GetLong()-1;
+											VJSValue jsval(paramArr.GetValueAt(paramnum));
+											if (jsval.IsArray())
 											{
+												VJSArray jarr(jsval, false);
 												curvalue->Dispose();
-												*curvalue = QueryParamElement(cv);
+												*curvalue = QueryParamElement(jarr);
+											}
+											else
+											{
+												VValueSingle* cv = jsval.CreateVValue();
+												if (cv != nil)
+												{
+													curvalue->Dispose();
+													if (cv->GetValueKind() == VK_TIME)
+													{
+														VValueSingle* cv2 = jsval.CreateVValue(nil, true);
+														*curvalue = QueryParamElement(cv, cv2);
+													}
+													else
+														*curvalue = QueryParamElement(cv);
+												}
 											}
 										}
 									}
 								}
+								err = search.SetParams(ParamNames, ParamValues);
 							}
-							err = search.SetParams(ParamNames, ParamValues);
+			
 						}
-		
+					}
+
+					{
+						EntityCollection* oldsel = sel;
+						sel = em->executeQuery(&search, fContext, oldsel, GetProgressIndicator(), DB4D_Do_Not_Lock, 0, nil, &err);
+						QuickReleaseRefCountable(oldsel);
+					}
+
+					if (WithQueryPlan())
+					{
+						SetQueryPlan(fContext->GetLastQueryPlan());
+					}
+					if (WithQueryPath())
+					{
+						SetQueryPath(fContext->GetLastQueryPath());
 					}
 				}
-
-				{
-					Selection* oldsel = sel;
-					sel = em->ExecuteQuery(&search, fContext, oldsel, GetProgressIndicator(), DB4D_Do_Not_Lock, 0, nil, &err);
-					QuickReleaseRefCountable(oldsel);
-				}
-
-				if (WithQueryPlan())
-				{
-					SetQueryPlan(fContext->GetLastQueryPlan());
-				}
-				if (WithQueryPath())
-				{
-					SetQueryPath(fContext->GetLastQueryPath());
-				}
+				fContext->MustDescribeQuery(olddescribe);
 			}
-			fContext->MustDescribeQuery(olddescribe);
 		}
 		else
 		{
@@ -1663,12 +1564,17 @@ void RestTools::RetrieveOrDeleteEntitySel()
 		if (url.GetValue(rest::removeFromSet, ss))
 		{
 			sLONG posToRemove = ss.GetLong();
-			if (posToRemove >=0 && posToRemove < sel->GetQTfic())
+			if (posToRemove >=0 && posToRemove < sel->GetLength(fContext))
 			{
-				sLONG recnum = sel->GetFic(posToRemove);
-				if (recnum >= 0)
+				bool refonly = false;
+				VString sref;
+				if (url.GetValue(rest::removeRefOnly, sref))
 				{
-					EntityRecord* recToDel = em->LoadEntityRecord(recnum, err, DB4D_Do_Not_Lock, fContext, false);
+					refonly = (sref == "true" || sref == "1");
+				}
+				if (!refonly)
+				{
+					EntityRecord* recToDel = sel->LoadEntity(posToRemove, fContext, err, DB4D_Do_Not_Lock);
 					if (recToDel != nil)
 					{
 						err = recToDel->Drop();
@@ -1691,7 +1597,7 @@ void RestTools::RetrieveOrDeleteEntitySel()
 				sLONG nbElem = arr.GetLength();
 				for (sLONG i = 0; i < nbElem && err == VE_OK; i++)
 				{
-					sLONG recnum = -1;
+					EntityRecord* erec = nil;
 					{
 						StErrorContextInstaller errs(false);
 						VError err2;
@@ -1699,7 +1605,7 @@ void RestTools::RetrieveOrDeleteEntitySel()
 						if (key.IsObject())
 						{
 							// traite ici les cles composees
-							recnum = em->getEntityNumWithPrimKey(key.GetObject(), fContext, err2);
+							erec = em->findEntityWithPrimKey(key.GetObject(), fContext, err2, DB4D_Do_Not_Lock);
 						}
 						else
 						{
@@ -1708,12 +1614,15 @@ void RestTools::RetrieveOrDeleteEntitySel()
 							{
 								VectorOfVValue keys(true);
 								keys.push_back(cv);
-								recnum = em->getEntityNumWithPrimKey(keys, fContext, err2);
+								erec = em->findEntityWithPrimKey(keys, fContext, err2, DB4D_Do_Not_Lock);
 							}
 						}
 					}
-					if (recnum >= 0)
-						err = sel->AddToSel(recnum);
+					if (erec != nil)
+					{
+						err = sel->AddEntity(erec, true);
+						erec->Release();
+					}
 				}
 			}
 
@@ -1726,90 +1635,10 @@ void RestTools::RetrieveOrDeleteEntitySel()
 			VJSValue val(json.Parse(ss));
 			WafSelection wafsel(val);
 
-			if (sel->GetTypSel() == sel_bitsel)
-			{
-				Bittab filter;
-				filter.aggrandit(em->GetMainTable()->GetDF()->GetMaxRecords(fContext));
-				
-				for (vector<sLONG>::iterator cur = wafsel.rows.begin(), end = wafsel.rows.end(); cur != end; cur++)
-				{
-					sLONG n = sel->GetFic(*cur);
-					filter.Set(n);					
-				}
+			EntityCollection* newsel = sel->NewFromWafSelection(&wafsel, fContext);
+			sel->Release();
+			sel = newsel;
 
-				for (WafSelectionRangeVector::iterator cur = wafsel.ranges.begin(), end = wafsel.ranges.end(); cur != end; cur++)
-				{
-					sLONG debut = cur->start;
-					sLONG fin = cur->end;
-					for (sLONG i = debut; i <= fin; i++)
-					{
-						sLONG n = sel->GetFic(i);
-						filter.Set(n);
-					}
-									
-				}
-
-				for (vector<sLONG>::iterator cur = wafsel.butRows.begin(), end = wafsel.butRows.end(); cur != end; cur++)
-				{
-					sLONG n = sel->GetFic(*cur);
-					filter.Clear(n);					
-				}
-
-				Bittab* bresult = new Bittab();
-				Bittab* bsel = ((BitSel*)sel)->GetBittab();
-				bresult->Or(bsel);
-				bresult->And(&filter);
-				sel->Release();
-				sel = new BitSel(em->GetMainTable()->GetDF(), bresult);
-				bresult->Release();
-			}
-			else
-			{
-				Bittab filter;
-				Selection* newsel;
-				sLONG nbelemInWafSel = wafsel.count();
-				if (nbelemInWafSel > kNbElemInSel)
-				{
-					newsel=new LongSel(em->GetMainTable()->GetDF(), nil);
-					((LongSel*)newsel)->PutInCache();
-				}
-				else
-				{
-					newsel=new PetiteSel(em->GetMainTable()->GetDF(), nil);
-				}
-
-				for (vector<sLONG>::iterator cur = wafsel.butRows.begin(), end = wafsel.butRows.end(); cur != end; cur++)
-				{
-					sLONG n = sel->GetFic(*cur);
-					filter.Set(n);					
-				}
-
-
-				for (vector<sLONG>::iterator cur = wafsel.rows.begin(), end = wafsel.rows.end(); cur != end; cur++)
-				{
-					sLONG n = sel->GetFic(*cur);
-					if (!filter.isOn(n))
-					{
-						newsel->AddToSel(n);
-					}
-				}
-
-				for (WafSelectionRangeVector::iterator cur = wafsel.ranges.begin(), end = wafsel.ranges.end(); cur != end; cur++)
-				{
-					sLONG debut = cur->start;
-					sLONG fin = cur->end;
-					for (sLONG i = debut; i <= fin; i++)
-					{
-						sLONG n = sel->GetFic(i);
-						if (!filter.isOn(n))
-							newsel->AddToSel(n);
-					}
-
-				}
-
-				sel->Release();
-				sel = newsel;
-			}
 		
 		}
 
@@ -1843,8 +1672,10 @@ void RestTools::RetrieveOrDeleteEntitySel()
 
 		if (sel != nil && err == VE_OK)
 		{
+			/*
 			if (fQueryLimit > 0)
 				sel->ReduceSel(fQueryLimit);
+				*/
 
 			if (restmethod == RestMethodeDelete)
 			{
@@ -1852,7 +1683,7 @@ void RestTools::RetrieveOrDeleteEntitySel()
 					fContext->StartTransaction(err);
 				if (err == VE_OK)
 				{
-					err = sel->DeleteRecords(fContext, nil, nil, nil, nil, em);
+					err = sel->DropEntities(fContext, nil, nil);
 					if (fImportAtomic)
 					{
 						if (err == VE_OK)
@@ -1865,29 +1696,48 @@ void RestTools::RetrieveOrDeleteEntitySel()
 			else
 			{
 				DataSet* newset = nil;
+				VString logicoper;
+				bool alreadyResult = false;
 
-				WafSelection wafkeepsel;
-				WafSelection* wafkeepselptr = nil;
-				VString keepSelStr;
-				if (url.GetValue(rest::keepSel, keepSelStr))
+				EntityCollection* truesel = nil;
+
+				if (url.GetValue(rest::logicOperator, logicoper))
 				{
-					VJSContext jscontext( fJSGlobalContext);
-					VJSJSON json(jscontext);
-					VJSValue val(json.Parse(keepSelStr));
-					wafkeepsel.buildFromJS(val);
-					wafkeepselptr = &wafkeepsel;
-					newwafkeepselptr = new WafSelection();
-				}
-
-				Selection* truesel = sel->SortSel(err, em, SortingAtt, fContext,  GetProgressIndicator(), wafkeepselptr, newwafkeepselptr);
-
-				if (truesel == nil)
-				{
+					EntityCollection* newsel = nil;
+					alreadyResult = MixCollection(sel, logicoper, newsel);
+					if (newsel != nil)
+					{
+						CopyRefCountable(&sel, newsel);
+						newsel->Release();
+					}
 					truesel = sel;
 					truesel->Retain();
 				}
+				else
+				{
+					WafSelection wafkeepsel;
+					WafSelection* wafkeepselptr = nil;
+					VString keepSelStr;
+					if (url.GetValue(rest::keepSel, keepSelStr))
+					{
+						VJSContext jscontext( fJSGlobalContext);
+						VJSJSON json(jscontext);
+						VJSValue val(json.Parse(keepSelStr));
+						wafkeepsel.buildFromJS(val);
+						wafkeepselptr = &wafkeepsel;
+						newwafkeepselptr = new WafSelection();
+					}
 
-				if (restmethod == RestMethodeBuildDataSet)
+					truesel = sel->SortSel(err, SortingAtt, fContext,  GetProgressIndicator(), wafkeepselptr, newwafkeepselptr);
+
+					if (truesel == nil)
+					{
+						truesel = sel;
+						truesel->Retain();
+					}
+				}
+
+				if (restmethod == RestMethodeBuildDataSet && err == VE_OK)
 				{
 					if (curdataset != nil && curdataset->GetSel() == truesel)
 					{
@@ -1901,7 +1751,7 @@ void RestTools::RetrieveOrDeleteEntitySel()
 						{
 							timeout = stimeout.GetLong() * 1000;
 						}
-						newset = new DataSet(em->GetMainTable(), truesel, timeout);
+						newset = new DataSet(em, truesel, timeout);
 						if (!VDBMgr::GetManager()->AddKeptDataSet(newset))
 						{
 							newset->Release();
@@ -1916,7 +1766,7 @@ void RestTools::RetrieveOrDeleteEntitySel()
 					}
 				}
 
-				if (err == VE_OK)
+				if (err == VE_OK && !alreadyResult)
 				{
 					if (em != nil)
 					{
@@ -1927,9 +1777,14 @@ void RestTools::RetrieveOrDeleteEntitySel()
 						else
 						{
 							VString keyval;
+							VString computeval;
 							if (url.GetValue(rest::findKey, keyval))
 							{
 								FindKeyInCollection(keyval, truesel);
+							}
+							else if (url.GetValue(rest::compute, computeval))
+							{
+								ComputeOnCollection(computeval, truesel);
 							}
 							else
 							{
@@ -1948,7 +1803,14 @@ void RestTools::RetrieveOrDeleteEntitySel()
 									{
 										VJSContext jscontext( fJSGlobalContext);
 										VJSArray arr(jscontext);
-										err = SelToJSObject(fContext,arr, em, sel, attributes, expandattributes, SortingAtt, true, false, skipfirst, countelem);
+										bool nokey = false;
+										VString nokeys;
+										if (url.GetValue(rest::noKey, nokeys))
+										{
+											if (nokeys == "1" || nokeys == "true")
+												nokey = true;
+										}
+										arr = sel->ToJsArray(fContext, jscontext, attributes, expandattributes, SortingAtt, !nokey, false, skipfirst, countelem, err);
 
 										VJSJSON JSON(jscontext);
 										VString outJson;
@@ -1988,17 +1850,14 @@ void RestTools::RetrieveOrDeleteEntitySel()
 }
 
 
-void RestTools::FindKeyInCollection(const VString& keyval, Selection* sel)
+void RestTools::FindKeyInCollection(const VString& keyval, EntityCollection* sel)
 {
 	VString result = "-1";
 	VectorOfVString vals;
 	vals.push_back(keyval);
-	sLONG n = em->getEntityNumWithPrimKey(vals, fContext, err);
-	if (n != -1)
-	{
-		sLONG pos = sel->GetRecordPos(n, fContext);
-		result.FromLong(pos);
-	}
+	RecIDType pos = sel->FindKey(vals, fContext, err);
+	result.FromLong(pos);
+	
 	if (err == VE_OK)
 	{
 		PutJsonBeginObject();
@@ -2009,7 +1868,161 @@ void RestTools::FindKeyInCollection(const VString& keyval, Selection* sel)
 }
 
 
-void RestTools::GetDistinctValues(Selection* sel)
+bool RestTools::MixCollection(EntityCollection* sel, const VString& logicOper, EntityCollection*& outSel)
+{
+	bool AlreadySentResult = false;
+	outSel = nil;
+	VString othercolurl;
+	if (url.GetValue(rest::otherCollection, othercolurl))
+	{
+		DB4DConjunction oper = DB4D_NOTCONJ;
+		if (logicOper == "and")
+			oper = DB4D_And;
+		else if (logicOper == "or")
+			oper = DB4D_OR;
+		else if (logicOper == "except")
+			oper = DB4D_Except;
+		else if (logicOper == "intersect")
+			oper = DB4D_Intersect;
+		else
+			err = ThrowError(rest::wrong_logic_operator, logicOper);
+
+		if (oper != DB4D_NOTCONJ)
+		{
+			VFullURL urlOther(othercolurl);
+			const VString* entitysetref = urlOther.NextPart();
+			if (entitysetref == nil)
+			{
+				err = ThrowError(rest::wrong_other_collection_ref, othercolurl);
+			}
+			else
+			{
+				VUUID xID;
+				xID.FromString(*entitysetref);
+				DataSet* othercolset = VDBMgr::GetManager()->RetainKeptDataSet(xID);
+				if (othercolset != nil)
+				{
+					EntityModel* otherem = othercolset->GetModel();
+					if (otherem != nil)
+					{
+						if (otherem->getScope() != escope_public)
+							otherem = nil;
+						else
+							otherem->Retain();
+					}
+					if (otherem == nil)
+						err = ThrowError(rest::wrong_other_collection_ref, othercolurl);
+					else
+					{
+						switch (oper)
+						{
+							case DB4D_And:
+								outSel = sel->And(othercolset->GetSel(), err, fContext);
+								break;
+							case DB4D_OR:
+								outSel = sel->Or(othercolset->GetSel(), err, fContext);
+								break;
+							case DB4D_Except:
+								outSel = sel->Minus(othercolset->GetSel(), err, fContext);
+								break;
+							case DB4D_Intersect:
+								{
+									bool result = sel->Intersect(othercolset->GetSel(), err, fContext);
+									if (err == VE_OK)
+									{
+										AlreadySentResult = true;
+										if (result)
+											PutText("true");
+										else
+											PutText("false");
+									}
+								}
+								break;
+						}
+					}
+					
+					othercolset->Release();
+				}
+				else
+					err = ThrowError(rest::wrong_other_collection_ref, othercolurl);
+			}
+		}
+	}
+	else
+		err = ThrowError(rest::missing_other_collection_ref);
+
+	return AlreadySentResult;
+}
+
+
+void RestTools::ComputeOnCollection(const VString& computeval, EntityCollection* sel)
+{
+	VJSContext jscontext( fJSGlobalContext);
+	VJSValue result(jscontext);
+	bool okcompute = false;
+	const EntityAttribute* att = nil;
+
+	VString distinctVal;
+	bool mustDistinct = false;;
+	if (url.GetValue(rest::distinct, distinctVal))
+	{
+		if (distinctVal == L"true")
+			mustDistinct = true;
+	}
+
+	DB4D_ColumnFormulae action = (DB4D_ColumnFormulae)EFormulaeActions[computeval];
+	if (action == DB4D_Count || !attributes.empty())
+	{
+		if (computeval == "all" || computeval == "$all")
+		{
+			okcompute = true;
+			VJSObject objresult(jscontext);
+			err  = sel->Compute(attributes, objresult, fContext, jscontext, mustDistinct);
+			if (err == VE_OK)
+				result = objresult;
+		}
+		else
+		{
+			if (action != DB4D_ColumnFormulae_none)
+			{
+				if (mustDistinct)
+				{
+					if (action == DB4D_Sum)
+						action = DB4D_Sum_distinct;
+					else if (action == DB4D_Count)
+						action = DB4D_Count_distinct;
+					else if (action == DB4D_Average)
+						action = DB4D_Average_distinct;
+				}
+				okcompute = true;
+				if (action == DB4D_Count && attributes.empty())
+				{
+					result.SetNumber(em->countEntities(fContext));
+				}
+				else
+				{
+					att = attributes[0].fAttribute;
+					err = sel->ComputeOnOneAttribute(att, action, result, fContext, jscontext);
+				}
+			}
+			else
+				err = ThrowError(rest::compute_action_does_not_exist, computeval);
+		}
+	}
+	else
+		err = ThrowError(rest::empty_attribute_list);
+
+	if (err == VE_OK && okcompute)
+	{
+		VString jsonString;
+		VJSJSON json(result.GetContextRef());
+		json.Stringify(result, jsonString);
+		PutText(jsonString);
+	}
+}
+
+
+void RestTools::GetDistinctValues(EntityCollection* sel)
 {
 	EntityAttribute* att = nil;
 	
@@ -2030,7 +2043,7 @@ void RestTools::GetDistinctValues(Selection* sel)
 		VCompareOptions options;
 		options.SetIntlManager(GetContextIntl(fContext));
 		VJSContext jscontext( fJSGlobalContext);
-		JSCollectionManager collection(jscontext);
+		JSCollectionManager collection(jscontext, att->isSimpleDate());
 		collection.SetNumberOfColumn(1);
 		VError err = sel->GetDistinctValues(att, collection, fContext, nil, options);
 
@@ -2091,10 +2104,10 @@ void RestTools::RetrieveOrDeleteOneEntity()
 	if (em != nil)
 	{
 		EntityRecord* erec = nil;
-		if (numrec == -3)
-			erec = em->NewEntity(fContext, DB4D_Do_Not_Lock);
+		if (fEntityKey.IsEmpty())
+			erec = em->newEntity(fContext);
 		else
-			erec = em->LoadEntityRecord(numrec, err, DB4D_Do_Not_Lock, fContext, false);
+			erec = em->findEntityWithPrimKey(fEntityKey, fContext, err, DB4D_Do_Not_Lock);
 		if (erec != nil)
 		{
 			if (meth != nil)
@@ -2121,7 +2134,7 @@ void RestTools::RetrieveOrDeleteOneEntity()
 						EntityAttributeValue* val = erec->getAttributeValue(att, err, fContext);
 						if (val != nil)
 						{
-							Selection* selsub = val->getRelatedSelection();
+							EntityCollection* selsub = val->getRelatedSelection();
 							EntityModel* emsub = att->GetSubEntityModel();
 							if (emsub != nil && selsub != nil)
 							{
@@ -2131,7 +2144,7 @@ void RestTools::RetrieveOrDeleteOneEntity()
 								{
 									timeout = stimeout.GetLong() * 1000;
 								}
-								DataSet* newset = new DataSet(emsub->GetMainTable(), selsub, timeout);
+								DataSet* newset = new DataSet(emsub, selsub, timeout);
 								if (!VDBMgr::GetManager()->AddKeptDataSet(newset))
 								{
 									newset->Release();
@@ -2275,9 +2288,7 @@ void RestTools::RetrieveOrDeleteOneEntity()
 		{
 			if (err == VE_OK)
 			{
-				VString snum;
-				snum.FromLong(numrec);
-				err = em->ThrowError(VE_DB4D_CANNOT_LOAD_ENTITY, &snum);
+				err = em->ThrowError(VE_DB4D_CANNOT_LOAD_ENTITY, &fEntityKey);
 			}
 			SetHTTPError(rest::http_not_found);
 		}
@@ -2297,7 +2308,7 @@ void RestTools::WorkOnData()
 		case RestMethodeDelete:
 		case RestMethodeBuildDataSet:
 		case RestMethodeBuildSubDataSet:
-			if (numrec == -2)
+			if (fEntityKey.IsEmpty())
 			{
 				RetrieveOrDeleteEntitySel();
 			}
@@ -2320,14 +2331,13 @@ void RestTools::WorkOnData()
 			{
 				if (onepictfield && em != nil)
 				{
-					if (numrec >= 0)
+					if (!fEntityKey.IsEmpty())
 					{
 						fInput->ResetLastError();
 						fInput->SetPos(0);
 						VString rawPictType;
 						if (url.GetValue(rest::rawPict, rawPictType))
 						{
-#if !VERSION_LINUX   // Postponed Linux Implementation !
 							VPictureCodecFactoryRef fact;
 							VString mimetype = rawPictType;
 							VPicture pict;
@@ -2347,17 +2357,15 @@ void RestTools::WorkOnData()
 								decoder->Release();
 							}
 
-							EntityRecord* erec = em->LoadEntityRecord(numrec, err, DB4D_Do_Not_Lock, fContext, false);
+							EntityRecord* erec = em->findEntityWithPrimKey(fEntityKey, fContext, err, DB4D_Do_Not_Lock);
 							if (erec != nil)
 							{
-								EntityAttribute* att = attributes.begin()->fAttribute;
+								const EntityAttribute* att = attributes.begin()->fAttribute;
 								err = erec->setAttributeValue(att, &pict);
 								if (err == VE_OK)
 									err = erec->Save(erec->GetModificationStamp());
 								erec->Release();
 							}
-							
-#endif  //(Postponed Linux Implementation)
 						}
 						else
 						{
@@ -2388,8 +2396,6 @@ void RestTools::WorkOnData()
 								}
 							}
 
-
-	#if !VERSION_LINUX   // Postponed Linux Implementation !
 							if (found)
 							{
 								VPictureCodecFactoryRef fact;
@@ -2424,17 +2430,16 @@ void RestTools::WorkOnData()
 									decoder->Release();
 								}
 
-								EntityRecord* erec = em->LoadEntityRecord(numrec, err, DB4D_Do_Not_Lock, fContext, false);
+								EntityRecord* erec = em->findEntityWithPrimKey(fEntityKey, fContext, err, DB4D_Do_Not_Lock);
 								if (erec != nil)
 								{
-									EntityAttribute* att = attributes.begin()->fAttribute;
+									const EntityAttribute* att = attributes.begin()->fAttribute;
 									err = erec->setAttributeValue(att, &pict);
 									if (err == VE_OK)
 										err = erec->Save(erec->GetModificationStamp());
 									erec->Release();
 								}
 							}
-	#endif  //(Postponed Linux Implementation)
 						}
 					}
 				}
@@ -2497,7 +2502,7 @@ void RestTools::ExecuteStaticRestMethod(const VString& JSNameSpace)
 
 		VString JsonMethodParams;
 
-		if (wasapost)
+		if (wasapost || wasaput)
 		{
 			{
 				if (methodParams.empty())
@@ -2640,14 +2645,16 @@ void RestTools::ExecuteRequest()
 #endif
 
 	if (labase != nil)
-		labase->BuildAutoModelCatalog();
+		labase->BuildAutoModelCatalog(fContext);
 
 	err = VE_OK;
 	InitUAG();
 	wasapost = fResponse->GetRequestMethod() == HTTP_POST;
+	wasaput = fResponse->GetRequestMethod() == HTTP_PUT;
+	wasadelete = fResponse->GetRequestMethod() == HTTP_DELETE;
 
 	s = url.NextPart();
-	if (s != nil && *s == L"rest" && url.IsValid())
+	if (s != nil && *s == VDBMgr::GetManager()->GetRestPrefix() && url.IsValid())
 	{
 		SetRequestFormat();
 		SetVerb();
@@ -2721,12 +2728,12 @@ void RestTools::ExecuteRequest()
 
 		if (fToXML)
 		{
-			fResponse->AddResponseHeader(L"Content-Type", L"text/xml", true);
+			fResponse->AddResponseHeader(L"Content-Type", L"text/xml; charset=UTF-8", true);
 			toJSON = false;
 		}
 
 		if (toJSON)
-			fResponse->AddResponseHeader(L"Content-Type", L"application/json", true);
+			fResponse->AddResponseHeader(L"Content-Type", L"application/json; charset=UTF-8", true);
 
 	}
 	else
@@ -2756,15 +2763,92 @@ void RestTools::ExecuteRequest()
 }
 
 
+bool RestRequestHandler::GetUserSession(const VUUID& inSessionID, User4DSession& outUserSession)
+{
+	bool ok = false;
+	VTaskLock lock(&fUserMapMutex);
+	CheckUserSessionExpirations();
+	UserSessionMap::iterator found = fUserMap.find(inSessionID);
+	if (found != fUserMap.end())
+	{
+		outUserSession = found->second;
+		VTime expiresAt;
+		VTime::Now(expiresAt);
+		expiresAt.AddMinutes(found->second.fHowManyMinutes);
+		found->second.fExpiresAt = expiresAt;
+		ok = true;
+	}
+	return ok;
+}
+
+
+
+bool RestRequestHandler::ExistsUserSession(const VUUID& inSessionID)
+{
+	bool ok = false;
+	VTaskLock lock(&fUserMapMutex);
+	CheckUserSessionExpirations();
+	UserSessionMap::iterator found = fUserMap.find(inSessionID);
+	if (found != fUserMap.end())
+	{
+		VTime expiresAt;
+		VTime::Now(expiresAt);
+		expiresAt.AddMinutes(found->second.fHowManyMinutes);
+		found->second.fExpiresAt = expiresAt;
+		ok = true;
+	}
+	return ok;
+}
+
+
+VUUID RestRequestHandler::CreateUserSession(const VString& userName, const VString& password, sLONG howManyMinutes)
+{
+	VTaskLock lock(&fUserMapMutex);
+	CheckUserSessionExpirations();
+
+	VUUID newid(true);
+	User4DSession* session = &fUserMap[newid];
+	session->fName = userName;
+	session->fHowManyMinutes = howManyMinutes;
+	session->fPassword = password;
+
+	VTime expiresAt;
+	VTime::Now(expiresAt);
+	expiresAt.AddMinutes(howManyMinutes);
+	session->fExpiresAt = expiresAt;
+	
+	return newid;
+}
+
+
+void RestRequestHandler::CheckUserSessionExpirations() // is called within an already set mutex
+{
+	VTime now;
+	VTime::Now(now);
+	VTime lastCheckedLimit = fLastExpireCheck;
+	lastCheckedLimit.AddMinutes(kUser4DSessionCheckInterval);
+	if (lastCheckedLimit > now)
+	{
+		vector<VUUID> haveExpired;
+		for (UserSessionMap::iterator cur = fUserMap.begin(), end = fUserMap.end(); cur != end; ++cur)
+		{
+			if (now > cur->second.fExpiresAt)
+				haveExpired.push_back(cur->first);
+		}
+		
+		for (vector<VUUID>::iterator cur = haveExpired.begin(), end = haveExpired.end(); cur != end; ++cur)
+		{
+			fUserMap.erase(*cur);
+		}
+
+		fLastExpireCheck = now;
+	}
+}
+
+
 
 VError RestRequestHandler::HandleRequest( IHTTPResponse* inResponse)
 {
-	/*
-	inRequest.GetAnswerStream()->SetCharSet(VTC_UTF_8, eCRM_NATIVE);
-	inRequest.GetAnswerStream()->OpenWriting();
-	inRequest.GetRequestStream()->OpenReading();
-	*/
-
 	DB4DJSRuntimeDelegate* xJSDelegate = nil;
 	VJSGlobalContext* xJSContext = nil;
 
@@ -2791,7 +2875,7 @@ VError RestRequestHandler::HandleRequest( IHTTPResponse* inResponse)
 		context = ConvertContext(xcontext);
 		xJSDelegate = new DB4DJSRuntimeDelegate(context);
 		xJSContext = VJSGlobalContext::Create( xJSDelegate);
-		CDB4DManager* db4D = XBOX::VComponentManager::RetainComponentOfType<CDB4DManager>();
+		CDB4DManager* db4D = CDB4DManager::RetainManager();
 		if (db4D != nil)
 		{
 			context->SetJSContext(xJSContext);
@@ -2819,13 +2903,12 @@ VError RestRequestHandler::HandleRequest( IHTTPResponse* inResponse)
 	// end of temporary code
 #else
 
+	// fApplicationRef will be nil when called from 4D
+
 	VError err = VE_OK;
 	BaseTaskInfo *context = NULL;
 	
-	IDB4D_ApplicationIntf *applicationIntf = fApplicationRef == nil ? nil : VDBMgr::GetManager()->GetApplicationInterface();
-
-	// code sale en attendant quelque chose de Stephane
-	//global_ApplicationRef = fApplicationRef;
+	IDB4D_ApplicationIntf *applicationIntf = /*fApplicationRef == nil ? nil :*/ VDBMgr::GetManager()->GetApplicationInterface();
 
 	VUUID userID;
 	userID.SetNull(true);
@@ -2847,13 +2930,47 @@ VError RestRequestHandler::HandleRequest( IHTTPResponse* inResponse)
 		baseContext = fxBase->NewContext(nil, nil);
 		BaseTaskInfo* context = ConvertContext(baseContext);
 		xJSDelegate = new DB4DJSRuntimeDelegate(context);
-		xJSContext = VJSGlobalContext::Create( xJSDelegate);
-		context->SetJSContext(xJSContext);
+		globalJSContext = VJSGlobalContext::Create( xJSDelegate);
+		context->SetJSContext(globalJSContext);
 	}
+
+	bool okCall = true;
+	VString WASID4D;
 
 	if (baseContext != NULL)
 	{
 		context = ConvertContext( baseContext);
+
+		if (fApplicationRef == nil) // called from 4D web server
+		{
+			okCall = false;
+			if (inResponse->GetRequest().GetCookie("WASID4D", WASID4D))
+			{
+				VUUID sessionID;
+				sessionID.FromString(WASID4D);
+				if (ExistsUserSession(sessionID))
+					okCall = true;
+			}
+
+			if (!okCall)
+			{
+				VString userName;
+				VString password;
+				sLONG howmanyminutes = 0;
+				const VHTTPHeader& header = inResponse->GetRequestHeader();
+				header.GetHeaderValue("username-4D", userName);
+				header.GetHeaderValue("password-4D", password);
+				header.GetHeaderValue("session-4D-length", howmanyminutes);
+				if (howmanyminutes == 0)
+					howmanyminutes = kUser4DSessionDefaultExpire;
+				if (applicationIntf->AcceptRestConnection(userName, password))
+				{
+					okCall = true;
+					VUUID sessionID = CreateUserSession(userName, password, howmanyminutes);
+					WASID4D.FromVUUID(sessionID);
+				}
+			}
+		}
 
 		/*
 		CUAGSession* session = inResponse->GetRequest().GetAuthenticationInfos()->GetUAGSession();
@@ -2869,12 +2986,23 @@ VError RestRequestHandler::HandleRequest( IHTTPResponse* inResponse)
 
 #endif
 
-	RestTools req(context, &(inResponse->GetRequest().GetRequestBody()), &(inResponse->GetResponseBody()), inResponse->GetRequest().GetHost(), inResponse->GetRequestURL(), inResponse, globalJSContext, fApplicationRef);
+	if (globalJSContext != NULL && okCall)
+	{
+		if (!WASID4D.IsEmpty())
+			inResponse->AddCookie("WASID4D", WASID4D, "", "", "", false, true, 60*60, false);
+		RestTools req(context, &(inResponse->GetRequest().GetRequestBody()), &(inResponse->GetResponseBody()), inResponse->GetRequest().GetHost(), inResponse->GetRequestURL(), inResponse, globalJSContext, fApplicationRef);
 
-	if (fApplicationRef == nil)
-		req.AllowAutoModel();
+		if (fApplicationRef == nil)
+			req.AllowAutoModel();
 
-	req.ExecuteRequest();
+		req.ExecuteRequest();
+	}
+
+	if (!okCall)
+	{
+		inResponse->SetResponseStatusCode(HTTP_UNAUTHORIZED);
+		inResponse->AddResponseHeader("4D-CREDENDIALS", "1.0");
+	}
 
 #if UseDB4DJSContext
 	// temporary code
@@ -2891,6 +3019,11 @@ VError RestRequestHandler::HandleRequest( IHTTPResponse* inResponse)
 	// end of temporary code
 #else
 
+	if (fApplicationRef == nil) // called from 4D web server
+	{
+		//applicationIntf->Release4DSession(session4D);
+	}
+
 	if (baseContext != nil)
 		baseContext->SetCurrentUser(userID, nil);
 	if (fApplicationRef != nil)
@@ -2901,16 +3034,11 @@ VError RestRequestHandler::HandleRequest( IHTTPResponse* inResponse)
 	{
 		baseContext->SetJSContext(NULL);
 		baseContext->Release();
-		QuickReleaseRefCountable(xJSContext);
+		QuickReleaseRefCountable(globalJSContext);
 		delete xJSDelegate;
 	}
 
 #endif
-
-	/*
-	QuickReleaseRefCountable(xUAGBase);
-	QuickReleaseRefCountable(xUAGcontext);
-	*/
 
 	return VE_OK;
 }

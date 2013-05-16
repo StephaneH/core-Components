@@ -883,19 +883,3 @@ void HTMLLexer::SetLexerInput( VString *inInput )
 	lexerInput->Init( inInput );
 	SetLexerInput( lexerInput );
 }
-
-#if _DEBUG
-void HTMLLexer::Test()
-{
-	HTMLLexer *lexer = new HTMLLexer();
-	VString source;
-	std::vector< ILexerToken * > tokens;
-
-	source = "<html>This is <p>a</p> <br /> test &lt; that has &gt;  a <a href = \"link.html\">link</a></html> <!-- This is a comment --> <b>test</b> <!--#4DVAR Test -->";
-	lexer->SetLexerInput( &source );
-
-	lexer->Tokenize( tokens );
-
-	delete lexer;
-}
-#endif

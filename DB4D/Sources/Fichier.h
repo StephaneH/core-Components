@@ -144,6 +144,9 @@ class Critere : public Obj4D, public IObjCounter
 		inline Boolean GetStyledText(void) { return((Boolean)CRD->fTextIsWithStyle);};
 		inline void SetStyledText(Boolean x) { CRD->fTextIsWithStyle = x; };
 
+		inline Boolean GetHideInRest(void) { return((Boolean)CRD->fHideInRest);};
+		inline void SetHideInRest(Boolean x) { CRD->fHideInRest = x; };
+
 		virtual Boolean IsIndexable(void) { return(true); };
 		virtual Boolean IsFullTextIndexable(void) { return(false); };
 		virtual Boolean IsTextable(void) { return(true); };
@@ -180,7 +183,7 @@ class Critere : public Obj4D, public IObjCounter
 };
 
 
-class Field : public Obj4D, public IObjCounter, public IRefCountable, public IBaggable
+class Field : public Obj4D, public IObjCounter, public IDebugRefCountable, public IBaggable
 {
 	public:
 		Field(sLONG typ, sLONG pos, Table* owner, Boolean isremote = false);
@@ -201,6 +204,8 @@ class Field : public Obj4D, public IObjCounter, public IRefCountable, public IBa
 		void RemoveUniqueFromIndexes();
 		VError TryUnique(VProgressIndicator* progress);
 		VError TryNot_Null(VProgressIndicator* progress);
+
+		VError SetTyp(sLONG typ);
 
 		VError setCRD( const CritereDISK *crd1, CDB4DBaseContext* inContext, Boolean inNotify = true, VProgressIndicator* progress = nil);
 		VError UpdateField(const CritereDISK *crd1, VValueBag *inExtraProperties);
@@ -267,6 +272,9 @@ class Field : public Obj4D, public IObjCounter, public IRefCountable, public IBa
 
 		inline Boolean GetStyledText(void) { return cri->GetStyledText(); };
 		void SetStyledText(Boolean x, CDB4DBaseContext* inContext, VDB4DProgressIndicator* InProgress);
+
+		inline Boolean GetHideInRest(void) { return cri->GetHideInRest(); };
+		void SetHideInRest(Boolean x, CDB4DBaseContext* inContext, VDB4DProgressIndicator* InProgress);
 
 		Boolean IsIndexable(void) { return(cri->IsIndexable()); };
 		Boolean IsFullTextIndexable(void) { return(cri->IsFullTextIndexable()); };
@@ -351,6 +359,21 @@ class Field : public Obj4D, public IObjCounter, public IRefCountable, public IBa
 		{
 			return (cri != nil);
 		}
+
+#if debugLeaksAll
+		virtual bool OKToTrackDebug() const
+		{
+			return false;
+		}
+
+		virtual void GetDebugInfo(VString& outText) const
+		{
+			VString s;
+			GetName(s);
+			outText = "Field : "+s;
+		}
+
+#endif
 
 	protected:
 		void	CreateEmptyValue();
@@ -795,7 +818,7 @@ typedef map<sLONG, xEmptyVal> MapOfEmptyVal;
 
 class FicheOnDisk;
 
-class Table : public Obj4D, public IObjCounter, public IRefCountable, public IBaggable
+class Table : public Obj4D, public IObjCounter, public IDebugRefCountable, public IBaggable
 {
 	public:
 		Table(Base4D *owner, sLONG xnres=0, Boolean canBeSaved = true, Boolean isRemote = false );
@@ -1197,6 +1220,15 @@ class Table : public Obj4D, public IObjCounter, public IRefCountable, public IBa
 			return false;
 		}
 
+		virtual VError SetHideInRest( CDB4DBaseContext* inContext, bool x, VDB4DProgressIndicator* inProgress = nil)
+		{
+			return ThrowError( VE_DB4D_TABLEISLOCKED, DBaction_ChangingTableProperties);
+		}
+
+		virtual bool GetHideInRest() const
+		{
+			return false;
+		}
 
 		virtual void MarkRecordAsPushed(sLONG numrec)
 		{
@@ -1216,7 +1248,22 @@ class Table : public Obj4D, public IObjCounter, public IRefCountable, public IBa
 		virtual Field* RetainPseudoField(DB4D_Pseudo_Field_Kind kind);
 
 		sLONG8 GetSeqRatioCorrector() const;
-		
+	
+#if debugLeaksAll
+		virtual bool OKToTrackDebug() const
+		{
+			return false;
+		}
+
+		virtual void GetDebugInfo(VString& outText) const
+		{
+			VString s;
+			GetName(s);
+			outText = "Table : "+s;
+		}
+
+#endif
+
 
 	protected:
 		VString fPrimaryKeyName;
@@ -1373,6 +1420,10 @@ class TableRegular : public Table
 
 		virtual bool HasSyncInfo() const;
 
+		virtual VError SetHideInRest( CDB4DBaseContext* inContext, bool x, VDB4DProgressIndicator* inProgress = nil);
+
+		virtual bool GetHideInRest() const;
+
 
 		virtual void MarkRecordAsPushed(sLONG numrec);
 
@@ -1483,6 +1534,20 @@ class TableSystem : public Table
 		{
 			return ThrowError(VE_DB4D_TABLEISLOCKED, noaction);
 		}
+
+#if debugLeaksAll
+		virtual bool OKToTrackDebug() const
+		{
+			return false;
+		}
+
+		virtual void GetDebugInfo(VString& outText) const
+		{
+			outText = "System Table : "+fName;
+		}
+
+#endif
+
 
 	protected:
 		VString fName;
@@ -1614,6 +1679,37 @@ public:
 	sLONG id_Read_Write_Group_Name;
 	sLONG id_All_Group_ID;
 	sLONG id_All_Group_Name;
+
+protected:
+};
+
+// Definition of _USER_VIEWS.
+
+class TableOfViews : public TableSystem
+{
+public:
+
+			TableOfViews (Base4D *inOwner);
+
+	sLONG	fViewName;				// VIEW_NAME		VARCHAR 
+	sLONG	fSchemaID;				// SCHEMA_ID		INT32
+	
+	protected:
+};
+
+// Definition of _USER_VIEW_COLUMNS.
+
+class TableOfViewFields : public TableSystem
+{
+public:
+
+			TableOfViewFields (Base4D *owner);
+
+	sLONG	fViewName;				// VIEW_NAME		VARCHAR
+	sLONG	fColumnName;			// COLUMN_NAME		VARCHAR
+	sLONG	fDataType;				// DATA_TYPE		INT32
+	sLONG	fDataLength;			// DATA_LENGTH		INT32
+	sLONG	fNullable;				// NULLABLE			BOOLEAN
 
 protected:
 };
@@ -1981,7 +2077,7 @@ class DataTable : public ObjInCacheMem, public IObjToFlush, public IObjToFree, p
 		virtual VError UnMarkAddrAsNewForTrans(sLONG numrec, BaseTaskInfo* context) = 0;
 
 		virtual VError PerformRech(Bittab* ReelFiltre, RechNode* rn, Bittab *cursel, Bittab *filtre, VDB4DProgressIndicator* InProgress, BaseTaskInfo* context, 
-									DB4D_Way_of_Locking HowToLock, Bittab *exceptions, sLONG limit, sLONG& nbfound, Bittab &Nulls, Bittab* dejalocked, OccupableStack* curstack, EntityModel* model) = 0;
+									DB4D_Way_of_Locking HowToLock, Bittab *exceptions, sLONG limit, sLONG& nbfound, Bittab &Nulls, Bittab* dejalocked, OccupableStack* curstack, LocalEntityModel* model) = 0;
 
 		virtual VError PerformRech(Bittab* ReelFiltre, SimpleQueryNode* rn, Bittab *cursel, Bittab *filtre, VDB4DProgressIndicator* InProgress, BaseTaskInfo* context, 
 									DB4D_Way_of_Locking HowToLock, Bittab *exceptions, sLONG limit, sLONG& nbfound, Bittab &Nulls, Bittab* dejalocked, OccupableStack* curstack) = 0;
@@ -1989,7 +2085,7 @@ class DataTable : public ObjInCacheMem, public IObjToFlush, public IObjToFree, p
 
 
 		virtual Bittab* Search(VError& err, RechNode* rn, Bittab *cursel, VDB4DProgressIndicator* InProgress, BaseTaskInfo* context, 
-								DB4D_Way_of_Locking HowToLock, Bittab *exceptions, sLONG limit, Bittab &Nulls, EntityModel* model);
+								DB4D_Way_of_Locking HowToLock, Bittab *exceptions, sLONG limit, Bittab &Nulls, LocalEntityModel* model);
 		virtual Bittab* Search(VError& err, SimpleQueryNode* rn, Bittab *cursel, VDB4DProgressIndicator* InProgress, BaseTaskInfo* context, 
 								DB4D_Way_of_Locking HowToLock, Bittab *exceptions, sLONG limit, Bittab &Nulls);
 
@@ -2293,6 +2389,11 @@ class DataTableRegular : public DataTable
 		DataTableRegular();
 		DataTableRegular(Base4D *xdb, Table* xcrit, sLONG xnum, DataAddr4D ou, Boolean ForInit, DataTableDISK* dejaDFD = nil);
 
+#if debuglr == 114
+		virtual	sLONG		Retain(const char* DebugInfo = 0) const;
+		virtual	sLONG		Release(const char* DebugInfo = 0) const;
+#endif
+
 		// from IObjToFree
 		virtual bool FreeMem(sLONG allocationBlockNumber, VSize combien, VSize& outSizeFreed);
 
@@ -2373,7 +2474,7 @@ class DataTableRegular : public DataTable
 		virtual VError UnMarkAddrAsNewForTrans(sLONG numrec, BaseTaskInfo* context);
 
 		virtual VError PerformRech(Bittab* ReelFiltre, RechNode* rn, Bittab *cursel, Bittab *filtre, VDB4DProgressIndicator* InProgress, BaseTaskInfo* context, 
-									DB4D_Way_of_Locking HowToLock, Bittab *exceptions, sLONG limit, sLONG& nbfound, Bittab &Nulls, Bittab* dejalocked, OccupableStack* curstack, EntityModel* model)
+									DB4D_Way_of_Locking HowToLock, Bittab *exceptions, sLONG limit, sLONG& nbfound, Bittab &Nulls, Bittab* dejalocked, OccupableStack* curstack, LocalEntityModel* model)
 		{ 
 			return FicInMem.PerformRech(ReelFiltre, rn, cursel, filtre, InProgress, context, HowToLock, exceptions, limit, nbfound, Nulls, dejalocked, curstack, model); 
 		};
@@ -2677,11 +2778,11 @@ class DataTableSystem : public DataTable
 		virtual VError UnMarkAddrAsNewForTrans(sLONG numrec, BaseTaskInfo* context) { return ThrowError(VE_DB4D_TABLEISLOCKED, noaction); };
 
 		virtual VError PerformRech(Bittab* ReelFiltre, RechNode* rn, Bittab *cursel, Bittab *filtre, VDB4DProgressIndicator* InProgress, BaseTaskInfo* context, 
-			DB4D_Way_of_Locking HowToLock, Bittab *exceptions, sLONG limit, sLONG& nbfound, Bittab &Nulls, Bittab* dejalocked, OccupableStack* curstack, EntityModel* model) { return VE_OK; };
+			DB4D_Way_of_Locking HowToLock, Bittab *exceptions, sLONG limit, sLONG& nbfound, Bittab &Nulls, Bittab* dejalocked, OccupableStack* curstack, LocalEntityModel* model) { return VE_OK; };
 
 		virtual VError PerformRech(Bittab* ReelFiltre, SimpleQueryNode* rn, Bittab *cursel, Bittab *filtre, VDB4DProgressIndicator* InProgress, BaseTaskInfo* context, 
 			DB4D_Way_of_Locking HowToLock, Bittab *exceptions, sLONG limit, sLONG& nbfound, Bittab &Nulls, Bittab* dejalocked, OccupableStack* curstack) { return VE_OK; };
-
+  
 		virtual FicheOnDisk* LoadNotFullRecord(sLONG n, VError& err, DB4D_Way_of_Locking HowToLock = DB4D_Do_Not_Lock, BaseTaskInfo* Context = nil, Boolean BitLockOnly = false, 
 			ReadAheadBuffer* buffer = nil, Boolean* CouldLock = nil, Boolean* outEnoughMem = nil);
 
@@ -2980,7 +3081,46 @@ class DataTableOfSchemas : public DataTableSystem
 
 																			/* ============= */
 
+class DataTableOfViews : public DataTableSystem
+{ 
+public:
 
+						DataTableOfViews (Base4D *xdb, Table* xcrit);
+	virtual				~DataTableOfViews ();
+
+	virtual FicheInMem	*LoadRecord (sLONG n, 
+							VError &err, 
+							DB4D_Way_of_Locking HowToLock = DB4D_Do_Not_Lock, 
+							BaseTaskInfo *Context = nil, 
+							Boolean WithSubRecords = false, 
+							Boolean BitLockOnly = false, 
+							ReadAheadBuffer *buffer = nil, 
+							Boolean *outEnoughMem = nil);
+	virtual sLONG		GetNbRecords (BaseTaskInfo *context, bool lockread = true);
+	virtual sLONG		GetMaxRecords (BaseTaskInfo *context) const;
+};
+
+class DataTableOfViewFields : public DataTableSystem
+{ 
+public:
+
+						DataTableOfViewFields (Base4D *xdb, Table* xcrit);
+	virtual				~DataTableOfViewFields ();
+
+	virtual FicheInMem	*LoadRecord (sLONG n, 
+							VError &err, 
+							DB4D_Way_of_Locking HowToLock = DB4D_Do_Not_Lock, 
+							BaseTaskInfo *Context = nil, 
+							Boolean WithSubRecords = false, 
+							Boolean BitLockOnly = false, 
+							ReadAheadBuffer *buffer = nil, 
+							Boolean *outEnoughMem = nil);
+	virtual sLONG		GetNbRecords (BaseTaskInfo *context, bool lockread = true);
+	virtual sLONG		GetMaxRecords (BaseTaskInfo *context) const;
+};
+
+
+																			/* ============= */
 typedef DataTable* DataTablePtr;
 
 typedef V1ArrayOf<DataTableRegular*> DataTableRegularArray;

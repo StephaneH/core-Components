@@ -286,7 +286,7 @@ void Selection::BaseCopyInto(Selection* newsel)
 }
 
 
-VError Selection::DeleteRecords(BaseTaskInfo* context, Bittab* NotDeletedOnes, Relation* RefIntRel, VDB4DProgressIndicator* InProgress, Table* inRemoteTable, EntityModel* inModel)
+VError Selection::DeleteRecords(BaseTaskInfo* context, Bittab* NotDeletedOnes, Relation* RefIntRel, VDB4DProgressIndicator* InProgress, Table* inRemoteTable)
 {
 	VError err = VE_OK;
 	if (fIsRemote || IsOwnerRemote())
@@ -329,21 +329,12 @@ VError Selection::DeleteRecords(BaseTaskInfo* context, Bittab* NotDeletedOnes, R
 	}
 	else
 	{
-		if (inModel == nil || okperm(context, inModel, DB4D_EM_Delete_Perm))
 		{
 			Boolean DeleteDejaFait = false;
-			bool okModel = true;
-
-			if (inModel != nil)
-			{
-				if (inModel->HasDeleteEvent())
-					okModel = false;
-			}
-
 	#if trackModif
 		trackDebugMsg("before delete selection of records\n");
 	#endif
-			if (parentfile != nil && okModel)
+			if (parentfile != nil)
 			{
 				Table* target = parentfile->GetTable();
 				if (!target->HasSyncInfo() && !(target->GetOwner()->ReferentialIntegrityEnabled() && target->AtLeastOneReferentialIntegrity()) )
@@ -472,10 +463,6 @@ VError Selection::DeleteRecords(BaseTaskInfo* context, Bittab* NotDeletedOnes, R
 
 			if (!DeleteDejaFait)
 			{
-				bool withModel = false;
-				if (inModel != nil && inModel->HasDeleteEvent())
-					withModel = true;
-
 				sLONG i;
 				Boolean first = true;
 				SelectionIterator itersel(this);
@@ -513,22 +500,6 @@ VError Selection::DeleteRecords(BaseTaskInfo* context, Bittab* NotDeletedOnes, R
 					sLONG n = currec;
 					VError err2 = VE_OK;
 
-					if (withModel)
-					{
-						EntityRecord* erec = inModel->LoadEntityRecord(n, err2, DB4D_Do_Not_Lock, context, false);
-						if (erec != nil)
-						{
-							FicheInMem* rec = RetainRefCountable(erec->getRecord());
-							if (RefIntRel != nil)
-								context->MustNotCheckRefInt(RefIntRel, rec);
-							err2 = erec->Drop();
-							if (RefIntRel != nil)
-								context->CheckRefIntAgain(RefIntRel, rec);
-							QuickReleaseRefCountable(rec);
-							erec->Release();
-						}
-					}
-					else
 					{
 						FicheInMem* rec = parentfile->LoadRecord(n, err2, DB4D_Keep_Lock_With_Record, context, true);
 						if (rec != nil)
@@ -575,11 +546,6 @@ VError Selection::DeleteRecords(BaseTaskInfo* context, Bittab* NotDeletedOnes, R
 			trackDebugMsg("after delete selection of records\n");
 	#endif
 		}
-		else
-		{
-			context->SetPermError();
-			err = inModel->ThrowError(VE_DB4D_NO_PERM_TO_DELETE);
-		}
 	}
 
 	if (err != VE_OK)
@@ -600,7 +566,8 @@ Boolean Selection::IsAllRecords(BaseTaskInfo* context)
 inline Boolean CompStringPtrLess(VString* v1, VString* v2) { return *v1 < *v2; };
 
 
-VError Selection::GetDistinctValues(EntityAttribute* att, DB4DCollectionManager& outCollection, BaseTaskInfo* context, VDB4DProgressIndicator* InProgress, const VCompareOptions& inOptions)
+
+VError Selection::GetDistinctValues(db4dEntityAttribute* att, DB4DCollectionManager& outCollection, BaseTaskInfo* context, VDB4DProgressIndicator* InProgress, const VCompareOptions& inOptions)
 {
 	VError err = VE_OK;
 
@@ -1250,7 +1217,7 @@ VError Selection::ExportToSQL(CDB4DSelection* xsel, Table* target, BaseTaskInfo*
 						err = remotecache->RetainCacheRecord(i, xfic, relatedrecs);
 						if (xfic != nil)
 						{
-							FicheInMem* fic = VImpCreator<VDB4DRecord>::GetImpObject(xfic)->GetRec();
+							FicheInMem* fic = dynamic_cast<VDB4DRecord*>(xfic)->GetRec();
 							if (fic != nil)
 							{
 								err = job.WriteOneRecord(fic, context);
@@ -4661,7 +4628,25 @@ VError BitSel::TransformIntoCluster(DataAddr4D addr)
 	return err;
 }
 
+#if debugLeaksAll
 
+void BitSel::GetDebugInfo(VString& outText) const
+{
+	VString s;
+	outText = "bitsel : ";
+	try
+	{
+		VString s;
+		((Selection*)this)->GetParentFile()->GetTable()->GetName(s);
+		outText += " for table : "+s;
+	}
+	catch (...)
+	{
+		outText += " for unknown table ";
+	}
+}
+
+#endif
 
 
 					/* ================================================= */
@@ -4703,7 +4688,7 @@ void SelectionIterator::Reset(Selection* sel)
 }
 
 
-sLONG SelectionIterator::NextRecord()
+RecIDType SelectionIterator::NextRecord()
 {
 	if (fWasJustReset)
 		return FirstRecord();
@@ -4723,7 +4708,7 @@ sLONG SelectionIterator::NextRecord()
 
 }
 
-sLONG SelectionIterator::PreviousRecord()
+RecIDType SelectionIterator::PreviousRecord()
 {
 	if (fWasJustReset)
 		return LastRecord();
@@ -4747,7 +4732,7 @@ sLONG SelectionIterator::PreviousRecord()
 }
 
 
-sLONG SelectionIterator::LastRecord()
+RecIDType SelectionIterator::LastRecord()
 {
 	fWasJustReset = false;
 	fCurRecord = fSel->GetLastRecord();
@@ -4761,7 +4746,7 @@ sLONG SelectionIterator::LastRecord()
 
 
 
-sLONG SelectionIterator::FirstRecord()
+RecIDType SelectionIterator::FirstRecord()
 {
 	fWasJustReset = false;
 	fCurRecord = fSel->GetNextRecord(0,0);
@@ -4774,7 +4759,7 @@ sLONG SelectionIterator::FirstRecord()
 }
 
 
-sLONG SelectionIterator::SetCurrentRecord(sLONG PosInSel)
+RecIDType SelectionIterator::SetCurrentRecord(sLONG PosInSel)
 {
 	fWasJustReset = false;
 	if (PosInSel >= fSel->GetQTfic())

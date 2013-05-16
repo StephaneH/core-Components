@@ -36,7 +36,7 @@ void XBOX::xDllMain (void)
 
 VUAGManager::VUAGManager()
 {
-	fDB4D = VComponentManager::RetainComponentOfType<CDB4DManager>();
+	fDB4D = CDB4DManager::RetainManager();
 	fCompLibrary = gUAGCompLib;
 
 
@@ -110,7 +110,7 @@ CUAGDirectory* VUAGManager::RetainDirectory(const VFile& inXMLFile, FileAccess i
 
 	if (err == VE_OK)
 	{
-		for (sLONG i = (sLONG)CUAGDirectory::AdminGroup; i <= (sLONG)CUAGDirectory::DebuggerGroup; ++i)
+		for (sLONG i = (sLONG)CUAGDirectory::AdminGroup; i <= (sLONG)CUAGDirectory::AdminGroup; ++i)
 		{
 			CUAGDirectory::SpecialGroupEnum groupref = (CUAGDirectory::SpecialGroupEnum)i;
 			VError err2;
@@ -281,7 +281,7 @@ VError UAGDirectory::Save(VFile* inFile )
 			VFile fileJs(*managerResourceFolder, "importUAG.js");
 			if (fileJs.Exists())
 			{
-				StErrorContextInstaller errs(false);
+				StErrorContextInstaller errs(false, false);
 				VJSValue result(jscontext);
 				jscontext.EvaluateScript(&fileJs, &result, nil, nil);
 				/*fBase refCount++ (4)*/				
@@ -783,7 +783,7 @@ VError UAGDirectory::ImportXMLData(const VFile& inFile, CDB4DBaseContext* contex
 			VFile fileJs(*managerResourceFolder, "importUAG.js");
 			if (fileJs.Exists())
 			{
-				StErrorContextInstaller errs(false);
+				StErrorContextInstaller errs(false, false);
 				VJSValue result(jscontext);
 				jscontext.EvaluateScript(&fileJs, &result, nil, nil);
 				/*fBase refCount++ (4)*/				
@@ -1079,7 +1079,7 @@ UAGUser* UAGDirectory::addOneUser(const VString& inUserName, const VString& inPa
 	}
 	else
 	{
-		userrec = fUserModel->NewEntity(fContext, DB4D_Do_Not_Lock);
+		userrec = fUserModel->NewEntity(fContext);
 		userrec->SetAttributeValue("name", &inUserName);
 		if (!inPassword.IsEmpty())
 		{
@@ -1120,7 +1120,7 @@ UAGGroup* UAGDirectory::addOneGroup(const VString& inGroupName, const VString& i
 	}
 	else
 	{
-		grouprec = fGroupModel->NewEntity(fContext, DB4D_Do_Not_Lock);
+		grouprec = fGroupModel->NewEntity(fContext);
 		grouprec->SetAttributeValue("name", &inGroupName);
 		grouprec->SetAttributeValue("fullName", &inFullName);
 		if (inPredefinedID != nil)
@@ -1242,7 +1242,7 @@ bool UAGDirectory::TakenByListener(const VString& inUserName, const VString& inP
 
 						if (user == nil && !sid.IsEmpty() && !sname.IsEmpty() && err == VE_OK)
 						{
-							CDB4DEntityRecord* userrec = fUserModel->NewEntity(fContext, DB4D_Do_Not_Lock);
+							CDB4DEntityRecord* userrec = fUserModel->NewEntity(fContext);
 							userrec->SetAttributeValue("ID", &xid);
 							userrec->SetAttributeValue("name", &sname);
 							userrec->SetAttributeValue("fullName", &sfullname);
@@ -1326,10 +1326,11 @@ bool UAGDirectory::TakenByListener(const VString& inUserName, const VString& inP
 CUAGSession* UAGDirectory::MakeDefaultSession(VError* outErr, VJSContext* inJSContext, bool fromLogout)
 {
 	UAGSession* session = nil;
-	CDB4DEntityRecord* userrec = fUserModel->NewEntity(fContext, DB4D_Do_Not_Lock);
+	CDB4DEntityRecord* userrec = fUserModel->NewEntity(fContext);
 	VUUIDBuffer zeroBuf;
 	zeroBuf.FromLong(0);
 	VUUID xid(zeroBuf);
+	xid.SetNull(false);
 	userrec->SetAttributeValue("ID", &xid);
 	VString sname = "default guest";
 	userrec->SetAttributeValue("name", &sname);
@@ -1421,7 +1422,7 @@ VJSObject UAGDirectory::CreateJSDirectoryObject( const VJSContext& inContext)
 VError UAGDirectory::FilterUsers(const VString& filterString, bool isAQuery, CUAGUserVector& outUsers)
 {
 	VError err = VE_OK;
-	CDB4DSelection* sel;
+	CDB4DEntityCollection* sel;
 	if (isAQuery)
 	{
 		sel = fUserModel->Query(filterString, fContext, err);
@@ -1434,11 +1435,11 @@ VError UAGDirectory::FilterUsers(const VString& filterString, bool isAQuery, CUA
 	}
 	if (sel != nil)
 	{
-		sLONG nb = sel->CountRecordsInSelection(fContext);
+		sLONG nb = sel->GetLength(fContext);
 		outUsers.reserve(nb);
-		for (sLONG i = 1; i <= nb; ++i)
+		for (sLONG i = 1; i <= nb && err == VE_OK; ++i)
 		{
-			CDB4DEntityRecord* userrec = sel->LoadEntity(i, DB4D_Do_Not_Lock, fContext);
+			CDB4DEntityRecord* userrec = sel->LoadEntityRecord(i, fContext, err, DB4D_Do_Not_Lock);
 			if (userrec != nil)
 			{
 				CUAGUser* user = new UAGUser(this, userrec);
@@ -1456,7 +1457,7 @@ VError UAGDirectory::FilterUsers(const VString& filterString, bool isAQuery, CUA
 VError UAGDirectory::FilterGroups(const VString& filterString, bool isAQuery, CUAGGroupVector& outGroups)
 {
 	VError err = VE_OK;
-	CDB4DSelection* sel;
+	CDB4DEntityCollection* sel;
 	if (isAQuery)
 	{
 		sel = fGroupModel->Query(filterString, fContext, err);
@@ -1469,11 +1470,11 @@ VError UAGDirectory::FilterGroups(const VString& filterString, bool isAQuery, CU
 	}
 	if (sel != nil)
 	{
-		sLONG nb = sel->CountRecordsInSelection(fContext);
+		sLONG nb = sel->GetLength(fContext);
 		outGroups.reserve(nb);
-		for (sLONG i = 1; i <= nb; ++i)
+		for (sLONG i = 1; i <= nb && err == VE_OK; ++i)
 		{
-			CDB4DEntityRecord* grouprec = sel->LoadEntity(i, DB4D_Do_Not_Lock, fContext);
+			CDB4DEntityRecord* grouprec = sel->LoadEntityRecord(i, fContext, err, DB4D_Do_Not_Lock);
 			if (grouprec != nil)
 			{
 				CUAGGroup* group = new UAGGroup(this, grouprec);

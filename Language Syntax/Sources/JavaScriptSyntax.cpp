@@ -27,6 +27,36 @@ using namespace std;
 #define kEndOfBlockLockTag CVSTR("// @endlock")
 #define kEndOfBlockLockTagLen 11
 
+#if VERSIONDEBUG
+void DebugDumpLineStyle(ICodeEditorDocument* inDocument, sLONG inLineNumber)
+{
+	sLONG kind = inDocument->GetLineKind( inLineNumber );
+	JavaScriptSyntaxLineKind lineKind = *( (JavaScriptSyntaxLineKind*)&kind);
+	
+	bool	lineEndsWithComment		=	lineKind.fEndsWithOpenComment ? true : false;
+	sLONG	lineOpenStringType		=	lineKind.fOpenStringType;
+	bool	lineEndsWithString		=	lineKind.fOpenStringType ? true : false;
+	sLONG	lineStartBlocks			=	lineKind.fLineKindStartBlocks;
+	sLONG	lineEndsBlocks			=	lineKind.fLineKindEndsBlocks;
+	bool	lineSingleComment		=	lineKind.fIsSingleLineComment ? true : false;
+	
+	
+	VString line;
+	inDocument->GetLine(inLineNumber, line);
+	VString msg;
+	msg.AppendString("Line(");				msg.AppendLong(inLineNumber+1);			msg.AppendString(") ");
+	msg.AppendString("StartBlock(");		msg.AppendLong(lineStartBlocks);		msg.AppendString(") ");
+	msg.AppendString("EndBlock(");			msg.AppendLong(lineEndsBlocks);			msg.AppendString(") ");
+	msg.AppendString("EndsWithComment(");	msg.AppendLong(lineEndsWithComment);	msg.AppendString(") ");
+	msg.AppendString("EndsWithString(");	msg.AppendLong(lineEndsWithString);		msg.AppendString(") ");
+	msg.AppendString("OpenStringType(");	msg.AppendLong(lineOpenStringType);		msg.AppendString(") ");
+	msg.AppendString("SingleLineComment(");	msg.AppendLong(lineSingleComment);		msg.AppendString(") ");
+	msg.AppendString("Content(");			msg.AppendString(line);					msg.AppendString(") ");
+	msg.AppendString("\n");
+	DebugMsg(msg);
+}
+#endif
+
 VJavaScriptSyntax::VJavaScriptSyntax() : fSymTable( NULL ), fDeclarationParsingContextSymbol( NULL ), fDocumentFile( NULL ), fBreakPointManager( NULL )
 {
 	fAutoInsertBlock = false;
@@ -34,6 +64,7 @@ VJavaScriptSyntax::VJavaScriptSyntax() : fSymTable( NULL ), fDeclarationParsingC
 	fAutoInsertTabs = false;
 	fInsertSpaces = false;
 	fTabWidth = 4;
+	fActiveBreakPoints = true;
 }
 
 VJavaScriptSyntax::~VJavaScriptSyntax()
@@ -41,22 +72,6 @@ VJavaScriptSyntax::~VJavaScriptSyntax()
 	if (fDocumentFile)	fDocumentFile->Release();
 	if (fSymTable)	fSymTable->Release();
 }
-
-#if _DEBUG // In DEBUG builds, we want to do some unit testing
-void VJavaScriptSyntax::RunUnitTests()
-{
-	static bool bTested = false;
-	if (!bTested && false) {
-		bTested = true;
-		JavaScriptLexer::Test();
-		ScriptDocLexer::Test();
-		JavaScriptParser::Test();
-		VJavaScriptSyntax::Test();
-		SymbolTableTest::Test();
-		HTMLParser::Test();
-	}
-}
-#endif
 
 void VJavaScriptSyntax::CleanTokens( std::vector< class ILexerToken * > &inTokens )
 {
@@ -68,11 +83,7 @@ void VJavaScriptSyntax::CleanTokens( std::vector< class ILexerToken * > &inToken
 
 void VJavaScriptSyntax::Init( ICodeEditorDocument* inDocument )
 {
-	#if _DEBUG
-		RunUnitTests();
-	#endif
-
-	// init colors, will be most of the time overided by preferences but unless user 
+	// init colors, will be most of the time overided by preferences but unless user
 	// does not setup any preferences it will be kind to give him some colors
 	// WARNING, please keep those settings synchronized with /Resources/default.waPreferences
 		
@@ -263,9 +274,10 @@ void VJavaScriptSyntax::SetLine( ICodeEditorDocument* inDocument, sLONG inLineNu
 	bool	openedCurlyBracket = false;
 
 	// get previous line comment and open string states
+	JavaScriptSyntaxLineKind previousLineKind = { 0 };
 	if (inLineNumber > 0) {
 		sLONG previousKind = inDocument->GetLineKind( inLineNumber - 1 );
-		JavaScriptSyntaxLineKind previousLineKind = *( (JavaScriptSyntaxLineKind*)&previousKind);
+		previousLineKind = *( (JavaScriptSyntaxLineKind*)&previousKind);
 
 		previousLineEndsWithComment = previousLineKind.fEndsWithOpenComment ? true : false;
 		previousLineOpenStringType = previousLineKind.fOpenStringType;
@@ -344,7 +356,6 @@ void VJavaScriptSyntax::SetLine( ICodeEditorDocument* inDocument, sLONG inLineNu
 		ILexerToken *current = *iter;
 		sBYTE style = eNormal;
 		switch (current->GetType()) {
-			case ILexerToken::TT_OPEN_COMMENT:						style = eComment; break;
 			case ILexerToken::TT_NUMBER:							style = eNumber; break;
 			case ILexerToken::TT_STRING:							style = eString; break;
 			case ILexerToken::TT_JAVASCRIPT_FUTURE_RESERVED_WORD:	style = eKeyword; break;
@@ -361,6 +372,13 @@ void VJavaScriptSyntax::SetLine( ICodeEditorDocument* inDocument, sLONG inLineNu
 						kind.fOpenStringType = JavaScriptStringType::kQuoteString;
 					style = eString; 
 				}
+				break;
+			case ILexerToken::TT_OPEN_COMMENT:
+			{
+				style = eComment;
+				if( !previousLineKind.fEndsWithOpenComment )
+					kind.fLineKindStartBlocks++;
+			}
 				break;
 			case ILexerToken::TT_COMMENT:
 				{
@@ -382,7 +400,16 @@ void VJavaScriptSyntax::SetLine( ICodeEditorDocument* inDocument, sLONG inLineNu
 						// It's not a typo, it's working around a lexer oddity that I'm not in the mood to fix.
 						kind.fLineKindEndsBlocks++;
 					}
-				} break;
+					else if( current->GetText().BeginsWith("/") )
+					{
+						kind.fIsSingleLineComment = 1;
+					}
+					else if( current->GetText().EndsWith("*/") )
+					{
+						kind.fLineKindEndsBlocks++;
+					}
+				}
+				break;
 			case ILexerToken::TT_PUNCTUATION:
 				{
 					if (current->GetValue() == CHAR_LEFT_CURLY_BRACKET)
@@ -437,7 +464,7 @@ void VJavaScriptSyntax::SetLine( ICodeEditorDocument* inDocument, sLONG inLineNu
 	inDocument->SetLineKind( inLineNumber, *((sLONG*)&kind) );
 	
 	CleanTokens( tokens );
-		
+
 	if ( ! inLoading)
 	{
 		// There are four cases we really need to care about.  If the line now ends in
@@ -471,6 +498,7 @@ bool VJavaScriptSyntax::CheckFolding(ICodeEditorDocument* inDocument, sLONG inLi
 void VJavaScriptSyntax::ComputeFolding( ICodeEditorDocument *inDocument )
 {
 	std::vector< sLONG > indentStack;
+	std::vector< sLONG > commentStack;
 
 	for (sLONG i = 0; i < inDocument->GetNbLines(); i++) {
 		// Reset the line's indent information, since we're recalculating it on the fly
@@ -520,7 +548,36 @@ void VJavaScriptSyntax::ComputeFolding( ICodeEditorDocument *inDocument )
 		{
 			for (int count = 0; count < lineKind.fLineKindStartBlocks; count++)
 				indentStack.push_back( i );
-		} 
+		}
+		
+		// Single Line Comments folding management
+		if( lineKind.fIsSingleLineComment )
+			commentStack.push_back(i);
+		
+		if( !lineKind.fIsSingleLineComment ||
+			(lineKind.fIsSingleLineComment && (i==inDocument->GetNbLines()-1)) )
+		{
+			if( commentStack.size() > 1 )
+			{
+				// Set the first line of a single line comment block as the foldable line
+				sLONG start = commentStack[0];
+				inDocument->SetFoldable(start, true);
+				
+				// Compute the number of foldable line
+				// Be aware that if we are on the last line AND if the last line is a single line comment
+				// then we must decrementby one this number
+				sLONG foldedLinesCount = i - start - ( !lineKind.fIsSingleLineComment ? 1 : 0 );
+				inDocument->SetNbFoldedLines(start, foldedLinesCount);
+
+				// Compute the line ident of the single line comments block in order to have the vertical line
+				// drawn on the left of the block
+				sLONG stop = start + commentStack.size()-1;
+				for(sLONG index=start+1; index<stop; index++)
+					inDocument->SetLineIndent(index, inDocument->GetLineIndent(index)+1);
+			}
+			
+			commentStack.clear();
+		}
 	}
 }
 
@@ -605,7 +662,7 @@ Symbols::ISymbol *VJavaScriptSyntax::LocateSymbol( Symbols::ISymbol *inContext, 
 
 			std::vector< Symbols::ISymbol * > lookup_list;
 
-			lookup_list.push_back( const_cast< Symbols::ISymbol * >( sym->Dereference() ) );
+			lookup_list.push_back( const_cast< Symbols::ISymbol * >( sym->RetainReferencedSymbol() ) );
 
 			while (!lookup_list.empty())
 			{
@@ -755,7 +812,7 @@ void VJavaScriptSyntax::GetTip( ICodeEditorDocument* inDocument, sLONG inLine, s
 					// We found a symbol, so now we want to see if it has a ScriptDoc tag associated
 					// with it.  If it does, then we have a lot of good information to be able to
 					// show the user.
-					const Symbols::ISymbol *temp = sym->Dereference();
+					const Symbols::ISymbol *temp = sym->RetainReferencedSymbol();
 					
 					ScriptDocComment *comment = ScriptDocComment::Create( temp->GetScriptDocComment() );
 					temp->Release();
@@ -1056,7 +1113,7 @@ Symbols::ISymbol* VJavaScriptSyntax::FindNamedDescendant( Symbols::ISymbol* inOw
 			std::vector<Symbols::ISymbol *> children = fSymTable->GetSymbolsByName(inOwner, inSymbolLineage[inLevel], inFile);
 			for (std::vector<Symbols::ISymbol *>::iterator it = children.begin(); it != children.end(); ++it)
 			{
-				Symbols::ISymbol* refSym = const_cast<Symbols::ISymbol *>( (*it)->Dereference() );
+				Symbols::ISymbol* refSym = const_cast<Symbols::ISymbol *>( (*it)->RetainReferencedSymbol() );
 
 				if (inKeepUndefined ||  !( refSym->GetAuxillaryKindInformation() & Symbols::ISymbol::kKindUndefined) )
 				{
@@ -1152,7 +1209,7 @@ void VJavaScriptSyntax::GetSuggestionsForTesting( const VString &inSourceLine, I
 
 		// Loop over all of the items in the keyword list and see if we can find any matches
 		VCollator *collator = VIntlMgr::GetDefaultMgr()->GetCollator();
-		for (vector< Completion >::iterator iter = completions.begin(); iter != completions.end(); iter++)
+		for (vector< Completion >::iterator iter = completions.begin(); iter != completions.end(); ++iter)
 		{
 			Completion comp = *iter;
 
@@ -1189,6 +1246,10 @@ void VJavaScriptSyntax::GetSuggestions( ICodeEditorDocument* inDocument, sLONG i
 	if (!fSymTable)
 		return;	
 
+#if VERSIONDEBUG
+	uLONG tStart = XBOX::VSystem::GetCurrentTime();
+#endif
+		
 	// to get faster results, we stop all the threads that adds symbols so we get access to db at full speed
 	fSymTable->LockUpdates();
 
@@ -1197,6 +1258,20 @@ void VJavaScriptSyntax::GetSuggestions( ICodeEditorDocument* inDocument, sLONG i
 	
 	inDocument->GetLine( inLineIndex, xstr );
 	xstr.Truncate( inPos );
+	
+	// We use a smart algorithm as follow :
+	// * we suggest both lower and upper case choices if the user input starts with a lower case letter
+	// * we suggest only upper case choices if the user input starts with an upper case letter
+	bool suggestUpperCaseOnly = false;
+	if( xstr.GetLength() > 0 )
+	{
+		VString letter(xstr[0]);
+		VString upperCase(letter);
+		upperCase.ToUpperCase();
+		
+		suggestUpperCaseOnly = letter.EqualToString(upperCase, true);
+	}
+
 	Symbols::IFile *file = FileFromDocument( inDocument );
 
 	// Call internal part shared whith SSJS test APIo
@@ -1209,9 +1284,10 @@ void VJavaScriptSyntax::GetSuggestions( ICodeEditorDocument* inDocument, sLONG i
 	for (vector< Completion >::iterator iter = completions.begin(); iter != completions.end(); iter++)
 	{
 		Completion comp = *iter;
+		
 		// We do not do case sensitive completions so that the user can accidentally type something
 		// in the wrong case, but still get reasonable results back
-		if (collator->EqualString_Like( comp.fText.GetCPointer(), comp.fText.GetLength(), xstr.GetCPointer(), xstr.GetLength(), false ))
+		if (collator->EqualString_Like( comp.fText.GetCPointer(), comp.fText.GetLength(), xstr.GetCPointer(), xstr.GetLength(), suggestUpperCaseOnly ))
 		{
 			// As a sanity check, let's make sure that none of the suggestions we're giving the
 			// caller are empty.
@@ -1244,6 +1320,23 @@ void VJavaScriptSyntax::GetSuggestions( ICodeEditorDocument* inDocument, sLONG i
 				outSuggestions->RemoveTip( 0 );
 		}
 	}
+
+#if VERSIONDEBUG
+	uLONG tStop = XBOX::VSystem::GetCurrentTime();
+	
+	VString msg("[Suggesting Done] File(");
+	msg.AppendString(file->GetPath());
+	msg.AppendString(") Line(");
+	msg.AppendString(xstr);
+	msg.AppendString(") Count(");
+	msg.AppendLong(outSuggestions->GetCount());
+	msg.AppendString(") InAll(");
+	msg.AppendLong(inAll);
+	msg.AppendString(") Duration(");
+	msg.AppendLong(tStop-tStart);
+	msg.AppendString("ms)\n");
+	DebugMsg(msg);
+#endif
 
 	fSymTable->UnlockUpdates();
 }
@@ -1639,6 +1732,11 @@ void VJavaScriptSyntax::InsertChar( ICodeEditorDocument* inDocument, UniChar inU
 		}
 	}
 
+	VString spaces;
+	for ( sLONG i = 0; i < GetTabWidth(); i++ )
+		spaces.AppendChar( ' ' );
+
+
 	// Now that we know it's safe to do, let's do our final processing!  
 	//////////
 	//	Performance note
@@ -1664,8 +1762,15 @@ void VJavaScriptSyntax::InsertChar( ICodeEditorDocument* inDocument, UniChar inU
 				if ( fAutoInsertTabs )
 				{
 					// If the preceeding line ends with a {, then we want to indent once more
-					if (!preceedingLine.IsEmpty() && preceedingLine.GetUniChar( preceedingLine.GetLength() ) == (UniChar)'{')
-						whitespace.AppendChar( '\t' );
+					if ( ! preceedingLine.IsEmpty() 
+						 && preceedingLine.GetUniChar( preceedingLine.GetLength() ) == (UniChar)'{'
+						 && ! ( xstr.GetLength() > 0 && xstr[0] == (UniChar)'}' ) )
+					{
+						if ( UseInsertSpacesForTabs() )
+							whitespace += spaces;
+						else
+							whitespace.AppendChar( '\t' );
+					}
 
 					if (!whitespace.IsEmpty())
 						inDocument->InsertText( whitespace );
@@ -1750,7 +1855,12 @@ void VJavaScriptSyntax::InsertChar( ICodeEditorDocument* inDocument, UniChar inU
 				VString lineText;
 				inDocument->GetLine( inLineIndex, lineText );
 				VString whitespace = DetermineWhitespace( lineText );
-				insertText += whitespace + CVSTR( "\t" );
+				insertText += whitespace;
+				
+				if ( UseInsertSpacesForTabs() )
+					insertText += spaces;
+				else
+					insertText.AppendChar( '\t' );
 
 				// And then another newline with the closing brace
 				insertText += CVSTR( "\r" ) + whitespace + CVSTR( "}" );
@@ -1777,6 +1887,25 @@ void VJavaScriptSyntax::InsertChar( ICodeEditorDocument* inDocument, UniChar inU
 					{
 						inDocument->Select( inPosition - 2, inPosition, lineNumber, lineNumber );
 						inDocument->InsertText( CVSTR( "}" ) );
+					}
+				}
+				else
+				{
+					lineText.GetSubString( inPosition - spaces.GetLength(), spaces.GetLength() + 1, str );
+					if ( str == spaces + CVSTR( "}" ) )
+					{
+
+						VString preceedingLine;
+						inDocument->GetLine( inLineIndex - 1, preceedingLine );
+						sLONG i = 0;
+						while ( i < preceedingLine.GetLength() && preceedingLine[ i ] == ' ' )
+							i++;
+
+						if ( i >= spaces.GetLength() && i == inPosition - 1 || ( ( i == inPosition - 1 - spaces.GetLength() ) && ( i + 1 == preceedingLine.GetLength() ) && ( preceedingLine[ i ] == '{' ) ) )
+						{
+							inDocument->Select( inPosition - 1 - spaces.GetLength(), inPosition, lineNumber, lineNumber );
+							inDocument->InsertText( CVSTR( "}" ) );
+						}
 					}
 				}
 			}
@@ -1839,35 +1968,8 @@ bool VJavaScriptSyntax::GetBreakPoints( ICodeEditorDocument* inDocument, std::ve
 		return false;
 }
 
-void VJavaScriptSyntax::HandleCompileError( XBOX::VFilePath inFile, sLONG inLineNumber, sLONG inStatus, IDocumentParserManager::TaskCookie inCookie )
+Symbols::ISymbol *VJavaScriptSyntax::GetDeclarationContext( )
 {
-	if (inCookie.fIdentifier != 'JSs ')	return;
-	ICodeEditorDocument *inDocument = static_cast< ICodeEditorDocument * >( inCookie.fCookie );
-
-	// Create a key from the given code
-	VString key;
-	switch (inStatus) {
-		case JavaScriptError::kExpectedIdentifier:	key = "ExpectedIdentifier"; break;
-		case JavaScriptError::kExpectedLiteral:		key = "ExpectedLiteral"; break;
-		case JavaScriptError::kIllegalLHS:			key = "IllegalLHS"; break;
-		case JavaScriptError::kSyntaxError:			key = "SyntaxError"; break;
-	}
-
-	// Look the error string up from the code we've been given.
-	VString errorMsg;
-	if (!gLanguageSyntax->GetLocalizationMgr()->LocalizeStringWithKey( key, errorMsg )) {
-		// We couldn't locate the key in our file, so fall back on something generic
-		errorMsg = CVSTR( "Syntax error" );
-	}
-
-	if (inLineNumber < inDocument->GetNbLines()) {
-		inDocument->SetLineParsingError( inLineNumber, errorMsg );
-	}
-}
-
-Symbols::ISymbol *VJavaScriptSyntax::GetDeclarationContext( void *cookie )
-{
-	// NOTE: The cookie we've been given is the document that is being parsed.
 	return fDeclarationParsingContextSymbol;
 }
 
@@ -1944,59 +2046,24 @@ uLONG8 VJavaScriptSyntax::GetFileModificationStamp( ICodeEditorDocument *inDocum
 
 void VJavaScriptSyntax::PerformIdleProcessing( ICodeEditorDocument *inDocument )
 {
-	// Before we start to update compile errors, we have to tell the document
-	// that there are no more compile errors on any line.  We cannot rely on SetLine
-	// to do this work for us because it is possible the user modified some code on
-	// line X which affected the ability to compile line X + 10.  SetLine would clear
-	// the non-existent error on line X, but not clear the one on X + 10 -- so we will
-	// clear *all* of the lines manually to ensure the document get a fresh start.
-	for (VIndex i = 0; i < inDocument->GetNbLines(); ++i) {
-		inDocument->SetLineParsingError( i, CVSTR( "" ) );
-	}
-
-	// This call does more than just update compile errors (sorry about the unfortunate method name), 
-	// in that it also updates the symbol table and triggers an outline refresh.  We pass in the
-	// *current* contents of the file instead of what the contents on disk are.  This is done so that
-	// the user doesn't have to save in order to get the latest information in their file.
 	VFilePath path;
 	inDocument->GetPath( path );
 
 	VString contents;
 	inDocument->GetCodeText( contents );
 
-	// Since we are scheduling a task which will run in a background thread and we are using the
-	// document as a cookie, we want to retain an instance of the document so that it can't be
-	// yanked out from under the scheduler.  We will release it in the ParsingComplete method.
-	inDocument->Retain();
-
 	IDocumentParserManager *manager = inDocument->GetParserManager();
-	if (manager) {
-		// It is fine for us to reconnect to the signal if we've already done so -- we just replace the previous
-		// signal with our new one, which is identical.
-		manager->GetParsingCompleteSignal().Connect( this, VTask::GetCurrent(), &VJavaScriptSyntax::ParsingComplete );
-		manager->GetCompileErrorSignal().Connect( this, VTask::GetCurrent(), &VJavaScriptSyntax::HandleCompileError );
-
-		IDocumentParserManager::TaskCookie cookie;
-		cookie.fIdentifier = 'JSs ';
-		cookie.fCookie = inDocument;
-
+	if (manager)
+	{
 		VSymbolFileInfos fileInfos(path, inDocument->GetBaseFolder(), inDocument->GetExecutionContext());
 
-		manager->ScheduleTask( this, fileInfos, contents, cookie, inDocument->GetSymbolTable(), IDocumentParserManager::kPriorityAboveNormal );
+		manager->ScheduleTask(this, fileInfos, contents, inDocument->GetSymbolTable(), IDocumentParserManager::kPriorityAboveNormal);
 	}
 }
 
 void VJavaScriptSyntax::UpdateCompilerErrors( ICodeEditorDocument* inDocument )
 {
 
-}
-
-void VJavaScriptSyntax::ParsingComplete( XBOX::VFilePath inFile, sLONG inStatus, IDocumentParserManager::TaskCookie inCookie )
-{
-	if (inCookie.fIdentifier != 'JSs ')	return;
-	ICodeEditorDocument *inDocument = (ICodeEditorDocument *)inCookie.fCookie;
-	inDocument->GetSignalParsingComplete().Trigger();
-	inDocument->Release();
 }
 
 void VJavaScriptSyntax::GotoNextMethodError( ICodeEditorDocument* inDocument, bool inNext )
@@ -2107,9 +2174,17 @@ void VJavaScriptSyntax::CallHelp( ICodeEditorDocument* inDocument )
 
 bool VJavaScriptSyntax::IsMatchingCharacter( ICodeEditorDocument* inDocument, sLONG inLineIndex, sLONG inOffset, UniChar inChar )
 {
-	const VArrayByte* styles;
+	const StylesVector* styles;
 	inDocument->GetStyle( inLineIndex, styles );
-	uBYTE style = styles->GetByte( inOffset + 1 );
+	sLONG		nSize = styles-> size ( );
+	if ( inOffset < 0 || inOffset > ( nSize - 1 ) )
+	{
+		xbox_assert ( false );
+
+		return false;
+	}
+
+	uBYTE style = (*styles)[ inOffset ];
 	if ( style != eComment && style != eString )
 	{
 		switch( inChar )
@@ -2300,106 +2375,5 @@ static void TestNegativeSuggestions( ICodeEditorDocument *inDocument, ISymbolTab
 	va_start( list, inExpectedNumberOfMatches );
 	TestSuggestions( false, inDocument, inSymTable, inSyntax, inSourceString, inLineOffset, inCharacterOffset, inExpectedNumberOfMatches, list );
 	va_end( list );
-}
-
-void VJavaScriptSyntax::Test()
-{
-	// This causes too many delays because of the fact that we have to sleep for a second on each
-	// suggestion list.  So I am disabling this for the time being.
-	return;
-
-	// Gin up a new document object and syntax interface.  We will use these to 
-	// perform the unit tests
-	CCodeEditorComponent *codeEditor = VComponentManager::RetainComponentOfType< CCodeEditorComponent >();
-	if (codeEditor) {
-		ICodeEditorDocument *doc = codeEditor->NewDocument();
-		VJavaScriptSyntax *syntax = new VJavaScriptSyntax();
-		ISymbolTable *symTable = gLanguageSyntax->CreateSymbolTable();
-		VFile *temp = VFile::CreateTemporaryFile();
-		temp->Delete();
-		xbox_assert( symTable->OpenSymbolDatabase( *temp ) );
-		syntax->SetSymbolTable( symTable );
-
-		VString sourceString;
-
-		sourceString = "var test = 12;\r"			// 0
-						"function wahoo() {\r"		// 1
-							"\tvar blah;\r"			// 2
-						"\r"						// 3
-						"}\r"						// 4
-						"\r";						// 5
-		
-		TestPositiveSuggestions( doc, symTable, syntax, sourceString,
-							5, 0, 2, "test", "wahoo" );
-		TestPositiveSuggestions( doc, symTable, syntax, sourceString,
-							2, 0, 3, "test", "wahoo", "blah" );
-		TestPositiveSuggestions( doc, symTable, syntax, sourceString,
-							0, 1, 1, "var" );
-
-		// This unit test fails because we cannot guess at the proper completion context for line 5.  Since
-		// it is an empty line, it doesn't contain a statement.  So we never explicitly set the context for it
-		// when doing declaration parsing.  Since there's no context, we attempt to walk up the user's source code
-		// to find the next closest context and we run into the context for wahoo.  blah exists inside of wahoo's
-		// context, and so blah is found in the suggestion list.
-	//	TestNegativeSuggestions( doc, syntax, sourceString,
-	//						5, 0, 1, "blah" );
-
-		sourceString = "var obj = {\r"										// 0
-							"\t'address' : {\r"								// 1
-								"\t\t'street' : '60, rue d\\'Alsace'\r"		// 2
-							"\t}\r"											// 3
-						"}\r"												// 4
-						"obj.\r"											// 5
-						"obj.address.\r"									// 6
-						"\r";												// 7
-		
-		TestPositiveSuggestions( doc, symTable, syntax, sourceString,
-					5, 4, 1, "address" );
-		TestNegativeSuggestions( doc, symTable, syntax, sourceString,
-					5, 4, 2, "obj", "street" );
-		TestPositiveSuggestions( doc, symTable, syntax, sourceString,
-					6, 12, 1, "street" );
-		TestNegativeSuggestions( doc, symTable, syntax, sourceString,
-					6, 12, 2, "obj", "address" );
-
-		sourceString = "function MyClass(config) {\r"																						// 0
-									"\tconfig.myParam = 42;  // autocompletion after typing \"config.\":  myParam\r"						// 1
-									"\tfoo = 42;	// global variable\r"																	// 2
-									"\tvar privateProperty = '';	// private property\r"													// 3
-									"\tthis.myProperty = 42;	// public property\r"														// 4
-									"\t\r"																									// 5
-									"\tvar privateMethod = function () { }	// private method\r"											// 6
-									"\tfunction privateMethod2  () { }	// private method\r"												// 7
-									"\tthis.myMethod = function (){ }	// privileged method\r"												// 8
-								"}\r"																										// 9
-								"\r"																										// 10
-								"MyClass.prototype.myMethod2 = function() { }	// myMethod2 is added to the constructor of MyClass\r"		// 11
-								"MyClass.myMethod3 = function() { }	// myMethod3 is added to the object MyClass\r"							// 12
-								"myObject = new MyClass();\r"																				// 13
-								"var obj = new MyClass(); \r"																				// 14
-								"obj.myMethod4 = function () { }\r"																			// 15
-								"obj.prototype.myMethod5 = function () { }\r";																// 16
-
-		// We are testing this. within the function MyClass to see what is displayed
-		TestPositiveSuggestions( doc, symTable, syntax, sourceString, 
-							8, 6,
-							3, "myMethod", "myProperty", "myMethod2" );
-		TestNegativeSuggestions( doc, symTable, syntax, sourceString,
-							8, 6,
-							7, "myObject", "config", "foo", "privateProperty", "privateMethod", "privateMethod2", "MyClass" );
-		// Let's test what is available to us within MyClass without using this.
-		TestPositiveSuggestions( doc, symTable, syntax, sourceString,
-							8, 0,
-							7, "myObject", "config", "foo", "privateProperty", "privateMethod", "privateMethod2", "MyClass" );
-		TestNegativeSuggestions( doc, symTable, syntax, sourceString,
-							8, 0,
-							3, "myProperty", "myMethod", "myMethod2" );
-
-		temp->Release();
-		doc->SelfDelete();
-		delete syntax;
-		symTable->Release();
-		codeEditor->Release();
-	}
 }
 #endif // _DEBUG

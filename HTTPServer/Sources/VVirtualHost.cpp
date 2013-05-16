@@ -273,7 +273,7 @@ void VVirtualHost::_Init()
 		fServerLog->SetBackupSettings (GetSettings()->GetLogBackupSettings());
 
 		/* Install Signal */
-		GetSettings()->GetSignal_SettingsChanged()->Connect (this, XBOX::VTask::GetCurrent(), &VVirtualHost::SettingsChanged_Message);
+		GetSettings()->GetSignal_SettingsChanged()->Connect (this, XBOX::VTask::GetMain(), &VVirtualHost::SettingsChanged_Message);
 	}
 
 #if HTTP_SERVER_USE_PROJECT_PATTERNS
@@ -663,6 +663,9 @@ bool VVirtualHost::AcceptConnectionsOnAddress (const IP4 /*done*/ inIPAddress) c
 #else
 bool VVirtualHost::AcceptConnectionsOnAddress (const VString& inIPAddress) const	
 {
+	if (inIPAddress.IsEmpty())
+		return false;
+
 	return (HTTPServerTools::EqualASCIIVString (GetSettings()->GetListeningAddress(), VNetAddress::GetAnyIP()) ||
 			HTTPServerTools::EqualASCIIVString (GetSettings()->GetListeningAddress(), inIPAddress));
 }

@@ -39,6 +39,8 @@ const sLONG kFakeSousPageForNull = -5;
 
 const sLONG KeyPreAllocSize = 2048;
 
+extern bool gTempNewIndexFourche;
+
 
 
 									/* -----------------------------------------------  */
@@ -452,6 +454,8 @@ class BTreePageIndex : public ObjInCacheMem, public IObjToFlush
 
 		VError Fourche(OccupableStack* curstack, Bittab* b, BTitemIndex* val1, uBOOL xstrict1, BTitemIndex* val2, uBOOL xstrict2, BaseTaskInfo* context, 
 										ProgressEncapsuleur* InProgress, const VCompareOptions& inOptions, BTitemIndex** outVal = nil);
+
+		VError SelectAllKeys(OccupableStack* curstack, Bittab* b, BaseTaskInfo* context, ProgressEncapsuleur* InProgress, BTitemIndex** outVal = nil);
 
 		VError FindKeyInArray(OccupableStack* curstack, Bittab* b, DB4DArrayOfConstValues* values, const void* &CurVal, BaseTaskInfo* context, const VCompareOptions& inOptions, ProgressEncapsuleur* InProgress);
 													
@@ -1321,6 +1325,12 @@ class IndexInfo : public ObjInCacheMemory, public IObjToFlush, public IObjToFree
 		void SetInvalidOnDisk();
 		void SetValidOnDisk();
 
+#if debugLeaksAll
+		virtual bool OKToTrackDebug() const
+		{
+			return false;
+		}
+#endif
 
 #if debugIndexPage
 		void Can_Debug_AddPage() { debug_CanAddPage = true; };
@@ -1530,6 +1540,10 @@ typedef IndexInfo inherited;
 
 		virtual bool MustBeRebuild();
 
+#if debugLeaksAll
+		virtual void GetDebugInfo(VString& outText) const;
+#endif
+
 	protected:
 		virtual ~IndexInfoFromField();
 		//IndexInfoFromFieldOnDisk IHD;
@@ -1676,6 +1690,11 @@ typedef IndexInfo inherited;
 
 		virtual VError JoinWithOtherIndex(IndexInfo* other, Bittab* filtre1, Bittab* filtre2,ComplexSelection* result, BaseTaskInfo* context, 
 											VCompareOptions& inOptions, VProgressIndicator* inProgress = nil, bool leftjoin = nil, bool rightjoin = nil);
+
+#if debugLeaksAll
+		virtual void GetDebugInfo(VString& outText) const;
+#endif
+
 
 	protected:
 		virtual ~IndexInfoFromMultipleField();

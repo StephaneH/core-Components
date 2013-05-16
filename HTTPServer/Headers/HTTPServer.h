@@ -44,9 +44,7 @@ USING_TOOLBOX_NAMESPACE
 #include <map>
 #include <cctype>
 
-#include "NameValueCollection.h"
 #include "Zip/Interfaces/CZipComponent.h"
-#include "VHTTPCookie.h"
 #include "VAuthenticationReferee.h"
 #include "HTTPProtocol.h"
 #include "HTTPErrors.h"
@@ -59,8 +57,6 @@ USING_TOOLBOX_NAMESPACE
 #include "VHTTPServerProject.h"
 #include "VHTTPServerComponentLibrary.h"
 #include "VHTTPServer.h"
-#include "VHTTPHeader.h"
-#include "VHTTPMessage.h"
 #include "VHTTPResponse.h"
 #include "VHTTPRequest.h"
 #include "VNonce.h"
@@ -70,7 +66,6 @@ USING_TOOLBOX_NAMESPACE
 #include "VVirtualFolder.h"
 #include "VHTTPServerSession.h"
 #include "VHTTPError.h"
-#include "VHTMLForm.h"
 
 
 #endif	// __HTTP_PRECOMPILED_HEADER_INCLUDED__

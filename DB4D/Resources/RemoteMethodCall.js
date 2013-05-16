@@ -13,8 +13,27 @@
 * Consequently, no title, copyright or other proprietary rights
 * other than those specified in the applicable license is granted.
 */
-/* VComponentBridge implementation. */
-#if DB4DasComponent
-	#include "KernelIPC/Sources/VComponentLibrary.cpp"
-#endif
 
+function remoteFunctionCall(funcName, dataClass) {
+
+    var keepFuncName = funcName;
+    var keepDataClass = dataClass;
+
+    var embbedder = function() {
+
+        var result = null;
+
+        var params = [];
+        for (var i = 0, nb = arguments.length; i < nb; ++i) {
+            params.push(arguments[i]);
+        }
+
+        var result = keepDataClass.callMethod(keepFuncName, params, this);
+
+        return result;
+    }
+
+    return embbedder;
+}
+
+remoteFunctionCall;

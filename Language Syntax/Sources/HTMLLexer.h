@@ -43,13 +43,6 @@ private:
 	bool fPeeked;
 	int fLineNumber;
 
-	#if _DEBUG
-		// The VJavaScriptSyntax constructor has friend acess to the HTMLLexer
-		// class so that it can call the Test static function to do unit testing.
-		friend class VJavaScriptSyntax;
-		static void Test( void );
-	#endif
-
 	friend class HTMLParser;
 	explicit HTMLLexer() : VLexerBase(), fPeeked( false ), fLineNumber( 0 ), fState( kDefault ) {}
 

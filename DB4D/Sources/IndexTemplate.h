@@ -470,6 +470,8 @@ class BtreePage : public ObjInCacheMem, public IObjToFlush
 		void LibereEspaceMem(OccupableStack* curstack);
 		void DelFromFlush(OccupableStack* curstack);
 		
+		VError SelectAllKeys(OccupableStack* curstack, Bittab* b, BaseTaskInfo* context, ProgressEncapsuleur* InProgress, FullCleIndex<Type, MaxCles>* outVal = nil);
+
 		VError FourcheScalar(OccupableStack* curstack, Bittab* b, const FullCleIndex<Type, MaxCles>& val1, uBOOL xstrict1, const FullCleIndex<Type, MaxCles>& val2, uBOOL xstrict2, BaseTaskInfo* context, 
 										ProgressEncapsuleur* InProgress, const VCompareOptions& inOptions, FullCleIndex<Type, MaxCles>* outVal = nil);
 

@@ -33,6 +33,7 @@ public:
 	XBOX::VError			GetFilePathFromURL (const XBOX::VString& inURL, XBOX::VString& outLocationPath);
 	bool					ResolveURLForAlternatePlatformPage (const XBOX::VString& inURL, const XBOX::VString& inPlatform, XBOX::VString& outResolvedURL);
 	const XBOX::VString&	GetName() const { return fName; }
+	bool					IsLocalFolder() const { return fLocalFolder; }
 
 private:
 	XBOX::VFolder *			fFolder;

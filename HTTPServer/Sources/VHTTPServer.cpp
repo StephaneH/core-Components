@@ -136,8 +136,6 @@ VHTTPServer::VHTTPServer ()
 , fCacheManager (NULL)
 {
 	fVirtualHostManager = new VVirtualHostManager();
-	if (testAssert (NULL != fVirtualHostManager))
-		fVirtualHostManager->Notify_DidStart();
 
 	fServerNet = new VTCPServer();
 	fCacheManager = new VCacheManager();
@@ -247,10 +245,18 @@ IHTTPServerProject *VHTTPServer::NewHTTPServerProject (const XBOX::VValueBag *in
 	return result;
 }
 
-IHTTPWebsocketHandler *			VHTTPServer::NewHTTPWebsocketHandler()
+IHTTPWebsocketServer*			VHTTPServer::NewHTTPWebsocketServerHandler()
 {
 
-	VHTTPWebsocketHandler *result = new VHTTPWebsocketHandler();
+	VHTTPWebsocketServerHandler *result = new VHTTPWebsocketServerHandler();
+
+	return result;
+}
+
+IHTTPWebsocketClient*			VHTTPServer::NewHTTPWebsocketClientHandler()
+{
+
+	VHTTPWebsocketClientHandler *result = new VHTTPWebsocketClientHandler();
 
 	return result;
 }
@@ -367,23 +373,10 @@ IConnectionListener *VHTTPServer::CreateConnectionListener (const VHTTPServerPro
 	{
 		if (XBOX::VE_OK == error)
 		{
-			if (inSettings->GetAllowSSL())
+			if (inSettings->GetAllowSSL() || inSettings->GetSSLMandatory())
 			{
 				if (inSettings->GetSSLCertificatesFolderPath().IsValid())
-				{
-					XBOX::VFilePath certPath;
-					XBOX::VFilePath keyPath;
-
-					_BuildCertificatesFilePathes (inSettings->GetSSLCertificatesFolderPath(), certPath, keyPath);
-
-					XBOX::VFile certFile (certPath);
-					XBOX::VFile keyFile (keyPath);
-					
-					if (certFile.Exists() && keyFile.Exists())
-						connectionListener->SetSSLCertificatePaths (certPath, keyPath);
-					else
-						connectionListener->SetSSLEnabled (false);
-				}
+					connectionListener->SetSSLCertificatesFolderPath (inSettings->GetSSLCertificatesFolderPath());
 			}
 
 			error = fServerNet->AddConnectionListener (connectionListener);
@@ -534,12 +527,15 @@ void VHTTPServer::SaveToBag (XBOX::VValueBag &outBag)
 /* static */
 XBOX::VError VHTTPServer::ThrowError (const XBOX::VError inErrorCode, const XBOX::VString& inParamString)
 {
-	VHTTPError *error = new VHTTPError (inErrorCode);
+	if (XBOX::VE_OK != inErrorCode)
+	{
+		VHTTPError *error = new VHTTPError (inErrorCode);
 
-	if (!inParamString.IsEmpty())
-		error->GetBag()->SetString (STRING_ERROR_PARAMETER_NAME, inParamString);
+		if (!inParamString.IsEmpty())
+			error->GetBag()->SetString (STRING_ERROR_PARAMETER_NAME, inParamString);
 
-	VTask::GetCurrent()->PushRetainedError (error);
+		VTask::GetCurrent()->PushRetainedError (error);
+	}
 
 	return inErrorCode;
 }

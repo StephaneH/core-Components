@@ -23,11 +23,14 @@ class VDB4DQuery;
 class VDB4DRowSet;
 
 
-
+#if DB4DasComponent
 class VDB4DMgr : public VComponentImp<CDB4DManager>
+#else
+class VDB4DMgr : public CDB4DManager
+#endif
 {
 public:
-	VDB4DMgr();
+	VDB4DMgr(VLocalizationManager* inLocalizationManager = NULL);
 	virtual ~VDB4DMgr();
 
 
@@ -38,6 +41,9 @@ public:
 	virtual IBackupSettings* CreateBackupSettings();
 
 	virtual IBackupTool* CreateBackupTool();
+	
+	virtual IJournalTool* CreateJournalTool();
+
 	virtual XBOX::VError GetJournalInfos(const XBOX::VFilePath& inDataFilePath,XBOX::VFilePath& outJournalPath,XBOX::VUUID& outJournalDataLink);
 	
 
@@ -45,8 +51,9 @@ public:
 	virtual CDB4DBase* OpenRemoteBase( CDB4DBase* inLocalDB, const VString& inBaseName, const VString& inFullBasePath, VErrorDB4D& outErr, 
 										Boolean inCreateIfNotExist, DB4DNetworkManager* inNetworkManager = nil, CUAGDirectory* inUAGDirectory = nil);
 	virtual CDB4DBase* OpenRemoteBase( CDB4DBase* inLocalDB, const VString& inBaseName, VErrorDB4D& outErr, DB4DNetworkManager* inNetworkManager = nil, CUAGDirectory* inUAGDirectory = nil);
-
+/*
 	virtual void* GetComponentLibrary() const;
+	*/
 
 	virtual CDB4DBase* OpenBase( const VString& inXMLContent, sLONG inParameters, VError* outErr, const VFilePath& inXMLPath, unordered_map_VString<VRefPtr<VFile> >* outIncludedFiles  = nil, const VFile* inPermissionsFile = nil);
 	// one structure file and one datafile whose name is structurename.data
@@ -185,6 +192,9 @@ public:
 #if debugLeakCheck_Strong
 		xStartRecordingMemoryLeaks();
 #endif
+#if debugLeaksAll
+		xStartRecordingMemoryLeaksAll();
+#endif
 	}
 
 	virtual void StopRecordingMemoryLeaks()
@@ -192,12 +202,18 @@ public:
 #if debugLeakCheck_Strong
 		xStopRecordingMemoryLeaks();
 #endif
+#if debugLeaksAll
+		xStopRecordingMemoryLeaksAll();
+#endif
 	}
 
 	virtual void DumpMemoryLeaks(XBOX::VString& outText)
 	{
 #if debugLeakCheck_Strong
 		xDumpMemoryLeaks(outText);
+#endif
+#if debugLeaksAll
+		IDebugRefCountable::DumpStackCrawls(outText);
 #endif
 	}
 
@@ -229,6 +245,9 @@ public:
 	virtual	void					SetGraphicsInterface( IDB4D_GraphicsIntf *inGraphics);
 	virtual	IDB4D_GraphicsIntf*		GetGraphicsInterface() const;
 
+	virtual	void					SetSQLInterface (IDB4D_SQLIntf *inSQLIntf);
+	virtual	IDB4D_SQLIntf			*GetSQLInterface () const;
+
 	virtual void GetStaticRequiredJSFiles(std::vector<XBOX::VFilePath>& outFiles);
 
 	virtual IDB4D_DataToolsIntf* CreateJSDataToolsIntf(VJSContext& jscontext, VJSObject& paramObj);
@@ -237,13 +256,18 @@ public:
 
 	virtual IHTTPRequestHandler*	AddRestRequestHandler( VErrorDB4D& outError, CDB4DBase *inBase, IHTTPServerProject *inHTTPServerProject, RIApplicationRef inApplicationRef, const XBOX::VString& inPattern, bool inEnabled);
 
+	VDBMgr* GetManager()
+	{
+		return fManager;
+	}
+
 protected:
 	VDBMgr *fManager;
 };
 
 
 
-class VDB4DBase : public VComponentImp<CDB4DBase>
+class VDB4DBase : public CDB4DBase
 {
 public:
 	VDB4DBase( VDBMgr *inManager, Base4D *inBase, Boolean mustRetain = true);
@@ -446,8 +470,8 @@ public:
 													sLONG limit = 0, VErrorDB4D *outErr = NULL);
 
 #if debuglr
-	virtual CComponent*	Retain (const char* DebugInfo = 0);
-	virtual void		Release (const char* DebugInfo = 0);
+	virtual	sLONG		Retain(const char* DebugInfo = 0) const;
+	virtual	sLONG		Release(const char* DebugInfo = 0) const;
 #endif
 
 	virtual Boolean IsRemote() const { return fIsRemote; };
@@ -525,7 +549,7 @@ public:
 
 	virtual VErrorDB4D ExecuteRestRequest(tempDB4DWebRequest& inRequest); // temporaire L.R le 4 dec 2008
 	
-	virtual sLONG CountEntityModels(CDB4DBaseContext* context = NULL, bool onlyRealOnes = true) const;
+	//virtual sLONG CountEntityModels(CDB4DBaseContext* context = NULL, bool onlyRealOnes = true) const;
 	
 	virtual VErrorDB4D RetainAllEntityModels(vector<XBOX::VRefPtr<CDB4DEntityModel> >& outList, CDB4DBaseContext* context = NULL, bool onlyRealOnes = true) const;
 	
@@ -562,6 +586,10 @@ public:
 
 	virtual bool CatalogJSParsingError(VFile* &outRetainedFile, VString& outMessage, sLONG& outLineNumber);
 
+	// Update _USER_VIEWS and _USER_VIEW_COLUMNS on CREATE and DROP views. 
+
+	virtual VErrorDB4D ExecuteSQLExpression (DB4DSQLExpression *inExpression);
+
 
 	//========== end of component methods ===============
 
@@ -582,7 +610,7 @@ private:
 
 
 
-class VDB4DSchema : public VComponentImp<CDB4DSchema>, public IBaggable
+class VDB4DSchema : public CDB4DSchema, public IBaggable
 {
 	public:
 		VDB4DSchema(Base4D* owner, const VString& inName, sLONG inID)
@@ -725,7 +753,7 @@ private:
 
 */
 
-class VDB4DFieldCacheCollection : public VComponentImp<CDB4DFieldCacheCollection>
+class VDB4DFieldCacheCollection : public CDB4DFieldCacheCollection
 {
 	public:
 		inline VDB4DFieldCacheCollection(Table* inTable):fFieldsCache(inTable)
@@ -748,11 +776,11 @@ class VDB4DFieldCacheCollection : public VComponentImp<CDB4DFieldCacheCollection
 
 
 
-class VDB4DRemoteRecordCache : public VComponentImp<CDB4DRemoteRecordCache>
+class VDB4DRemoteRecordCache : public CDB4DRemoteRecordCache
 {
 	public:
 		
-		inline VDB4DRemoteRecordCache(CDB4DFieldCacheCollection* inFields, CDB4DBaseContext* inContext):fRecordsCache(VImpCreator<VDB4DFieldCacheCollection>::GetImpObject(inFields)->GetFieldsCache(), ConvertContext(inContext))
+		inline VDB4DRemoteRecordCache(CDB4DFieldCacheCollection* inFields, CDB4DBaseContext* inContext):fRecordsCache(dynamic_cast<VDB4DFieldCacheCollection*>(inFields)->GetFieldsCache(), ConvertContext(inContext))
 		{
 			fFields = RetainRefCountable(inFields);
 		}
@@ -778,7 +806,7 @@ class VDB4DRemoteRecordCache : public VComponentImp<CDB4DRemoteRecordCache>
 
 
 
-class VDB4DField : public VComponentImp<CDB4DField>
+class VDB4DField : public CDB4DField
 {
 public:
 	VDB4DField(Field* inField);
@@ -828,6 +856,9 @@ public:
 	virtual Boolean IsStyledText(CDB4DBaseContextPtr inContext = NULL) const;
 	virtual VErrorDB4D SetStyledText(Boolean styledText, VDB4DProgressIndicator* InProgress = nil, CDB4DBaseContextPtr inContext = NULL);
 
+	virtual Boolean IsHiddenInRest(CDB4DBaseContextPtr inContext = NULL) const;
+	virtual VErrorDB4D SetHideInRest(Boolean hideInRest, VDB4DProgressIndicator* InProgress = nil, CDB4DBaseContextPtr inContext = NULL);
+
 	virtual VError SetDefinition(const VValueBag& inFieldDefinition, VDB4DProgressIndicator* InProgress = nil, CDB4DBaseContextPtr inContext = NULL);
 	virtual VValueBag* CreateDefinition(CDB4DBaseContextPtr inContext = NULL) const;
 
@@ -875,7 +906,7 @@ private:
 };
 
 
-class VDB4DTable : public VComponentImp<CDB4DTable>
+class VDB4DTable : public CDB4DTable
 {
 public:
 
@@ -1038,6 +1069,10 @@ public:
 
 	virtual bool GetKeepRecordSyncInfo() const;
 
+	virtual VErrorDB4D SetHideInRest(bool hideInRest, CDB4DBaseContextPtr inContext, VDB4DProgressIndicator* InProgress = nil);
+
+	virtual bool IsHiddenInRest(CDB4DBaseContextPtr inContext) const;
+
 	virtual VErrorDB4D GetModificationsSinceStampWithPrimKey(uLONG8 stamp, VStream& outStream, uLONG8& outLastStamp, sLONG& outNbRows, 
 																CDB4DBaseContextPtr inContext, vector<sLONG>& cols,
 																CDB4DSelection* filter, sLONG8 skip, sLONG8 top,
@@ -1085,7 +1120,7 @@ private:
 
 
 
-class VDB4DSelection : public VComponentImp<CDB4DSelection>
+class VDB4DSelection : public CDB4DSelection
 {
 public:
 
@@ -1107,7 +1142,6 @@ public:
 
 	virtual Boolean SortSelection(DB4D_FieldID inFieldID, Boolean inAscending, VDB4DProgressIndicator* InProgress = nil, CDB4DBaseContextPtr inContext = nil);
 	virtual Boolean SortSelection(CDB4DSortingCriteriasPtr inCriterias, VDB4DProgressIndicator* InProgress = nil, CDB4DBaseContextPtr inContext = nil);
-	virtual Boolean SortSelection(const VString orderString, VDB4DProgressIndicator* InProgress = NULL, CDB4DBaseContextPtr inContext = NULL);
 
 	virtual Boolean SortSelectionOnClient(DB4D_FieldID inFieldID, Boolean inAscending, VDB4DProgressIndicator* InProgress = nil, CDB4DBaseContextPtr inContext = nil);
 	virtual Boolean SortSelectionOnClient(CDB4DSortingCriteriasPtr inCriterias, VDB4DProgressIndicator* InProgress = nil, CDB4DBaseContextPtr inContext = nil);
@@ -1187,7 +1221,7 @@ public:
 	virtual void SetAssociatedModel(CDB4DEntityModel* em);
 	virtual CDB4DEntityModel* GetModel() const;
 
-	virtual CDB4DEntityRecord *LoadEntity( RecIDType inEntityIndex, DB4D_Way_of_Locking HowToLock, CDB4DBaseContextPtr inContext, Boolean* outLockWasKeptInTrans = NULL);
+	//virtual CDB4DEntityRecord *LoadEntity( RecIDType inEntityIndex, DB4D_Way_of_Locking HowToLock, CDB4DBaseContextPtr inContext, Boolean* outLockWasKeptInTrans = NULL);
 
 	virtual void SetQueryPlan(VValueBag* queryplan);
 	virtual void SetQueryPath(VValueBag* queryplan);
@@ -1195,7 +1229,7 @@ public:
 	virtual VValueBag* GetQueryPlan();
 	virtual VValueBag* GetQueryPath();
 
-	virtual VError ConvertToJSObject(CDB4DBaseContext* inContext, VJSArray& outArr, const VString& inAttributeList, bool withKey, bool allowEmptyAttList, sLONG from, sLONG count);
+	//virtual VError ConvertToJSObject(CDB4DBaseContext* inContext, VJSArray& outArr, const VString& inAttributeList, bool withKey, bool allowEmptyAttList, sLONG from, sLONG count);
 
 	
 	//========== end of component methods ===============
@@ -1226,7 +1260,7 @@ private:
 };
 
 
-class VDB4DSet : public VComponentImp<CDB4DSet>
+class VDB4DSet : public CDB4DSet
 {
 public:
 
@@ -1282,7 +1316,7 @@ private:
 };
 
 
-class VDB4DQueryOptions : public VComponentImp<CDB4DQueryOptions>
+class VDB4DQueryOptions : public CDB4DQueryOptions
 {
 	public:
 		virtual void SetFilter( CDB4DSelection* inFilter);
@@ -1309,7 +1343,7 @@ class VDB4DQueryOptions : public VComponentImp<CDB4DQueryOptions>
 };
 
 
-class VDB4DQueryResult : public VComponentImp<CDB4DQueryResult>
+class VDB4DQueryResult : public CDB4DQueryResult
 {
 	public:
 		VDB4DQueryResult(CDB4DTable* inTable)
@@ -1325,7 +1359,7 @@ class VDB4DQueryResult : public VComponentImp<CDB4DQueryResult>
 
 		VDB4DQueryResult(Table* inTable)
 		{
-			VDB4DBase* xbase = VImpCreator<VDB4DBase>::GetImpObject(inTable->GetOwner()->RetainBaseX());
+			VDB4DBase* xbase = dynamic_cast<VDB4DBase*>(inTable->GetOwner()->RetainBaseX());
 			fSelection = nil;
 			fSet = nil;
 			fLockedSet = nil;
@@ -1389,7 +1423,7 @@ class VDB4DQueryResult : public VComponentImp<CDB4DQueryResult>
 };
 
 
-class VDB4DQuery : public VComponentImp<CDB4DQuery>
+class VDB4DQuery : public CDB4DQuery
 {
 public:
 	//VDB4DQuery( VDB4DTableContext *inTableContext);
@@ -1446,7 +1480,7 @@ private:
 
 
 
-class VDB4DComplexSelection : public VComponentImp<CDB4DComplexSelection>
+class VDB4DComplexSelection : public CDB4DComplexSelection
 {
 	public:
 		inline VDB4DComplexSelection(VDBMgr* manager, ComplexSelection* sel)
@@ -1490,7 +1524,7 @@ class VDB4DComplexSelection : public VComponentImp<CDB4DComplexSelection>
 
 
 
-class VDB4DComplexQuery : public VComponentImp<CDB4DComplexQuery>
+class VDB4DComplexQuery : public CDB4DComplexQuery
 {
 	public:
 
@@ -1535,7 +1569,7 @@ class VDB4DComplexQuery : public VComponentImp<CDB4DComplexQuery>
 
 
 
-class VDB4DSortingCriterias : public VComponentImp<CDB4DSortingCriterias>
+class VDB4DSortingCriterias : public CDB4DSortingCriterias
 {
 public:
 	//VDB4DSortingCriterias( VDB4DTableContext *inTableContext);
@@ -1561,7 +1595,7 @@ private:
 
 
 
-class VDB4DSqlQuery : public VComponentImp<CDB4DSqlQuery>
+class VDB4DSqlQuery : public CDB4DSqlQuery
 {
 public:
 	VDB4DSqlQuery( VDBMgr *inManager, Base4D* WhichBase, BaseTaskInfo* WhichContext, VString& request, VError& err );
@@ -1579,7 +1613,7 @@ private:
 };
 
 
-class VDB4DRecord : public VComponentImp<CDB4DRecord>
+class VDB4DRecord : public CDB4DRecord
 {
 public:
 	VDB4DRecord( VDBMgr* manager, FicheInMem *inFiche, CDB4DBaseContextPtr inContext);
@@ -1712,7 +1746,7 @@ private:
 };
 
 
-class VDB4DImpExp : public VComponentImp<CDB4DImpExp>
+class VDB4DImpExp : public CDB4DImpExp
 {
 	public:
 		VDB4DImpExp(CDB4DTable* inTarget, Table* intarget);
@@ -1749,7 +1783,7 @@ class VDB4DImpExp : public VComponentImp<CDB4DImpExp>
 };
 
 
-class VDB4DCheckAndRepairAgent : public VComponentImp<CDB4DCheckAndRepairAgent>
+class VDB4DCheckAndRepairAgent : public CDB4DCheckAndRepairAgent
 {
 	public:
 		VDB4DCheckAndRepairAgent(CDB4DBase* inTarget);
@@ -1774,7 +1808,7 @@ class VDB4DCheckAndRepairAgent : public VComponentImp<CDB4DCheckAndRepairAgent>
 };
 
 
-class VDB4DRelation : public VComponentImp<CDB4DRelation>
+class VDB4DRelation : public CDB4DRelation
 {
 	public:
 		VDB4DRelation(CDB4DBase* inTarget, Relation* xrel);
@@ -1851,7 +1885,7 @@ class VDB4DRelation : public VComponentImp<CDB4DRelation>
 };
 
 
-class VDB4DColumnFormula : public VComponentImp<CDB4DColumnFormula>
+class VDB4DColumnFormula : public CDB4DColumnFormula
 {
 	public:
 		VDB4DColumnFormula(Table* target);
@@ -1870,7 +1904,7 @@ class VDB4DColumnFormula : public VComponentImp<CDB4DColumnFormula>
 };
 
 
-class VDB4DIndex : public VComponentImp<CDB4DIndex>
+class VDB4DIndex : public CDB4DIndex
 {
 	public:
 
@@ -1929,7 +1963,7 @@ class VDB4DIndex : public VComponentImp<CDB4DIndex>
 
 const sLONG kMaxPageLevelInPath = 20;
 
-class VDB4DIndexKey : public VComponentImp<CDB4DIndexKey>
+class VDB4DIndexKey : public CDB4DIndexKey
 {
 	public:
 
@@ -1975,7 +2009,7 @@ class contextElem
 
 typedef map<Base4D*, contextElem> ContextByBaseMap;
 
-class VDB4DContext : public VComponentImp<CDB4DContext>
+class VDB4DContext : public CDB4DContext
 {
 	public:
 		inline VDB4DContext(CUAGSession* inUserSession, VJSGlobalContext* inJSContext, bool islocal):fLanguageContext( nil),fExtra( nil), fNeedsToSendExtraData( false)
@@ -1991,6 +2025,8 @@ class VDB4DContext : public VComponentImp<CDB4DContext>
 		virtual ~VDB4DContext();
 		virtual CDB4DBaseContextPtr RetainDataBaseContext(CDB4DBase* inTarget, Boolean ForceCreate = true, bool reallyRetain = true);
 		//virtual void SetDataBaseContext(CDB4DBase* inTarget, CDB4DBaseContextPtr inContext);
+
+		BaseTaskInfo* RetainDataBaseContext(Base4D* inTarget, Boolean ForceCreate = true, bool reallyRetain = true);
 
 		virtual VUUID& GetID();
 		virtual const VUUID& GetID() const;
@@ -2068,7 +2104,7 @@ class VDB4DContext : public VComponentImp<CDB4DContext>
 
 
 
-class VDB4DAutoSeqNumber : public VComponentImp<CDB4DAutoSeqNumber>
+class VDB4DAutoSeqNumber : public CDB4DAutoSeqNumber
 {
 	public:
 		VDB4DAutoSeqNumber(AutoSeqNumber* seq);
@@ -2152,7 +2188,7 @@ class VDB4DJournalData : public CDB4DJournalData
 };
 
 class DB4DJournalParser;
-class VDB4DJournalParser : public VComponentImp<CDB4DJournalParser>
+class VDB4DJournalParser : public CDB4DJournalParser
 {
 	public:
 		VDB4DJournalParser();
@@ -2176,7 +2212,7 @@ class VDB4DJournalParser : public VComponentImp<CDB4DJournalParser>
 
 
 
-class VDB4DRawDataBase : public VComponentImp<CDB4DRawDataBase>
+class VDB4DRawDataBase : public CDB4DRawDataBase
 {
 	public:
 		VDB4DRawDataBase(Base4D_NotOpened* inBase);
@@ -2220,11 +2256,6 @@ protected:
 		Base4D_NotOpened* fBase;
 };
 
-
 // *******************************************obsolete *********************************************************
-
-
-
-
 
 #endif

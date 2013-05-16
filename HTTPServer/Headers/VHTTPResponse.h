@@ -88,7 +88,8 @@ public:
 											const XBOX::VString& inPath,
 											bool inSecure,
 											bool inHTTPOnly,
-											sLONG inMaxAge);
+											sLONG inMaxAge,
+											bool inAlwaysUseExpires = true);
 
 	/* Cookies manipulations functions */
 	bool						IsCookieSet (const XBOX::VString& inName) const;
@@ -139,6 +140,8 @@ public:
 	bool						GetForceCloseSession() const { return fForceCloseSession; }
 	void						SetForceCloseSession (bool inValue = true) { fForceCloseSession = inValue; }
 
+	bool						GetUseDefaultCharset() const { return fUseDefaultCharset; }
+	void						SetUseDefaultCharset (bool inValue) { fUseDefaultCharset = inValue; }
 
 private:
 	uLONG						fStartRequestTime;
@@ -161,8 +164,8 @@ private:
 	sLONG						fMaxCompressionThreshold;
 
 	bool						fHeaderSent;
-
 	bool						fForceCloseSession;	// To avoid waiting Keep-Alive timeout when HTTP Server is shutting down
+	bool						fUseDefaultCharset;
 
 private:
 	/* private functions */

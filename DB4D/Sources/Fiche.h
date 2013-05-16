@@ -248,8 +248,9 @@ class RelationDep : public VObject
 class FieldsForCacheOnOneTable;
 class FieldsForCache;
 class RemoteRecordCache;
+class EntityAttribute;
 
-class FicheInMem : public VObject, public IRefCountable
+class FicheInMem : public VObject, public IDebugRefCountable
 {
 	public:
 		FicheInMem(void) 
@@ -293,6 +294,8 @@ class FicheInMem : public VObject, public IRefCountable
 
 		ValPtr GetFieldValue(const Field* cri, VError& err, bool pictAsRaw = false, bool forQuery = false);
 		ValPtr GetFieldOldValue(const Field* cri, VError& err, bool forQuery = false);
+
+		ValPtr GetFieldValue(const EntityAttribute* att, VError& err, bool touch = false);
 
 		uLONG GetFieldModificationStamp( sLONG inFieldID);
 		uLONG GetFieldModificationStamp( const Field* inField);

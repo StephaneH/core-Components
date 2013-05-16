@@ -69,9 +69,7 @@ private:
 
 
 VVirtualHostManager::VVirtualHostManager ()
-: fSignal_DidStart (VSignal::ESM_Asynchonous)
-, fSignal_DidStop (VSignal::ESM_Asynchonous)
-, fHostPatternsMap ()
+: fHostPatternsMap ()
 #if HTTP_SERVER_USE_PROJECT_PATTERNS
 , fURLPatternsMap ()
 #endif
@@ -136,18 +134,6 @@ VVirtualHost *VVirtualHostManager::RetainMatchingVirtualHost (const VHTTPRequest
 		virtualHost->Retain();
 
 	return virtualHost;
-}
-
-
-void VVirtualHostManager::Notify_DidStart()
-{
-	fSignal_DidStart();
-}
-
-
-void VVirtualHostManager::Notify_DidStop()
-{
-	fSignal_DidStop();
 }
 
 
@@ -281,7 +267,8 @@ VVirtualHost *VVirtualHostManager::_FindMatchingVirtualHost (const VVirtualHostM
 #if WITH_DEPRECATED_IPV4_API
 	else if ((inIPAddress != 0) && (std::count_if (inMap.begin(), inMap.end(), VVirtualHostAcceptAddressFunctor (inPort)) == 1))
 #else
-	else if (!HTTPServerTools::EqualASCIIVString (inIPAddress, VNetAddress::GetAnyIP()) &&
+	else if (!inIPAddress.IsEmpty() &&	// YT 08-Oct-2012 - WAK0078200
+			!HTTPServerTools::EqualASCIIVString (inIPAddress, VNetAddress::GetAnyIP()) &&
 			(std::count_if (inMap.begin(), inMap.end(), VVirtualHostAcceptAddressFunctor (inIPAddress)) == 1))
 #endif		
 	{
@@ -359,7 +346,25 @@ VVirtualFolder * VVirtualHostManager::RetainVirtualFolder (const XBOX::VString& 
 	}
 	
 	if (NULL == resultVirtualFolder)
+	{
 		resultVirtualFolder = new VVirtualFolder (inLocationPath, inIndexPage, inKeyword, CVSTR (""));
+
+		if (resultVirtualFolder->IsLocalFolder())
+		{
+			xbox_assert (resultVirtualFolder->GetFolder() != NULL);
+
+			if ((NULL != resultVirtualFolder->GetFolder())&& !resultVirtualFolder->GetFolder()->Exists())
+			{
+				XBOX::VString errorString;
+				XBOX::VString folderPath (resultVirtualFolder->GetFolder()->GetPath().GetPath());
+				errorString.Printf ("Virtual Folder (%S) does NOT exist !!", &folderPath);
+
+				VHTTPServer::ThrowError (VE_VIRTUAL_FOLDER_DOES_NOT_EXIST, errorString);
+
+				XBOX::ReleaseRefCountable (&resultVirtualFolder);
+			}
+		}
+	}
 
 	return resultVirtualFolder;
 }

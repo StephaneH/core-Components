@@ -398,12 +398,16 @@ VError putUserIntoGroup(VJSParms_callStaticFunction& ioParms, CUAGUser* inUser, 
 {
 	VError err = VE_OK;
 	CUAGDirectory* dir = inUser->GetDirectory();
-	CUAGGroup* group = dir->RetainGroup(s);
-	if (group == nil)
+	CUAGGroup* group;
 	{
-		VUUID id;
-		id.FromString(s);
-		group = dir->RetainGroup(id);
+		StErrorContextInstaller errs(false);
+		group = dir->RetainGroup(s);
+		if (group == nil)
+		{
+			VUUID id;
+			id.FromString(s);
+			group = dir->RetainGroup(id);
+		}
 	}
 	if (group != nil)
 	{
@@ -413,6 +417,7 @@ VError putUserIntoGroup(VJSParms_callStaticFunction& ioParms, CUAGUser* inUser, 
 	{
 		err = ThrowError(VE_UAG_GROUPNAME_DOES_NOT_EXIST, s);
 	}
+	QuickReleaseRefCountable(group);
 	return err;
 }
 
@@ -421,12 +426,16 @@ VError removeUserFromGroup(VJSParms_callStaticFunction& ioParms, CUAGUser* inUse
 {
 	VError err = VE_OK;
 	CUAGDirectory* dir = inUser->GetDirectory();
-	CUAGGroup* group = dir->RetainGroup(s);
-	if (group == nil)
+	CUAGGroup* group;
 	{
-		VUUID id;
-		id.FromString(s);
-		group = dir->RetainGroup(id);
+		StErrorContextInstaller errs(false);
+		group = dir->RetainGroup(s);
+		if (group == nil)
+		{
+			VUUID id;
+			id.FromString(s);
+			group = dir->RetainGroup(id);
+		}
 	}
 	if (group != nil)
 	{
@@ -436,6 +445,7 @@ VError removeUserFromGroup(VJSParms_callStaticFunction& ioParms, CUAGUser* inUse
 	{
 		err = ThrowError(VE_UAG_GROUPNAME_DOES_NOT_EXIST, s);
 	}
+	QuickReleaseRefCountable(group);
 	return err;
 }
 
@@ -444,12 +454,16 @@ VError putGroupIntoGroup(VJSParms_callStaticFunction& ioParms, CUAGGroup* inGrou
 {
 	VError err = VE_OK;
 	CUAGDirectory* dir = inGroup->GetDirectory();
-	CUAGGroup* group = dir->RetainGroup(s);
-	if (group == nil)
+	CUAGGroup* group;
 	{
-		VUUID id;
-		id.FromString(s);
-		group = dir->RetainGroup(id);
+		StErrorContextInstaller errs(false);
+		group = dir->RetainGroup(s);
+		if (group == nil)
+		{
+			VUUID id;
+			id.FromString(s);
+			group = dir->RetainGroup(id);
+		}
 	}
 	if (group != nil)
 	{
@@ -459,6 +473,7 @@ VError putGroupIntoGroup(VJSParms_callStaticFunction& ioParms, CUAGGroup* inGrou
 	{
 		err = ThrowError(VE_UAG_GROUPNAME_DOES_NOT_EXIST, s);
 	}
+	QuickReleaseRefCountable(group);
 	return err;
 }
 
@@ -468,12 +483,16 @@ VError removeGroupFromGroup(VJSParms_callStaticFunction& ioParms, CUAGGroup* inG
 {
 	VError err = VE_OK;
 	CUAGDirectory* dir = inGroup->GetDirectory();
-	CUAGGroup* group = dir->RetainGroup(s);
-	if (group == nil)
+	CUAGGroup* group;
 	{
-		VUUID id;
-		id.FromString(s);
-		group = dir->RetainGroup(id);
+		StErrorContextInstaller errs(false);
+		group = dir->RetainGroup(s);
+		if (group == nil)
+		{
+			VUUID id;
+			id.FromString(s);
+			group = dir->RetainGroup(id);
+		}
 	}
 	if (group != nil)
 	{
@@ -483,6 +502,7 @@ VError removeGroupFromGroup(VJSParms_callStaticFunction& ioParms, CUAGGroup* inG
 	{
 		err = ThrowError(VE_UAG_GROUPNAME_DOES_NOT_EXIST, s);
 	}
+	QuickReleaseRefCountable(group);
 	return err;
 }
 

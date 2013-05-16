@@ -3115,6 +3115,7 @@ VError Transaction::PlaceCle(IndexInfo* ind, BTitemIndex* val, sLONG numrec)
 		}
 
 		val->Unuse();
+		ind->Release();
 	}
 	if (err != VE_OK)
 		SetValid(false);
@@ -3180,6 +3181,7 @@ VError Transaction::DetruireCle(IndexInfo* ind, BTitemIndex* val, sLONG numrec)
 		}
 
 		val->Unuse();
+		ind->Release();
 	}
 
 	if (err != VE_OK)

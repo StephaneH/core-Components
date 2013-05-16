@@ -44,6 +44,8 @@ public:
 	virtual XBOX::VError					SetListeningSocketDescriptor (sLONG inSocketDescriptor) { fSocketDescriptor = inSocketDescriptor; return XBOX::VE_OK; }
 	virtual XBOX::VError					SetListeningSSLSocketDescriptor (sLONG inSSLSocketDescriptor) { fSSLSocketDescriptor = inSSLSocketDescriptor; return XBOX::VE_OK; }
 
+	virtual void							SetReuseAddressSocketOption (bool inValue) { fReuseAddressSocketOption = inValue; }
+
 	virtual IHTTPServerProjectSettings *	GetSettings() const;
 	VHTTPServer *							GetHTTPServer() const { return fHTTPServer; }
 
@@ -143,6 +145,8 @@ private:
 	IAuthenticationDelegate *				fAuthenticationDelegate;
 	sLONG									fSocketDescriptor;
 	sLONG									fSSLSocketDescriptor;
+
+	bool									fReuseAddressSocketOption;
 
 private:
 	void									_Tell_DidStart() { fDidStartSignal(); }

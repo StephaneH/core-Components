@@ -92,6 +92,7 @@ extern const XBOX::VString STRING_HEADER_X_WA_PATTERN;
 		/**
 		*	Some common HTTP header values
 		*/
+extern const XBOX::VString STRING_HEADER_VALUE_100_CONTINUE;
 extern const XBOX::VString STRING_HEADER_VALUE_CHUNKED;
 extern const XBOX::VString STRING_HEADER_VALUE_CLOSE;
 extern const XBOX::VString STRING_HEADER_VALUE_COMPRESS;
@@ -699,6 +700,7 @@ public:
 	sLONG8							GetStartTime() const { return fStartTime; }
 	sLONG8							GetElapsedTime() const;
 	void							DebugMsg (const char *inMsg);
+	void							DebugMsg (const XBOX::VString& inMsg);
 
 private:
 	sLONG8							fStartTime;

@@ -140,6 +140,42 @@ void _MakeServerString (const XBOX::VString& inProductName, const XBOX::VString&
 }
 
 
+static
+HTTPCompressionMethod _GetEncodingMethod (const XBOX::VString& inValue)
+{
+	/* gzip & x-gzip */
+	if (HTTPServerTools::EqualASCIIVString (inValue, STRING_HEADER_VALUE_X_GZIP))
+	{
+		return COMPRESSION_X_GZIP;
+	}
+	else if (HTTPServerTools::EqualASCIIVString (inValue, STRING_HEADER_VALUE_GZIP))
+	{
+		return COMPRESSION_GZIP;
+	}
+	/* deflate */
+	else if (HTTPServerTools::EqualASCIIVString (inValue, STRING_HEADER_VALUE_DEFLATE))
+	{
+		return COMPRESSION_DEFLATE;
+	}
+	/* compress & x-compress */
+	else if (HTTPServerTools::EqualASCIIVString (inValue, STRING_HEADER_VALUE_X_COMPRESS))
+	{
+		return COMPRESSION_X_COMPRESS;
+	}
+	else if (HTTPServerTools::EqualASCIIVString (inValue, STRING_HEADER_VALUE_COMPRESS))
+	{
+		return COMPRESSION_COMPRESS;
+	}
+	/* identity (RFC2616 compliance - see Chapter 3.5 Content Codings)*/
+	else if (HTTPServerTools::EqualASCIIVString (inValue, STRING_HEADER_VALUE_IDENTITY) || HTTPServerTools::EqualASCIIVString (inValue, STRING_STAR))
+	{
+		return COMPRESSION_NONE;
+	}
+
+	return COMPRESSION_UNKNOWN;
+}
+
+
 //--------------------------------------------------------------------------------------------------
 
 
@@ -648,11 +684,16 @@ void HTTPProtocol::ParseURL (const XBOX::VString& inRawURL, XBOX::VString& outDe
 	outDecodedURL.FromString (inRawURL);
 	XBOX::VURL::Decode (outDecodedURL);
 
-	sLONG questionMarkPos = outDecodedURL.FindUniChar (CHAR_QUESTION_MARK);
+	sLONG questionMarkPos = inRawURL.FindUniChar (CHAR_QUESTION_MARK);
 	if (questionMarkPos > 0)
 	{
-		outDecodedURL.GetSubString (1, questionMarkPos - 1, outURLPath);
-		outDecodedURL.GetSubString (questionMarkPos + 1, outDecodedURL.GetLength() - questionMarkPos, outURLQuery);
+		inRawURL.GetSubString (1, questionMarkPos - 1, outURLPath);
+		inRawURL.GetSubString (questionMarkPos + 1, inRawURL.GetLength() - questionMarkPos, outURLQuery);
+
+		outURLQuery.ExchangeAll (CHAR_PLUS_SIGN, CHAR_SPACE); // YT 20-Feb-2013 - WAK0077896
+
+		XBOX::VURL::Decode (outURLPath);
+		XBOX::VURL::Decode (outURLQuery);
 	}
 	else
 	{
@@ -932,28 +973,31 @@ HTTPCompressionMethod HTTPProtocol::NegotiateEncodingMethod (XBOX::VString& inEn
 	if (inEncodingHeaderValue.IsEmpty())
 		return COMPRESSION_NONE;
 
-	XBOX::VString preferedEncodingValue;
+	XBOX::VString			preferedEncodingValue;
+	HTTPCompressionMethod	preferedEncodingMethod = COMPRESSION_UNKNOWN;
+
 	HTTPProtocol::GetBestQualifiedValueUsingQFactor (inEncodingHeaderValue, preferedEncodingValue);
 
-	/* gzip & x-gzip */
-	if (HTTPServerTools::EqualASCIIVString (preferedEncodingValue, STRING_HEADER_VALUE_X_GZIP))
-		return COMPRESSION_X_GZIP;
-	else if (HTTPServerTools::EqualASCIIVString (preferedEncodingValue, STRING_HEADER_VALUE_GZIP))
-		return COMPRESSION_GZIP;
-	/* deflate */
-	else if (HTTPServerTools::EqualASCIIVString (preferedEncodingValue, STRING_HEADER_VALUE_DEFLATE))
-		return COMPRESSION_DEFLATE;
-	/* compress & x-compress */
-	else if (HTTPServerTools::EqualASCIIVString (preferedEncodingValue, STRING_HEADER_VALUE_X_COMPRESS))
-		return COMPRESSION_X_COMPRESS;
-	else if (HTTPServerTools::EqualASCIIVString (preferedEncodingValue, STRING_HEADER_VALUE_COMPRESS))
-		return COMPRESSION_COMPRESS;
-	/* identity (RFC2616 compliance - see Chapter 3.5 Content Codings)*/
-	else if (HTTPServerTools::EqualASCIIVString (preferedEncodingValue, STRING_HEADER_VALUE_IDENTITY) ||
-			HTTPServerTools::EqualASCIIVString (preferedEncodingValue, STRING_STAR))
-		return COMPRESSION_NONE;
+	preferedEncodingMethod = _GetEncodingMethod (preferedEncodingValue);
 
-	return COMPRESSION_UNKNOWN;
+	/* Unable to determine prefered Encoding method using q-factor, just try to find the well-known encoding method */
+	if (COMPRESSION_UNKNOWN == preferedEncodingMethod)
+	{
+		VectorOfHeadersWithQFactors	valuesWithQFactors;
+		_ExtractValuesWithQFactors (inEncodingHeaderValue, valuesWithQFactors);
+
+		if (valuesWithQFactors.size() > 0)
+		{
+			std::sort (valuesWithQFactors.begin(), valuesWithQFactors.end(), _QFactorComparator);
+			for (VectorOfHeadersWithQFactors::const_iterator it = valuesWithQFactors.begin(); it != valuesWithQFactors.end(); ++it)
+			{
+				if (((*it).second > 0.0) && (COMPRESSION_UNKNOWN != (preferedEncodingMethod = _GetEncodingMethod ((*it).first))))
+					break;
+			}
+		}
+	}
+
+	return preferedEncodingMethod;
 }
 
 
@@ -1152,6 +1196,26 @@ XBOX::CharSet HTTPProtocol::NegotiateCharSet (XBOX::VString& inAcceptCharsetHead
 
 
 /* static */
+bool HTTPProtocol::IsAcceptableCharSet (const XBOX::VString& inAcceptCharsetValue, const XBOX::CharSet inCharSet)
+{
+	VectorOfHeadersWithQFactors	valuesWithQFactors;
+
+	_ExtractValuesWithQFactors (inAcceptCharsetValue, valuesWithQFactors);
+
+	std::sort (valuesWithQFactors.begin(), valuesWithQFactors.end(), _QFactorComparator);
+	for (VectorOfHeadersWithQFactors::const_iterator it = valuesWithQFactors.begin(); it != valuesWithQFactors.end(); ++it)
+	{
+		if (HTTPServerTools::EqualASCIIVString ((*it).first, STRING_STAR) && (XBOX::VTC_ISO_8859_1 == inCharSet))
+			return true;
+		else if (((*it).second > 0.0) && (XBOX::VTextConverters::Get()->GetCharSetFromName ((*it).first) == inCharSet))
+			return true;
+	}
+
+	return false;
+}
+
+
+/* static */
 bool HTTPProtocol::IsValidRequestLine (const XBOX::VString& inRequestLine)
 {
 	if (inRequestLine.IsEmpty())
@@ -1167,6 +1231,16 @@ bool HTTPProtocol::IsValidRequestLine (const XBOX::VString& inRequestLine)
 	{
 		XBOX::VTaskLock	lock (&fRequestRegexMatcherMutex);
 		isOK = (MatchRegex (fRequestRegexMatcher, inRequestLine, false));
+
+		/*
+		 *	If validation failed, check requestLine is complete.. Should end by HTTP/x.x
+		 */
+		if (!isOK && (HTTPServerTools::FindASCIICString (inRequestLine, "http/") == 0))
+			VHTTPServer::ThrowError (VE_HTTP_PROTOCOL_BAD_REQUEST, CVSTR ("Request Line seems to be incomplete !!"));
+	}
+	else
+	{
+		VHTTPServer::ThrowError (error, CVSTR ("Cannot Create VRegexMatcher !!"));
 	}
 
 	return isOK;

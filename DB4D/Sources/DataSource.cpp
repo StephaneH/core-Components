@@ -20,6 +20,111 @@
 //DateBlock nulldate= { 0,0,0 };
 
 
+template <>
+Boolean DB4DArrayOfConstDirectValues<uBYTE>::Find(XBOX::VValueSingle& inValue, const XBOX::VCompareOptions& inOptions) const
+{
+	uBYTE b = inValue.GetByte();
+	return FindDirect(&b, inOptions);
+}
+
+
+template <>
+Boolean DB4DArrayOfConstDirectValues<sBYTE>::Find(XBOX::VValueSingle& inValue, const XBOX::VCompareOptions& inOptions) const
+{
+	sBYTE b = inValue.GetByte();
+	return FindDirect(&b, inOptions);
+}
+
+
+template <>
+Boolean DB4DArrayOfConstDirectValues<Real>::Find(XBOX::VValueSingle& inValue, const XBOX::VCompareOptions& inOptions) const
+{
+	Real r = inValue.GetReal();
+	return FindDirect(&r, inOptions);
+}
+
+template <>
+Boolean DB4DArrayOfConstDirectValues<sWORD>::Find(XBOX::VValueSingle& inValue, const XBOX::VCompareOptions& inOptions) const
+{
+	sWORD n = inValue.GetWord();
+	return FindDirect(&n, inOptions);
+}
+
+template <>
+Boolean DB4DArrayOfConstDirectValues<sLONG>::Find(XBOX::VValueSingle& inValue, const XBOX::VCompareOptions& inOptions) const
+{
+	sLONG l = inValue.GetLong();
+	return FindDirect(&l, inOptions);
+}
+
+template <>
+Boolean DB4DArrayOfConstDirectValues<sLONG8>::Find(XBOX::VValueSingle& inValue, const XBOX::VCompareOptions& inOptions) const
+{
+	sLONG8 l8 = inValue.GetLong8();
+	return FindDirect(&l8, inOptions);
+}
+
+template <>
+Boolean DB4DArrayOfConstDirectValues<uLONG8>::Find(XBOX::VValueSingle& inValue, const XBOX::VCompareOptions& inOptions) const
+{
+	VTime tt;
+	inValue.GetTime(tt);
+	uLONG8 xtt = tt.GetMilliseconds();
+	return FindDirect(&xtt, inOptions);
+}
+
+template <>
+Boolean DB4DArrayOfConstDirectValues<xTime>::Find(XBOX::VValueSingle& inValue, const XBOX::VCompareOptions& inOptions) const
+{
+	VTime tt;
+	inValue.GetTime(tt);
+	xTime xtt(tt);
+	return FindDirect(&xtt, inOptions);
+}
+
+
+template <>
+Boolean DB4DArrayOfConstDirectValues<VUUIDBuffer>::Find(XBOX::VValueSingle& inValue, const XBOX::VCompareOptions& inOptions) const
+{
+	VUUID xid;
+	inValue.GetVUUID(xid);
+	return FindDirect(&(xid.GetBuffer()), inOptions);
+}
+
+
+template <>
+Boolean DB4DArrayOfConstDirectValues<VInlineString>::Find(XBOX::VValueSingle& inValue, const XBOX::VCompareOptions& inOptions) const
+{
+	VInlineString val;
+	VString ss;
+	inValue.GetString(ss);
+	val.InitWithString(ss);
+	MyLess pred(inOptions);
+	MyLess& predref = pred;
+	return binary_search(fDataArray, fDataArray + fSize, val, predref);
+}
+
+
+template <>
+Boolean DB4DArrayOfConstDirectValues<QuickString>::Find(XBOX::VValueSingle& inValue, const XBOX::VCompareOptions& inOptions) const
+{
+	MyLess pred(inOptions);
+	MyLess& predref = pred;
+	QuickString xs;
+	VString s;
+	inValue.GetString(s);
+	sLONG len = s.GetLength();
+	const UniChar* source = s.GetCPointer();
+	xs.fString = (UniChar*)VObject::GetMainMemMgr()->Malloc(len*2 + 4, false, 'qstr');
+	if (len > 0)
+		copy(source, source+len, xs.fString+2);
+	*((sLONG*)xs.fString) = len;
+	Boolean result = binary_search(fDataArray, fDataArray + fSize, xs, predref);
+	VObject::GetMainMemMgr()->Free(xs.fString);
+
+	return result;
+}
+
 
 DB4DArrayOfValues* GenerateConstArrayOfValues(DB4DArrayOfValues* values, sLONG datakind, const VCompareOptions& inOptions)
 {
@@ -3645,7 +3750,7 @@ VErrorDB4D VSubTableDB4D::QuerySubRecords(const CDB4DQuery* inQuery, CDB4DBaseCo
 	}
 	if (testAssert(inQuery != nil))
 	{
-		const SearchTab* query = (VImpCreator<VDB4DQuery>::GetImpObject(inQuery))->GetSearchTab();
+		const SearchTab* query = (dynamic_cast<const VDB4DQuery*>(inQuery))->GetSearchTab();
 		return QuerySubRecord(query, context);
 	}
 	else 
@@ -3662,7 +3767,7 @@ VErrorDB4D VSubTableDB4D::SortSubRecords(const CDB4DSortingCriterias* inCriteria
 	}
 	if (testAssert(inCriterias != nil))
 	{
-		const SortTab* criterias = (VImpCreator<VDB4DSortingCriterias>::GetImpObject(inCriterias))->GetSortTab();
+		const SortTab* criterias = (dynamic_cast<const VDB4DSortingCriterias*>(inCriterias))->GetSortTab();
 		return SortSubRecord(criterias, context);
 	}
 	else 

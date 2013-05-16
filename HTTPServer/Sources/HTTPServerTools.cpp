@@ -93,6 +93,7 @@ const XBOX::VString STRING_HEADER_X_WA_PATTERN			= CVSTR ("X-WA-Pattern");
 	/**
 	*	Some common HTTP header values
 	*/
+const XBOX::VString STRING_HEADER_VALUE_100_CONTINUE	= CVSTR ("100-continue");
 const XBOX::VString STRING_HEADER_VALUE_CHUNKED			= CVSTR ("chunked");
 const XBOX::VString STRING_HEADER_VALUE_CLOSE			= CVSTR ("close");
 const XBOX::VString STRING_HEADER_VALUE_COMPRESS		= CVSTR ("compress");
@@ -1331,14 +1332,19 @@ sLONG8 VDebugTimer::GetElapsedTime() const
 void VDebugTimer::DebugMsg (const char *inMsg)
 {
 	XBOX::VString	debugMsg;
-	sLONG8			microsec = sLONG8 (GetElapsedTime() * 1000000.0 / XBOX::VSystem::GetProfilingFrequency());
 
 	debugMsg.FromCString (inMsg);
-	debugMsg.AppendCString (" - time: ");
-	debugMsg.AppendLong8 (microsec);
-	debugMsg.AppendCString (" µs\n");
-
-	::DebugMsg (debugMsg);
+	DebugMsg (debugMsg);
 }
 
 
+void VDebugTimer::DebugMsg (const XBOX::VString& inMsg)
+{
+	XBOX::VString	debugMsg;
+	sLONG8			microsec = sLONG8 (GetElapsedTime() * 1000000.0 / XBOX::VSystem::GetProfilingFrequency());
+
+	debugMsg.FromString (inMsg);
+	debugMsg.AppendPrintf (" (%d µs)\n", microsec);
+
+	::DebugMsg (debugMsg);
+}

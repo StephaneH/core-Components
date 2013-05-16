@@ -38,7 +38,7 @@ CDB4DContext *GetDB4DContextFromJSContext( const XBOX::VJSContext& inContext)
 
 void SetDB4DContextInJSContext( const XBOX::VJSContext& inContext, CDB4DContext* inDB4DContext)
 {
-	if (inContext.GetGlobalObjectPrivateInstance()->SetSpecific( 'db4d', inDB4DContext, VJSSpecifics::DestructorReleaseCComponent))
+	if (inContext.GetGlobalObjectPrivateInstance()->SetSpecific( 'db4d', inDB4DContext, VJSSpecifics::DestructorReleaseIRefCountable))
 	{
 		if (inDB4DContext != NULL)
 			inDB4DContext->Retain();
@@ -64,7 +64,8 @@ inline CDB4DBaseContext* GetDB4DBaseContextFromJSContext( const XBOX::VJSContext
 
 inline CDB4DBaseContext* GetDB4DBaseContextFromJSContext( const XBOX::VJSContext& inContext, CDB4DEntityModel* em)
 {
-	CDB4DBase* base = em->RetainDataBase();
+	EntityModel* xem = dynamic_cast<EntityModel*>(em);
+	CDB4DBase* base = xem->GetCatalog()->GetOwner()->RetainBaseX();
 	CDB4DBaseContext* result = GetDB4DBaseContextFromJSContext( inContext, base);
 	base->Release();
 	return result;
@@ -85,6 +86,36 @@ static CDB4DBaseContext* GetDB4DBaseContextFromJSContext( const VJSParms_withCon
 
 
 
+BaseTaskInfo *GetBaseTaskInfoFromJSContext( const XBOX::VJSContext& inContext, Base4D* inBase)
+{
+	CDB4DContext *db4dContext = GetDB4DContextFromJSContext( inContext);
+	if (db4dContext != NULL)
+		return dynamic_cast<VDB4DContext*>(db4dContext)->RetainDataBaseContext( inBase, true, false);
+
+	return NULL;
+}
+
+
+BaseTaskInfo *GetBaseTaskInfoFromJSContext( const XBOX::VJSContext& inContext, EntityModel* inModel)
+{
+	return GetBaseTaskInfoFromJSContext(inContext, inModel->GetCatalog()->GetOwner());
+}
+
+
+BaseTaskInfo *GetBaseTaskInfoFromJSContext( const XBOX::VJSContext& inContext, EntityCollection* inSel)
+{
+	return GetBaseTaskInfoFromJSContext(inContext, inSel->GetModel());
+}
+
+
+template<class T>
+static BaseTaskInfo* GetBaseTaskInfoFromJSContext( const VJSParms_withContext& inParms, T* inParam)
+{
+	return GetBaseTaskInfoFromJSContext( inParms.GetContext(), inParam);
+}
+
+
+
 sLONG _GetStringAsIndexType(const VString& propname)
 {
 	sLONG result = 0;
@@ -97,11 +128,11 @@ sLONG _GetStringAsIndexType(const VString& propname)
 	return result;
 }
 
-
-VError getQParams(VJSParms_callStaticFunction& ioParms, sLONG firstparam, QueryParamElementVector& outParams, CDB4DQuery* inQuery)
+/*
+VError getQParams(VJSParms_callStaticFunction& ioParms, sLONG firstparam, QueryParamElementVector& outParams, SearchTab* inQuery)
 {
 	VError err = VE_OK;
-	SearchTab* query = VImpCreator<VDB4DQuery>::GetImpObject(inQuery)->GetSearchTab();
+	SearchTab* query = inQuery;
 	for (sLONG i = firstparam, nb = ioParms.CountParams(); i <= nb; i++)
 	{
 		if (ioParms.IsObjectParam(i))
@@ -149,7 +180,7 @@ VError getQParams(VJSParms_callStaticFunction& ioParms, sLONG firstparam, QueryP
 }
 
 
-VError FillQueryWithParams(CDB4DQuery* query, VJSParms_callStaticFunction& ioParms, sLONG firstparam)
+VError FillQueryWithParams(SearchTab* query, VJSParms_callStaticFunction& ioParms, sLONG firstparam)
 {
 	vector<VString> ParamNames;
 	QueryParamElementVector ParamValues;
@@ -203,7 +234,7 @@ VError FillQueryWithParams(CDB4DQuery* query, VJSParms_callStaticFunction& ioPar
 		
 	return err;
 }
-
+*/
 
 sLONG GetAttributeListParams(XBOX::VJSParms_callStaticFunction& ioParms, sLONG StartParam, EntityAttributeSortedSelection& outList)
 {
@@ -211,17 +242,16 @@ sLONG GetAttributeListParams(XBOX::VJSParms_callStaticFunction& ioParms, sLONG S
 	{
 		VString s;
 		ioParms.GetStringParam(StartParam, s);
-		outList.BuildFromString(s, ConvertContext( GetDB4DBaseContextFromJSContext(ioParms, outList.GetModel())), true, false, nil);
+		outList.BuildFromString(s, GetBaseTaskInfoFromJSContext(ioParms, outList.GetModel()), true, false, nil);
 		StartParam++;
 	}
 	else
 	{
 		while (StartParam <= ioParms.CountParams())
 		{
-			CDB4DEntityAttribute* att = ioParms.GetParamObjectPrivateData<VJSEntityAttribute>(StartParam);
-			if (att != nil)
+			EntityAttribute* xatt = ioParms.GetParamObjectPrivateData<VJSEntityAttribute>(StartParam);
+			if (xatt != nil)
 			{
-				EntityAttribute* xatt = VImpCreator<EntityAttribute>::GetImpObject(att);
 				outList.AddAttribute(xatt, nil);
 				StartParam++;
 			}
@@ -241,19 +271,19 @@ sLONG GetAttributeListParams(XBOX::VJSParms_callStaticFunction& ioParms, sLONG S
 
 
 
-EntitySelectionIterator::EntitySelectionIterator(CDB4DSelection* inSel, bool inReadOnly, bool inAutoSave, CDB4DBaseContext* inContext, CDB4DEntityModel* inModel)
+EntitySelectionIterator::EntitySelectionIterator(EntityCollection* inSel, bool inReadOnly, bool inAutoSave, BaseTaskInfo* inContext, EntityModel* inModel)
 {
 	fReadOnly = inReadOnly;
 	fAutoSave = inAutoSave;
 	fSel = RetainRefCountable(inSel);
 	fCurRec = nil;
 	fCurPos = -1;
-	fSelSize = fSel->CountRecordsInSelection(inContext);
+	fSelSize = fSel->GetLength(inContext);
 	fModel = RetainRefCountable(inModel);
 }
 
 
-EntitySelectionIterator::EntitySelectionIterator(CDB4DEntityRecord* inRec, CDB4DBaseContext* inContext)
+EntitySelectionIterator::EntitySelectionIterator(EntityRecord* inRec, BaseTaskInfo* inContext)
 {
 	fReadOnly = false;
 	fAutoSave = true;
@@ -284,7 +314,7 @@ EntitySelectionIterator::~EntitySelectionIterator()
 }
 
 
-CDB4DEntityRecord* EntitySelectionIterator::GetCurRec(CDB4DBaseContext* inContext)
+EntityRecord* EntitySelectionIterator::GetCurRec(BaseTaskInfo* inContext)
 {
 	if (fSel != nil)
 	{
@@ -294,8 +324,9 @@ CDB4DEntityRecord* EntitySelectionIterator::GetCurRec(CDB4DBaseContext* inContex
 			fCurPos = 0;
 			if (fCurPos >= fSelSize)
 				fCurPos = -1;
+			VError err = VE_OK;
 			if (fCurPos != -1)
-				fCurRec = fSel->LoadEntity(fCurPos+1, /*fReadOnly ? DB4D_Do_Not_Lock : DB4D_Keep_Lock_With_Record*/DB4D_Do_Not_Lock, inContext);		
+				fCurRec = fSel->LoadEntity(fCurPos, inContext, err, DB4D_Do_Not_Lock);		
 		}
 	}
 	
@@ -303,7 +334,7 @@ CDB4DEntityRecord* EntitySelectionIterator::GetCurRec(CDB4DBaseContext* inContex
 }
 
 
-VError EntitySelectionIterator::ReLoadCurRec(CDB4DBaseContext* inContext, bool readonly, bool canautosave)
+VError EntitySelectionIterator::ReLoadCurRec(BaseTaskInfo* inContext, bool readonly, bool canautosave)
 {
 	VError err = VE_OK;
 	
@@ -317,25 +348,20 @@ VError EntitySelectionIterator::ReLoadCurRec(CDB4DBaseContext* inContext, bool r
 				fCurPos = -1;
 		}
 		if (fCurPos != -1)
-			fCurRec = fSel->LoadEntity(fCurPos+1, /*readonly ? DB4D_Do_Not_Lock : DB4D_Keep_Lock_With_Record*/DB4D_Do_Not_Lock, inContext);		
+			fCurRec = fSel->LoadEntity(fCurPos, inContext, err, DB4D_Do_Not_Lock);		
 	}
 	else
 	{
 		if (fCurRec != nil)
 		{
-			sLONG curnum = fCurRec->GetNum();
-			if (curnum >= 0)
-			{
-				fCurRec->Release();
-				fCurRec = fModel->LoadEntity(curnum, err, DB4D_Do_Not_Lock, inContext, false);
-			}
+			err = fCurRec->Reload();
 		}
 	}
 	
 	return err ;	
 }
 
-
+/*
 sLONG EntitySelectionIterator::GetCurRecID()
 {
 	if (fSel == nil)
@@ -358,11 +384,10 @@ sLONG EntitySelectionIterator::GetCurRecID()
 		}
 	}
 }
-
+*/
 
 void EntitySelectionIterator::ReleaseCurCurec(bool canautosave)
 {
-	//if (fSel != nil)
 	{
 		if (fCurRec != nil)
 		{
@@ -378,7 +403,6 @@ void EntitySelectionIterator::ReleaseCurCurec(bool canautosave)
 				}
 			}
 			
-			//fCurRec->ReleaseExtraDatas();
 			fCurRec->Release();
 			fCurRec = nil;
 		}
@@ -386,7 +410,7 @@ void EntitySelectionIterator::ReleaseCurCurec(bool canautosave)
 }
 
 
-void EntitySelectionIterator::NextNotNull(CDB4DBaseContext* inContext)
+void EntitySelectionIterator::NextNotNull(BaseTaskInfo* inContext)
 {
 	VError err;
 	if (fSel != nil)
@@ -398,71 +422,27 @@ void EntitySelectionIterator::NextNotNull(CDB4DBaseContext* inContext)
 		if (fCurPos >= fSelSize)
 			fCurPos = -1;
 		bool stop = false;
-		EntityModel* em = VImpCreator<EntityModel>::GetImpObject(fModel);
-		do 
-		{
-			if (fCurPos != -1)
-			{
-				sLONG recnum = fSel->GetSelectedRecordID(fCurPos+1, inContext);
-				if (recnum >= 0)
-				{
-					sLONG len = 0;
-					DataAddr4D ou = em->GetMainTable()->GetDF()->GetRecordPos(recnum, len, err);
-					if (ou > 0)
-					{
-						stop = true;
-					}
-				}
-			}
-			else
-				stop = true;
 
-			if (!stop)
-			{
-				++fCurPos;
-				if (fCurPos >= fSelSize)
-				{
-					fCurPos = -1;
-					stop = true;
-				}
-			}
-
-		} while (!stop);
+		if (fCurPos != -1)
+			fCurPos = fSel->NextNotNull(inContext, fCurPos);
 	}
 }
 
 
-void EntitySelectionIterator::First(CDB4DBaseContext* inContext)
+void EntitySelectionIterator::First(BaseTaskInfo* inContext)
 {
 	ReleaseCurCurec(true);
-	/*
-	 if (fSelSize > 0)
-	 {
-	 fCurPos = 0;
-	 fCurRec = fSel->LoadSelectedRecord(fCurPos+1, fReadOnly ? DB4D_Do_Not_Lock : DB4D_Keep_Lock_With_Record, inContext, false);
-	 }
-	 else
-	 */
 	fCurPos = -2;
 	NextNotNull(inContext);
 	ReLoadCurRec(inContext, fReadOnly, fAutoSave); 
 	
 }
 
-void EntitySelectionIterator::Next(CDB4DBaseContext* inContext)
+void EntitySelectionIterator::Next(BaseTaskInfo* inContext)
 {
 	if (fSel != nil)
 	{
 		ReleaseCurCurec(true);
-		/*
-		if (fCurPos == -2)
-			fCurPos = 0;
-		else
-		{
-			if (fCurPos != -1)
-				fCurPos++;
-		}
-		*/
 		NextNotNull(inContext);
 
 		{
@@ -472,7 +452,8 @@ void EntitySelectionIterator::Next(CDB4DBaseContext* inContext)
 			}
 			else
 			{
-				fCurRec = fSel->LoadEntity(fCurPos+1, /*fReadOnly ? DB4D_Do_Not_Lock : DB4D_Keep_Lock_With_Record*/DB4D_Do_Not_Lock, inContext);			
+				VError err = VE_OK;
+				fCurRec = fSel->LoadEntity(fCurPos, inContext, err, DB4D_Do_Not_Lock);			
 			}
 		}
 	}
@@ -484,10 +465,11 @@ void EntitySelectionIterator::Next(CDB4DBaseContext* inContext)
 //======================================================
 
 
-JSCollectionManager::JSCollectionManager(JS4D::ContextRef inContext)
+JSCollectionManager::JSCollectionManager(JS4D::ContextRef inContext, bool simpleDate)
 {
 	fContextRef = inContext;
 	fSize = 0;
+	fSimpleDate = simpleDate;
 }
 
 
@@ -580,7 +562,7 @@ VErrorDB4D JSCollectionManager::SetNthElementRawData(RecIDType ElemNumber, sLONG
 VErrorDB4D JSCollectionManager::GetNthElement(RecIDType ElemNumber, sLONG ColumnNumber, const XBOX::VValueSingle*& outValue, bool *outDisposeIt)
 {
 	VJSValue val(fValues[ColumnNumber-1].GetValueAt(ElemNumber-1));
-	outValue = val.CreateVValue();
+	outValue = val.CreateVValue(nil, fSimpleDate);
 	return VE_OK;
 }
 
@@ -625,26 +607,26 @@ void JSCollectionManager::SetNumberOfColumn(sLONG nb)
 
 
 
-void VJSTable::Initialize( const VJSParms_initialize& inParms, CDB4DTable* inTable)
+void VJSTable::Initialize( const VJSParms_initialize& inParms, Table* inTable)
 {
 	inTable->Retain();
 }
 
 
-void VJSTable::Finalize( const VJSParms_finalize& inParms, CDB4DTable* inTable)
+void VJSTable::Finalize( const VJSParms_finalize& inParms, Table* inTable)
 {
 	inTable->Release();
 }
 
 
 
-void VJSTable::GetPropertyNames( VJSParms_getPropertyNames& ioParms, CDB4DTable* inTable)
+void VJSTable::GetPropertyNames( VJSParms_getPropertyNames& ioParms, Table* inTable)
 {
-	sLONG nb = inTable->CountFields();
+	sLONG nb = inTable->GetNbCrit();
 	for (sLONG i = 1; i <= nb; i++)
 	{
 		VString fieldname;
-		CDB4DField* ff = inTable->RetainNthField(i);
+		Field* ff = inTable->RetainField(i);
 		if (ff != nil)
 		{
 			ff->GetName(fieldname);
@@ -655,20 +637,20 @@ void VJSTable::GetPropertyNames( VJSParms_getPropertyNames& ioParms, CDB4DTable*
 }
 
 
-void VJSTable::GetProperty( VJSParms_getProperty& ioParms, CDB4DTable* inTable)
+void VJSTable::GetProperty( VJSParms_getProperty& ioParms, Table* inTable)
 {
-	CDB4DField* ff = nil;
+	Field* ff = nil;
 	
 	sLONG num;
 	if (ioParms.GetPropertyNameAsLong( &num))
 	{
-		ff = inTable->RetainNthField(num);
+		ff = inTable->RetainField(num);
 	}
 	else
 	{
 		VString propname;
 		ioParms.GetPropertyName( propname);
-		ff = inTable->FindAndRetainField(propname);
+		ff = inTable->FindAndRetainFieldRef(propname);
 	}
 	if (ff != nil)
 	{
@@ -682,13 +664,13 @@ void VJSTable::GetProperty( VJSParms_getProperty& ioParms, CDB4DTable* inTable)
 }
 
 
-void VJSTable::_GetID(VJSParms_callStaticFunction& ioParms, CDB4DTable* inTable)
+void VJSTable::_GetID(VJSParms_callStaticFunction& ioParms, Table* inTable)
 {
-	ioParms.ReturnNumber(inTable->GetID());
+	ioParms.ReturnNumber(inTable->GetNum());
 }
 
 
-void VJSTable::_GetName(VJSParms_callStaticFunction& ioParms, CDB4DTable* inTable)
+void VJSTable::_GetName(VJSParms_callStaticFunction& ioParms, Table* inTable)
 {
 	XBOX::VString name;
 	inTable->GetName( name);
@@ -697,7 +679,7 @@ void VJSTable::_GetName(VJSParms_callStaticFunction& ioParms, CDB4DTable* inTabl
 }
 
 
-void VJSTable::_SetName(VJSParms_callStaticFunction& ioParms, CDB4DTable* inTable)
+void VJSTable::_SetName(VJSParms_callStaticFunction& ioParms, Table* inTable)
 {
 	XBOX::VString name;
 
@@ -713,48 +695,48 @@ void VJSTable::_SetName(VJSParms_callStaticFunction& ioParms, CDB4DTable* inTabl
 }
 
 
-void VJSTable::_CountFields(VJSParms_callStaticFunction& ioParms, CDB4DTable* inTable)
+void VJSTable::_CountFields(VJSParms_callStaticFunction& ioParms, Table* inTable)
 {
-	ioParms.ReturnNumber(inTable->CountFields());
+	ioParms.ReturnNumber(inTable->GetNbCrit());
 }
 
 
-void VJSTable::_Drop(VJSParms_callStaticFunction& ioParms, CDB4DTable* inTable)
+void VJSTable::_Drop(VJSParms_callStaticFunction& ioParms, Table* inTable)
 {
 	VError err = inTable->Drop(nil, nil);
 }
 
 
-void VJSTable::_keepSyncInfo(VJSParms_callStaticFunction& ioParms, CDB4DTable* inTable)
+void VJSTable::_keepSyncInfo(VJSParms_callStaticFunction& ioParms, Table* inTable)
 {
 	bool keepinfo;
 	VError err = VE_OK;
 	if (ioParms.GetBoolParam(1, &keepinfo))
 	{
-		err = inTable->SetKeepRecordSyncInfo(keepinfo, nil, nil);
+		err = inTable->SetKeepRecordSyncInfo(nil, keepinfo, nil);
 	}
 }
 
 
-void VJSTable::_dropPrimaryKey(VJSParms_callStaticFunction& ioParms, CDB4DTable* inTable)
+void VJSTable::_dropPrimaryKey(VJSParms_callStaticFunction& ioParms, Table* inTable)
 {
-	CDB4DFieldArray empty;
+	NumFieldArray empty;
 	VError err = inTable->SetPrimaryKey(empty, nil, false, nil, nil);
 }
 
 
-void VJSTable::_setPrimaryKey(VJSParms_callStaticFunction& ioParms, CDB4DTable* inTable)
+void VJSTable::_setPrimaryKey(VJSParms_callStaticFunction& ioParms, Table* inTable)
 {
-	CDB4DFieldArray fields;
-	XBOX::VString s = L"PK"+XBOX::ToString(inTable->GetID());
+	NumFieldArray fields;
+	XBOX::VString s = L"PK"+XBOX::ToString(inTable->GetNum());
 
 	sLONG nbparam = (sLONG) ioParms.CountParams();
 	for (sLONG i = 1; i <= nbparam; i++)
 	{
-		CDB4DField* field = ioParms.GetParamObjectPrivateData<VJSField>(i);
+		Field* field = ioParms.GetParamObjectPrivateData<VJSField>(i);
 		if (field != nil)
 		{
-			fields.Add(field);
+			fields.Add(field->GetPosInRec());
 		}
 	}
 
@@ -762,7 +744,7 @@ void VJSTable::_setPrimaryKey(VJSParms_callStaticFunction& ioParms, CDB4DTable* 
 }
 
 
-void VJSTable::_CreateField(VJSParms_callStaticFunction& ioParms, CDB4DTable* inTable)
+void VJSTable::_CreateField(VJSParms_callStaticFunction& ioParms, Table* inTable)
 {
 	sLONG nbparam = (sLONG) ioParms.CountParams();
 	if (nbparam > 1)
@@ -806,29 +788,29 @@ void VJSTable::_CreateField(VJSParms_callStaticFunction& ioParms, CDB4DTable* in
 			if (isnotnull)
 				attribute = attribute | DB4D_Not_Null;
 				
-			VError err = inTable->AddField(fieldname, fieldtype, fieldsize, attribute);
+			//VError err = inTable->AddField(fieldname, fieldtype, fieldsize, attribute);
 		}
 	}
 	
 }
 
 
-void VJSTable::_setAutoSeqValue(XBOX::VJSParms_callStaticFunction& ioParms, CDB4DTable* inTable)
+void VJSTable::_setAutoSeqValue(XBOX::VJSParms_callStaticFunction& ioParms, Table* inTable)
 {
 	Real val;
 	if (ioParms.GetRealParam(1, &val))
 	{
-		CDB4DAutoSeqNumber* autoseq = inTable->RetainAutoSeqNumber(GetDB4DBaseContextFromJSContext(ioParms, inTable));
+		AutoSeqNumber* autoseq = inTable->GetSeqNum(nil);
 		if (autoseq != nil)
 		{
 			autoseq->SetCurrentValue((sLONG8)val);
-			autoseq->Release();
+			//autoseq->Release();
 		}
 	}
 }
 
 
-void VJSTable::_isEntityModel(VJSParms_callStaticFunction& ioParms, CDB4DTable* inTable)
+void VJSTable::_isEntityModel(VJSParms_callStaticFunction& ioParms, Table* inTable)
 {
 	ioParms.ReturnBool(false);
 }
@@ -1066,19 +1048,19 @@ void	VJSBackupSettings::_isValid(XBOX::VJSParms_callStaticFunction& ioParms, IBa
 
 
 
-void VJSField::Initialize( const VJSParms_initialize& inParms, CDB4DField* inField)
+void VJSField::Initialize( const VJSParms_initialize& inParms, Field* inField)
 {
 	inField->Retain();
 }
 
 
-void VJSField::Finalize( const VJSParms_finalize& inParms, CDB4DField* inField)
+void VJSField::Finalize( const VJSParms_finalize& inParms, Field* inField)
 {
 	inField->Release();
 }
 
 
-void VJSField::_GetName(VJSParms_callStaticFunction& ioParms, CDB4DField* inField)
+void VJSField::_GetName(VJSParms_callStaticFunction& ioParms, Field* inField)
 {
 	VString name;
 	inField->GetName( name);
@@ -1087,7 +1069,7 @@ void VJSField::_GetName(VJSParms_callStaticFunction& ioParms, CDB4DField* inFiel
 }
 
 
-void VJSField::_SetName(VJSParms_callStaticFunction& ioParms, CDB4DField* inField)
+void VJSField::_SetName(VJSParms_callStaticFunction& ioParms, Field* inField)
 {
 	VString name;
 
@@ -1095,22 +1077,21 @@ void VJSField::_SetName(VJSParms_callStaticFunction& ioParms, CDB4DField* inFiel
 	{
 		if (ioParms.GetStringParam(1, name))
 		{
-			CDB4DBaseContext* context = NULL; // GetContext From IoParm
-			VError err = inField->SetName(name, context);
+			VError err = inField->SetName(name, nil);
 		}
 	}
 
 }
 
 
-void VJSField::_Drop(VJSParms_callStaticFunction& ioParms, CDB4DField* inField)
+void VJSField::_Drop(VJSParms_callStaticFunction& ioParms, Field* inField)
 {
-	VError err = inField->Drop(nil, nil);
+	//VError err = inField->Drop(nil, nil);
 }
 
 
 
-void VJSField::_CreateIndex(VJSParms_callStaticFunction& ioParms, CDB4DField* inField)
+void VJSField::_CreateIndex(VJSParms_callStaticFunction& ioParms, Field* inField)
 {
 	VString indexname, indextype;
 	sLONG indtype = DB4D_Index_AutoType;
@@ -1123,14 +1104,14 @@ void VJSField::_CreateIndex(VJSParms_callStaticFunction& ioParms, CDB4DField* in
 	ioParms.GetStringParam(2, indexname);
 	{
 		VSyncEvent* indexevent = new VSyncEvent();
-		VError err = inField->GetOwner()->GetOwner()->CreateIndexOnOneField(inField, indtype, false, nil, &indexname, nil, true, indexevent);
+		//VError err = inField->GetOwner()->GetOwner()->CreateIndexOnOneField(inField, indtype, false, nil, &indexname, nil, true, indexevent);
 		indexevent->Lock();
 		indexevent->Release();
 	}
 }
 
 
-void VJSField::_DropIndex(VJSParms_callStaticFunction& ioParms, CDB4DField* inField)
+void VJSField::_DropIndex(VJSParms_callStaticFunction& ioParms, Field* inField)
 {
 	sLONG indtype = DB4D_Index_AutoType;
 	VString indextype;
@@ -1141,89 +1122,89 @@ void VJSField::_DropIndex(VJSParms_callStaticFunction& ioParms, CDB4DField* inFi
 			indtype = DB4D_Index_AutoType;
 	}	
 	VSyncEvent* indexevent = new VSyncEvent();
-	VError err = inField->GetOwner()->GetOwner()->DropIndexOnOneField(inField, indtype, nil, indexevent);
+	//VError err = inField->GetOwner()->GetOwner()->DropIndexOnOneField(inField, indtype, nil, indexevent);
 	indexevent->Lock();
 	indexevent->Release();
 }
 
 
-void VJSField::_Create_FullText_Index(VJSParms_callStaticFunction& ioParms, CDB4DField* inField)
+void VJSField::_Create_FullText_Index(VJSParms_callStaticFunction& ioParms, Field* inField)
 {
 	VString indexname;
 	ioParms.GetStringParam(1, indexname);
 	VSyncEvent* indexevent = new VSyncEvent();
-	VError err = inField->GetOwner()->GetOwner()->CreateFullTextIndexOnOneField(inField, nil, &indexname, nil, true, indexevent);
+	//VError err = inField->GetOwner()->GetOwner()->CreateFullTextIndexOnOneField(inField, nil, &indexname, nil, true, indexevent);
 	indexevent->Lock();
 	indexevent->Release();
 	
 }
 
 
-void VJSField::_Drop_FullText_Index(VJSParms_callStaticFunction& ioParms, CDB4DField* inField)
+void VJSField::_Drop_FullText_Index(VJSParms_callStaticFunction& ioParms, Field* inField)
 {
 	VSyncEvent* indexevent = new VSyncEvent();
-	VError err = inField->GetOwner()->GetOwner()->DropFullTextIndexOnOneField(inField, nil, indexevent);
-	indexevent->Lock();
+//	VError err = inField->GetOwner()->GetOwner()->DropFullTextIndexOnOneField(inField, nil, indexevent);
+	//indexevent->Lock();
 	indexevent->Release();
 }
 
 
-void VJSField::_SetType(VJSParms_callStaticFunction& ioParms, CDB4DField* inField)
+void VJSField::_SetType(VJSParms_callStaticFunction& ioParms, Field* inField)
 {
 	if (ioParms.CountParams() > 0)
 	{
 		sLONG fieldtype;
 		if (ioParms.GetLongParam(1, &fieldtype))
 		{
-			VError err = inField->SetType(fieldtype, nil, nil);
+			//VError err = inField->SetType(fieldtype, nil, nil);
 		}
 	}
 }
 
 
-void VJSField::_GetType(VJSParms_callStaticFunction& ioParms, CDB4DField* inField)
+void VJSField::_GetType(VJSParms_callStaticFunction& ioParms, Field* inField)
 {
-	ioParms.ReturnNumber(inField->GetType(nil));
+	ioParms.ReturnNumber(inField->GetTyp());
 }
 
 
-void VJSField::_GetID(VJSParms_callStaticFunction& ioParms, CDB4DField* inField)
+void VJSField::_GetID(VJSParms_callStaticFunction& ioParms, Field* inField)
 {
-	ioParms.ReturnNumber(inField->GetID(nil));
+	ioParms.ReturnNumber(inField->GetPosInRec());
 }
 
 
-void VJSField::_IsIndexed(VJSParms_callStaticFunction& ioParms, CDB4DField* inField)
+void VJSField::_IsIndexed(VJSParms_callStaticFunction& ioParms, Field* inField)
 {
-	ioParms.ReturnBool(inField->IsIndexed(nil));
+	ioParms.ReturnBool(inField->IsIndexed());
 }
 
 
-void VJSField::_IsUnique(VJSParms_callStaticFunction& ioParms, CDB4DField* inField)
+void VJSField::_IsUnique(VJSParms_callStaticFunction& ioParms, Field* inField)
 {
-	ioParms.ReturnBool(inField->IsUnique(nil));
+	ioParms.ReturnBool(inField->GetUnique());
 }
 
 
-void VJSField::_Is_FullText_Indexed(VJSParms_callStaticFunction& ioParms, CDB4DField* inField)
+void VJSField::_Is_FullText_Indexed(VJSParms_callStaticFunction& ioParms, Field* inField)
 {
-	ioParms.ReturnBool(inField->IsFullTextIndexed(nil));
+	ioParms.ReturnBool(inField->IsFullTextIndexed());
 }
 
 
-void VJSField::_IsNotNull(VJSParms_callStaticFunction& ioParms, CDB4DField* inField)
+void VJSField::_IsNotNull(VJSParms_callStaticFunction& ioParms, Field* inField)
 {
-	ioParms.ReturnBool(inField->IsNot_Null(nil));
+	ioParms.ReturnBool(inField->GetNot_Null());
 }
 
 
-void VJSField::_IsAutoIncrement(VJSParms_callStaticFunction& ioParms, CDB4DField* inField)
+void VJSField::_IsAutoIncrement(VJSParms_callStaticFunction& ioParms, Field* inField)
 {
-	ioParms.ReturnBool(inField->IsAutoSequence(nil));
+	ioParms.ReturnBool(inField->GetAutoSeq());
 }
 
 
-void VJSField::_SetNotNull(VJSParms_callStaticFunction& ioParms, CDB4DField* inField)
+void VJSField::_SetNotNull(VJSParms_callStaticFunction& ioParms, Field* inField)
 {
 	if (ioParms.CountParams() > 0)
 	{
@@ -1236,20 +1217,20 @@ void VJSField::_SetNotNull(VJSParms_callStaticFunction& ioParms, CDB4DField* inF
 }
 
 
-void VJSField::_SetAutoIncrement(VJSParms_callStaticFunction& ioParms, CDB4DField* inField)
+void VJSField::_SetAutoIncrement(VJSParms_callStaticFunction& ioParms, Field* inField)
 {
 	if (ioParms.CountParams() > 0)
 	{
 		bool b;
 		if (ioParms.GetBoolParam(1, &b))
 		{
-			VError err = inField->SetAutoSequence(b, nil);
+			inField->SetAutoSeq(b, nil);
 		}
 	}
 }
 
 
-void VJSField::_SetUnique(VJSParms_callStaticFunction& ioParms, CDB4DField* inField)
+void VJSField::_SetUnique(VJSParms_callStaticFunction& ioParms, Field* inField)
 {
 	if (ioParms.CountParams() > 0)
 	{
@@ -1262,78 +1243,78 @@ void VJSField::_SetUnique(VJSParms_callStaticFunction& ioParms, CDB4DField* inFi
 }
 
 
-void VJSField::_SetAutoGenerate(VJSParms_callStaticFunction& ioParms, CDB4DField* inField)
+void VJSField::_SetAutoGenerate(VJSParms_callStaticFunction& ioParms, Field* inField)
 {
 	if (ioParms.CountParams() > 0)
 	{
 		bool b;
 		if (ioParms.GetBoolParam(1, &b))
 		{
-			VError err = inField->SetAutoGenerate(b, nil);
+			inField->SetAutoGenerate(b, nil);
 		}
 	}
 }
 
 
-void VJSField::_SetStoredAsUUID(VJSParms_callStaticFunction& ioParms, CDB4DField* inField)
+void VJSField::_SetStoredAsUUID(VJSParms_callStaticFunction& ioParms, Field* inField)
 {
 	if (ioParms.CountParams() > 0)
 	{
 		bool b;
 		if (ioParms.GetBoolParam(1, &b))
 		{
-			VError err = inField->SetStoreAsUUID(b, nil);
+			//VError err = inField->set(b, nil);
 		}
 	}
 }
 
 
-void VJSField::_IsAutoGenerate(VJSParms_callStaticFunction& ioParms, CDB4DField* inField)
+void VJSField::_IsAutoGenerate(VJSParms_callStaticFunction& ioParms, Field* inField)
 {
-	ioParms.ReturnBool(inField->IsAutoGenerate(nil));
+	ioParms.ReturnBool(inField->GetAutoGenerate());
 }
 
 
-void VJSField::_IsStoredAsUUID(VJSParms_callStaticFunction& ioParms, CDB4DField* inField)
+void VJSField::_IsStoredAsUUID(VJSParms_callStaticFunction& ioParms, Field* inField)
 {
-	ioParms.ReturnBool(inField->IsStoreAsUUID(nil));
+	//ioParms.ReturnBool(inField->IsStoreAsUUID(nil));
 }
 
 
 
-void VJSField::_isStoredAsUTF8(VJSParms_callStaticFunction& ioParms, CDB4DField* inField)
+void VJSField::_isStoredAsUTF8(VJSParms_callStaticFunction& ioParms, Field* inField)
 {
-	ioParms.ReturnBool(inField->IsStoreAsUTF8(nil));
+	ioParms.ReturnBool(inField->GetStoreUTF8());
 }
 
 
-void VJSField::_SetStoredAsUTF8(VJSParms_callStaticFunction& ioParms, CDB4DField* inField)
+void VJSField::_SetStoredAsUTF8(VJSParms_callStaticFunction& ioParms, Field* inField)
 {
 	if (ioParms.CountParams() > 0)
 	{
 		bool b;
 		if (ioParms.GetBoolParam(1, &b))
 		{
-			VError err = inField->SetStoreAsUTF8(b, nil);
+			inField->SetStoreUTF8(b, nil);
 		}
 	}
 }
 
 
-void VJSField::_isStoredOutside(VJSParms_callStaticFunction& ioParms, CDB4DField* inField)
+void VJSField::_isStoredOutside(VJSParms_callStaticFunction& ioParms, Field* inField)
 {
-	ioParms.ReturnBool(inField->IsStoreOutside(nil));
+//	ioParms.ReturnBool(inField->IsStoreOutside(nil));
 }
 
 
-void VJSField::_setStoreOutside(VJSParms_callStaticFunction& ioParms, CDB4DField* inField)
+void VJSField::_setStoreOutside(VJSParms_callStaticFunction& ioParms, Field* inField)
 {
 	if (ioParms.CountParams() > 0)
 	{
 		bool b;
 		if (ioParms.GetBoolParam(1, &b))
 		{
-			VError err = inField->SetStoreOutside(b, nil, nil);
+			//VError err = inField->SetStoreOutside(b, nil, nil);
 		}
 	}
 }
@@ -1386,27 +1367,27 @@ void VJSField::GetDefinition( ClassDefinition& outDefinition)
 //======================================================
 
 
-void VJSDatabase::Initialize( const VJSParms_initialize& inParms, CDB4DBase* inDatabase)
+void VJSDatabase::Initialize( const VJSParms_initialize& inParms, Base4D* inDatabase)
 {
 	inDatabase->Retain();
 }
 
 
-void VJSDatabase::Finalize( const VJSParms_finalize& inParms, CDB4DBase* inDatabase)
+void VJSDatabase::Finalize( const VJSParms_finalize& inParms, Base4D* inDatabase)
 {
 	inDatabase->Release();
 }
 
 
-VJSObject VJSDatabase::CreateJSEMObject( const VString& emName, const VJSContext& inContext, CDB4DBaseContext *inBaseContext)
+VJSObject VJSDatabase::CreateJSEMObject( const VString& emName, const VJSContext& inContext, BaseTaskInfo *inBaseContext)
 {
-	CDB4DBase* inDatabase = inBaseContext->GetOwner();
-	CDB4DEntityModel* em = inDatabase->RetainEntityModel(emName, false);
+	Base4D* inDatabase = inBaseContext->GetBase();
+	EntityModel* em = inDatabase->RetainEntity(emName, false);
 	VJSObject result(inContext);
 	if (em != nil)
 	{
-		EntityModel* xem = VImpCreator<EntityModel>::GetImpObject(em);
-		if (xem->publishAsGlobal(inBaseContext))
+		EntityModel* xem = em;
+		if (xem->publishAsGlobal(nil))
 			result = VJSEntityModel::CreateInstance(inContext, em);
 		else
 			result.SetUndefined();
@@ -1420,15 +1401,14 @@ VJSObject VJSDatabase::CreateJSEMObject( const VString& emName, const VJSContext
 }
 
 
-void VJSDatabase::PutAllModelsInGlobalObject(VJSObject& globalObject, CDB4DBase* inDatabase, CDB4DBaseContext* context)
+void VJSDatabase::PutAllModelsInGlobalObject(VJSObject& globalObject, Base4D* inDatabase, BaseTaskInfo* context)
 {
-	vector<VRefPtr<CDB4DEntityModel> > entities;
-	inDatabase->RetainAllEntityModels(entities, context, false);
-	for (vector<VRefPtr<CDB4DEntityModel> >::iterator cur = entities.begin(), end = entities.end(); cur != end; cur++)
+	vector<VRefPtr<EntityModel> > entities;
+	inDatabase->RetainAllEntityModels(entities, false);
+	for (vector<VRefPtr<EntityModel> >::iterator cur = entities.begin(), end = entities.end(); cur != end; cur++)
 	{
-		CDB4DEntityModel* em = *cur;
-		EntityModel* xem = VImpCreator<EntityModel>::GetImpObject(em);
-		if (xem->publishAsGlobal(context))
+		EntityModel* em = *cur;
+		if (em->publishAsGlobal(context))
 		{
 			VJSValue emVal = VJSEntityModel::CreateInstance(globalObject.GetContextRef(), em);
 			globalObject.SetProperty(em->GetEntityName(), emVal);
@@ -1437,17 +1417,16 @@ void VJSDatabase::PutAllModelsInGlobalObject(VJSObject& globalObject, CDB4DBase*
 }
 
 
-void VJSDatabase::GetPropertyNames( VJSParms_getPropertyNames& ioParms, CDB4DBase* inDatabase)
+void VJSDatabase::GetPropertyNames( VJSParms_getPropertyNames& ioParms, Base4D* inDatabase)
 {
 	//set<VString> dejaName;
-	//vector<CDB4DEntityModel*> entities;
-	vector<VRefPtr<CDB4DEntityModel> > entities;
-	inDatabase->RetainAllEntityModels(entities, GetDB4DBaseContextFromJSContext( ioParms, inDatabase), false);
-	for (vector<VRefPtr<CDB4DEntityModel> >::iterator cur = entities.begin(), end = entities.end(); cur != end; cur++)
+	//vector<EntityModel*> entities;
+	vector<VRefPtr<EntityModel> > entities;
+	inDatabase->RetainAllEntityModels(entities, false);
+	for (vector<VRefPtr<EntityModel> >::iterator cur = entities.begin(), end = entities.end(); cur != end; cur++)
 	{
-		CDB4DEntityModel* em = *cur;
+		EntityModel* em = *cur;
 		ioParms.AddPropertyName(em->GetEntityName());
-		//dejaName.insert(em->GetEntityName());
 	}
 	
 #if AllowDefaultEMBasedOnTables
@@ -1474,15 +1453,14 @@ void VJSDatabase::GetPropertyNames( VJSParms_getPropertyNames& ioParms, CDB4DBas
 }
 
 
-void VJSDatabase::GetProperty( VJSParms_getProperty& ioParms, CDB4DBase* inDatabase)
+void VJSDatabase::GetProperty( VJSParms_getProperty& ioParms, Base4D* inDatabase)
 {
-	CDB4DTable* tt = nil;
-	CDB4DEntityModel* em = nil;
+	EntityModel* em = nil;
 	
 	VString propname;
 	{
 		ioParms.GetPropertyName(propname);
-		CDB4DEntityModel* em = inDatabase->RetainEntityModel(propname, false);
+		EntityModel* em = inDatabase->RetainEntity(propname, false);
 		if (em != nil)
 		{
 			ioParms.ReturnValue(VJSEntityModel::CreateInstance(ioParms.GetContextRef(), em));
@@ -1491,7 +1469,7 @@ void VJSDatabase::GetProperty( VJSParms_getProperty& ioParms, CDB4DBase* inDatab
 		else
 		{
 			/*
-			CDB4DEntityModel* em = inDatabase->RetainEntityModelBySingleEntityName(propname);
+			EntityModel* em = inDatabase->RetainEntityModelBySingleEntityName(propname);
 			if (em != nil)
 			{
 				ioParms.ReturnValue(VJSEntityModel::CreateInstance(ioParms.GetContextRef(), em));
@@ -1504,9 +1482,9 @@ void VJSDatabase::GetProperty( VJSParms_getProperty& ioParms, CDB4DBase* inDatab
 }
 
 
-void VJSDatabase::_setSortMaxMem(XBOX::VJSParms_callStaticFunction& ioParms, CDB4DBase* inDatabase)
+void VJSDatabase::_setSortMaxMem(XBOX::VJSParms_callStaticFunction& ioParms, Base4D* inDatabase)
 {
-	CDB4DManager* db4D = XBOX::VComponentManager::RetainComponentOfType<CDB4DManager>();
+	CDB4DManager* db4D = CDB4DManager::RetainManager();
 	if (db4D != nil)
 	{
 		Real memsize;
@@ -1519,9 +1497,9 @@ void VJSDatabase::_setSortMaxMem(XBOX::VJSParms_callStaticFunction& ioParms, CDB
 }
 
 
-void VJSDatabase::_setCacheSize(XBOX::VJSParms_callStaticFunction& ioParms, CDB4DBase* inDatabase)
+void VJSDatabase::_setCacheSize(XBOX::VJSParms_callStaticFunction& ioParms, Base4D* inDatabase)
 {
-	CDB4DManager* db4D = XBOX::VComponentManager::RetainComponentOfType<CDB4DManager>();
+	CDB4DManager* db4D = CDB4DManager::RetainManager();
 	if (db4D != nil)
 	{
 		Real cachesize;
@@ -1534,9 +1512,9 @@ void VJSDatabase::_setCacheSize(XBOX::VJSParms_callStaticFunction& ioParms, CDB4
 	}
 }
 
-void VJSDatabase::_getCacheSize(XBOX::VJSParms_callStaticFunction& ioParms, CDB4DBase* inDatabase)
+void VJSDatabase::_getCacheSize(XBOX::VJSParms_callStaticFunction& ioParms, Base4D* inDatabase)
 {
-	CDB4DManager* db4D = XBOX::VComponentManager::RetainComponentOfType<CDB4DManager>();
+	CDB4DManager* db4D = CDB4DManager::RetainManager();
 	if (db4D != nil)
 	{
 		ioParms.ReturnNumber(db4D->GetCacheSize());
@@ -1545,7 +1523,30 @@ void VJSDatabase::_getCacheSize(XBOX::VJSParms_callStaticFunction& ioParms, CDB4
 }
 
 
-void VJSDatabase::_loadModelsDefinition(XBOX::VJSParms_callStaticFunction& ioParms, CDB4DBase* inDatabase)
+void VJSDatabase::_getModelDefinition(XBOX::VJSParms_callStaticFunction& ioParms, Base4D* inDatabase)
+{
+	VError err = VE_OK;
+	VValueBag* outBag = new VValueBag();;
+	EntityModelCatalog* catalog = inDatabase->GetGoodEntityCatalog(true);
+	if (catalog != nil)
+	{
+		err = catalog->SaveEntityModels(*outBag, true, true);
+		if (err == VE_OK)
+		{
+			VString s;
+			err = outBag->GetJSONString(s);
+			if (err == VE_OK)
+			{
+				VJSJSON json(ioParms.GetContextRef());
+				ioParms.ReturnValue(json.Parse(s));
+			}
+		}
+	}
+	QuickReleaseRefCountable(outBag);	
+}
+
+
+void VJSDatabase::_loadModelsDefinition(XBOX::VJSParms_callStaticFunction& ioParms, Base4D* inDatabase)
 {
 	VFile* file = ioParms.RetainFileParam(1);
 	inDatabase->ReLoadEntityModels(file); // file peut etre null, c'est permis
@@ -1553,7 +1554,7 @@ void VJSDatabase::_loadModelsDefinition(XBOX::VJSParms_callStaticFunction& ioPar
 }
 
 
-void VJSDatabase::_GetName(VJSParms_callStaticFunction& ioParms, CDB4DBase* inDatabase)
+void VJSDatabase::_GetName(VJSParms_callStaticFunction& ioParms, Base4D* inDatabase)
 {
 	VString name;
 	inDatabase->GetName( name);
@@ -1562,7 +1563,7 @@ void VJSDatabase::_GetName(VJSParms_callStaticFunction& ioParms, CDB4DBase* inDa
 }
 
 
-void VJSDatabase::_SetName(VJSParms_callStaticFunction& ioParms, CDB4DBase* inDatabase)
+void VJSDatabase::_SetName(VJSParms_callStaticFunction& ioParms, Base4D* inDatabase)
 {
 	VString name;
 	/*
@@ -1582,24 +1583,25 @@ void VJSDatabase::_SetName(VJSParms_callStaticFunction& ioParms, CDB4DBase* inDa
 }
 
 
-void VJSDatabase::_CountTables(VJSParms_callStaticFunction& ioParms, CDB4DBase* inDatabase)
+void VJSDatabase::_CountTables(VJSParms_callStaticFunction& ioParms, Base4D* inDatabase)
 {
-	ioParms.ReturnNumber(inDatabase->CountTables(nil));
+	ioParms.ReturnNumber(inDatabase->GetNBTable());
 }
 
 
-void VJSDatabase::_GetPath(VJSParms_callStaticFunction& ioParms, CDB4DBase* inDatabase)
+void VJSDatabase::_GetPath(VJSParms_callStaticFunction& ioParms, Base4D* inDatabase)
 {
 	VString pathname;
 	XBOX::VFilePath path;
-	inDatabase->GetBasePath(path, nil);
+	inDatabase->GetDataSegPath(1, path);
 	path.GetPath(pathname);
 	ioParms.ReturnString(pathname);
 }
 
 
-void VJSDatabase::_CreateTable(VJSParms_callStaticFunction& ioParms, CDB4DBase* inDatabase)
+void VJSDatabase::_CreateTable(VJSParms_callStaticFunction& ioParms, Base4D* inDatabase)
 {
+#if 0
 	VString tablename;
 	
 	if (ioParms.CountParams() > 0)
@@ -1622,23 +1624,23 @@ void VJSDatabase::_CreateTable(VJSParms_callStaticFunction& ioParms, CDB4DBase* 
 			
 		}
 	}
-			
+#endif
 }
 
 
-void VJSDatabase::_CreateIndex(VJSParms_callStaticFunction& ioParms, CDB4DBase* inDatabase)
+void VJSDatabase::_CreateIndex(VJSParms_callStaticFunction& ioParms, Base4D* inDatabase)
 {
 }
 
 
-void VJSDatabase::_DropIndex(VJSParms_callStaticFunction& ioParms, CDB4DBase* inDatabase)
+void VJSDatabase::_DropIndex(VJSParms_callStaticFunction& ioParms, Base4D* inDatabase)
 {
 }
 
 
-void VJSDatabase::_StartTransaction(VJSParms_callStaticFunction& ioParms, CDB4DBase* inDatabase)
+void VJSDatabase::_StartTransaction(VJSParms_callStaticFunction& ioParms, Base4D* inDatabase)
 {
-	CDB4DBaseContext* context = GetDB4DBaseContextFromJSContext(ioParms, inDatabase);
+	BaseTaskInfo* context = GetBaseTaskInfoFromJSContext(ioParms, inDatabase);
 	if (context != nil)
 	{
 		VError err = context->StartTransaction();
@@ -1646,9 +1648,9 @@ void VJSDatabase::_StartTransaction(VJSParms_callStaticFunction& ioParms, CDB4DB
 }
 
 
-void VJSDatabase::_Commit(VJSParms_callStaticFunction& ioParms, CDB4DBase* inDatabase)
+void VJSDatabase::_Commit(VJSParms_callStaticFunction& ioParms, Base4D* inDatabase)
 {
-	CDB4DBaseContext* context = GetDB4DBaseContextFromJSContext(ioParms, inDatabase);
+	BaseTaskInfo* context = GetBaseTaskInfoFromJSContext(ioParms, inDatabase);
 	if (context != nil)
 	{
 		VError err = context->CommitTransaction();
@@ -1656,9 +1658,9 @@ void VJSDatabase::_Commit(VJSParms_callStaticFunction& ioParms, CDB4DBase* inDat
 }
 
 
-void VJSDatabase::_RollBack(VJSParms_callStaticFunction& ioParms, CDB4DBase* inDatabase)
+void VJSDatabase::_RollBack(VJSParms_callStaticFunction& ioParms, Base4D* inDatabase)
 {
-	CDB4DBaseContext* context = GetDB4DBaseContextFromJSContext(ioParms, inDatabase);
+	BaseTaskInfo* context = GetBaseTaskInfoFromJSContext(ioParms, inDatabase);
 	if (context != nil)
 	{
 		VError err = context->RollBackTransaction();
@@ -1666,9 +1668,9 @@ void VJSDatabase::_RollBack(VJSParms_callStaticFunction& ioParms, CDB4DBase* inD
 }
 
 
-void VJSDatabase::_TransactionLevel(VJSParms_callStaticFunction& ioParms, CDB4DBase* inDatabase)
+void VJSDatabase::_TransactionLevel(VJSParms_callStaticFunction& ioParms, Base4D* inDatabase)
 {
-	CDB4DBaseContext* context = GetDB4DBaseContextFromJSContext(ioParms, inDatabase);
+	BaseTaskInfo* context = GetBaseTaskInfoFromJSContext(ioParms, inDatabase);
 	if (context != nil)
 	{
 		ioParms.ReturnNumber(context->CurrentTransactionLevel());
@@ -1676,37 +1678,42 @@ void VJSDatabase::_TransactionLevel(VJSParms_callStaticFunction& ioParms, CDB4DB
 }
 
 
-void VJSDatabase::_GetStructure(VJSParms_callStaticFunction& ioParms, CDB4DBase* inDatabase)
+void VJSDatabase::_GetStructure(VJSParms_callStaticFunction& ioParms, Base4D* inDatabase)
 {
-	CDB4DBase* structure = inDatabase->RetainStructDatabase(nil);
+	/*
+	Base4D* structure = inDatabase->RetainStructDatabase(nil);
 	if (structure != nil)
 	{
 		ioParms.ReturnValue(VJSDatabase::CreateInstance(ioParms.GetContextRef(), structure));
 		structure->Release();
 	}
+	*/
 }
 
 
-void VJSDatabase::_GetSyncInfo(VJSParms_callStaticFunction& ioParms, CDB4DBase* inDatabase)
+void VJSDatabase::_GetSyncInfo(VJSParms_callStaticFunction& ioParms, Base4D* inDatabase)
 {
-	CDB4DBase* structure = inDatabase->RetainSyncDataBase();
+	/*
+	Base4D* structure = inDatabase->RetainSyncDataBase();
 	if (structure != nil)
 	{
 		ioParms.ReturnValue(VJSDatabase::CreateInstance(ioParms.GetContextRef(), structure));
 		structure->Release();
 	}
+	*/
 }
 
 
-void VJSDatabase::_FlushCache(VJSParms_callStaticFunction& ioParms, CDB4DBase* inDatabase)
+void VJSDatabase::_FlushCache(VJSParms_callStaticFunction& ioParms, Base4D* inDatabase)
 {
 	bool waitUntilDone = false;
 	ioParms.GetBoolParam(1, &waitUntilDone);
-	inDatabase->Flush(waitUntilDone);
+	VDBMgr::GetManager()->FlushCache(inDatabase, waitUntilDone);
+	//inDatabase->Flush(waitUntilDone);
 }
 
 
-void VJSDatabase::_ExportAsSQL(VJSParms_callStaticFunction& ioParms, CDB4DBase* inDatabase)
+void VJSDatabase::_ExportAsSQL(VJSParms_callStaticFunction& ioParms, Base4D* inDatabase)
 {
 	VError err = VE_OK;
 	VFolder* folder = ioParms.RetainFolderParam( 1);
@@ -1721,33 +1728,33 @@ void VJSDatabase::_ExportAsSQL(VJSParms_callStaticFunction& ioParms, CDB4DBase* 
 		ExportOption options;
 		options.NbBlobsPerLevel = nbBlobsPerLevel;
 		options.MaxSQLTextSize = maxSQLFileSize;
-		err = inDatabase->ExportToSQL( GetDB4DBaseContextFromJSContext(ioParms, inDatabase), folder, nil, options);
+		err = inDatabase->ExportToSQL( GetBaseTaskInfoFromJSContext(ioParms, inDatabase), folder, nil, options);
 		folder->Release();
 	}
 }
 
 
-void VJSDatabase::_clearErrs(VJSParms_callStaticFunction& ioParms, CDB4DBase* inDatabase)
+void VJSDatabase::_clearErrs(VJSParms_callStaticFunction& ioParms, Base4D* inDatabase)
 {
 	XBOX::VTask::GetCurrent()->FlushErrors();
 }
 
 
-void VJSDatabase::_getTables( XBOX::VJSParms_getProperty& ioParms, CDB4DBase* inDatabase)
+void VJSDatabase::_getTables( XBOX::VJSParms_getProperty& ioParms, Base4D* inDatabase)
 {
 	ioParms.ReturnValue(VJSDatabaseTableEnumerator::CreateInstance(ioParms.GetContextRef(), inDatabase));
 
 }
 
 
-void VJSDatabase::_getEntityModels( XBOX::VJSParms_getProperty& ioParms, CDB4DBase* inDatabase)
+void VJSDatabase::_getEntityModels( XBOX::VJSParms_getProperty& ioParms, Base4D* inDatabase)
 {
 	ioParms.ReturnValue(VJSDatabaseEMEnumerator::CreateInstance(ioParms.GetContextRef(), inDatabase));
 
 }
 
 
-void VJSDatabase::_getTempFolder( XBOX::VJSParms_callStaticFunction& ioParms, CDB4DBase* inDatabase)
+void VJSDatabase::_getTempFolder( XBOX::VJSParms_callStaticFunction& ioParms, Base4D* inDatabase)
 {
 	VFolder* ff = inDatabase->RetainTemporaryFolder(true);
 	ioParms.ReturnFolder( ff);
@@ -1756,7 +1763,7 @@ void VJSDatabase::_getTempFolder( XBOX::VJSParms_callStaticFunction& ioParms, CD
 
 
 
-void VJSDatabase::_getDataFolder( XBOX::VJSParms_callStaticFunction& ioParms, CDB4DBase* inDatabase)
+void VJSDatabase::_getDataFolder( XBOX::VJSParms_callStaticFunction& ioParms, Base4D* inDatabase)
 {
 	VFolder* ff = inDatabase->RetainDataFolder();
 	ioParms.ReturnFolder( ff);
@@ -1764,15 +1771,15 @@ void VJSDatabase::_getDataFolder( XBOX::VJSParms_callStaticFunction& ioParms, CD
 }
 
 
-void VJSDatabase::_getCatalogFolder( XBOX::VJSParms_callStaticFunction& ioParms, CDB4DBase* inDatabase)
+void VJSDatabase::_getCatalogFolder( XBOX::VJSParms_callStaticFunction& ioParms, Base4D* inDatabase)
 {
-	VFolder* ff = inDatabase->RetainStructFolder();
+	VFolder* ff = RetainRefCountable(inDatabase->GetStructFolder());
 	ioParms.ReturnFolder( ff);
 	ReleaseRefCountable( &ff);
 }
 
 
-void VJSDatabase::_getCacheInfo( XBOX::VJSParms_callStaticFunction& ioParms, CDB4DBase* inDatabase)
+void VJSDatabase::_getCacheInfo( XBOX::VJSParms_callStaticFunction& ioParms, Base4D* inDatabase)
 {
 	VMemStats stats;
 	VDBMgr::GetManager()->GetCacheManager()->GetMemoryManager()->GetStatistics(stats);
@@ -1825,12 +1832,13 @@ void VJSDatabase::_getCacheInfo( XBOX::VJSParms_callStaticFunction& ioParms, CDB
 }
 
 
-void VJSDatabase::_getDBList( XBOX::VJSParms_callStaticFunction& ioParms, CDB4DBase* inDatabase)
+void VJSDatabase::_getDBList( XBOX::VJSParms_callStaticFunction& ioParms, Base4D* inDatabase)
 {
+	/*
 	VJSArray arr(ioParms.GetContextRef());
 	for (sLONG i = 1, nb = VDBMgr::GetManager()->CountBases(); i <= nb; i++)
 	{
-		CDB4DBase* base = VDBMgr::GetManager()->RetainNthBase(i);
+		Base4D* base = VDBMgr::GetManager()->RetainNthBase(i);
 		if (base != nil)
 		{
 			arr.PushValue(VJSDatabase::CreateInstance(ioParms.GetContextRef(), base));
@@ -1838,25 +1846,31 @@ void VJSDatabase::_getDBList( XBOX::VJSParms_callStaticFunction& ioParms, CDB4DB
 		}
 	}
 	ioParms.ReturnValue(arr);
+	*/
 }
 
 
-void VJSDatabase::_freeCacheMem( XBOX::VJSParms_callStaticFunction& ioParms, CDB4DBase* inDatabase)
+void VJSDatabase::_freeCacheMem( XBOX::VJSParms_callStaticFunction& ioParms, Base4D* inDatabase)
 {
 	VDBMgr::GetManager()->GetCacheManager()->GetMemoryManager()->PurgeMem();
 }
 
 
-void VJSDatabase::_getIndices( XBOX::VJSParms_callStaticFunction& ioParms, CDB4DBase* inDatabase)
+void VJSDatabase::_getIndices( XBOX::VJSParms_callStaticFunction& ioParms, Base4D* inDatabase)
 {
 	VJSArray arr(ioParms.GetContextRef());
-	Base4D* base = VImpCreator<VDB4DBase>::GetImpObject(inDatabase)->GetBase();
-	base->GetIndices(arr);
+	inDatabase->GetIndices(arr);
 	ioParms.ReturnValue(arr);
 }
 
 
-void VJSDatabase::_close( XBOX::VJSParms_callStaticFunction& ioParms, CDB4DBase* inDatabase)
+void VJSDatabase::_fixForV4(XBOX::VJSParms_callStaticFunction& ioParms, Base4D* inDatabase)
+{
+	inDatabase->_fixForWakandaV4();
+}
+
+
+void VJSDatabase::_close( XBOX::VJSParms_callStaticFunction& ioParms, Base4D* inDatabase)
 {
 	bool simpleClose = true;
 	if (ioParms.IsStringParam(1))
@@ -1870,7 +1884,9 @@ void VJSDatabase::_close( XBOX::VJSParms_callStaticFunction& ioParms, CDB4DBase*
 			{
 				simpleClose = false;
 				VSyncEvent* waitclose = &(sync->fSync);
-				inDatabase->Close(waitclose);
+				inDatabase->UnRegisterForLang();
+				inDatabase->BeginClose(waitclose);
+				VDBMgr::GetManager()->UnRegisterBase(inDatabase);
 				ioParms.ReturnValue(VJSSyncEvent::CreateInstance(ioParms.GetContextRef(), sync));
 				sync->Release();
 			}
@@ -1880,7 +1896,9 @@ void VJSDatabase::_close( XBOX::VJSParms_callStaticFunction& ioParms, CDB4DBase*
 
 	if (simpleClose)
 	{
-		inDatabase->Close();
+		inDatabase->UnRegisterForLang();
+		inDatabase->BeginClose();
+		VDBMgr::GetManager()->UnRegisterBase(inDatabase);
 		ioParms.ReturnNullValue();
 	}
 }
@@ -2044,16 +2062,14 @@ IDB4D_DataToolsIntf* VJSDatabase::CreateJSDataToolsIntf(VJSContext& jscontext, V
 }
 
 
-void	VJSDatabase::_GetJournalFile(XBOX::VJSParms_callStaticFunction& ioParms, CDB4DBase* inDatabase)
+void	VJSDatabase::_GetJournalFile(XBOX::VJSParms_callStaticFunction& ioParms, Base4D* inDatabase)
 {
-	CDB4DBaseContext* context = NULL;
-	Base4D* base = NULL;
 	VError error = VE_OK;
 	XBOX::VFile* journalFile = NULL;
 
-	context = GetDB4DBaseContextFromJSContext(ioParms, inDatabase);
+	//context = GetBaseTaskInfoFromJSContext(ioParms, inDatabase);
 	
-	journalFile = inDatabase->RetainJournalFile(context);
+	journalFile = inDatabase->RetainJournalFile();
 
 	if (journalFile)
 	{
@@ -2066,42 +2082,36 @@ void	VJSDatabase::_GetJournalFile(XBOX::VJSParms_callStaticFunction& ioParms, CD
 	XBOX::ReleaseRefCountable(&journalFile);
 }
 
-void	VJSDatabase::_IsJournalEnabled(XBOX::VJSParms_callStaticFunction& ioParms, CDB4DBase* inDatabase)
+void	VJSDatabase::_IsJournalEnabled(XBOX::VJSParms_callStaticFunction& ioParms, Base4D* inDatabase)
 {
-	CDB4DBaseContext* context = NULL;
-	Base4D* base = NULL;
 	bool journalEnabled = false;
 	XBOX::VFile* journalFile = NULL;
 
-	context = GetDB4DBaseContextFromJSContext(ioParms, inDatabase);
+	//context = GetBaseTaskInfoFromJSContext(ioParms, inDatabase);
 	
-	journalFile = inDatabase->RetainJournalFile(context);
+	journalFile = inDatabase->RetainJournalFile();
 	journalEnabled = (journalFile != NULL);
 	XBOX::ReleaseRefCountable(&journalFile);
 
 	ioParms.ReturnBool(journalEnabled);
 }
 
-void	VJSDatabase::_DisableJournal(XBOX::VJSParms_callStaticFunction& ioParms, CDB4DBase* inDatabase)
+void	VJSDatabase::_DisableJournal(XBOX::VJSParms_callStaticFunction& ioParms, Base4D* inDatabase)
 {
-	CDB4DBaseContext* context = NULL;
 	Base4D* base = NULL;
 	VError error = VE_OK;
 
-	context = GetDB4DBaseContextFromJSContext(ioParms, inDatabase);
-	base = VImpCreator<VDB4DBase>::GetImpObject(inDatabase)->GetBase();
+	BaseTaskInfo* context = GetBaseTaskInfoFromJSContext(ioParms, inDatabase);
 
-	error = JournalUtils::DisableJournal(base,context);
+	error = JournalUtils::DisableJournal(inDatabase, context->GetEncapsuleur());
 	ioParms.ReturnBool(error == VE_OK);
 }
 
-void	VJSDatabase::_GetBackupSettings(XBOX::VJSParms_callStaticFunction& ioParms, CDB4DBase* inDatabase)
+void	VJSDatabase::_GetBackupSettings(XBOX::VJSParms_callStaticFunction& ioParms, Base4D* base)
 {
 	StErrorContextInstaller errorContext;
-	CDB4DBaseContext* context = NULL;
 	bool done =false;
-
-	context = GetDB4DBaseContextFromJSContext(ioParms, inDatabase);
+	CDB4DBase* inDatabase = base->RetainBaseX();
 
 	if (inDatabase)
 	{
@@ -2117,6 +2127,8 @@ void	VJSDatabase::_GetBackupSettings(XBOX::VJSParms_callStaticFunction& ioParms,
 	}
 	if(!done)
 		ioParms.ReturnNullValue();
+
+	QuickReleaseRefCountable(inDatabase);
 }
 
 /**
@@ -2129,18 +2141,16 @@ void	VJSDatabase::_GetBackupSettings(XBOX::VJSParms_callStaticFunction& ioParms,
  * ds.backupAndChangeJournal(null,{some options});		  // fails you have to specify a journal 
  * ds.backupAndChangeJournal('some path',{some options}); // fails you have to specify a journal as a File object
  */
-void	VJSDatabase::_BackupAndChangeJournal(XBOX::VJSParms_callStaticFunction& ioParms, CDB4DBase* inDatabase)
+void	VJSDatabase::_BackupAndChangeJournal(XBOX::VJSParms_callStaticFunction& ioParms, Base4D* base)
 {
 	StErrorContextInstaller errorContext;
 	CDB4DBaseContext* context = NULL;
-	Base4D* base = NULL;
 	XBOX::VFilePath manifestPath;
 	XBOX::VError error = VE_OK;
-	context = GetDB4DBaseContextFromJSContext(ioParms, inDatabase);
-	base = VImpCreator<VDB4DBase>::GetImpObject(inDatabase)->GetBase();
 
-	
-	
+	CDB4DBase* inDatabase = base->RetainBaseX();
+	context = GetDB4DBaseContextFromJSContext(ioParms, inDatabase);
+		
 	//Retrieve progress callbacks from options if applicable
 	VJSObject jsBackupProgressObs(ioParms.GetContextRef());
 	XBOX::VFilePath journalPath;
@@ -2240,6 +2250,7 @@ void	VJSDatabase::_BackupAndChangeJournal(XBOX::VJSParms_callStaticFunction& ioP
 		ioParms.ReturnFilePathAsFileOrFolder(manifestPath);
 	}
 	
+	QuickReleaseRefCountable(inDatabase);
 }
 
 /**
@@ -2255,19 +2266,17 @@ void	VJSDatabase::_BackupAndChangeJournal(XBOX::VJSParms_callStaticFunction& ioP
  * </code>
  */
 
-void	VJSDatabase::_Backup(XBOX::VJSParms_callStaticFunction& ioParms, CDB4DBase* inDatabase)
+void	VJSDatabase::_Backup(XBOX::VJSParms_callStaticFunction& ioParms, Base4D* base)
 {
 	StErrorContextInstaller errorContext;
 
 	CDB4DBaseContext* context = NULL;
-	Base4D* base = NULL;
 	VError error = VE_OK;
 	VJSObject jsBackupProgressObs(ioParms.GetContextRef());
 	IBackupSettings* workingBackupSettings = NULL;
 
+	CDB4DBase* inDatabase = base->RetainBaseX();
 	context = GetDB4DBaseContextFromJSContext(ioParms, inDatabase);
-	base = VImpCreator<VDB4DBase>::GetImpObject(inDatabase)->GetBase();
-
 	
 	//Command syntax:
 	//ds.backup([config: object] [,options: object])
@@ -2325,13 +2334,20 @@ void	VJSDatabase::_Backup(XBOX::VJSParms_callStaticFunction& ioParms, CDB4DBase*
 		{
 			workingBackupSettings = const_cast<IBackupSettings*>(inDatabase->RetainBackupSettings());
 		}
-
-		//Now backup takes place
-		IBackupTool* backupTool = NULL;
-		backupTool = VDBMgr::CreateBackupTool();
-		backupSucceeded = backupTool->BackupDatabase(inDatabase,context,*workingBackupSettings,&manifestPath,&backupToolInterface);
-		delete backupTool;
-		backupTool = NULL;
+		if (testAssert(workingBackupSettings != NULL))
+		{
+			//Now backup takes place
+			IBackupTool* backupTool = NULL;
+			backupTool = VDBMgr::CreateBackupTool();
+			backupSucceeded = backupTool->BackupDatabase(inDatabase,context,*workingBackupSettings,&manifestPath,&backupToolInterface);
+			delete backupTool;
+			backupTool = NULL;
+		}
+		else
+		{
+			error = VE_INVALID_PARAMETER;
+			vThrowError(error,CVSTR("no backup configuration defined"));
+		}
 	}
 	XBOX::ReleaseRefCountable(&workingBackupSettings);
 	
@@ -2389,14 +2405,22 @@ void	VJSDatabase::_Backup(XBOX::VJSParms_callStaticFunction& ioParms, CDB4DBase*
 	{
 		ioParms.ReturnNullValue();
 	}
+	QuickReleaseRefCountable(inDatabase);
 }
 
-void VJSDatabase::_verify( XBOX::VJSParms_callStaticFunction& ioParms, CDB4DBase* inDatabase)
+
+void VJSDatabase::_tempSetIndexNewFourche( XBOX::VJSParms_callStaticFunction& ioParms, Base4D* inDatabase)
+{
+	gTempNewIndexFourche = ioParms.GetBoolParam(1, L"new", L"old");
+}
+
+
+void VJSDatabase::_verify( XBOX::VJSParms_callStaticFunction& ioParms, Base4D* inDatabase)
 {
 	StErrorContextInstaller errs(false);
 	bool ok = false;
 
-	CDB4DManager* db4D = VComponentManager::RetainComponentOfType<CDB4DManager>();
+	CDB4DManager* db4D = CDB4DManager::RetainManager();
 	VError err = VE_OK;
 	VJSObject paramObj(ioParms.GetContextRef());
 	if (ioParms.IsObjectParam(1))
@@ -2407,23 +2431,27 @@ void VJSDatabase::_verify( XBOX::VJSParms_callStaticFunction& ioParms, CDB4DBase
 		paramObj.MakeEmpty();
 
 	JSTOOLSIntf toolintf(ioParms.GetContextRef(), paramObj);
-	CDB4DRawDataBase* dataDB = inDatabase->OpenRawDataBase(&toolintf, err);
-
-	if (dataDB != nil)
+	CDB4DBase* basex = inDatabase->RetainBaseX();
+	if (basex != nil)
 	{
-		err = dataDB->CheckAll(&toolintf);
-		ok = err == VE_OK;
-		dataDB->Release();
+		CDB4DRawDataBase* dataDB = basex->OpenRawDataBase(&toolintf, err);
+		if (dataDB != nil)
+		{
+			err = dataDB->CheckAll(&toolintf);
+			ok = err == VE_OK;
+			dataDB->Release();
+		}
+		basex->Release();
 	}
 	ioParms.ReturnBool(ok);
 }
 
 
-void VJSDatabase::_queryOptions( XBOX::VJSParms_callStaticFunction& ioParms, CDB4DBase* inDatabase)
+void VJSDatabase::_queryOptions( XBOX::VJSParms_callStaticFunction& ioParms, Base4D* inDatabase)
 {
 	if (ioParms.IsObjectParam(1))
 	{
-		CDB4DBaseContext* context = GetDB4DBaseContextFromJSContext(ioParms, inDatabase);
+		BaseTaskInfo* context = GetBaseTaskInfoFromJSContext(ioParms, inDatabase);
 		VJSObject options(ioParms.GetContextRef());
 		ioParms.GetParamObject(1, options);
 		bool exists;
@@ -2455,6 +2483,7 @@ void VJSDatabase::GetDefinition( ClassDefinition& outDefinition)
 		{ "clearErrs", js_callStaticFunction<_clearErrs>, JS4D::PropertyAttributeReadOnly | JS4D::PropertyAttributeDontEnum | JS4D::PropertyAttributeDontDelete },
 		{ "getSyncInfo", js_callStaticFunction<_GetSyncInfo>, JS4D::PropertyAttributeReadOnly | JS4D::PropertyAttributeDontEnum | JS4D::PropertyAttributeDontDelete },
 		{ "loadModelDefinition", js_callStaticFunction<_loadModelsDefinition>, JS4D::PropertyAttributeReadOnly | JS4D::PropertyAttributeDontEnum | JS4D::PropertyAttributeDontDelete },
+		{ "getModelDefinition", js_callStaticFunction<_getModelDefinition>, JS4D::PropertyAttributeReadOnly | JS4D::PropertyAttributeDontEnum | JS4D::PropertyAttributeDontDelete },
 		{ "setCacheSize", js_callStaticFunction<_setCacheSize>, JS4D::PropertyAttributeReadOnly | JS4D::PropertyAttributeDontEnum | JS4D::PropertyAttributeDontDelete },
 		{ "getCacheSize", js_callStaticFunction<_getCacheSize>, JS4D::PropertyAttributeReadOnly | JS4D::PropertyAttributeDontEnum | JS4D::PropertyAttributeDontDelete },
 		{ "getDataFolder", js_callStaticFunction<_getDataFolder>, JS4D::PropertyAttributeReadOnly | JS4D::PropertyAttributeDontEnum | JS4D::PropertyAttributeDontDelete },
@@ -2473,6 +2502,8 @@ void VJSDatabase::GetDefinition( ClassDefinition& outDefinition)
 		{ "isJournalEnabled", js_callStaticFunction<_IsJournalEnabled>, JS4D::PropertyAttributeReadOnly | JS4D::PropertyAttributeDontEnum | JS4D::PropertyAttributeDontDelete },
 		{ "disableJournal", js_callStaticFunction<_DisableJournal>, JS4D::PropertyAttributeReadOnly | JS4D::PropertyAttributeDontEnum | JS4D::PropertyAttributeDontDelete },
 		{ "backupAndChangeJournal", js_callStaticFunction<_BackupAndChangeJournal>, JS4D::PropertyAttributeReadOnly | JS4D::PropertyAttributeDontEnum | JS4D::PropertyAttributeDontDelete },
+		{ "fixForV4", js_callStaticFunction<_fixForV4>, JS4D::PropertyAttributeReadOnly | JS4D::PropertyAttributeDontEnum | JS4D::PropertyAttributeDontDelete },
+		{ "tempSetIndexNewFourche", js_callStaticFunction<_tempSetIndexNewFourche>, JS4D::PropertyAttributeReadOnly | JS4D::PropertyAttributeDontEnum | JS4D::PropertyAttributeDontDelete },
 		
 		{ 0, 0, 0}
 	};
@@ -2494,7 +2525,7 @@ void VJSDatabase::GetDefinition( ClassDefinition& outDefinition)
 }
 
 
-VJSObject VJSDatabase::CreateInstance( JS4D::ContextRef inContext, CDB4DBase *inDatabase)
+VJSObject VJSDatabase::CreateInstance( JS4D::ContextRef inContext, Base4D *inDatabase)
 {
 	return VJSObject( inContext, inherited::CreateInstance( inContext, inDatabase));
 }
@@ -2505,24 +2536,24 @@ VJSObject VJSDatabase::CreateInstance( JS4D::ContextRef inContext, CDB4DBase *in
 
 
 
-void VJSDatabaseTableEnumerator::Initialize( const VJSParms_initialize& inParms, CDB4DBase* inDatabase)
+void VJSDatabaseTableEnumerator::Initialize( const VJSParms_initialize& inParms, Base4D* inDatabase)
 {
 	inDatabase->Retain();
 }
 
 
-void VJSDatabaseTableEnumerator::Finalize( const VJSParms_finalize& inParms, CDB4DBase* inDatabase)
+void VJSDatabaseTableEnumerator::Finalize( const VJSParms_finalize& inParms, Base4D* inDatabase)
 {
 	inDatabase->Release();
 }
 
-void VJSDatabaseTableEnumerator::GetPropertyNames( VJSParms_getPropertyNames& ioParms, CDB4DBase* inDatabase)
+void VJSDatabaseTableEnumerator::GetPropertyNames( VJSParms_getPropertyNames& ioParms, Base4D* inDatabase)
 {
-	sLONG nb = inDatabase->CountTables();
+	sLONG nb = inDatabase->GetNBTable();
 	for (sLONG i = 1; i <= nb; i++)
 	{
 		VString tablename;
-		CDB4DTable* tt = inDatabase->RetainNthTable(i);
+		Table* tt = inDatabase->RetainTable(i);
 		if (tt != nil)
 		{
 			tt->GetName(tablename);
@@ -2536,21 +2567,21 @@ void VJSDatabaseTableEnumerator::GetPropertyNames( VJSParms_getPropertyNames& io
 }
 
 
-void VJSDatabaseTableEnumerator::GetProperty( VJSParms_getProperty& ioParms, CDB4DBase* inDatabase)
+void VJSDatabaseTableEnumerator::GetProperty( VJSParms_getProperty& ioParms, Base4D* inDatabase)
 {
-	CDB4DTable* tt = nil;
-	CDB4DEntityModel* em = nil;
+	Table* tt = nil;
+	EntityModel* em = nil;
 
 	VString propname;
 	sLONG num;
 	if (ioParms.GetPropertyNameAsLong( &num))
 	{
-		tt = inDatabase->RetainNthTable(num-1);
+		tt = inDatabase->RetainTable(num-1);
 	}
 	else
 	{
 		ioParms.GetPropertyName(propname);
-		tt = inDatabase->FindAndRetainTable(propname);
+		tt = inDatabase->FindAndRetainTableRef(propname);
 		if (tt != nil)
 		{
 			ioParms.ReturnValue(VJSTable::CreateInstance(ioParms.GetContextRef(), tt));
@@ -2571,7 +2602,7 @@ void VJSDatabaseTableEnumerator::GetDefinition( ClassDefinition& outDefinition)
 }
 
 
-VJSObject VJSDatabaseTableEnumerator::CreateInstance( JS4D::ContextRef inContext, CDB4DBase *inDatabase)
+VJSObject VJSDatabaseTableEnumerator::CreateInstance( JS4D::ContextRef inContext, Base4D *inDatabase)
 {
 	return VJSObject( inContext, inherited::CreateInstance( inContext, inDatabase));
 }
@@ -2583,25 +2614,25 @@ VJSObject VJSDatabaseTableEnumerator::CreateInstance( JS4D::ContextRef inContext
 
 
 
-void VJSDatabaseEMEnumerator::Initialize( const VJSParms_initialize& inParms, CDB4DBase* inDatabase)
+void VJSDatabaseEMEnumerator::Initialize( const VJSParms_initialize& inParms, Base4D* inDatabase)
 {
 	inDatabase->Retain();
 }
 
 
-void VJSDatabaseEMEnumerator::Finalize( const VJSParms_finalize& inParms, CDB4DBase* inDatabase)
+void VJSDatabaseEMEnumerator::Finalize( const VJSParms_finalize& inParms, Base4D* inDatabase)
 {
 	inDatabase->Release();
 }
 
-void VJSDatabaseEMEnumerator::GetPropertyNames( VJSParms_getPropertyNames& ioParms, CDB4DBase* inDatabase)
+void VJSDatabaseEMEnumerator::GetPropertyNames( VJSParms_getPropertyNames& ioParms, Base4D* inDatabase)
 {
-	//vector<CDB4DEntityModel*> entities;
-	vector<VRefPtr<CDB4DEntityModel> > entities;
-	inDatabase->RetainAllEntityModels(entities, GetDB4DBaseContextFromJSContext( ioParms, inDatabase), false);
-	for (vector<VRefPtr<CDB4DEntityModel> >::iterator cur = entities.begin(), end = entities.end(); cur != end; cur++)
+	//vector<EntityModel*> entities;
+	vector<VRefPtr<EntityModel> > entities;
+	inDatabase->RetainAllEntityModels(entities, false);
+	for (vector<VRefPtr<EntityModel> >::iterator cur = entities.begin(), end = entities.end(); cur != end; cur++)
 	{
-		CDB4DEntityModel* em = *cur;
+		EntityModel* em = *cur;
 		ioParms.AddPropertyName(em->GetEntityName());
 		//dejaName.insert(em->GetEntityName());
 	}
@@ -2628,12 +2659,12 @@ void VJSDatabaseEMEnumerator::GetPropertyNames( VJSParms_getPropertyNames& ioPar
 }
 
 
-void VJSDatabaseEMEnumerator::GetProperty( VJSParms_getProperty& ioParms, CDB4DBase* inDatabase)
+void VJSDatabaseEMEnumerator::GetProperty( VJSParms_getProperty& ioParms, Base4D* inDatabase)
 {
 	VString propname;
 	
 	ioParms.GetPropertyName(propname);
-	CDB4DEntityModel* em = inDatabase->RetainEntityModel(propname, false);
+	EntityModel* em = inDatabase->RetainEntity(propname, false);
 	if (em != nil)
 	{
 		ioParms.ReturnValue(VJSEntityModel::CreateInstance(ioParms.GetContextRef(), em));
@@ -2653,7 +2684,7 @@ void VJSDatabaseEMEnumerator::GetDefinition( ClassDefinition& outDefinition)
 }
 
 
-VJSObject VJSDatabaseEMEnumerator::CreateInstance( JS4D::ContextRef inContext, CDB4DBase *inDatabase)
+VJSObject VJSDatabaseEMEnumerator::CreateInstance( JS4D::ContextRef inContext, Base4D *inDatabase)
 {
 	return VJSObject( inContext, inherited::CreateInstance( inContext, inDatabase));
 }
@@ -2664,24 +2695,24 @@ VJSObject VJSDatabaseEMEnumerator::CreateInstance( JS4D::ContextRef inContext, C
 
 
 
-void VJSEntityAttributeEnumerator::Initialize( const VJSParms_initialize& inParms, CDB4DEntityModel* inModel)
+void VJSEntityAttributeEnumerator::Initialize( const VJSParms_initialize& inParms, EntityModel* inModel)
 {
 	inModel->Retain();
 }
 
 
-void VJSEntityAttributeEnumerator::Finalize( const VJSParms_finalize& inParms, CDB4DEntityModel* inModel)
+void VJSEntityAttributeEnumerator::Finalize( const VJSParms_finalize& inParms, EntityModel* inModel)
 {
 	inModel->Release();
 }
 
 
-void VJSEntityAttributeEnumerator::GetPropertyNames( VJSParms_getPropertyNames& ioParms, CDB4DEntityModel* inModel)
+void VJSEntityAttributeEnumerator::GetPropertyNames( VJSParms_getPropertyNames& ioParms, EntityModel* inModel)
 {
 	sLONG nb = inModel->CountAttributes();
 	for (sLONG i = 1; i <= nb; i++)
 	{
-		CDB4DEntityAttribute* att = inModel->GetAttribute(i);
+		EntityAttribute* att = inModel->getAttribute(i);
 		if (att != nil)
 		{
 			ioParms.AddPropertyName(att->GetAttibuteName());
@@ -2690,20 +2721,20 @@ void VJSEntityAttributeEnumerator::GetPropertyNames( VJSParms_getPropertyNames& 
 }
 
 
-void VJSEntityAttributeEnumerator::GetProperty( VJSParms_getProperty& ioParms, CDB4DEntityModel* inModel)
+void VJSEntityAttributeEnumerator::GetProperty( VJSParms_getProperty& ioParms, EntityModel* inModel)
 {
-	CDB4DEntityAttribute* att = nil;
+	EntityAttribute* att = nil;
 
 	sLONG num;
 	VString propname;
 	ioParms.GetPropertyName( propname);
 	if (ioParms.GetPropertyNameAsLong( &num))
 	{
-		att = inModel->GetAttribute(num-1);
+		att = inModel->getAttribute(num-1);
 	}
 	else
 	{
-		att = inModel->GetAttribute(propname);
+		att = inModel->getAttribute(propname);
 	}
 	if (att != nil)
 	{
@@ -2727,107 +2758,33 @@ void VJSEntityAttributeEnumerator::GetDefinition( ClassDefinition& outDefinition
 
 //======================================================
 
-/*
-void VJSEntityConstructor::Initialize( const VJSParms_initialize& inParms, CDB4DEntityModel* inModel)
+
+
+void VJSEntityModel::Initialize( const VJSParms_initialize& inParms, EntityModel* inModel)
 {
 	inModel->Retain();
 }
 
 
-void VJSEntityConstructor::Finalize( const VJSParms_finalize& inParms, CDB4DEntityModel* inModel)
+void VJSEntityModel::Finalize( const VJSParms_finalize& inParms, EntityModel* inModel)
 {
 	inModel->Release();
 }
 
 
-
-
-void VJSEntityConstructor::CallAsFunction(VJSParms_callAsFunction& ioParms)
-{
-	CDB4DEntityModel* inModel = ioParms.GetObject().GetPrivateData<VJSEntityModel>();
-	XBOX::VError err = XBOX::VE_OK;
-	CDB4DEntityRecord* erec = inModel->NewEntity(GetBaseContext( ioParms), DB4D_Do_Not_Lock);
-	if (erec != nil)
-	{
-		if (ioParms.IsObjectParam(1))
-		{
-			VJSObject obj(ioParms.GetContextRef());
-			ioParms.GetParamObject(1, obj);
-			err = VImpCreator<EntityRecord>::GetImpObject(erec)->convertFromJSObj(obj);
-		}
-		EntitySelectionIterator* iter = new EntitySelectionIterator(erec, GetBaseContext( ioParms));
-		ioParms.ReturnValue(VJSEntitySelectionIterator::CreateInstance(ioParms.GetContextRef(), iter));
-		erec->Release();
-	}
-}
-
-
-void VJSEntityConstructor::CallAsConstructor(VJSParms_callAsConstructor& ioParms)
-{
-	CDB4DEntityModel* inModel = ioParms.GetObject().GetPrivateData<VJSEntityModel>();
-	XBOX::VError err = XBOX::VE_OK;
-	CDB4DEntityRecord* erec = inModel->NewEntity(GetBaseContext( ioParms), DB4D_Do_Not_Lock);
-
-	if (erec != nil)
-	{
-		if (ioParms.IsObjectParam(1))
-		{
-			VJSObject obj(ioParms.GetContextRef());
-			ioParms.GetParamObject(1, obj);
-			err = VImpCreator<EntityRecord>::GetImpObject(erec)->convertFromJSObj(obj);
-		}
-
-		EntitySelectionIterator* iter = new EntitySelectionIterator(erec, GetBaseContext( ioParms));
-		ioParms.ReturnConstructedObject(VJSEntitySelectionIterator::CreateInstance(ioParms.GetContextRef(), iter));
-		erec->Release();
-	}
-
-}
-
-
-
-void VJSEntityConstructor::GetDefinition( ClassDefinition& outDefinition)
-{
-	outDefinition.className = "EntityConstructor";
-	outDefinition.initialize = js_initialize<Initialize>;
-	outDefinition.finalize = js_finalize<Finalize>;
-	outDefinition.callAsFunction = js_callAsFunction<CallAsFunction>;
-	outDefinition.callAsConstructor = js_callAsConstructor<CallAsConstructor>;
-}
-
-*/
-
-
-//======================================================
-
-
-
-
-void VJSEntityModel::Initialize( const VJSParms_initialize& inParms, CDB4DEntityModel* inModel)
-{
-	inModel->Retain();
-}
-
-
-void VJSEntityModel::Finalize( const VJSParms_finalize& inParms, CDB4DEntityModel* inModel)
-{
-	inModel->Release();
-}
-
-
-void VJSEntityModel::_isEntityModel(VJSParms_callStaticFunction& ioParms, CDB4DEntityModel* inModel)
+void VJSEntityModel::_isEntityModel(VJSParms_callStaticFunction& ioParms, EntityModel* inModel)
 {
 	ioParms.ReturnBool(true);
 }
 
 
 
-void VJSEntityModel::GetPropertyNames( VJSParms_getPropertyNames& ioParms, CDB4DEntityModel* inModel)
+void VJSEntityModel::GetPropertyNames( VJSParms_getPropertyNames& ioParms, EntityModel* inModel)
 {
 	sLONG nb = inModel->CountAttributes();
 	for (sLONG i = 1; i <= nb; i++)
 	{
-		CDB4DEntityAttribute* att = inModel->GetAttribute(i);
+		EntityAttribute* att = inModel->getAttribute(i);
 		if (att != nil)
 		{
 			ioParms.AddPropertyName(att->GetAttibuteName());
@@ -2836,20 +2793,20 @@ void VJSEntityModel::GetPropertyNames( VJSParms_getPropertyNames& ioParms, CDB4D
 }
 
 
-void VJSEntityModel::GetProperty( VJSParms_getProperty& ioParms, CDB4DEntityModel* inModel)
+void VJSEntityModel::GetProperty( VJSParms_getProperty& ioParms, EntityModel* inModel)
 {
-	CDB4DEntityAttribute* att = nil;
+	EntityAttribute* att = nil;
 	
 	sLONG num;
 	VString propname;
 	ioParms.GetPropertyName( propname);
 	if (ioParms.GetPropertyNameAsLong( &num))
 	{
-		att = inModel->GetAttribute(num);
+		att = inModel->getAttribute(num);
 	}
 	else
 	{
-		att = inModel->GetAttribute(propname);
+		att = inModel->getAttribute(propname);
 	}
 	if (att != nil)
 	{
@@ -2857,19 +2814,16 @@ void VJSEntityModel::GetProperty( VJSParms_getProperty& ioParms, CDB4DEntityMode
 	}
 	else
 	{
-		CDB4DEntityMethod* meth = inModel->GetMethod(propname);
+		EntityMethod* meth = inModel->getMethod(propname);
 		if (meth != nil && meth->GetMethodKind() == emeth_static)
 		{
 			VUUID permid, promoteid;
-			EntityMethod* xmeth = VImpCreator<EntityMethod>::GetImpObject(meth);
-			//xmeth->GetPermission(DB4D_EM_Execute_Perm, permid);
-			//xmeth->GetPermission(DB4D_EM_Promote_Perm, promoteid);
-			CDB4DBaseContext* context = GetDB4DBaseContextFromJSContext(ioParms, inModel);
+			BaseTaskInfo* context = GetBaseTaskInfoFromJSContext(ioParms, inModel);
 			//if (okperm(context, permid))
 			{
 				//bool waspromoted = promoteperm(basecontext, promoteid);
 				VJSObject localObjFunc(ioParms.GetContextRef());
-				VJSObject* objfunc = meth->GetFuncObject(context, localObjFunc);
+				VJSObject* objfunc = meth->getFuncObject(context, localObjFunc);
 				if (objfunc != nil)
 				{
 					ioParms.ReturnValue(*objfunc);
@@ -2886,19 +2840,20 @@ void VJSEntityModel::CallAsFunction(VJSParms_callAsFunction& ioParms)
 	{
 		VError err = VE_OK;
 
-		CDB4DEntityModel* inModel = ioParms.GetObject().GetPrivateData<VJSEntityModel>();
+		EntityModel* inModel = ioParms.GetObject().GetPrivateData<VJSEntityModel>();
 		if (ioParms.IsObjectParam(1))
 		{
 			VJSObject objParam(ioParms.GetContextRef());
 			ioParms.GetParamObject(1, objParam);
+			BaseTaskInfo* context = GetBaseTaskInfoFromJSContext(ioParms, inModel);
 
+			/*
 			bool first = true;
 
 			vector<VString> props;
 			objParam.GetPropertyNames(props);
 
-			CDB4DQuery* query = inModel->NewQuery();
-			CDB4DBaseContext* context = GetDB4DBaseContextFromJSContext(ioParms, inModel);
+			SearchTab query(inModel);
 
 			VString queryString;
 
@@ -2910,15 +2865,18 @@ void VJSEntityModel::CallAsFunction(VJSParms_callAsFunction& ioParms)
 				if (cv != nil)
 				{
 					if (!first)
-						query->AddLogicalOperator(DB4D_And);
-					query->AddEmCriteria(*cur, DB4D_Like, *cv, false);
+						query.AddSearchLineBoolOper(DB4D_And);
+					query.AddSearchLineEm(*cur, DB4D_Like, cv, false);
 					delete cv;
 					first = false;
 				}
 
 			}
 
-			CDB4DSelection* sel = inModel->ExecuteQuery(query, context, nil, nil, DB4D_Do_Not_Lock, 0, nil, &err);
+			EntityCollection* sel = inModel->executeQuery(&query, context, nil, nil, DB4D_Do_Not_Lock, 0, nil, &err);
+			*/
+			
+			EntityCollection* sel = inModel->executeQuery(objParam, context, nil, nil, DB4D_Do_Not_Lock, 0, nil, &err);
 			if (sel != nil)
 			{
 				EntitySelectionIterator* itersel = new EntitySelectionIterator(sel, false, true, context, inModel);
@@ -2934,7 +2892,6 @@ void VJSEntityModel::CallAsFunction(VJSParms_callAsFunction& ioParms)
 				}
 				sel->Release();
 			}
-			query->Release();
 		}
 		else
 		{
@@ -2946,44 +2903,29 @@ void VJSEntityModel::CallAsFunction(VJSParms_callAsFunction& ioParms)
 					key.push_back(cv);
 			}
 			
-			CDB4DEntityRecord* erec = nil;
+			EntityRecord* erec = nil;
 
-			erec = inModel->FindEntityWithPrimKey(key, GetDB4DBaseContextFromJSContext(ioParms, inModel), err, DB4D_Do_Not_Lock);
+			BaseTaskInfo* context = GetBaseTaskInfoFromJSContext(ioParms, inModel);
+
+			erec = inModel->findEntityWithPrimKey(key, context, err, DB4D_Do_Not_Lock);
 
 			if (erec != nil)
 			{
-				EntitySelectionIterator* iter = new EntitySelectionIterator( erec, GetDB4DBaseContextFromJSContext(ioParms, inModel));
+				EntitySelectionIterator* iter = new EntitySelectionIterator( erec, context);
 				ioParms.ReturnValue(VJSEntitySelectionIterator::CreateInstance(ioParms.GetContextRef(), iter));
 				erec->Release();
 			}
 		}
 	}
-
-#if 0
-	CDB4DEntityModel* inModel = ioParms.GetObject().GetPrivateData<VJSEntityModel>();
-	XBOX::VError err = XBOX::VE_OK;
-	CDB4DEntityRecord* erec = inModel->NewEntity(GetBaseContext( ioParms), /*DB4D_Keep_Lock_With_Record*/DB4D_Do_Not_Lock);
-	if (erec != nil)
-	{
-		if (ioParms.IsObjectParam(1))
-		{
-			VJSObject obj(ioParms.GetContextRef());
-			ioParms.GetParamObject(1, obj);
-			err = VImpCreator<EntityRecord>::GetImpObject(erec)->convertFromJSObj(obj);
-		}
-		EntitySelectionIterator* iter = new EntitySelectionIterator(erec, GetBaseContext( ioParms));
-		ioParms.ReturnValue(VJSEntitySelectionIterator::CreateInstance(ioParms.GetContextRef(), iter));
-		erec->Release();
-	}
-#endif
 }
 
 
 void VJSEntityModel::CallAsConstructor(VJSParms_callAsConstructor& ioParms)
 {
-	CDB4DEntityModel* inModel = ioParms.GetObject().GetPrivateData<VJSEntityModel>();
+	EntityModel* inModel = ioParms.GetObject().GetPrivateData<VJSEntityModel>();
 	XBOX::VError err = XBOX::VE_OK;
-	CDB4DEntityRecord* erec = inModel->NewEntity( GetDB4DBaseContextFromJSContext(ioParms, inModel), DB4D_Do_Not_Lock);
+	BaseTaskInfo* context = GetBaseTaskInfoFromJSContext(ioParms, inModel);
+	EntityRecord* erec = inModel->newEntity( context);
 
 	if (erec != nil)
 	{
@@ -2991,10 +2933,10 @@ void VJSEntityModel::CallAsConstructor(VJSParms_callAsConstructor& ioParms)
 		{
 			VJSObject obj(ioParms.GetContextRef());
 			ioParms.GetParamObject(1, obj);
-			err = VImpCreator<EntityRecord>::GetImpObject(erec)->convertFromJSObj(obj);
+			err = erec->convertFromJSObj(obj);
 		}
 
-		EntitySelectionIterator* iter = new EntitySelectionIterator( erec, GetDB4DBaseContextFromJSContext(ioParms, inModel));
+		EntitySelectionIterator* iter = new EntitySelectionIterator( erec, context);
 		ioParms.ReturnConstructedObject(VJSEntitySelectionIterator::CreateInstance(ioParms.GetContextRef(), iter));
 		erec->Release();
 	}
@@ -3002,31 +2944,31 @@ void VJSEntityModel::CallAsConstructor(VJSParms_callAsConstructor& ioParms)
 }
 
 
-void VJSEntityModel::_getName(VJSParms_callStaticFunction& ioParms, CDB4DEntityModel* inModel)
+void VJSEntityModel::_getName(VJSParms_callStaticFunction& ioParms, EntityModel* inModel)
 {
 	ioParms.ReturnString(inModel->GetEntityName());
 }
 
 
-void VJSEntityModel::_getScope(VJSParms_callStaticFunction& ioParms, CDB4DEntityModel* inModel)
+void VJSEntityModel::_getScope(VJSParms_callStaticFunction& ioParms, EntityModel* inModel)
 {
 	ioParms.ReturnString(EScopeKinds[inModel->GetScope()]);
 }
 
 
-void VJSEntityModel::_getDataStore(VJSParms_callStaticFunction& ioParms, CDB4DEntityModel* inModel)
+void VJSEntityModel::_getDataStore(VJSParms_callStaticFunction& ioParms, EntityModel* inModel)
 {
-	CDB4DBase* owner = inModel->RetainDataBase();
+	Base4D* owner = inModel->GetCatalog()->GetOwner();
 	if (owner != nil)
 		ioParms.ReturnValue(VJSDatabase::CreateInstance(ioParms.GetContextRef(), owner));
 	QuickReleaseRefCountable(owner);
 }
 
 
-void VJSEntityModel::_AllEntities(VJSParms_callStaticFunction& ioParms, CDB4DEntityModel* inModel)
+void VJSEntityModel::_AllEntities(VJSParms_callStaticFunction& ioParms, EntityModel* inModel)
 {
 	VError err = VE_OK;
-	CDB4DSelection* sel = inModel->SelectAllEntities(GetDB4DBaseContextFromJSContext(ioParms, inModel), &err);
+	EntityCollection* sel = inModel->SelectAllEntities(GetBaseTaskInfoFromJSContext(ioParms, inModel), &err);
 	if (sel != nil)
 	{
 		ioParms.ReturnValue(VJSEntitySelection::CreateInstance(ioParms.GetContextRef(), sel));
@@ -3035,32 +2977,47 @@ void VJSEntityModel::_AllEntities(VJSParms_callStaticFunction& ioParms, CDB4DEnt
 }
 
 
-void QueryJS(VJSParms_callStaticFunction& ioParms, CDB4DEntityModel* inModel, CDB4DSelection* filter)
+void QueryJS(VJSParms_callStaticFunction& ioParms, EntityModel* inModel, EntityCollection* filter)
 {
+	VString querystring;
+	VError err = VE_OK;
+	if (ioParms.GetStringParam(1, querystring))
+	{
+		BaseTaskInfo* context = GetBaseTaskInfoFromJSContext(ioParms, inModel);
+		EntityCollection* sel = inModel->executeQuery(querystring, ioParms, context, filter, nil, DB4D_Do_Not_Lock, 0, nil, &err);
+		if (sel != nil)
+		{
+			sel->SetQueryPlan(context->GetLastQueryPlan());
+			sel->SetQueryPath(context->GetLastQueryPath());
+			ioParms.ReturnValue(VJSEntitySelection::CreateInstance(ioParms.GetContextRef(), sel));
+			sel->Release();
+		}
+	}
+	
+		/*
 	VString querystring;
 	VError err = VE_OK;
 	if (ioParms.GetStringParam(1, querystring))
 	{
 		bool withlock = false;
 		//ioParms.GetBoolParam(2, &withlock);
-		CDB4DQuery* query = inModel->NewQuery();
-		if (query != nil)
+		SearchTab query(inModel);
 		{
 			VString orderby;
-			CDB4DBaseContext* context = GetDB4DBaseContextFromJSContext(ioParms, inModel);
+			BaseTaskInfo* context = GetBaseTaskInfoFromJSContext(ioParms, inModel);
 			QueryParamElementVector qparams;
-			err = getQParams(ioParms, 2, qparams, query);
-			err = query->BuildFromString(querystring, orderby, context, inModel, &qparams);
+			err = getQParams(ioParms, 2, qparams, &query);
+			err = query.BuildFromString(querystring, orderby, context, inModel, false, &qparams);
 			if (err == VE_OK)
 			{
-				err = FillQueryWithParams(query, ioParms, 2);
+				err = FillQueryWithParams(&query, ioParms, 2);
 
 				if (err == VE_OK)
 				{	 
-					CDB4DSelection* sel = inModel->ExecuteQuery(query, context, filter, nil, withlock ? DB4D_Keep_Lock_With_Transaction : DB4D_Do_Not_Lock, 0, nil, &err);
+					EntityCollection* sel = inModel->executeQuery(&query, context, filter, nil, withlock ? DB4D_Keep_Lock_With_Transaction : DB4D_Do_Not_Lock, 0, nil, &err);
 					if (sel != nil && !orderby.IsEmpty())
 					{
-						bool ok = sel->SortSelection(orderby, nil, context);
+						bool ok = sel->SortCollection(orderby, nil, context);
 						if (!ok)
 						{
 							ReleaseRefCountable(&sel);
@@ -3075,19 +3032,45 @@ void QueryJS(VJSParms_callStaticFunction& ioParms, CDB4DEntityModel* inModel, CD
 					}
 				}
 			}
-			query->Release();
 		}
 	}
+	*/
 }
 
-void VJSEntityModel::_Query(VJSParms_callStaticFunction& ioParms, CDB4DEntityModel* inModel)
+void VJSEntityModel::_Query(VJSParms_callStaticFunction& ioParms, EntityModel* inModel)
 {
 	QueryJS(ioParms, inModel, nil);
 }
 
 
-void FindJS(VJSParms_callStaticFunction& ioParms, CDB4DEntityModel* inModel, CDB4DSelection* filter)
+void FindJS(VJSParms_callStaticFunction& ioParms, EntityModel* inModel, EntityCollection* filter)
 {
+	VString querystring;
+	VError err = VE_OK;
+	bool okresult = false;
+	if (ioParms.GetStringParam(1, querystring))
+	{
+		BaseTaskInfo* context = GetBaseTaskInfoFromJSContext(ioParms, inModel);
+		EntityCollection* sel = inModel->executeQuery(querystring, ioParms, context, filter, nil, DB4D_Do_Not_Lock, 0, nil, &err);
+		if (sel != nil)
+		{
+			EntitySelectionIterator* itersel = new EntitySelectionIterator(sel, false, true, context, inModel);
+			itersel->First(context);
+			if (itersel->GetCurRec(context) != nil)
+			{
+				ioParms.ReturnValue(VJSEntitySelectionIterator::CreateInstance(ioParms.GetContextRef(), itersel));
+				okresult = true;
+			}
+			else
+				delete itersel;
+			sel->Release();
+		}
+	}
+	if (!okresult)
+		ioParms.ReturnNullValue();
+
+
+/*
 	VString querystring;
 	VError err = VE_OK;
 	bool okresult = false;
@@ -3095,22 +3078,21 @@ void FindJS(VJSParms_callStaticFunction& ioParms, CDB4DEntityModel* inModel, CDB
 	{
 		bool withlock = false;
 		//ioParms.GetBoolParam(2, &withlock);
-		CDB4DQuery* query = inModel->NewQuery();
-		if (query != nil)
+		SearchTab query(inModel);
 		{
-			CDB4DBaseContext* context = GetDB4DBaseContextFromJSContext(ioParms, inModel);
+			BaseTaskInfo* context = GetBaseTaskInfoFromJSContext(ioParms, inModel);
 			VString orderby;
 			QueryParamElementVector qparams;
-			err = getQParams(ioParms, 2, qparams, query);
-			err = query->BuildFromString(querystring, orderby, context, inModel, &qparams);
+			err = getQParams(ioParms, 2, qparams, &query);
+			err = query.BuildFromString(querystring, orderby, context, inModel, false, &qparams);
 			if (err == VE_OK)
-				err = FillQueryWithParams(query, ioParms, 2);
+				err = FillQueryWithParams(&query, ioParms, 2);
 			if (err == VE_OK)
 			{
-				CDB4DSelection* sel = inModel->ExecuteQuery(query, context, filter, nil, withlock ? DB4D_Keep_Lock_With_Transaction : DB4D_Do_Not_Lock, 0, nil, &err);
+				EntityCollection* sel = inModel->ExecuteQuery(&query, context, filter, nil, withlock ? DB4D_Keep_Lock_With_Transaction : DB4D_Do_Not_Lock, 0, nil, &err);
 				if (sel != nil && !orderby.IsEmpty())
 				{
-					bool ok = sel->SortSelection(orderby, nil, context);
+					bool ok = sel->SortCollection(orderby, nil, context);
 					if (!ok)
 					{
 						ReleaseRefCountable(&sel);
@@ -3130,24 +3112,24 @@ void FindJS(VJSParms_callStaticFunction& ioParms, CDB4DEntityModel* inModel, CDB
 					sel->Release();
 				}
 			}
-			query->Release();
 		}
 	}
 	if (!okresult)
 		ioParms.ReturnNullValue();
+*/
 }
 
-void VJSEntityModel::_Find(VJSParms_callStaticFunction& ioParms, CDB4DEntityModel* inModel)
+void VJSEntityModel::_Find(VJSParms_callStaticFunction& ioParms, EntityModel* inModel)
 {
 	FindJS(ioParms, inModel, nil);
 }
 
 
 
-void VJSEntityModel::_NewEntity(VJSParms_callStaticFunction& ioParms, CDB4DEntityModel* inModel)
+void VJSEntityModel::_NewEntity(VJSParms_callStaticFunction& ioParms, EntityModel* inModel)
 {
-	CDB4DBaseContext* context = GetDB4DBaseContextFromJSContext(ioParms, inModel);
-	CDB4DEntityRecord* rec = inModel->NewEntity(context, /*DB4D_Keep_Lock_With_Record*/DB4D_Do_Not_Lock);
+	BaseTaskInfo* context = GetBaseTaskInfoFromJSContext(ioParms, inModel);
+	EntityRecord* rec = inModel->newEntity(context);
 	if (rec != nil)
 	{
 		EntitySelectionIterator* iter = new EntitySelectionIterator(rec, context);
@@ -3157,10 +3139,10 @@ void VJSEntityModel::_NewEntity(VJSParms_callStaticFunction& ioParms, CDB4DEntit
 }
 
 
-void VJSEntityModel::_NewSelection(VJSParms_callStaticFunction& ioParms, CDB4DEntityModel* inModel)
+void VJSEntityModel::_NewSelection(VJSParms_callStaticFunction& ioParms, EntityModel* inModel)
 {
 	bool keepsorted = ioParms.GetBoolParam( 1, L"KeepSorted", L"AnyOrder");
-	CDB4DSelection* sel = inModel->NewSelection(keepsorted ? DB4D_Sel_SmallSel : DB4D_Sel_Bittab);
+	EntityCollection* sel = inModel->NewCollection(keepsorted);
 	if (sel != nil)
 	{
 		ioParms.ReturnValue(VJSEntitySelection::CreateInstance(ioParms.GetContextRef(), sel));
@@ -3169,10 +3151,10 @@ void VJSEntityModel::_NewSelection(VJSParms_callStaticFunction& ioParms, CDB4DEn
 }
 
 
-void VJSEntityModel::_First(VJSParms_callStaticFunction& ioParms, CDB4DEntityModel* inModel)
+void VJSEntityModel::_First(VJSParms_callStaticFunction& ioParms, EntityModel* inModel)
 {
 	VError err = VE_OK;
-	CDB4DSelection* sel = inModel->SelectAllEntities(GetDB4DBaseContextFromJSContext(ioParms, inModel), &err);
+	EntityCollection* sel = inModel->SelectAllEntities(GetBaseTaskInfoFromJSContext(ioParms, inModel), &err);
 	if (sel != nil)
 	{
 		VJSEntitySelection::_First(ioParms, sel);
@@ -3180,12 +3162,12 @@ void VJSEntityModel::_First(VJSParms_callStaticFunction& ioParms, CDB4DEntityMod
 	}
 }
 
-void VJSEntityModel::_Count(VJSParms_callStaticFunction& ioParms, CDB4DEntityModel* inModel)
+void VJSEntityModel::_Count(VJSParms_callStaticFunction& ioParms, EntityModel* inModel)
 {
 	if (ioParms.CountParams() > 0)
 	{
 		VError err = VE_OK;
-		CDB4DSelection* sel = inModel->SelectAllEntities(GetDB4DBaseContextFromJSContext(ioParms, inModel), &err);
+		EntityCollection* sel = inModel->SelectAllEntities(GetBaseTaskInfoFromJSContext(ioParms, inModel), &err);
 		if (sel != nil)
 		{
 			VJSEntitySelection::_Count(ioParms, sel);
@@ -3193,13 +3175,13 @@ void VJSEntityModel::_Count(VJSParms_callStaticFunction& ioParms, CDB4DEntityMod
 		}
 	}
 	else
-	ioParms.ReturnNumber(inModel->CountEntities(GetDB4DBaseContextFromJSContext(ioParms, inModel)));
+	ioParms.ReturnNumber(inModel->countEntities(GetBaseTaskInfoFromJSContext(ioParms, inModel)));
 }
 
-void VJSEntityModel::_OrderBy(VJSParms_callStaticFunction& ioParms, CDB4DEntityModel* inModel)
+void VJSEntityModel::_OrderBy(VJSParms_callStaticFunction& ioParms, EntityModel* inModel)
 {
 	VError err = VE_OK;
-	CDB4DSelection* sel = inModel->SelectAllEntities(GetDB4DBaseContextFromJSContext(ioParms, inModel), &err);
+	EntityCollection* sel = inModel->SelectAllEntities(GetBaseTaskInfoFromJSContext(ioParms, inModel), &err);
 	if (sel != nil)
 	{
 		VJSEntitySelection::_OrderBy(ioParms, sel);
@@ -3207,10 +3189,10 @@ void VJSEntityModel::_OrderBy(VJSParms_callStaticFunction& ioParms, CDB4DEntityM
 	}
 }
 
-void VJSEntityModel::_Each(VJSParms_callStaticFunction& ioParms, CDB4DEntityModel* inModel)
+void VJSEntityModel::_Each(VJSParms_callStaticFunction& ioParms, EntityModel* inModel)
 {
 	VError err = VE_OK;
-	CDB4DSelection* sel = inModel->SelectAllEntities(GetDB4DBaseContextFromJSContext(ioParms, inModel), &err);
+	EntityCollection* sel = inModel->SelectAllEntities(GetBaseTaskInfoFromJSContext(ioParms, inModel), &err);
 	if (sel != nil)
 	{
 		VJSEntitySelection::_Each(ioParms, sel);
@@ -3218,10 +3200,10 @@ void VJSEntityModel::_Each(VJSParms_callStaticFunction& ioParms, CDB4DEntityMode
 	}
 }
 
-void VJSEntityModel::_dropEntities(VJSParms_callStaticFunction& ioParms, CDB4DEntityModel* inModel)
+void VJSEntityModel::_dropEntities(VJSParms_callStaticFunction& ioParms, EntityModel* inModel)
 {
 	VError err = VE_OK;
-	CDB4DSelection* sel = inModel->SelectAllEntities(GetDB4DBaseContextFromJSContext(ioParms, inModel), &err);
+	EntityCollection* sel = inModel->SelectAllEntities(GetBaseTaskInfoFromJSContext(ioParms, inModel), &err);
 	if (sel != nil)
 	{
 		VJSEntitySelection::_dropEntities(ioParms, sel);
@@ -3229,10 +3211,10 @@ void VJSEntityModel::_dropEntities(VJSParms_callStaticFunction& ioParms, CDB4DEn
 	}
 }
 
-void VJSEntityModel::_distinctValues(VJSParms_callStaticFunction& ioParms, CDB4DEntityModel* inModel)
+void VJSEntityModel::_distinctValues(VJSParms_callStaticFunction& ioParms, EntityModel* inModel)
 {
 	VError err = VE_OK;
-	CDB4DSelection* sel = inModel->SelectAllEntities(GetDB4DBaseContextFromJSContext(ioParms, inModel), &err);
+	EntityCollection* sel = inModel->SelectAllEntities(GetBaseTaskInfoFromJSContext(ioParms, inModel), &err);
 	if (sel != nil)
 	{
 		VJSEntitySelection::_distinctValues(ioParms, sel);
@@ -3241,10 +3223,10 @@ void VJSEntityModel::_distinctValues(VJSParms_callStaticFunction& ioParms, CDB4D
 }
 
 
-void VJSEntityModel::_toArray(VJSParms_callStaticFunction& ioParms, CDB4DEntityModel* inModel)
+void VJSEntityModel::_toArray(VJSParms_callStaticFunction& ioParms, EntityModel* inModel)
 {
 	VError err = VE_OK;
-	CDB4DSelection* sel = inModel->SelectAllEntities(GetDB4DBaseContextFromJSContext(ioParms, inModel), &err);
+	EntityCollection* sel = inModel->SelectAllEntities(GetBaseTaskInfoFromJSContext(ioParms, inModel), &err);
 	if (sel != nil)
 	{
 		VJSEntitySelection::_toArray(ioParms, sel);
@@ -3253,10 +3235,10 @@ void VJSEntityModel::_toArray(VJSParms_callStaticFunction& ioParms, CDB4DEntityM
 }
 
 
-void VJSEntityModel::_sum(VJSParms_callStaticFunction& ioParms, CDB4DEntityModel* inModel)
+void VJSEntityModel::_sum(VJSParms_callStaticFunction& ioParms, EntityModel* inModel)
 {
 	VError err = VE_OK;
-	CDB4DSelection* sel = inModel->SelectAllEntities(GetDB4DBaseContextFromJSContext(ioParms, inModel), &err);
+	EntityCollection* sel = inModel->SelectAllEntities(GetBaseTaskInfoFromJSContext(ioParms, inModel), &err);
 	if (sel != nil)
 	{
 		VJSEntitySelection::_sum(ioParms, sel);
@@ -3265,10 +3247,10 @@ void VJSEntityModel::_sum(VJSParms_callStaticFunction& ioParms, CDB4DEntityModel
 }
 
 
-void VJSEntityModel::_min(VJSParms_callStaticFunction& ioParms, CDB4DEntityModel* inModel)
+void VJSEntityModel::_min(VJSParms_callStaticFunction& ioParms, EntityModel* inModel)
 {
 	VError err = VE_OK;
-	CDB4DSelection* sel = inModel->SelectAllEntities(GetDB4DBaseContextFromJSContext(ioParms, inModel), &err);
+	EntityCollection* sel = inModel->SelectAllEntities(GetBaseTaskInfoFromJSContext(ioParms, inModel), &err);
 	if (sel != nil)
 	{
 		VJSEntitySelection::_min(ioParms, sel);
@@ -3277,10 +3259,10 @@ void VJSEntityModel::_min(VJSParms_callStaticFunction& ioParms, CDB4DEntityModel
 }
 
 
-void VJSEntityModel::_max(VJSParms_callStaticFunction& ioParms, CDB4DEntityModel* inModel)
+void VJSEntityModel::_max(VJSParms_callStaticFunction& ioParms, EntityModel* inModel)
 {
 	VError err = VE_OK;
-	CDB4DSelection* sel = inModel->SelectAllEntities(GetDB4DBaseContextFromJSContext(ioParms, inModel), &err);
+	EntityCollection* sel = inModel->SelectAllEntities(GetBaseTaskInfoFromJSContext(ioParms, inModel), &err);
 	if (sel != nil)
 	{
 		VJSEntitySelection::_max(ioParms, sel);
@@ -3289,10 +3271,10 @@ void VJSEntityModel::_max(VJSParms_callStaticFunction& ioParms, CDB4DEntityModel
 }
 
 
-void VJSEntityModel::_average(VJSParms_callStaticFunction& ioParms, CDB4DEntityModel* inModel)
+void VJSEntityModel::_average(VJSParms_callStaticFunction& ioParms, EntityModel* inModel)
 {
 	VError err = VE_OK;
-	CDB4DSelection* sel = inModel->SelectAllEntities(GetDB4DBaseContextFromJSContext(ioParms, inModel), &err);
+	EntityCollection* sel = inModel->SelectAllEntities(GetBaseTaskInfoFromJSContext(ioParms, inModel), &err);
 	if (sel != nil)
 	{
 		VJSEntitySelection::_average(ioParms, sel);
@@ -3301,10 +3283,10 @@ void VJSEntityModel::_average(VJSParms_callStaticFunction& ioParms, CDB4DEntityM
 }
 
 
-void VJSEntityModel::_compute(VJSParms_callStaticFunction& ioParms, CDB4DEntityModel* inModel)
+void VJSEntityModel::_compute(VJSParms_callStaticFunction& ioParms, EntityModel* inModel)
 {
 	VError err = VE_OK;
-	CDB4DSelection* sel = inModel->SelectAllEntities(GetDB4DBaseContextFromJSContext(ioParms, inModel), &err);
+	EntityCollection* sel = inModel->SelectAllEntities(GetBaseTaskInfoFromJSContext(ioParms, inModel), &err);
 	if (sel != nil)
 	{
 		VJSEntitySelection::_compute(ioParms, sel);
@@ -3313,84 +3295,53 @@ void VJSEntityModel::_compute(VJSParms_callStaticFunction& ioParms, CDB4DEntityM
 }
 
 
-void VJSEntityModel::_fromArray(VJSParms_callStaticFunction& ioParms, CDB4DEntityModel* inModel)
+void VJSEntityModel::_callMethod(XBOX::VJSParms_callStaticFunction& ioParms, EntityModel* inModel)
+{
+	BaseTaskInfo* basecontext = GetBaseTaskInfoFromJSContext(ioParms, inModel);
+	if (ioParms.IsStringParam(1))
+	{
+		VString funcname;
+		ioParms.GetStringParam(1, funcname);
+		if (ioParms.IsArrayParam(2))
+		{
+			VJSArray arr(ioParms.GetContextRef(), nil,  true);
+			ioParms.GetParamArray(2, arr);
+			if (ioParms.IsObjectParam(3))
+			{
+				VJSObject thisobj(ioParms.GetContextRef());
+				ioParms.GetParamObject(3, thisobj);
+				VError err = VE_OK;
+				ioParms.ReturnValue(inModel->call_Method(funcname, arr, thisobj, basecontext, ioParms.GetContextRef(), err));
+			}
+			else
+				vThrowError(VE_JVSC_WRONG_PARAMETER_TYPE_OBJECT, "3");
+		}
+		else
+			vThrowError(VE_JVSC_WRONG_PARAMETER_TYPE_ARRAY, "2");
+	}
+	else
+		vThrowError(VE_JVSC_WRONG_PARAMETER_TYPE_STRING, "1");
+}
+
+
+void VJSEntityModel::_fromArray(VJSParms_callStaticFunction& ioParms, EntityModel* inModel)
 {
 	VError err = VE_OK;
 	bool okresult = false;
-	CDB4DBaseContext* context = GetDB4DBaseContextFromJSContext(ioParms, inModel);
-	BaseTaskInfo* basecontext = ConvertContext(context);
+	BaseTaskInfo* basecontext = GetBaseTaskInfoFromJSContext(ioParms, inModel);
 	if (ioParms.IsArrayParam(1))
 	{
-		CDB4DSelection* xsel = inModel->NewSelection(DB4D_Sel_Bittab);
 		VJSArray arr(ioParms.GetContextRef(), nil,  true);
 		ioParms.GetParamArray(1, arr);
-		sLONG nbelem = arr.GetLength();
-		VJSValue jsval(ioParms.GetContextRef());
-		Bittab* bsel = ((BitSel*)(VImpCreator<VDB4DSelection>::GetImpObject(xsel)->GetSel()))->GetBittab();
-		EntityModel* model = VImpCreator<EntityModel>::GetImpObject(inModel);
 
-		for (sLONG i = 0; i < nbelem && err == VE_OK; i++)
+		EntityCollection* xsel = inModel->FromArray(arr, basecontext, err, nil);
+
+		if (xsel != nil)
 		{
-			jsval = arr.GetValueAt(i);
-			if (jsval.IsObject())
-			{
-				VJSObject objrec(ioParms.GetContextRef());
-				jsval.GetObject(objrec);
-				sLONG stamp = 0;
-				
-				EntityRecord* rec = nil;
-				jsval = objrec.GetProperty("__KEY");
-				if (jsval.IsObject())
-				{
-					VJSObject objkey(ioParms.GetContextRef());
-					jsval.GetObject(objkey);
-
-					jsval = objkey.GetProperty("__STAMP");
-					if (jsval.IsNumber())
-						jsval.GetLong(&stamp);
-
-					rec = model->findEntityWithPrimKey(objkey, basecontext,err, DB4D_Do_Not_Lock);
-					if (err == VE_OK)
-					{
-						if (rec == nil)
-						{
-							rec = model->NewEntity(basecontext, DB4D_Do_Not_Lock);
-							if (rec != nil)
-							{
-								rec->setPrimKey(objkey);
-							}
-						}
-					}
-				}
-				else
-				{
-					rec = model->NewEntity(basecontext, DB4D_Do_Not_Lock);
-				}
-
-				if (rec != nil)
-				{
-					err = rec->convertFromJSObj(objrec);
-				}
-				if (err == VE_OK)
-				{
-					StErrorContextInstaller errs(false);
-					VError err2 = rec->Save(stamp);
-					if (err2 == VE_OK)
-					{
-						sLONG numrec = rec->GetNum();
-						if (numrec >= 0)
-						bsel->Set(numrec);
-					}
-				}
-
-				QuickReleaseRefCountable(rec);
-			}
-
+			okresult = true;
+			ioParms.ReturnValue(VJSEntitySelection::CreateInstance(ioParms.GetContextRef(), xsel));
+			xsel->Release();
 		}
-
-		okresult = true;
-		ioParms.ReturnValue(VJSEntitySelection::CreateInstance(ioParms.GetContextRef(), xsel));
-		xsel->Release();
 
 	}
 	if (!okresult)
@@ -3398,34 +3349,23 @@ void VJSEntityModel::_fromArray(VJSParms_callStaticFunction& ioParms, CDB4DEntit
 }
 
 
-void VJSEntityModel::_setAutoSequenceNumber(VJSParms_callStaticFunction& ioParms, CDB4DEntityModel* inModel)
+void VJSEntityModel::_setAutoSequenceNumber(VJSParms_callStaticFunction& ioParms, EntityModel* inModel)
 {
 	VError err = VE_OK;
 	bool okresult = false;
-	CDB4DBaseContext* context = GetDB4DBaseContextFromJSContext(ioParms, inModel);
-
-	CDB4DTable* tt = inModel->RetainTable();
-	if (tt != nil)
+	BaseTaskInfo* context = GetBaseTaskInfoFromJSContext(ioParms, inModel);
+	Real newnum;
+	if (ioParms.IsNumberParam(1))
 	{
-		CDB4DAutoSeqNumber* seq = tt->RetainAutoSeqNumber(context);
-		if (seq != nil)
-		{
-			Real newnum;
-			if (ioParms.IsNumberParam(1))
-			{
-				ioParms.GetRealParam(1, &newnum);
-				seq->SetCurrentValue((sLONG8)newnum);
-			}
-		}
-		QuickReleaseRefCountable(seq);
+		ioParms.GetRealParam(1, &newnum);
+		err = inModel->SetAutoSequenceNumber((sLONG8)newnum, context);
 	}
-	QuickReleaseRefCountable(tt);
-
 }
 
 
-void VJSEntityModel::_getFragmentation(VJSParms_callStaticFunction& ioParms, CDB4DEntityModel* inModel)
+void VJSEntityModel::_getFragmentation(VJSParms_callStaticFunction& ioParms, EntityModel* inModel)
 {
+	/*
 	VError err = VE_OK;
 	bool okresult = false;
 	CDB4DBaseContext* context = GetDB4DBaseContextFromJSContext(ioParms, inModel);
@@ -3441,20 +3381,21 @@ void VJSEntityModel::_getFragmentation(VJSParms_callStaticFunction& ioParms, CDB
 		ioParms.ReturnNumber(result);
 	}
 	QuickReleaseRefCountable(tt);
+	*/
 
 }
 
 
 
-void VJSEntityModel::_getAttributes( XBOX::VJSParms_getProperty& ioParms, CDB4DEntityModel* inModel)
+void VJSEntityModel::_getAttributes( XBOX::VJSParms_getProperty& ioParms, EntityModel* inModel)
 {
 	ioParms.ReturnValue(VJSEntityAttributeEnumerator::CreateInstance(ioParms.GetContextRef(), inModel));
 }
 
 
-void VJSEntityModel::_getLength( XBOX::VJSParms_getProperty& ioParms, CDB4DEntityModel* inModel)
+void VJSEntityModel::_getLength( XBOX::VJSParms_getProperty& ioParms, EntityModel* inModel)
 {
-	ioParms.ReturnNumber(inModel->CountEntities(GetDB4DBaseContextFromJSContext(ioParms, inModel)));
+	ioParms.ReturnNumber(inModel->countEntities(GetBaseTaskInfoFromJSContext(ioParms, inModel)));
 }
 
 
@@ -3494,6 +3435,8 @@ void VJSEntityModel::GetDefinition( ClassDefinition& outDefinition)
 		{ "max", js_callStaticFunction<_max>, JS4D::PropertyAttributeReadOnly | JS4D::PropertyAttributeDontEnum | JS4D::PropertyAttributeDontDelete },
 		{ "average", js_callStaticFunction<_average>, JS4D::PropertyAttributeReadOnly | JS4D::PropertyAttributeDontEnum | JS4D::PropertyAttributeDontDelete },
 		{ "compute", js_callStaticFunction<_compute>, JS4D::PropertyAttributeReadOnly | JS4D::PropertyAttributeDontEnum | JS4D::PropertyAttributeDontDelete },
+
+		{ "callMethod", js_callStaticFunction<_callMethod>, JS4D::PropertyAttributeReadOnly | JS4D::PropertyAttributeDontEnum | JS4D::PropertyAttributeDontDelete },
 		{ 0, 0, 0}
 	};
 
@@ -3523,110 +3466,96 @@ void VJSEntityModel::GetDefinition( ClassDefinition& outDefinition)
 
 
 
-void VJSEntityAttribute::Initialize( const VJSParms_initialize& inParms, CDB4DEntityAttribute* inAttribute)
+void VJSEntityAttribute::Initialize( const VJSParms_initialize& inParms, EntityAttribute* inAttribute)
 {
 	inAttribute->Retain();
 }
 
 
-void VJSEntityAttribute::Finalize( const VJSParms_finalize& inParms, CDB4DEntityAttribute* inAttribute)
+void VJSEntityAttribute::Finalize( const VJSParms_finalize& inParms, EntityAttribute* inAttribute)
 {
 	inAttribute->Release();
 }
 
 
-void VJSEntityAttribute::_getName(VJSParms_callStaticFunction& ioParms, CDB4DEntityAttribute* inAttribute)
+void VJSEntityAttribute::_getName(VJSParms_callStaticFunction& ioParms, EntityAttribute* inAttribute)
 {
-	ioParms.ReturnString(inAttribute->GetAttibuteName());
+	ioParms.ReturnString(inAttribute->GetName());
 }
 
 
-void VJSEntityAttribute::_getPropName( XBOX::VJSParms_getProperty& ioParms, CDB4DEntityAttribute* inAttribute)
+void VJSEntityAttribute::_getPropName( XBOX::VJSParms_getProperty& ioParms, EntityAttribute* inAttribute)
 {
-	ioParms.ReturnString(inAttribute->GetAttibuteName());
+	ioParms.ReturnString(inAttribute->GetName());
 }
 
 
-void VJSEntityAttribute::_getKind( XBOX::VJSParms_getProperty& ioParms, CDB4DEntityAttribute* inAttribute)
+void VJSEntityAttribute::_getKind( XBOX::VJSParms_getProperty& ioParms, EntityAttribute* inAttribute)
 {
-	ioParms.ReturnString(EattTypes[inAttribute->GetAttributeKind()]);
+	ioParms.ReturnString(EattTypes[inAttribute->GetKind()]);
 }
 
 
-void VJSEntityAttribute::_getScope( XBOX::VJSParms_getProperty& ioParms, CDB4DEntityAttribute* inAttribute)
+void VJSEntityAttribute::_getScope( XBOX::VJSParms_getProperty& ioParms, EntityAttribute* inAttribute)
 {
-	ioParms.ReturnString(EScopeKinds[inAttribute->GetScope()]);
+	ioParms.ReturnString(EScopeKinds[inAttribute->getScope()]);
 }
 
 
-void VJSEntityAttribute::_getType( XBOX::VJSParms_getProperty& ioParms, CDB4DEntityAttribute* inAttribute)
+void VJSEntityAttribute::_getType( XBOX::VJSParms_getProperty& ioParms, EntityAttribute* inAttribute)
 {
 	VString s;
-	EntityAttributeKind kind = inAttribute->GetAttributeKind();
+	EntityAttributeKind kind = inAttribute->GetKind();
 	if (kind == eattr_composition || kind == eattr_relation_1toN)
 	{
-		CDB4DEntityModel* rel = inAttribute->GetRelatedEntityModel();
+		EntityModel* rel = inAttribute->GetSubEntityModel();
 		if (rel != nil)
 		{
-			EntityModel* xrel = VImpCreator<EntityModel>::GetImpObject(rel);
-			s = xrel->GetCollectionName();
+			s = rel->GetCollectionName();
 		}
 	}
 	else if (kind == eattr_relation_Nto1)
 	{
-		CDB4DEntityModel* rel = inAttribute->GetRelatedEntityModel();
+		EntityModel* rel = inAttribute->GetSubEntityModel();
 		if (rel != nil)
 		{
-			EntityModel* xrel = VImpCreator<EntityModel>::GetImpObject(rel);
-			s = xrel->GetName();
+			s = rel->GetName();
 		}
 		}
 	else
 	{
-		EntityAttribute* xatt = VImpCreator<EntityAttribute>::GetImpObject(inAttribute);
-		s = EValPredefinedTypes[xatt->GetDataKind()];
+		s = EValPredefinedTypes[inAttribute->GetDataKind()];
 	}
 	ioParms.ReturnString(s);
 }
 
 
-void VJSEntityAttribute::_getIndexType( XBOX::VJSParms_getProperty& ioParms, CDB4DEntityAttribute* inAttribute)
+void VJSEntityAttribute::_getIndexType( XBOX::VJSParms_getProperty& ioParms, EntityAttribute* inAttribute)
 {
 	VString s;
-	EntityAttribute* xatt = VImpCreator<EntityAttribute>::GetImpObject(inAttribute);
-	s = xatt->GetIndexKind();
+	s = inAttribute->GetIndexKind();
 	ioParms.ReturnString(s);
 }
 
 
-void VJSEntityAttribute::_getIndexed( XBOX::VJSParms_getProperty& ioParms, CDB4DEntityAttribute* inAttribute)
+void VJSEntityAttribute::_getIndexed( XBOX::VJSParms_getProperty& ioParms, EntityAttribute* inAttribute)
 {
-	bool res = false;
-	EntityAttribute* xatt = VImpCreator<EntityAttribute>::GetImpObject(inAttribute);
-	Field* ff = xatt->RetainDirectField();
-	if (ff != nil)
-		res = ff->IsIndexed();
-	QuickReleaseRefCountable(ff);
+	bool res = inAttribute->IsIndexed();
 	ioParms.ReturnBool(res);
 }
 
 
-void VJSEntityAttribute::_getFullTextIndexed( XBOX::VJSParms_getProperty& ioParms, CDB4DEntityAttribute* inAttribute)
+void VJSEntityAttribute::_getFullTextIndexed( XBOX::VJSParms_getProperty& ioParms, EntityAttribute* inAttribute)
 {
-	bool res = false;
-	EntityAttribute* xatt = VImpCreator<EntityAttribute>::GetImpObject(inAttribute);
-	Field* ff = xatt->RetainDirectField();
-	if (ff != nil)
-		res = ff->IsFullTextIndexed();
-	QuickReleaseRefCountable(ff);
+	bool res = inAttribute->IsFullTextIndexed();
 	ioParms.ReturnBool(res);
 }
 
 
 
-void VJSEntityAttribute::_getDataClass( XBOX::VJSParms_getProperty& ioParms, CDB4DEntityAttribute* inAttribute)
+void VJSEntityAttribute::_getDataClass( XBOX::VJSParms_getProperty& ioParms, EntityAttribute* inAttribute)
 {
-	CDB4DEntityModel* res = inAttribute->GetModel();
+	EntityModel* res = inAttribute->GetModel();
 	if (res == nil)
 		ioParms.ReturnNullValue();
 	else
@@ -3634,9 +3563,9 @@ void VJSEntityAttribute::_getDataClass( XBOX::VJSParms_getProperty& ioParms, CDB
 }
 
 
-void VJSEntityAttribute::_getRelatedDataClass( XBOX::VJSParms_getProperty& ioParms, CDB4DEntityAttribute* inAttribute)
+void VJSEntityAttribute::_getRelatedDataClass( XBOX::VJSParms_getProperty& ioParms, EntityAttribute* inAttribute)
 {
-	CDB4DEntityModel* res = inAttribute->GetRelatedEntityModel();
+	EntityModel* res = inAttribute->GetSubEntityModel();
 	if (res == nil)
 		ioParms.ReturnNullValue();
 	else
@@ -3697,11 +3626,11 @@ void VJSEntitySelectionIterator::Finalize( const VJSParms_finalize& inParms, Ent
 
 void VJSEntitySelectionIterator::GetPropertyNames( VJSParms_getPropertyNames& ioParms, EntitySelectionIterator* inSelIter)
 {
-	CDB4DEntityModel* em = inSelIter->GetModel();
+	EntityModel* em = inSelIter->GetModel();
 	sLONG nb = em->CountAttributes();
 	for (sLONG i = 1; i <= nb; i++)
 	{
-		CDB4DEntityAttribute* att = em->GetAttribute(i);
+		EntityAttribute* att = em->getAttribute(i);
 		if (att != nil)
 		{
 			ioParms.AddPropertyName(att->GetAttibuteName());
@@ -3711,18 +3640,18 @@ void VJSEntitySelectionIterator::GetPropertyNames( VJSParms_getPropertyNames& io
 
 void VJSEntitySelectionIterator::GetProperty( VJSParms_getProperty& ioParms, EntitySelectionIterator* inSelIter)
 {
-	CDB4DEntityModel* em = inSelIter->GetModel();
-	CDB4DBaseContext* context = GetDB4DBaseContextFromJSContext(ioParms, em);
+	EntityModel* em = inSelIter->GetModel();
+	BaseTaskInfo* context = GetBaseTaskInfoFromJSContext(ioParms, em);
 	VString propname;
 	ioParms.GetPropertyName(propname);
-	CDB4DEntityAttribute* att = em->GetAttribute(propname);
+	EntityAttribute* att = em->getAttribute(propname);
 	if (att != nil)
 	{
-		CDB4DEntityRecord* rec = inSelIter->GetCurRec(context);
+		EntityRecord* rec = inSelIter->GetCurRec(context);
 		if (rec != nil)
 		{
 			VError err = VE_OK;
-			CDB4DEntityAttributeValue* emval = rec->GetAttributeValue(att, err);
+			EntityAttributeValue* emval = rec->getAttributeValue(att, err, context);
 			if (emval != nil)
 			{
 				switch (emval->GetAttributeKind()) {
@@ -3731,29 +3660,6 @@ void VJSEntitySelectionIterator::GetProperty( VJSParms_getProperty& ioParms, Ent
 							VValueSingle* cv = emval->GetVValue();
 							if (cv != nil)
 							{
-#if 0
-								if (cv->GetValueKind() == VK_IMAGE)
-								{
-#if !VERSION_LINUX   // Postponed Linux Implementation !
-
-									/*
-									void* extradata = emval->GetExtraData();
-									if (extradata == nil)
-									{
-										db4dJSPictContainer* xpic = new db4dJSPictContainer(cv, ioParms.GetContextRef(), rec, att);
-										ioParms.ReturnValue(VJSImage::CreateInstance(ioParms.GetContextRef(), xpic));
-										emval->SetExtraData(xpic);
-										xpic->Release();
-									}
-									else
-									{
-										ioParms.ReturnValue(VJSImage::CreateInstance(ioParms.GetContextRef(), (db4dJSPictContainer*)extradata));
-									}
-									*/
-#endif
-								}
-								else
-#endif
 									ioParms.ReturnVValue(*cv);
 							}
 						}
@@ -3761,7 +3667,7 @@ void VJSEntitySelectionIterator::GetProperty( VJSParms_getProperty& ioParms, Ent
 						
 					case eav_subentity:
 						{
-							CDB4DEntityRecord* subrec = emval->GetRelatedEntity();
+							EntityRecord* subrec = emval->getRelatedEntity();
 							if (subrec != nil)
 							{
 								EntitySelectionIterator* subiter = new EntitySelectionIterator(subrec, context);
@@ -3772,7 +3678,7 @@ void VJSEntitySelectionIterator::GetProperty( VJSParms_getProperty& ioParms, Ent
 						
 					case eav_selOfSubentity:
 						{
-							CDB4DSelection* sel = emval->GetRelatedSelection();
+							EntityCollection* sel = emval->getRelatedSelection();
 							if (sel != nil)
 							{
 								ioParms.ReturnValue(VJSEntitySelection::CreateInstance(ioParms.GetContextRef(), sel));								
@@ -3804,7 +3710,7 @@ void VJSEntitySelectionIterator::GetProperty( VJSParms_getProperty& ioParms, Ent
 	}
 	else
 	{
-		CDB4DEntityMethod* meth = em->GetMethod(propname);
+		EntityMethod* meth = em->getMethod(propname);
 		if (meth != nil && meth->GetMethodKind() == emeth_rec)
 		{
 			VJSObject localObjFunc(ioParms.GetContextRef());
@@ -3821,14 +3727,14 @@ void VJSEntitySelectionIterator::GetProperty( VJSParms_getProperty& ioParms, Ent
 
 bool VJSEntitySelectionIterator::SetProperty( VJSParms_setProperty& ioParms, EntitySelectionIterator* inSelIter)
 {
-	CDB4DEntityModel* em = inSelIter->GetModel();
-	CDB4DBaseContext* context = GetDB4DBaseContextFromJSContext(ioParms, em);
+	EntityModel* em = inSelIter->GetModel();
+	BaseTaskInfo* context = GetBaseTaskInfoFromJSContext(ioParms, em);
 	VString propname;
 	ioParms.GetPropertyName(propname);
-	CDB4DEntityAttribute* att = em->GetAttribute(propname);
+	EntityAttribute* att = em->getAttribute(propname);
 	if (att != nil)
 	{
-		CDB4DEntityRecord* rec = inSelIter->GetCurRec(context);
+		EntityRecord* rec = inSelIter->GetCurRec(context);
 		if (rec != nil)
 		{
 			if (att->GetAttributeKind() == eattr_composition)
@@ -3845,7 +3751,7 @@ bool VJSEntitySelectionIterator::SetProperty( VJSParms_setProperty& ioParms, Ent
 				VString jsonvalue;
 				json.Stringify(val, jsonvalue);
 				*/
-				rec->SetAttributeValue(att, jsobj);
+				rec->setAttributeValue(att, jsobj);
 			}
 			else
 			{
@@ -3863,13 +3769,13 @@ bool VJSEntitySelectionIterator::SetProperty( VJSParms_setProperty& ioParms, Ent
 						for (VSize i = 0; i < nbelem; i++)
 						{
 							VJSValue elem(varr.GetValueAt(i));
-							VValueSingle* cv = elem.CreateVValue();
+							VValueSingle* cv = elem.CreateVValue(nil, att->isSimpleDate());
 							if (cv != nil)
 							{
 								vals.push_back(cv);
 							}
 						}
-						rec->SetAttributeValue(att, &vals);
+						rec->setAttributeValue(att, &vals);
 					}
 					else
 					{
@@ -3884,7 +3790,7 @@ bool VJSEntitySelectionIterator::SetProperty( VJSParms_setProperty& ioParms, Ent
 								{
 									isMeta = true;
 									VError err = VE_OK;
-									CDB4DEntityAttributeValue* emval = rec->GetAttributeValue(att, err);
+									CDB4DEntityAttributeValue* emval = rec->getAttributeValue(att, err, context);
 									if (emval != nil)
 									{
 										VValueSingle* cvpict = emval->GetVValue();
@@ -3923,7 +3829,7 @@ bool VJSEntitySelectionIterator::SetProperty( VJSParms_setProperty& ioParms, Ent
 													{
 														pict->FromVPictureData(newpictdata);
 														newpictdata->Release();
-														rec->TouchAttributeValue(att);
+														rec->touchAttributeValue(att);
 													}
 
 													QuickReleaseRefCountable(pictureSettings);
@@ -3944,10 +3850,10 @@ bool VJSEntitySelectionIterator::SetProperty( VJSParms_setProperty& ioParms, Ent
 
 						if (!isMeta)
 						{
-							VValueSingle* cv = ioParms.CreatePropertyVValue();
+							VValueSingle* cv = ioParms.CreatePropertyVValue(att->isSimpleDate());
 							//if (cv != nil)
 							{
-								rec->SetAttributeValue(att, cv);
+								rec->setAttributeValue(att, cv);
 								if (cv != nil)
 									delete cv;
 							}
@@ -3956,7 +3862,7 @@ bool VJSEntitySelectionIterator::SetProperty( VJSParms_setProperty& ioParms, Ent
 				}
 				else
 				{
-					rec->SetAttributeValue(att, xrelatedRec->GetCurRec(context));
+					rec->setAttributeValue(att, xrelatedRec->GetCurRec(context));
 				}
 			}
 		}
@@ -3969,7 +3875,7 @@ void VJSEntitySelectionIterator::_Save(VJSParms_callStaticFunction& ioParms, Ent
 {
 	VError err = VE_OK;
 	bool saved = false;
-	CDB4DEntityRecord* inRecord = inSelIter->GetCurRec(GetDB4DBaseContextFromJSContext(ioParms, inSelIter->GetModel()));
+	EntityRecord* inRecord = inSelIter->GetCurRec(GetBaseTaskInfoFromJSContext(ioParms, inSelIter->GetModel()));
 	if (inRecord != nil)
 	{
 		sLONG stamp = inRecord->GetModificationStamp();
@@ -3986,7 +3892,7 @@ void VJSEntitySelectionIterator::_validate(VJSParms_callStaticFunction& ioParms,
 {
 	VError err = VE_OK;
 	bool validated = false;
-	CDB4DEntityRecord* inRecord = inSelIter->GetCurRec(GetDB4DBaseContextFromJSContext(ioParms, inSelIter->GetModel()));
+	EntityRecord* inRecord = inSelIter->GetCurRec(GetBaseTaskInfoFromJSContext(ioParms, inSelIter->GetModel()));
 	if (inRecord != nil)
 	{
 		err = inRecord->Validate();
@@ -4011,7 +3917,7 @@ void VJSEntitySelectionIterator::_GetModel(VJSParms_callStaticFunction& ioParms,
 void VJSEntitySelectionIterator::_Next(VJSParms_callStaticFunction& ioParms, EntitySelectionIterator* inSelIter)
 {
 	EntitySelectionIterator* newIter = new EntitySelectionIterator(*inSelIter);
-	CDB4DBaseContext* context = GetDB4DBaseContextFromJSContext(ioParms, inSelIter->GetModel());
+	BaseTaskInfo* context = GetBaseTaskInfoFromJSContext(ioParms, inSelIter->GetModel());
 	newIter->Next(context);
 	if (newIter->GetCurPos() != -1)
 	{
@@ -4027,23 +3933,14 @@ void VJSEntitySelectionIterator::_Next(VJSParms_callStaticFunction& ioParms, Ent
 
 void VJSEntitySelectionIterator::_Loaded(VJSParms_callStaticFunction& ioParms, EntitySelectionIterator* inSelIter)
 {
-	ioParms.ReturnBool(inSelIter->GetCurRec(GetDB4DBaseContextFromJSContext(ioParms, inSelIter->GetModel())) != nil);
+	ioParms.ReturnBool(inSelIter->GetCurRec(GetBaseTaskInfoFromJSContext(ioParms, inSelIter->GetModel())) != nil);
 }
 
-
-void VJSEntitySelectionIterator::_GetID(VJSParms_callStaticFunction& ioParms, EntitySelectionIterator* inSelIter)
-{
-	CDB4DEntityRecord* inRecord = inSelIter->GetCurRec(GetDB4DBaseContextFromJSContext(ioParms, inSelIter->GetModel()));
-	if (inRecord == nil)
-		ioParms.ReturnNumber(-1);
-	else
-		ioParms.ReturnNumber(inRecord->GetNum());
-}
 
 
 void VJSEntitySelectionIterator::_IsModified(VJSParms_callStaticFunction& ioParms, EntitySelectionIterator* inSelIter)
 {
-	CDB4DEntityRecord* inRecord = inSelIter->GetCurRec(GetDB4DBaseContextFromJSContext(ioParms, inSelIter->GetModel()));
+	EntityRecord* inRecord = inSelIter->GetCurRec(GetBaseTaskInfoFromJSContext(ioParms, inSelIter->GetModel()));
 	if (inRecord == nil)
 		ioParms.ReturnBool(false);
 	else
@@ -4053,7 +3950,7 @@ void VJSEntitySelectionIterator::_IsModified(VJSParms_callStaticFunction& ioParm
 
 void VJSEntitySelectionIterator::_IsNew(VJSParms_callStaticFunction& ioParms, EntitySelectionIterator* inSelIter)
 {
-	CDB4DEntityRecord* inRecord = inSelIter->GetCurRec(GetDB4DBaseContextFromJSContext(ioParms, inSelIter->GetModel()));
+	EntityRecord* inRecord = inSelIter->GetCurRec(GetBaseTaskInfoFromJSContext(ioParms, inSelIter->GetModel()));
 	if (inRecord == nil)
 		ioParms.ReturnBool(false);
 	else
@@ -4064,7 +3961,7 @@ void VJSEntitySelectionIterator::_IsNew(VJSParms_callStaticFunction& ioParms, En
 void VJSEntitySelectionIterator::_Drop(VJSParms_callStaticFunction& ioParms, EntitySelectionIterator* inSelIter)
 {
 	VError err = VE_OK;
-	CDB4DEntityRecord* inRecord = inSelIter->GetCurRec(GetDB4DBaseContextFromJSContext(ioParms, inSelIter->GetModel()));
+	EntityRecord* inRecord = inSelIter->GetCurRec(GetBaseTaskInfoFromJSContext(ioParms, inSelIter->GetModel()));
 	if (inRecord != nil)
 		err = inRecord->Drop();
 	inSelIter->ReleaseCurCurec(false);
@@ -4081,14 +3978,14 @@ void VJSEntitySelectionIterator::_Reload(VJSParms_callStaticFunction& ioParms, E
 {
 	VError err = VE_OK;
 	bool readonly = ioParms.GetBoolParam( 1, L"ReadOnly", L"ReadWrite");
-	err = inSelIter->ReLoadCurRec(GetDB4DBaseContextFromJSContext(ioParms, inSelIter->GetModel()), readonly, false);
+	err = inSelIter->ReLoadCurRec(GetBaseTaskInfoFromJSContext(ioParms, inSelIter->GetModel()), readonly, false);
 }
 
 
 void VJSEntitySelectionIterator::_getTimeStamp(VJSParms_callStaticFunction& ioParms, EntitySelectionIterator* inSelIter)
 {
 	VError err = VE_OK;
-	CDB4DEntityRecord* inRecord = inSelIter->GetCurRec(GetDB4DBaseContextFromJSContext(ioParms, inSelIter->GetModel()));
+	EntityRecord* inRecord = inSelIter->GetCurRec(GetBaseTaskInfoFromJSContext(ioParms, inSelIter->GetModel()));
 	if (inRecord != nil)
 	{
 		VTime stamp;
@@ -4102,7 +3999,7 @@ void VJSEntitySelectionIterator::_getKey(XBOX::VJSParms_callStaticFunction& ioPa
 {
 	VError err = VE_OK;
 	
-	CDB4DEntityRecord* inRecord = inSelIter->GetCurRec(GetDB4DBaseContextFromJSContext(ioParms, inSelIter->GetModel()));
+	EntityRecord* inRecord = inSelIter->GetCurRec(GetBaseTaskInfoFromJSContext(ioParms, inSelIter->GetModel()));
 	if (inRecord != nil)
 	{
 		VectorOfVValue key;
@@ -4127,7 +4024,7 @@ void VJSEntitySelectionIterator::_getKey(XBOX::VJSParms_callStaticFunction& ioPa
 void VJSEntitySelectionIterator::_getStamp(XBOX::VJSParms_callStaticFunction& ioParms, EntitySelectionIterator* inSelIter)
 {
 	VError err = VE_OK;
-	CDB4DEntityRecord* inRecord = inSelIter->GetCurRec(GetDB4DBaseContextFromJSContext(ioParms, inSelIter->GetModel()));
+	EntityRecord* inRecord = inSelIter->GetCurRec(GetBaseTaskInfoFromJSContext(ioParms, inSelIter->GetModel()));
 	if (inRecord != nil)
 	{
 		ioParms.ReturnNumber(inRecord->GetModificationStamp());
@@ -4135,18 +4032,36 @@ void VJSEntitySelectionIterator::_getStamp(XBOX::VJSParms_callStaticFunction& io
 }
 
 
-void EntityRecToString(CDB4DEntityRecord* inRecord, CDB4DBaseContext* context, VString& result)
+void VJSEntitySelectionIterator::_getModifiedAttributes(XBOX::VJSParms_callStaticFunction& ioParms, EntitySelectionIterator* inSelIter)
+{
+	VError err = VE_OK;
+	EntityRecord* inRecord = inSelIter->GetCurRec(GetBaseTaskInfoFromJSContext(ioParms, inSelIter->GetModel()));
+	VJSArray arr(ioParms.GetContextRef());
+	if (inRecord != nil)
+	{
+		EntityAttributeCollection result;
+		inRecord->GetModifiedAttributes(result);
+		for (EntityAttributeCollection::iterator cur = result.begin(), end = result.end(); cur != end; ++cur)
+		{
+			arr.PushString((*cur)->GetName());
+		}
+	}
+	ioParms.ReturnValue(arr);
+}
+
+
+void EntityRecToString(EntityRecord* inRecord, BaseTaskInfo* context, VString& result)
 {
 	result.Clear();
 	VError err = VE_OK;
 	if (inRecord != nil)
 	{
-		CDB4DEntityModel* em = inRecord->GetModel();
+		EntityModel* em = inRecord->GetModel();
 		bool first = true;
 		sLONG nbatt = em->CountAttributes();
 		for (sLONG i = 1; i <= nbatt; i++)
 		{
-			CDB4DEntityAttribute* att = em->GetAttribute(i);
+			EntityAttribute* att = em->getAttribute(i);
 			if (att != nil)
 			{
 				if (first)
@@ -4154,7 +4069,7 @@ void EntityRecToString(CDB4DEntityRecord* inRecord, CDB4DBaseContext* context, V
 				else
 					result += L"  ,  ";
 				result += att->GetAttibuteName()+L" : ";
-				CDB4DEntityAttributeValue* val = inRecord->GetAttributeValue(att, err);
+				EntityAttributeValue* val = inRecord->getAttributeValue(att, err, context);
 				if (val == nil)
 					result += L"null";
 				else
@@ -4163,7 +4078,7 @@ void EntityRecToString(CDB4DEntityRecord* inRecord, CDB4DBaseContext* context, V
 					{
 					case eav_vvalue:
 						{
-							XBOX::VValueSingle* cv = val->GetVValue();
+							XBOX::VValueSingle* cv = val->getVValue();
 							if (cv == nil)
 								result += L"null";
 							else
@@ -4178,7 +4093,7 @@ void EntityRecToString(CDB4DEntityRecord* inRecord, CDB4DBaseContext* context, V
 
 					case eav_subentity:
 						{
-							CDB4DEntityRecord* rec = val->GetRelatedEntity();
+							EntityRecord* rec = val->getRelatedEntity();
 							if (rec == nil)
 								result += L"<<null entity>>";
 							else
@@ -4188,12 +4103,12 @@ void EntityRecToString(CDB4DEntityRecord* inRecord, CDB4DBaseContext* context, V
 
 					case eav_selOfSubentity:
 						{
-							CDB4DSelection* sel = val->GetRelatedSelection();
+							EntityCollection* sel = val->getRelatedSelection();
 							if (sel == nil)
 								result += L"<<null selection>>";
 							else
 							{
-								sLONG nbent = sel->CountRecordsInSelection(context);
+								sLONG nbent = sel->GetLength(context);
 								result += ToString(nbent)+ ((nbent == 1)?L" entity":L" entities");
 							}
 						}
@@ -4214,9 +4129,9 @@ void VJSEntitySelectionIterator::_toString(VJSParms_callStaticFunction& ioParms,
 {
 	VString result;
 	VError err = VE_OK;
-	CDB4DEntityModel* em = inSelIter->GetModel();
-	CDB4DBaseContext* context = GetDB4DBaseContextFromJSContext(ioParms, em);
-	CDB4DEntityRecord* inRecord = inSelIter->GetCurRec(context);
+	EntityModel* em = inSelIter->GetModel();
+	BaseTaskInfo* context = GetBaseTaskInfoFromJSContext(ioParms, em);
+	EntityRecord* inRecord = inSelIter->GetCurRec(context);
 	EntityRecToString(inRecord, context, result);
 	ioParms.ReturnString(result);
 }
@@ -4224,12 +4139,12 @@ void VJSEntitySelectionIterator::_toString(VJSParms_callStaticFunction& ioParms,
 
 void VJSEntitySelectionIterator::_toObject(VJSParms_callStaticFunction& ioParms, EntitySelectionIterator* inSelIter)
 {
-	CDB4DEntityModel* em = inSelIter->GetModel();
-	CDB4DBaseContext* context = GetDB4DBaseContextFromJSContext(ioParms, em);
-	CDB4DEntityRecord* inRecord = inSelIter->GetCurRec(context);
+	EntityModel* em = inSelIter->GetModel();
+	BaseTaskInfo* context = GetBaseTaskInfoFromJSContext(ioParms, em);
+	EntityRecord* inRecord = inSelIter->GetCurRec(context);
 	if (inRecord != nil)
 	{
-		EntityRecord* rec = VImpCreator<EntityRecord>::GetImpObject(inRecord);
+		EntityRecord* rec = inRecord;
 		VJSObject obj(ioParms.GetContextRef());
 		obj.MakeEmpty();
 		EntityAttributeSortedSelection atts(rec->GetOwner());
@@ -4246,22 +4161,16 @@ void VJSEntitySelectionIterator::_toObject(VJSParms_callStaticFunction& ioParms,
 
 void VJSEntitySelectionIterator::_toJSON(VJSParms_callStaticFunction& ioParms, EntitySelectionIterator* inSelIter)
 {
-	CDB4DEntityModel* em = inSelIter->GetModel();
-	CDB4DBaseContext* context = GetDB4DBaseContextFromJSContext(ioParms, em);
-	CDB4DEntityRecord* inRecord = inSelIter->GetCurRec(context);
+	EntityModel* em = inSelIter->GetModel();
+	BaseTaskInfo* context = GetBaseTaskInfoFromJSContext(ioParms, em);
+	EntityRecord* inRecord = inSelIter->GetCurRec(context);
 	if (inRecord != nil)
 	{
-		EntityRecord* rec = VImpCreator<EntityRecord>::GetImpObject(inRecord);
+		EntityRecord* rec = inRecord;
 		VJSObject obj(ioParms.GetContextRef());
 		obj.MakeEmpty();
 		EntityAttributeSortedSelection atts(rec->GetOwner());
 		rec->ConvertToJSObject(obj, atts, nil, nil, true, false);
-		/*
-		VJSJSON json(ioParms.GetContextRef());
-		VString s;
-		json.Stringify(obj, s);
-		ioParms.ReturnString(s);
-		*/
 		ioParms.ReturnValue(obj);
 	}
 }
@@ -4277,7 +4186,6 @@ void VJSEntitySelectionIterator::GetDefinition( ClassDefinition& outDefinition)
 		{ "isLoaded", js_callStaticFunction<_Loaded>, JS4D::PropertyAttributeReadOnly | JS4D::PropertyAttributeDontEnum | JS4D::PropertyAttributeDontDelete },
 		{ "save", js_callStaticFunction<_Save>, JS4D::PropertyAttributeReadOnly | JS4D::PropertyAttributeDontEnum | JS4D::PropertyAttributeDontDelete },
 		{ "validate", js_callStaticFunction<_validate>, JS4D::PropertyAttributeReadOnly | JS4D::PropertyAttributeDontEnum | JS4D::PropertyAttributeDontDelete },
-		{ "getID", js_callStaticFunction<_GetID>, JS4D::PropertyAttributeReadOnly | JS4D::PropertyAttributeDontEnum | JS4D::PropertyAttributeDontDelete },
 		{ "refresh", js_callStaticFunction<_Reload>, JS4D::PropertyAttributeReadOnly | JS4D::PropertyAttributeDontEnum | JS4D::PropertyAttributeDontDelete },
 		{ "isModified", js_callStaticFunction<_IsModified>, JS4D::PropertyAttributeReadOnly | JS4D::PropertyAttributeDontEnum | JS4D::PropertyAttributeDontDelete },
 		{ "isNew", js_callStaticFunction<_IsNew>, JS4D::PropertyAttributeReadOnly | JS4D::PropertyAttributeDontEnum | JS4D::PropertyAttributeDontDelete },
@@ -4291,6 +4199,7 @@ void VJSEntitySelectionIterator::GetDefinition( ClassDefinition& outDefinition)
 		{ "toObject", js_callStaticFunction<_toObject>, JS4D::PropertyAttributeReadOnly | JS4D::PropertyAttributeDontEnum | JS4D::PropertyAttributeDontDelete },
 		{ "getKey", js_callStaticFunction<_getKey>, JS4D::PropertyAttributeReadOnly | JS4D::PropertyAttributeDontEnum | JS4D::PropertyAttributeDontDelete },
 		{ "getStamp", js_callStaticFunction<_getStamp>, JS4D::PropertyAttributeReadOnly | JS4D::PropertyAttributeDontEnum | JS4D::PropertyAttributeDontDelete },
+		{ "getModifiedAttributes", js_callStaticFunction<_getModifiedAttributes>, JS4D::PropertyAttributeReadOnly | JS4D::PropertyAttributeDontEnum | JS4D::PropertyAttributeDontDelete },
 		{ 0, 0, 0}
 	};
 	
@@ -4310,27 +4219,28 @@ void VJSEntitySelectionIterator::GetDefinition( ClassDefinition& outDefinition)
 
 
 
-void VJSEntitySelection::Initialize( const VJSParms_initialize& inParms, CDB4DSelection* inSelection)
+void VJSEntitySelection::Initialize( const VJSParms_initialize& inParms, EntityCollection* inSelection)
 {
 	inSelection->Retain();
 }
 
 
-void VJSEntitySelection::Finalize( const VJSParms_finalize& inParms, CDB4DSelection* inSelection)
+void VJSEntitySelection::Finalize( const VJSParms_finalize& inParms, EntityCollection* inSelection)
 {
 	inSelection->Release();
 }
 
 
 
-void VJSEntitySelection::GetProperty( VJSParms_getProperty& ioParms, CDB4DSelection* inSelection)
+void VJSEntitySelection::GetProperty( VJSParms_getProperty& ioParms, EntityCollection* inSelection)
 {
 	
 	sLONG num;
 	if (ioParms.GetPropertyNameAsLong( &num) && (num >= 0) )
 	{
-		CDB4DBaseContext* context = GetDB4DBaseContextFromJSContext( ioParms, inSelection);
-		CDB4DEntityRecord* rec = inSelection->LoadEntity(num+1, /*DB4D_Keep_Lock_With_Record*/DB4D_Do_Not_Lock, context);
+		VError err = VE_OK;
+		BaseTaskInfo* context = GetBaseTaskInfoFromJSContext( ioParms, inSelection);
+		EntityRecord* rec = inSelection->LoadEntity(num, context, err, DB4D_Do_Not_Lock);
 		if (rec != nil)
 		{
 			EntitySelectionIterator* iter = new EntitySelectionIterator(rec, context);
@@ -4341,19 +4251,19 @@ void VJSEntitySelection::GetProperty( VJSParms_getProperty& ioParms, CDB4DSelect
 	}
 	else
 	{
-		CDB4DEntityModel* em = inSelection->GetModel();
+		EntityModel* em = inSelection->GetModel();
 		if (em != nil)
 		{
 			VString propname;
 			ioParms.GetPropertyName(propname);
-			CDB4DEntityMethod* meth = em->GetMethod(propname);
+			EntityMethod* meth = em->getMethod(propname);
 			if (meth != nil)
 			{
 				if (meth->GetMethodKind() == emeth_sel)
 				{
-					CDB4DBaseContext* context = GetDB4DBaseContextFromJSContext( ioParms, em);
+					BaseTaskInfo* context = GetBaseTaskInfoFromJSContext( ioParms, em);
 					VJSObject localObjFunc(ioParms.GetContextRef());
-					VJSObject* objfunc = meth->GetFuncObject(context, localObjFunc);
+					VJSObject* objfunc = meth->getFuncObject(context, localObjFunc);
 					if (objfunc != nil)
 					{
 						ioParms.ReturnValue(*objfunc);
@@ -4362,39 +4272,43 @@ void VJSEntitySelection::GetProperty( VJSParms_getProperty& ioParms, CDB4DSelect
 			}
 			else
 			{
-				CDB4DEntityAttribute* att = em->GetAttribute(propname);
+				EntityAttribute* att = em->getAttribute(propname);
 				if (att != nil)
 				{
-					CDB4DBaseContext* context = GetDB4DBaseContextFromJSContext( ioParms, em);
+					BaseTaskInfo* context = GetBaseTaskInfoFromJSContext( ioParms, em);
 					EntityAttributeKind kind = att->GetAttributeKind();
 					if (kind == eattr_relation_Nto1 || kind == eattr_relation_1toN || kind == eattr_composition)
 					{
 						VError err = VE_OK;
-						CDB4DSelection* result = em->ProjectSelection(inSelection, att, err, context);
+						EntityCollection* result = inSelection->ProjectCollection(att, err, context);
 						if (result != nil)
 							ioParms.ReturnValue(VJSEntitySelection::CreateInstance(ioParms.GetContextRef(), result));
 					}
 					else
 					{
-						CDB4DBaseContext* context = GetDB4DBaseContextFromJSContext( ioParms, inSelection);
-						sLONG nbelem = inSelection->CountRecordsInSelection(context);
+						BaseTaskInfo* context = GetBaseTaskInfoFromJSContext( ioParms, inSelection);
+						/*
+						sLONG nbelem = inSelection->GetLength();
 						VJSArray result(ioParms.GetContextRef());
 						VError err = VE_OK;
-						for (sLONG i = 1; i <= nbelem && err == VE_OK; i++)
+						for (sLONG i = 0; i < nbelem && err == VE_OK; i++)
 						{
-							CDB4DEntityRecord* erec = inSelection->LoadEntity(i, DB4D_Do_Not_Lock, context);
+							EntityRecord* erec = inSelection->LoadEntity(i, context, err, DB4D_Do_Not_Lock);
 							if (erec != nil)
 							{
-								CDB4DEntityAttributeValue* xval = erec->GetAttributeValue(att, err);
+								EntityAttributeValue* xval = erec->getAttributeValue(att, err);
 								if (err == VE_OK && xval != nil)
 								{
-									VValueSingle* cv = xval->GetVValue();
+									VValueSingle* cv = xval->getVValue();
 									result.PushValue(*cv);
 								}
 								//QuickReleaseRefCountable(xval);
 								erec->Release();
 							}
 						}
+						*/
+						VError err = VE_OK;
+						VJSValue result(inSelection->ProjectAttribute(att, err, context, ioParms.GetContextRef()));
 						if (err == VE_OK)
 							ioParms.ReturnValue(result);
 					}
@@ -4408,26 +4322,26 @@ void VJSEntitySelection::GetProperty( VJSParms_getProperty& ioParms, CDB4DSelect
 }
 
 
-void computeStats(XBOX::VJSParms_callStaticFunction& ioParms, CDB4DSelection* inSelection, DB4D_ColumnFormulae action)
+void computeStats(XBOX::VJSParms_callStaticFunction& ioParms, EntityCollection* inSelection, DB4D_ColumnFormulae action)
 {
 	bool okresult = false;
-	CDB4DEntityModel* model = inSelection->GetModel();
+	EntityModel* model = inSelection->GetModel();
 
 	if (model == nil)
 		ThrowBaseError(VE_DB4D_NOT_AN_ENTITY_COLLECTION);
 	else
 	{
-		EntityModel* em = VImpCreator<EntityModel>::GetImpObject(model);
-		CDB4DBaseContext* context = GetDB4DBaseContextFromJSContext( ioParms, inSelection);
+		EntityModel* em = model;
+		BaseTaskInfo* context = GetBaseTaskInfoFromJSContext( ioParms, inSelection);
 
-		CDB4DEntityAttribute* xatt = ioParms.GetParamObjectPrivateData<VJSEntityAttribute>(1);
+		EntityAttribute* xatt = ioParms.GetParamObjectPrivateData<VJSEntityAttribute>(1);
 		if (xatt == nil)
 		{
 			if (ioParms.IsStringParam(1))
 			{
 				VString s;
 				ioParms.GetStringParam(1, s);
-				xatt = model->GetAttribute(s);
+				xatt = model->getAttribute(s);
 
 				if (xatt == nil)
 				{
@@ -4442,13 +4356,13 @@ void computeStats(XBOX::VJSParms_callStaticFunction& ioParms, CDB4DSelection* in
 		{
 			if (xatt->GetModel() != model)
 			{
-				VString s = em->GetName()+"."+xatt->GetAttibuteName();
+				VString s = xatt->GetModel()->GetName()+"."+xatt->GetAttibuteName();
 				ThrowBaseError(VE_DB4D_ENTITY_ATTRIBUTE_IS_FROM_ANOTHER_DATACLASS, s);
 				xatt = nil;
 			}
 			else
 			{
-				EntityAttribute* att = VImpCreator<EntityAttribute>::GetImpObject(xatt);
+				EntityAttribute* att = xatt;
 				if (action == DB4D_Count || action == DB4D_Count_distinct || action == DB4D_Min || action == DB4D_Max)
 				{
 					if (!att->IsStatable())
@@ -4468,51 +4382,32 @@ void computeStats(XBOX::VJSParms_callStaticFunction& ioParms, CDB4DSelection* in
 
 		if (xatt != nil)
 		{
-			EntityAttribute* att = VImpCreator<EntityAttribute>::GetImpObject(xatt);
-			Selection* sel = VImpCreator<VDB4DSelection>::GetImpObject(inSelection)->GetSel();
-			Selection* selsorted = nil;
+			EntityAttribute* att = xatt;
+			EntityCollection* selsorted = nil;
 
 			if (action >= DB4D_Count_distinct && action <=DB4D_Sum_distinct)
 			{
 				EntityAttributeSortedSelection sortingAtt(em);
 				sortingAtt.AddAttribute(att, nil);
 				VError err = VE_OK;
-				selsorted = sel->SortSel(err, em, &sortingAtt, ConvertContext(context));
+				selsorted = inSelection->SortSel(err, &sortingAtt, context);
 				if (selsorted != nil)
-					sel = selsorted;
+					inSelection = selsorted;
 			}
 
-			if (att->GetKind() == eattr_storage /*|| att->GetKind() == eattr_field*/)
-			{
-				Field* cri = att->RetainDirectField();
-				if (cri != nil)
-				{
-					ColumnFormulas formules(em->GetMainTable());
-					formules.AddAction(action, cri);
-					VError err = formules.Execute(sel, ConvertContext(context), nil, nil, sel == selsorted);
-					if (err == VE_OK)
-					{
-						VValueSingle* result = formules.GetResult(0);
-						if (result != nil)
-						{
-							if (result->IsNull() && (action == DB4D_Sum || action == DB4D_Count))
-								ioParms.ReturnNumber(0);
-							else
-								ioParms.ReturnVValue(*result);
-							okresult = true;
-						}
-					}
-					cri->Release();
-				}
-			}
-			else
+			VJSValue result(ioParms.GetContextRef());
+			inSelection->ComputeOnOneAttribute(xatt, action, result, context, ioParms.GetContextRef());
+			ioParms.ReturnValue(result);
+			okresult = true;
+
+			/*
 			{
 				EntityAttributeSortedSelection attlist(em);
 				attlist.AddAttribute(att, nil);
 
 				VJSObject result(ioParms.GetContextRef());
 
-				VError err  = em->compute(attlist, sel, result, ConvertContext(context), ioParms.GetContextRef());
+				VError err  = inSelection->Compute(attlist, result, context, ioParms.GetContextRef());
 				if (err == VE_OK)
 				{
 					VJSValue subatt(ioParms.GetContextRef());
@@ -4554,6 +4449,8 @@ void computeStats(XBOX::VJSParms_callStaticFunction& ioParms, CDB4DSelection* in
 					}
 				}
 			}
+			*/
+
 			QuickReleaseRefCountable(selsorted);
 		}
 	}
@@ -4566,17 +4463,17 @@ void computeStats(XBOX::VJSParms_callStaticFunction& ioParms, CDB4DSelection* in
 }
 
 
-void VJSEntitySelection::_compute(XBOX::VJSParms_callStaticFunction& ioParms, CDB4DSelection* inSelection)
+void VJSEntitySelection::_compute(XBOX::VJSParms_callStaticFunction& ioParms, EntityCollection* inSelection)
 {
 	VError err = VE_OK;
 	bool okresult = false;
-	CDB4DBaseContext* context = GetDB4DBaseContextFromJSContext( ioParms, inSelection);
-	CDB4DEntityModel* model = inSelection->GetModel();
+	BaseTaskInfo* context = GetBaseTaskInfoFromJSContext( ioParms, inSelection);
+	EntityModel* model = inSelection->GetModel();
 	if (model == nil)
 		err = ThrowBaseError(VE_DB4D_NOT_AN_ENTITY_COLLECTION);
 	else
 	{
-		EntityModel* em = VImpCreator<EntityModel>::GetImpObject(model);
+		EntityModel* em =model;
 		EntityAttributeSortedSelection attlist(em);
 		EntityAttributeSortedSelection groupByList(em);
 		sLONG curparam = GetAttributeListParams(ioParms, 1, attlist);
@@ -4590,176 +4487,72 @@ void VJSEntitySelection::_compute(XBOX::VJSParms_callStaticFunction& ioParms, CD
 			withdistinct = ioParms.GetBoolParam(curparam, L"distinct", L"");
 		}
 
-		if (groupByList.empty())
+		if (attlist.empty())
 		{
-			DB4D_ColumnFormulae lastaction = DB4D_Count;
-			if (withdistinct)
-				lastaction = DB4D_Sum_distinct;
+			err = vThrowError(VE_JVSC_WRONG_PARAMETER_TYPE_ATTRIBUTE, "1");
+		}
 
-			bool allAttributesAreDirect = true;
-
-			if (!attlist.empty())
+		for (EntityAttributeSortedSelection::const_iterator cur = attlist.begin(), end = attlist.end(); cur != end && err == VE_OK; ++cur)
+		{
+			const EntityAttribute* att = cur->fAttribute;
+			if (att->GetModel() != em )
 			{
-				Selection* sel = VImpCreator<VDB4DSelection>::GetImpObject(inSelection)->GetSel();
-				Selection* selsorted = nil;
-				if (withdistinct)
-				{
-					EntityAttributeSortedSelection sortingAtt(em);
-					sortingAtt.AddAttribute(attlist[0].fAttribute, nil);
-					VError err = VE_OK;
-					selsorted = sel->SortSel(err, em, &sortingAtt, ConvertContext(context));
-					if (selsorted != nil)
-						sel = selsorted;
-				}
-
-				ColumnFormulas formules(em->GetMainTable());
-				for (EntityAttributeSortedSelection::const_iterator cur = attlist.begin(), end = attlist.end(); cur != end && err == VE_OK; cur++)
-				{
-					const EntityAttribute* att = cur->fAttribute;
-					if (!att->IsStatable())
-					{
-						err = att->ThrowError(VE_DB4D_WRONG_ATTRIBUTE_KIND);
-					}
-					else if (att->GetOwner() != em)
-					{
-						VString s = att->GetOwner()->GetName()+"."+att->GetAttibuteName();
-						err = ThrowBaseError(VE_DB4D_ENTITY_ATTRIBUTE_IS_FROM_ANOTHER_DATACLASS, s);
-					}
-					else
-					{
-						if (/*att->GetKind() != eattr_field &&*/ att->GetKind() != eattr_storage)
-						{
-							allAttributesAreDirect = false;
-						}
-						else
-						{
-							Field* cri = att->RetainDirectField();
-							if (cri != nil)
-							{
-								for (DB4D_ColumnFormulae action = DB4D_Sum; action <= lastaction; action = (DB4D_ColumnFormulae)((sLONG)action+1))
-									formules.AddAction(action, cri);
-								cri->Release();
-							}
-						}
-					}
-				}
-
-				if (err == VE_OK)
-				{
-					if (allAttributesAreDirect)
-					{
-						err = formules.Execute(sel, ConvertContext(context), nil, nil, sel == selsorted);
-						if (err == VE_OK)
-						{
-							VJSObject result(ioParms.GetContextRef());
-							result.MakeEmpty();
-
-							sLONG curcol = 0;
-							for (EntityAttributeSortedSelection::const_iterator cur = attlist.begin(), end = attlist.end(); cur != end; cur++)
-							{
-								const EntityAttribute* att = cur->fAttribute;
-								if (/*att->GetKind() != eattr_field &&*/ att->GetKind() != eattr_storage)
-								{
-									allAttributesAreDirect = false;
-								}
-								else
-								{
-									Field* cri = att->RetainDirectField();
-									if (cri != nil)
-									{
-										VJSObject oneatt(ioParms.GetContextRef());
-										oneatt.MakeEmpty();
-
-										for (DB4D_ColumnFormulae action = DB4D_Sum; action <= lastaction; action = (DB4D_ColumnFormulae)((sLONG)action+1), curcol++)
-										{
-											if ( (action == DB4D_Sum || action == DB4D_Average || action == DB4D_Average_distinct || action == DB4D_Sum_distinct) && !att->IsSummable())
-											{
-												// nothing to do here
-											}
-											else
-											{
-												VValueSingle* cv = formules.GetResult(curcol);
-												if (cv != nil)
-												{
-													VJSValue jsval(ioParms.GetContextRef());
-													jsval.SetVValue(*cv);
-													VString actionstring;
-													switch (action)
-													{
-														case DB4D_Sum:
-															actionstring = L"sum";
-															break;
-														case DB4D_Average:
-															actionstring = L"average";
-															break;
-														case DB4D_Min:
-															actionstring = L"min";
-															break;
-														case DB4D_Max:
-															actionstring = L"max";
-															break;
-														case DB4D_Count:
-															actionstring = L"count";
-															break;
-														case DB4D_Count_distinct:
-															actionstring = L"count_distinct";
-															break;
-														case DB4D_Average_distinct:
-															actionstring = L"average_distinct";
-															break;
-														case DB4D_Sum_distinct:
-															actionstring = L"sum_distinct";
-															break;
-													}
-													oneatt.SetProperty(actionstring, jsval, JS4D::PropertyAttributeNone);
-												}
-											}
-										}
-										cri->Release();
-
-										result.SetProperty(att->GetName(), oneatt, JS4D::PropertyAttributeNone);
-									}
-								}
-							}
-
-							ioParms.ReturnValue(result);
-							okresult = true;
-						}
-
-					}
-					else
-					{
-						VJSObject result(ioParms.GetContextRef());
-						err  = em->compute(attlist, sel, result, ConvertContext(context), ioParms.GetContextRef());
-						if (err == VE_OK)
-						{
-							ioParms.ReturnValue(result);
-							okresult = true;
-						}
-					}
-				}
-				QuickReleaseRefCountable(selsorted);
+				VString s = att->GetModel()->GetName()+"."+att->GetAttibuteName();
+				err = ThrowBaseError(VE_DB4D_ENTITY_ATTRIBUTE_IS_FROM_ANOTHER_DATACLASS, s);
+			}
+			else if (!att->IsStatable())
+			{
+				err = att->ThrowError(VE_DB4D_WRONG_ATTRIBUTE_KIND);
 			}
 		}
-		else
+
+		for (EntityAttributeSortedSelection::const_iterator cur = groupByList.begin(), end = groupByList.end(); cur != end && err == VE_OK; ++cur)
 		{
-			VString attlistString, groupbyString;
-			attlist.ToString(attlistString);
-			groupByList.ToString(groupbyString);
-			VJSFunction func("ReportingDB4D.report", ioParms.GetContextRef());
-			func.AddParam(VJSEntitySelection::CreateInstance(ioParms.GetContextRef(), inSelection));
-			func.AddParam(attlistString);
-			func.AddParam(groupbyString);
-			if (func.Call())
+			const EntityAttribute* att = cur->fAttribute;
+			if (att->GetModel() != em )
 			{
-				okresult = true;
-				ioParms.ReturnValue(func.GetResult());
+				VString s = att->GetModel()->GetName()+"."+att->GetAttibuteName();
+				err = ThrowBaseError(VE_DB4D_ENTITY_ATTRIBUTE_IS_FROM_ANOTHER_DATACLASS, s);
+			}
+			else if (!att->IsStatable())
+			{
+				err = att->ThrowError(VE_DB4D_WRONG_ATTRIBUTE_KIND);
+			}
+		}
+
+
+		if (err == VE_OK)
+		{
+			if (groupByList.empty())
+			{
+				VJSObject result(ioParms.GetContextRef());
+				err  = inSelection->Compute(attlist, result, context, ioParms.GetContextRef(), withdistinct);
+				if (err == VE_OK)
+				{
+					ioParms.ReturnValue(result);
+					okresult = true;
+				}
 			}
 			else
 			{
-				ioParms.SetException(func.GetException());
+				VString attlistString, groupbyString;
+				attlist.ToString(attlistString);
+				groupByList.ToString(groupbyString);
+				VJSFunction func("ReportingDB4D.report", ioParms.GetContextRef());
+				func.AddParam(VJSEntitySelection::CreateInstance(ioParms.GetContextRef(), inSelection));
+				func.AddParam(attlistString);
+				func.AddParam(groupbyString);
+				if (func.Call())
+				{
+					okresult = true;
+					ioParms.ReturnValue(func.GetResult());
+				}
+				else
+				{
+					ioParms.SetException(func.GetException());
+				}
 			}
-		}	
+		}
 	}
 	
 
@@ -4770,62 +4563,48 @@ void VJSEntitySelection::_compute(XBOX::VJSParms_callStaticFunction& ioParms, CD
 }
 
 
-static void _opersel(XBOX::VJSParms_callStaticFunction& ioParms, CDB4DSelection* inSelection, DB4DConjunction oper)
+static void _opersel(XBOX::VJSParms_callStaticFunction& ioParms, EntityCollection* inSelection, DB4DConjunction oper)
 {
 	bool okresult = false;
-	CDB4DBaseContext* context = GetDB4DBaseContextFromJSContext( ioParms, inSelection);
-	CDB4DEntityModel* model = inSelection->GetModel();
+	BaseTaskInfo* context = GetBaseTaskInfoFromJSContext( ioParms, inSelection);
+	EntityModel* model = inSelection->GetModel();
 	if (model == nil)
 		ThrowBaseError(VE_DB4D_NOT_AN_ENTITY_COLLECTION);
 	else
 	{
-		CDB4DSelection* otherSelection = ioParms.GetParamObjectPrivateData<VJSEntitySelection>(1);
+		EntityCollection* otherSelection = ioParms.GetParamObjectPrivateData<VJSEntitySelection>(1);
 		if (otherSelection == nil)
 			ThrowBaseError(VE_DB4D_NOT_AN_ENTITY_COLLECTION);
 		else
 		{
-			CDB4DEntityModel* otherModel = otherSelection->GetModel();
+			EntityModel* otherModel = otherSelection->GetModel();
 			if (otherModel == nil)
 				ThrowBaseError(VE_DB4D_NOT_AN_ENTITY_COLLECTION);
 			else
 			{
-				EntityModel* em = VImpCreator<EntityModel>::GetImpObject(model);
-				EntityModel* otherem = VImpCreator<EntityModel>::GetImpObject(otherModel);
+				EntityModel* em = model;
+				EntityModel* otherem = otherModel;
 				if (otherem->isExtendedFrom(em))
 				{
 					VError err = VE_OK;
-					Selection* sel  = VImpCreator<VDB4DSelection>::GetImpObject(inSelection)->GetSel();
-					Selection* othersel  = VImpCreator<VDB4DSelection>::GetImpObject(otherSelection)->GetSel();
-					BaseTaskInfo* xcontext = ConvertContext(context);
-					Bittab* b1 = sel->GenereBittab(xcontext, err);
-					Bittab* b2 = othersel->GenereBittab(xcontext, err);
-					if (b1 != nil && b2 != nil && err == VE_OK)
+					EntityCollection* result = nil;
+					switch (oper)
 					{
-						Bittab* bresult = b1->Clone(err);
-						if (err == VE_OK && bresult != nil)
-						{
-							okresult = true;
-							switch (oper)
-							{
-								case DB4D_OR:
-									bresult->Or(b2);
-									break;
-								case DB4D_And:
-									bresult->And(b2);
-									break;
-								case DB4D_Except:
-									bresult->moins(b2);
-									break;
-							}
-							Selection* newsel = new BitSel(sel->GetParentFile(), bresult);
-							CDB4DSelection* resultsel = new VDB4DSelection(VDBMgr::GetManager(), VImpCreator<VDB4DBase>::GetImpObject(inSelection->GetBaseRef()), em->GetMainTable(), newsel, em);
-							ioParms.ReturnValue(VJSEntitySelection::CreateInstance(ioParms.GetContextRef(), resultsel));
-							QuickReleaseRefCountable(resultsel);
-						}
-						QuickReleaseRefCountable(bresult);
+						case DB4D_OR:
+							result = inSelection->Or(otherSelection, err, context);
+							break;
+						case DB4D_And:
+							result = inSelection->And(otherSelection, err, context);
+							break;
+						case DB4D_Except:
+							result = inSelection->Minus(otherSelection, err, context);
+							break;
 					}
-					QuickReleaseRefCountable(b1);
-					QuickReleaseRefCountable(b2);
+					if (result != nil)
+					{
+						okresult = true;
+						ioParms.ReturnValue(VJSEntitySelection::CreateInstance(ioParms.GetContextRef(), result));
+					}
 				}
 				else
 					ThrowBaseError(VE_DB4D_COLLECTION_ON_INCOMPATIBLE_DATACLASSES);
@@ -4837,39 +4616,39 @@ static void _opersel(XBOX::VJSParms_callStaticFunction& ioParms, CDB4DSelection*
 		ioParms.ReturnNullValue();
 }
 
-void VJSEntitySelection::_and(XBOX::VJSParms_callStaticFunction& ioParms, CDB4DSelection* inSelection)
+void VJSEntitySelection::_and(XBOX::VJSParms_callStaticFunction& ioParms, EntityCollection* inSelection)
 {
 	_opersel(ioParms, inSelection, DB4D_And);
 }
 
-void VJSEntitySelection::_or(XBOX::VJSParms_callStaticFunction& ioParms, CDB4DSelection* inSelection)
+void VJSEntitySelection::_or(XBOX::VJSParms_callStaticFunction& ioParms, EntityCollection* inSelection)
 {
 	_opersel(ioParms, inSelection, DB4D_OR);
 }
 
-void VJSEntitySelection::_minus(XBOX::VJSParms_callStaticFunction& ioParms, CDB4DSelection* inSelection)
+void VJSEntitySelection::_minus(XBOX::VJSParms_callStaticFunction& ioParms, EntityCollection* inSelection)
 {
 	_opersel(ioParms, inSelection, DB4D_Except);
 }
 
 
 
-void VJSEntitySelection::_Count(VJSParms_callStaticFunction& ioParms, CDB4DSelection* inSelection)
+void VJSEntitySelection::_Count(VJSParms_callStaticFunction& ioParms, EntityCollection* inSelection)
 {
 	if (ioParms.CountParams() > 0)
 		computeStats(ioParms, inSelection, ioParms.GetBoolParam(2,L"distinct",L"") ? DB4D_Count_distinct : DB4D_Count);
 	else
-		ioParms.ReturnNumber(inSelection->CountRecordsInSelection( GetDB4DBaseContextFromJSContext( ioParms, inSelection)));
+		ioParms.ReturnNumber(inSelection->GetLength(GetBaseTaskInfoFromJSContext( ioParms, inSelection)));
 }
 
 
-void VJSEntitySelection::_getLength( XBOX::VJSParms_getProperty& ioParms, CDB4DSelection* inSelection)
+void VJSEntitySelection::_getLength( XBOX::VJSParms_getProperty& ioParms, EntityCollection* inSelection)
 {
-	ioParms.ReturnNumber(inSelection->CountRecordsInSelection( GetDB4DBaseContextFromJSContext( ioParms, inSelection)));
+	ioParms.ReturnNumber(inSelection->GetLength(GetBaseTaskInfoFromJSContext( ioParms, inSelection)));
 }
 
 
-void VJSEntitySelection::_getQueryPlan( XBOX::VJSParms_getProperty& ioParms, CDB4DSelection* inSelection)
+void VJSEntitySelection::_getQueryPlan( XBOX::VJSParms_getProperty& ioParms, EntityCollection* inSelection)
 {
 	const VValueBag* queryplan = inSelection->GetQueryPlan();
 	if (queryplan != nil)
@@ -4890,7 +4669,7 @@ void VJSEntitySelection::_getQueryPlan( XBOX::VJSParms_getProperty& ioParms, CDB
 }
 
 
-void VJSEntitySelection::_getQueryPath( XBOX::VJSParms_getProperty& ioParms, CDB4DSelection* inSelection)
+void VJSEntitySelection::_getQueryPath( XBOX::VJSParms_getProperty& ioParms, EntityCollection* inSelection)
 {
 	const VValueBag* queryplan = inSelection->GetQueryPath();
 	if (queryplan != nil)
@@ -4913,7 +4692,7 @@ void VJSEntitySelection::_getQueryPath( XBOX::VJSParms_getProperty& ioParms, CDB
 
 
 
-void VJSEntitySelection::_First(VJSParms_callStaticFunction& ioParms, CDB4DSelection* inSelection)
+void VJSEntitySelection::_First(VJSParms_callStaticFunction& ioParms, EntityCollection* inSelection)
 {
 	bool readonly = false;
 	if (ioParms.CountParams() > 0 && ioParms.IsStringParam(1))
@@ -4926,7 +4705,7 @@ void VJSEntitySelection::_First(VJSParms_callStaticFunction& ioParms, CDB4DSelec
 	else
 		ioParms.GetBoolParam(1, &readonly);
 	
-	CDB4DBaseContext* context = GetDB4DBaseContextFromJSContext( ioParms, inSelection);
+	BaseTaskInfo* context = GetBaseTaskInfoFromJSContext( ioParms, inSelection);
 	EntitySelectionIterator* iter = new EntitySelectionIterator(inSelection, readonly, true, context, inSelection->GetModel());
 	iter->First(context);
 	if (iter->GetCurRec(context) != nil)
@@ -4941,9 +4720,9 @@ void VJSEntitySelection::_First(VJSParms_callStaticFunction& ioParms, CDB4DSelec
 }
 
 
-void VJSEntitySelection::_OrderBy(VJSParms_callStaticFunction& ioParms, CDB4DSelection* inSelection)
+void VJSEntitySelection::_OrderBy(VJSParms_callStaticFunction& ioParms, EntityCollection* inSelection)
 {
-	CDB4DEntityModel* model = inSelection->GetModel();
+	EntityModel* model = inSelection->GetModel();
 	bool ok = false;
 	VError err = VE_OK;
 
@@ -4961,7 +4740,7 @@ void VJSEntitySelection::_OrderBy(VJSParms_callStaticFunction& ioParms, CDB4DSel
 		}
 		else
 		{
-			for (sLONG i = 1, nb = ioParms.CountParams(); i <= nb && err == VE_OK; i++)
+			for (sLONG i = 1, nb = (sLONG)ioParms.CountParams(); i <= nb && err == VE_OK; i++)
 			{
 				if (ioParms.IsStringParam(i))
 				{
@@ -4978,7 +4757,7 @@ void VJSEntitySelection::_OrderBy(VJSParms_callStaticFunction& ioParms, CDB4DSel
 				}
 				else
 				{
-					CDB4DEntityAttribute* att = ioParms.GetParamObjectPrivateData<VJSEntityAttribute>(i);
+					EntityAttribute* att = ioParms.GetParamObjectPrivateData<VJSEntityAttribute>(i);
 					if (att != nil)
 					{
 						if (i != 1)
@@ -4999,52 +4778,39 @@ void VJSEntitySelection::_OrderBy(VJSParms_callStaticFunction& ioParms, CDB4DSel
 				}
 			}
 		}
+		EntityCollection* newcol = nil;
 		if (!sortorder.IsEmpty())
 		{
-			ok = inSelection->SortSelection(sortorder, nil, GetDB4DBaseContextFromJSContext( ioParms, inSelection));
+			newcol = inSelection->SortCollection(sortorder, GetBaseTaskInfoFromJSContext( ioParms, inSelection), err, nil);
 		}
-		if (ok)
-			ioParms.ReturnValue(VJSEntitySelection::CreateInstance(ioParms.GetContextRef(), inSelection));
+		if (newcol != nil)
+			ioParms.ReturnValue(VJSEntitySelection::CreateInstance(ioParms.GetContextRef(), newcol));
 		else
 			ioParms.ReturnNullValue();
+		QuickReleaseRefCountable(newcol);
 	}
 }
 
 
-void VJSEntitySelection::_Add(VJSParms_callStaticFunction& ioParms, CDB4DSelection* inSelection)
+void VJSEntitySelection::_Add(VJSParms_callStaticFunction& ioParms, EntityCollection* inSelection)
 {
 	VError err = VE_OK;
 	if (ioParms.CountParams() > 0)
 	{
-		CDB4DBaseContext* context = GetDB4DBaseContextFromJSContext( ioParms, inSelection);
+		BaseTaskInfo* context = GetBaseTaskInfoFromJSContext( ioParms, inSelection);
 		bool atTheEnd = ioParms.GetBoolParam( 2, L"AtTheEnd", L"AnyWhere");
-		CDB4DSelection* sel = ioParms.GetParamObjectPrivateData<VJSEntitySelection>(1);
+		EntityCollection* sel = ioParms.GetParamObjectPrivateData<VJSEntitySelection>(1);
 		if (sel != nil)
 		{
-			for (sLONG i = 0, nb = sel->CountRecordsInSelection(nil); i < nb && err == VE_OK; i++)
-			{
-				err = inSelection->AddRecordID(sel->GetSelectedRecordID(i+1, nil), atTheEnd, context);
-			}
+			err = inSelection->AddCollection(sel, context, atTheEnd);
 		}
 		else
 		{
 			{
 				EntitySelectionIterator* seliter = ioParms.GetParamObjectPrivateData<VJSEntitySelectionIterator>(1);
-				if (seliter != nil)
+				if (seliter != nil && seliter->GetCurRec(context) != nil)
 				{
-					sLONG recid = seliter->GetCurRecID();
-					if (recid >= 0)
-						err = inSelection->AddRecordID(recid, atTheEnd, context);
-				}
-				else
-				{
-					if (ioParms.IsNumberParam(1))
-					{
-						sLONG recid;
-						ioParms.GetLongParam(1, &recid);
-						if (recid >= 0)
-							err = inSelection->AddRecordID(recid, atTheEnd, context);
-					}
+					err = inSelection->AddEntity(seliter->GetCurRec(context), atTheEnd);
 				}
 			}
 		}
@@ -5054,13 +4820,13 @@ void VJSEntitySelection::_Add(VJSParms_callStaticFunction& ioParms, CDB4DSelecti
 
 
 
-void VJSEntitySelection::_GetModel(VJSParms_callStaticFunction& ioParms, CDB4DSelection* inSelection)
+void VJSEntitySelection::_GetModel(VJSParms_callStaticFunction& ioParms, EntityCollection* inSelection)
 {
 	ioParms.ReturnValue(VJSEntityModel::CreateInstance(ioParms.GetContextRef(), inSelection->GetModel()));
 }
 
 
-void VJSEntitySelection::_Each(XBOX::VJSParms_callStaticFunction& ioParms, CDB4DSelection* inSelection)
+void VJSEntitySelection::_Each(XBOX::VJSParms_callStaticFunction& ioParms, EntityCollection* inSelection)
 {
 	VJSValue valfunc(ioParms.GetParamValue(1));
 	vector<VJSValue> params;
@@ -5079,14 +4845,18 @@ void VJSEntitySelection::_Each(XBOX::VJSParms_callStaticFunction& ioParms, CDB4D
 			VJSValue thisParamVal(ioParms.GetParamValue(2));
 			VJSObject thisParam(thisParamVal.GetObject());
 
-			CDB4DBaseContext* context = GetDB4DBaseContextFromJSContext( ioParms, inSelection);
+			BaseTaskInfo* context = GetBaseTaskInfoFromJSContext( ioParms, inSelection);
 			bool cont = true;
-			for (sLONG i = 1, nb = inSelection->CountRecordsInSelection(context); i <= nb && cont; i++)
+			for (sLONG i = 0, nb = inSelection->GetLength(context); i < nb && cont; i++)
 			{
-				CDB4DEntityRecord* erec = inSelection->LoadEntity(i, DB4D_Do_Not_Lock, context);
+				VError err = VE_OK;
+				EntityRecord* erec = inSelection->LoadEntity(i, context, err, DB4D_Do_Not_Lock);
 				if (erec != nil)
 				{
-					params[1].SetNumber(i-1);
+					VJSValue indiceVal2(ioParms.GetContextRef());
+					indiceVal2.SetNumber(i);
+					params[1] = indiceVal2;
+					//params[1].SetNumber(i);
 					EntitySelectionIterator* iter = new EntitySelectionIterator(erec, context);
 					VJSObject thisobj(VJSEntitySelectionIterator::CreateInstance(ioParms.GetContextRef(), iter));
 					params[0] = thisobj;
@@ -5110,45 +4880,38 @@ void VJSEntitySelection::_Each(XBOX::VJSParms_callStaticFunction& ioParms, CDB4D
 					}
 					erec->Release();
 				}
+				else
+				{
+					// generate an exception on damaged entity ?
+				}
 			}
 		}
 	}
 }
 
 
-void VJSEntitySelection::_dropEntities(XBOX::VJSParms_callStaticFunction& ioParms, CDB4DSelection* inSelection)
+void VJSEntitySelection::_dropEntities(XBOX::VJSParms_callStaticFunction& ioParms, EntityCollection* inSelection)
 {
-	bool okreturned = false;
-	CDB4DBaseContext* context = GetDB4DBaseContextFromJSContext( ioParms, inSelection);
-	CDB4DTable* tt = inSelection->GetBaseRef()->RetainNthTable(inSelection->GetTableRef(), context);
-	CDB4DSet* locked = nil;
-	if (tt != nil)
-		locked = tt->NewSet();
-	VError err = inSelection->DeleteRecords(context, locked, nil);
+	EntityCollection* locked = nil;
+	BaseTaskInfo* context = GetBaseTaskInfoFromJSContext( ioParms, inSelection);
+	VError err = inSelection->DropEntities(context, nil, &locked);
 	if (locked != nil)
-	{
-		VError err;
-		CDB4DSelection* result = locked->ConvertToSelection(err, context);
-		if (result != nil)
-			ioParms.ReturnValue(VJSEntitySelection::CreateInstance(ioParms.GetContextRef(), result));
-		QuickReleaseRefCountable(result);
-	}
-	QuickReleaseRefCountable(locked);
-	QuickReleaseRefCountable(tt);
-	if (!okreturned)
+		ioParms.ReturnValue(VJSEntitySelection::CreateInstance(ioParms.GetContextRef(), locked));
+	else
 		ioParms.ReturnNullValue();
+	QuickReleaseRefCountable(locked);
 }
 
 
-void VJSEntitySelection::_toString(XBOX::VJSParms_callStaticFunction& ioParms, CDB4DSelection* inSelection)
+void VJSEntitySelection::_toString(XBOX::VJSParms_callStaticFunction& ioParms, EntityCollection* inSelection)
 {
 	VString out;
-	CDB4DBaseContext* context = GetDB4DBaseContextFromJSContext( ioParms, inSelection);
-	CDB4DEntityModel* model = inSelection->GetModel();
+	BaseTaskInfo* context = GetBaseTaskInfoFromJSContext( ioParms, inSelection);
+	EntityModel* model = inSelection->GetModel();
 	if (model != nil)
 	{
 		sLONG count = 0;
-		sLONG selcount = inSelection->CountRecordsInSelection(context);
+		sLONG selcount = inSelection->GetLength(context);
 		ioParms.GetLongParam(1, &count);
 		if (count == 0)
 			count = 100;
@@ -5157,8 +4920,7 @@ void VJSEntitySelection::_toString(XBOX::VJSParms_callStaticFunction& ioParms, C
 		VError err = VE_OK;
 		for (sLONG i = 0; i < count; i++)
 		{
-			//CDB4DEntityRecord* rec = model->LoadEntity(inSelection->getrecordid(i), err, DB4D_Do_Not_Lock, context, false);
-			CDB4DEntityRecord* rec = inSelection->LoadEntity( i+1, DB4D_Do_Not_Lock, context, nil);
+			EntityRecord* rec = inSelection->LoadEntity( i, context, err, DB4D_Do_Not_Lock );
 			if (rec != nil)
 			{
 				VString s;
@@ -5173,26 +4935,24 @@ void VJSEntitySelection::_toString(XBOX::VJSParms_callStaticFunction& ioParms, C
 }
 
 
-void VJSEntitySelection::_distinctValues(XBOX::VJSParms_callStaticFunction& ioParms, CDB4DSelection* inSelection)
+void VJSEntitySelection::_distinctValues(XBOX::VJSParms_callStaticFunction& ioParms, EntityCollection* inSelection)
 {
-	CDB4DBaseContext* context = GetDB4DBaseContextFromJSContext( ioParms, inSelection);
-	CDB4DEntityModel* model = inSelection->GetModel();
-	CDB4DEntityAttribute* att = ioParms.GetParamObjectPrivateData<VJSEntityAttribute>(1);
+	BaseTaskInfo* context = GetBaseTaskInfoFromJSContext( ioParms, inSelection);
+	EntityModel* model = inSelection->GetModel();
+	EntityAttribute* att = ioParms.GetParamObjectPrivateData<VJSEntityAttribute>(1);
 	bool okresult = false;
 	if (att == nil)
 	{
 		VString s;
 		ioParms.GetStringParam(1, s);
-		att = model->GetAttribute(s);
+		att = model->getAttribute(s);
 	}
-	EntityAttribute* xatt = nil;
 	if (att != nil)
 	{
-		xatt = VImpCreator<EntityAttribute>::GetImpObject(att);
-		EntityModel* em = VImpCreator<EntityModel>::GetImpObject(model);
-		if (xatt->GetOwner() != em)
+		EntityModel* em = dynamic_cast<EntityModel*>(model);
+		if (att->GetOwner() != em)
 		{
-			VString s = xatt->GetOwner()->GetName()+"."+xatt->GetAttibuteName();
+			VString s = att->GetOwner()->GetName()+"."+att->GetAttibuteName();
 			ThrowBaseError(VE_DB4D_ENTITY_ATTRIBUTE_IS_FROM_ANOTHER_DATACLASS, s);
 		}
 	}
@@ -5201,46 +4961,27 @@ void VJSEntitySelection::_distinctValues(XBOX::VJSParms_callStaticFunction& ioPa
 		EntityAttributeKind kind = att->GetAttributeKind();
 		if (kind == eattr_storage || kind == eattr_computedField || kind == eattr_alias)
 		{
-			JSCollectionManager collection(ioParms.GetContextRef());
+			JSCollectionManager collection(ioParms.GetContextRef(), att->isSimpleDate());
 			collection.SetNumberOfColumn(1);
-			VError err = inSelection->GetDistinctValues(att, collection, context, nil);
+			VCompareOptions options;
+			options.SetDiacritical(true);
+			
+			VError err = inSelection->GetDistinctValues(att, collection, context, nil, options);
 			if (err == VE_OK)
 			{
 				okresult = true;
 				VJSArray result(collection.getArrayRef(1));
 				ioParms.ReturnValue(result);
 			}
+			
 		}
 		else
-			xatt->ThrowError(VE_DB4D_WRONG_ATTRIBUTE_KIND);
+			att->ThrowError(VE_DB4D_WRONG_ATTRIBUTE_KIND);
 
-		/*
-		EntityAttribute* xatt = VImpCreator<EntityAttribute>::GetImpObject(att);
-		sLONG fieldpos = xatt->GetFieldPos();
-		if (fieldpos > 0)
-		{
-			CDB4DTable* table = model->RetainTable();
-			if (table != nil)
-			{
-				CDB4DField* field = table->RetainNthField(fieldpos, context);
-				if (field != nil)
-				{
-					JSCollectionManager collection(ioParms.GetContextRef());
-					collection.SetNumberOfColumn(1);
-					VError err = inSelection->GetDistinctValues(field, collection, context, nil);
-					if (err == VE_OK)
-					{
-						okresult = true;
-						VJSArray result(collection.getArrayRef(1));
-						ioParms.ReturnValue(result);
-					}
-					field->Release();
-				}
-				table->Release();
-			}
-		}
-		*/
 	}
+	else
+		vThrowError(VE_JVSC_WRONG_PARAMETER_TYPE_ATTRIBUTE, "1");
+
 	if (!okresult)
 		ioParms.ReturnNullValue();
 }
@@ -5278,13 +5019,12 @@ void buildAttributeListFromParams(XBOX::VJSParms_callStaticFunction& ioParms, sL
 	{
 		while (StartParam <= ioParms.CountParams())
 		{
-			CDB4DEntityAttribute* att = ioParms.GetParamObjectPrivateData<VJSEntityAttribute>(StartParam);
+			EntityAttribute* att = ioParms.GetParamObjectPrivateData<VJSEntityAttribute>(StartParam);
 			if (att != nil)
 			{
-				EntityAttribute* xatt = VImpCreator<EntityAttribute>::GetImpObject(att);
-				if (xatt->GetOwner() == model)
+				if (att->GetOwner() == model)
 				{
-					outList.AddAttribute(xatt, nil);
+					outList.AddAttribute(att, nil);
 				}
 				StartParam++;
 			}
@@ -5296,12 +5036,12 @@ void buildAttributeListFromParams(XBOX::VJSParms_callStaticFunction& ioParms, sL
 }
 
 
-void VJSEntitySelection::_toArray(XBOX::VJSParms_callStaticFunction& ioParms, CDB4DSelection* inSelection)
+void VJSEntitySelection::_toArray(XBOX::VJSParms_callStaticFunction& ioParms, EntityCollection* inSelection)
 {
 	bool okresult = false;
-	CDB4DBaseContext* context = GetDB4DBaseContextFromJSContext( ioParms, inSelection);
-	CDB4DEntityModel* model = inSelection->GetModel();
-	EntityModel* xmodel = VImpCreator<EntityModel>::GetImpObject(model);
+	BaseTaskInfo* context = GetBaseTaskInfoFromJSContext( ioParms, inSelection);
+	EntityModel* model = inSelection->GetModel();
+	EntityModel* xmodel = dynamic_cast<EntityModel*>(model);
 	EntityAttributeSortedSelection attlist(xmodel);
 	EntityAttributeSelection expand(xmodel);
 	EntityAttributeSortedSelection sortingatts(xmodel);
@@ -5311,7 +5051,7 @@ void VJSEntitySelection::_toArray(XBOX::VJSParms_callStaticFunction& ioParms, CD
 	VError err = VE_OK;
 	VJSObject objfunc(ioParms.GetContextRef());
 	bool withfunc = false;
-	BaseTaskInfo* basecontext = ConvertContext(context);
+	//BaseTaskInfo* basecontext = ConvertContext(context);
 	
 	VJSObject thisParam(ioParms.GetContextRef());
 	VJSValue valfunc(ioParms.GetParamValue(curparam));
@@ -5334,11 +5074,11 @@ void VJSEntitySelection::_toArray(XBOX::VJSParms_callStaticFunction& ioParms, CD
 	}
 
 	if (!withfunc)
-		buildAttributeListFromParams(ioParms, curparam, xmodel, attlist, expand, sortingatts, basecontext);
+		buildAttributeListFromParams(ioParms, curparam, xmodel, attlist, expand, sortingatts, context);
 
 	size_t newparam = curparam;
 	bool withkey = ioParms.GetBoolParam(curparam, "withKey", "withoutKey", &newparam);
-	curparam = newparam;
+	curparam = (sLONG)newparam;
 
 	if (ioParms.IsNumberParam(curparam))
 	{
@@ -5353,7 +5093,7 @@ void VJSEntitySelection::_toArray(XBOX::VJSParms_callStaticFunction& ioParms, CD
 
 	VJSArray arr(ioParms.GetContextRef());
 
-	sLONG count = inSelection->CountRecordsInSelection(context);
+	sLONG count = inSelection->GetLength(context);
 	if (startvalue < 0)
 		startvalue = 0;
 	count = count-startvalue;
@@ -5369,10 +5109,13 @@ void VJSEntitySelection::_toArray(XBOX::VJSParms_callStaticFunction& ioParms, CD
 		bool cont = true;
 		for (sLONG i = startvalue; i < lastvalue && cont; i++, curindice++)
 		{
-			CDB4DEntityRecord* erec = inSelection->LoadEntity(i+1, DB4D_Do_Not_Lock, context);
+			EntityRecord* erec = inSelection->LoadEntity(i, context, err, DB4D_Do_Not_Lock);
 			if (erec != nil)
 			{
-				params[1].SetNumber(curindice);
+				VJSValue indiceVal2(ioParms.GetContextRef());
+				indiceVal2.SetNumber(curindice);
+				params[1] = indiceVal2;
+				//params[1].SetNumber(curindice);
 				EntitySelectionIterator* iter = new EntitySelectionIterator(erec, context);
 				VJSObject thisobj(VJSEntitySelectionIterator::CreateInstance(ioParms.GetContextRef(), iter));
 				params[0] = thisobj;
@@ -5391,8 +5134,7 @@ void VJSEntitySelection::_toArray(XBOX::VJSParms_callStaticFunction& ioParms, CD
 	}
 	else
 	{
-		Selection* sel = VImpCreator<VDB4DSelection>::GetImpObject(inSelection)->GetSel();
-		err = SelToJSObject(basecontext, arr, xmodel, sel, attlist, &expand, &sortingatts, withkey, false, startvalue, nbvalue);
+		arr = inSelection->ToJsArray(context, ioParms.GetContextRef(), attlist, &expand, &sortingatts, withkey, false, startvalue, nbvalue, err);
 		if (err != VE_OK)
 			okresult = false;
 	}
@@ -5405,60 +5147,53 @@ void VJSEntitySelection::_toArray(XBOX::VJSParms_callStaticFunction& ioParms, CD
 }
 
 
-void VJSEntitySelection::_Query(XBOX::VJSParms_callStaticFunction& ioParms, CDB4DSelection* inSelection)
+void VJSEntitySelection::_Query(XBOX::VJSParms_callStaticFunction& ioParms, EntityCollection* inSelection)
 {
-	CDB4DEntityModel* model = inSelection->GetModel();
+	EntityModel* model = inSelection->GetModel();
 	QueryJS(ioParms, model, inSelection);
 }
 
 
-void VJSEntitySelection::_Find(XBOX::VJSParms_callStaticFunction& ioParms, CDB4DSelection* inSelection)
+void VJSEntitySelection::_Find(XBOX::VJSParms_callStaticFunction& ioParms, EntityCollection* inSelection)
 {
-	CDB4DEntityModel* model = inSelection->GetModel();
+	EntityModel* model = inSelection->GetModel();
 	FindJS(ioParms, model, inSelection);
 }
 
 
-void VJSEntitySelection::_sum(XBOX::VJSParms_callStaticFunction& ioParms, CDB4DSelection* inSelection)
+void VJSEntitySelection::_sum(XBOX::VJSParms_callStaticFunction& ioParms, EntityCollection* inSelection)
 {
 	computeStats(ioParms, inSelection, ioParms.GetBoolParam(2,L"distinct",L"") ? DB4D_Sum_distinct : DB4D_Sum);
 }
 
 
-void VJSEntitySelection::_min(XBOX::VJSParms_callStaticFunction& ioParms, CDB4DSelection* inSelection)
+void VJSEntitySelection::_min(XBOX::VJSParms_callStaticFunction& ioParms, EntityCollection* inSelection)
 {
 	computeStats(ioParms, inSelection, DB4D_Min);
 }
 
 
-void VJSEntitySelection::_max(XBOX::VJSParms_callStaticFunction& ioParms, CDB4DSelection* inSelection)
+void VJSEntitySelection::_max(XBOX::VJSParms_callStaticFunction& ioParms, EntityCollection* inSelection)
 {
 	computeStats(ioParms, inSelection, DB4D_Max);
 }
 
 
-void VJSEntitySelection::_average(XBOX::VJSParms_callStaticFunction& ioParms, CDB4DSelection* inSelection)
+void VJSEntitySelection::_average(XBOX::VJSParms_callStaticFunction& ioParms, EntityCollection* inSelection)
 {
 	computeStats(ioParms, inSelection, ioParms.GetBoolParam(2,L"distinct",L"") ? DB4D_Average_distinct : DB4D_Average);
 }
 
 
-void VJSEntitySelection::_toJSON(XBOX::VJSParms_callStaticFunction& ioParms, CDB4DSelection* inSelection)
+void VJSEntitySelection::_toJSON(XBOX::VJSParms_callStaticFunction& ioParms, EntityCollection* inSelection)
 {
-	CDB4DBaseContext* context = GetDB4DBaseContextFromJSContext( ioParms, inSelection);
-	CDB4DEntityModel* model = inSelection->GetModel();
-	EntityModel* xmodel = VImpCreator<EntityModel>::GetImpObject(model);
-	Selection* sel = VImpCreator<VDB4DSelection>::GetImpObject(inSelection)->GetSel();
+	BaseTaskInfo* context = GetBaseTaskInfoFromJSContext( ioParms, inSelection);
+	EntityModel* model = inSelection->GetModel();
+	EntityAttributeSortedSelection atts(model);
+	VError err = VE_OK;
 	
-	VJSArray obj(ioParms.GetContextRef());
-	EntityAttributeSortedSelection atts(xmodel);
-	SelToJSObject(ConvertContext(context), obj, xmodel, sel, atts, nil, nil, true, false, -1, -1);
-	/*
-	VJSJSON json(ioParms.GetContextRef());
-	VString s;
-	json.Stringify(obj, s);
-	ioParms.ReturnString(s);
-	*/
+	VJSArray obj(inSelection->ToJsArray(context, ioParms.GetContextRef(), atts, nil, nil, true, false, -1, -1, err));
+	
 	ioParms.ReturnValue(obj);
 }
 
@@ -5648,6 +5383,52 @@ void VJSCacheManager::GetDefinition( ClassDefinition& outDefinition)
 	static functions for global object class
 
 */
+void do_OpenRemoteStore(VJSParms_callStaticFunction& ioParms, VJSGlobalObject*)
+{
+	VError err = VE_OK;
+	if (ioParms.IsStringParam(1))
+	{
+		VJSONObject* params = nil;
+		VString url, username, password;
+		if (ioParms.IsObjectParam(1))
+		{
+			VJSObject objparams(ioParms.GetContextRef());
+			ioParms.GetParamObject(1, objparams);
+			VJSONValue inutile;
+			((VJSValue)objparams).GetJSONValue(inutile);
+			params = RetainRefCountable(inutile.GetObject());
+		}
+		else
+		{
+			ioParms.GetStringParam(1, url);
+			ioParms.GetStringParam(2, username);
+			ioParms.GetStringParam(3, password);
+			params = new VJSONObject();
+			params->SetPropertyAsString("hostname", url);
+			params->SetPropertyAsString("user", username);
+			params->SetPropertyAsString("password", password);
+		}
+		VFolder* folder = VDBMgr::GetManager()->RetainResourceFolder();
+		VFile xfile(*folder, "remote");
+		CDB4DBase* xbd = VDBMgr::GetManager()->CreateBase(xfile, DB4D_Create_Empty_Catalog | DB4D_Create_As_XML_Definition | DB4D_Create_No_Respart | DB4D_Create_WithSeparateIndexSegment, XBOX::VTask::GetCurrentIntlManager(), &err);
+		Base4D* bd = dynamic_cast<VDB4DBase*>(xbd)->GetBase();
+
+		EntityModelCatalog* remotecat = EntityModelCatalog::NewCatalog(kRemoteCatalogFactory, bd, params, err);
+		if (remotecat == nil)
+		{
+			// throw err;
+		}
+		else
+		{
+			err = bd->AddOutsideCatalog(remotecat);
+			ioParms.ReturnValue(VJSDatabase::CreateInstance(ioParms.GetContextRef(), bd));
+		}
+
+		QuickReleaseRefCountable(xbd);
+	}
+}
+
+
 void do_OpenBase(VJSParms_callStaticFunction& ioParms, VJSGlobalObject*)
 {
 	XBOX::VFile* structfile = ioParms.RetainFileParam( 1);
@@ -5669,7 +5450,7 @@ void do_OpenBase(VJSParms_callStaticFunction& ioParms, VJSGlobalObject*)
 		
 		if (datafile != NULL)
 		{
-			CDB4DManager* db4D = XBOX::VComponentManager::RetainComponentOfType<CDB4DManager>();
+			CDB4DManager* db4D = CDB4DManager::RetainManager();
 			XBOX::VError err = XBOX::VE_OK;
 			CDB4DBase* newdb = db4D->OpenBase(*structfile, DB4D_Open_WithSeparateIndexSegment | DB4D_Open_As_XML_Definition | DB4D_Open_No_Respart, &err);
 			if (err == XBOX::VE_OK)
@@ -5683,7 +5464,7 @@ void do_OpenBase(VJSParms_callStaticFunction& ioParms, VJSGlobalObject*)
 				QuickReleaseRefCountable(dbcontext);
 				if (err == XBOX::VE_OK)
 				{
-					ioParms.ReturnValue(VJSDatabase::CreateInstance(ioParms.GetContextRef(), newdb));
+					ioParms.ReturnValue(VJSDatabase::CreateInstance(ioParms.GetContextRef(), dynamic_cast<VDB4DBase*>(newdb)->GetBase()));
 				}
 			}
 			QuickReleaseRefCountable( newdb);
@@ -5717,7 +5498,7 @@ void do_Open4DBase(VJSParms_callStaticFunction& ioParms, VJSGlobalObject*)
 
 		if (datafile != NULL)
 		{
-			CDB4DManager* db4D = XBOX::VComponentManager::RetainComponentOfType<CDB4DManager>();
+			CDB4DManager* db4D = CDB4DManager::RetainManager();
 			XBOX::VError err = XBOX::VE_OK;
 			CDB4DBase* newdb = db4D->OpenBase(*structfile, DB4D_Open_WithSeparateIndexSegment | DB4D_Open_BuildAutoEm, &err);
 			if (err == XBOX::VE_OK)
@@ -5731,7 +5512,7 @@ void do_Open4DBase(VJSParms_callStaticFunction& ioParms, VJSGlobalObject*)
 				QuickReleaseRefCountable(dbcontext);
 				if (err == XBOX::VE_OK)
 				{
-					ioParms.ReturnValue(VJSDatabase::CreateInstance(ioParms.GetContextRef(), newdb));
+					ioParms.ReturnValue(VJSDatabase::CreateInstance(ioParms.GetContextRef(), dynamic_cast<VDB4DBase*>(newdb)->GetBase()));
 				}
 			}
 			QuickReleaseRefCountable( newdb);
@@ -5765,7 +5546,7 @@ void do_CreateBase(VJSParms_callStaticFunction& ioParms, VJSGlobalObject*)
 		
 		if (datafile != NULL)
 		{
-			CDB4DManager* db4D = XBOX::VComponentManager::RetainComponentOfType<CDB4DManager>();
+			CDB4DManager* db4D = CDB4DManager::RetainManager();
 			XBOX::VError err = XBOX::VE_OK;
 			CDB4DBase* newdb = db4D->CreateBase(*structfile, DB4D_Create_As_XML_Definition | DB4D_Create_No_Respart | DB4D_Create_WithSeparateIndexSegment, XBOX::VTask::GetCurrentIntlManager(), &err);
 			if (err == XBOX::VE_OK)
@@ -5779,7 +5560,7 @@ void do_CreateBase(VJSParms_callStaticFunction& ioParms, VJSGlobalObject*)
 				QuickReleaseRefCountable(dbcontext);
 				if (err == XBOX::VE_OK)
 				{
-					ioParms.ReturnValue(VJSDatabase::CreateInstance(ioParms.GetContextRef(), newdb));
+					ioParms.ReturnValue(VJSDatabase::CreateInstance(ioParms.GetContextRef(), dynamic_cast<VDB4DBase*>(newdb)->GetBase()));
 				}
 			}
 			QuickReleaseRefCountable(newdb);
@@ -5794,13 +5575,26 @@ void do_CreateBase(VJSParms_callStaticFunction& ioParms, VJSGlobalObject*)
 
 void do_GetBase(VJSParms_callStaticFunction& ioParms, VJSGlobalObject*)
 {
+	VString basename;
+	if (ioParms.GetStringParam(1, basename))
+	{
+		Base4D* db = VDBMgr::GetManager()->RetainBase4DByName(basename);
+		if (db != NULL)
+		{
+			ioParms.ReturnValue(VJSDatabase::CreateInstance(ioParms.GetContextRef(), db));
+			db->Release();
+		}
+		QuickReleaseRefCountable(db);
+	}
+
+	/*
 	XBOX::VString basename;
 	if (ioParms.IsNumberParam(1))
 	{
-		CDB4DManager* db4D = XBOX::VComponentManager::RetainComponentOfType<CDB4DManager>();
+		CDB4DManager* db4D = CDB4DManager::RetainManager();
 		sLONG i = 0;
 		ioParms.GetLongParam(1, &i);
-		CDB4DBase* db = db4D->RetainNthBase(i);
+		Base4D* db = db4D->RetainNthBase(i);
 		if (db != NULL)
 		{
 			ioParms.ReturnValue(VJSDatabase::CreateInstance(ioParms.GetContextRef(), db));
@@ -5810,10 +5604,10 @@ void do_GetBase(VJSParms_callStaticFunction& ioParms, VJSGlobalObject*)
 	}
 	else if (ioParms.GetStringParam(1, basename))
 	{
-		CDB4DManager* db4D = XBOX::VComponentManager::RetainComponentOfType<CDB4DManager>();
+		CDB4DManager* db4D = CDB4DManager::RetainManager();
 		for (sLONG i = 1, nb = db4D->CountBases(); i <= nb; i++)
 		{
-			CDB4DBase* db = db4D->RetainNthBase(i);
+			Base4D* db = db4D->RetainNthBase(i);
 			if (db != NULL)
 			{
 				XBOX::VString name;
@@ -5825,6 +5619,7 @@ void do_GetBase(VJSParms_callStaticFunction& ioParms, VJSGlobalObject*)
 		}
 		XBOX::ReleaseRefCountable( &db4D);
 	}
+	*/
 }
 
 
@@ -5859,6 +5654,7 @@ void CreateGlobalDB4DClasses()
 	VJSGlobalClass::AddStaticFunction( "openDataStore", VJSGlobalClass::js_callStaticFunction<do_OpenBase>, JS4D::PropertyAttributeNone);
 	VJSGlobalClass::AddStaticFunction( "createDataStore", VJSGlobalClass::js_callStaticFunction<do_CreateBase>, JS4D::PropertyAttributeNone);
 	//VJSGlobalClass::AddStaticFunction( "openRemoteBase", VJSGlobalClass::js_callStaticFunction<do_OpenRemoteBase>, JS4D::PropertyAttributeNone); // DataBase : OpenRemoteBase(string : servername, long : portnum);
+	VJSGlobalClass::AddStaticFunction( "openRemoteStore", VJSGlobalClass::js_callStaticFunction<do_OpenRemoteStore>, JS4D::PropertyAttributeNone);
 	VJSGlobalClass::AddStaticFunction( "getDataStore", VJSGlobalClass::js_callStaticFunction<do_GetBase>, JS4D::PropertyAttributeNone);
 
 	VJSGlobalClass::AddStaticFunction( "getCacheManager", VJSGlobalClass::js_callStaticFunction<do_GetCacheManager>, JS4D::PropertyAttributeNone);

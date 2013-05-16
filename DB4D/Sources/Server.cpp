@@ -302,7 +302,7 @@ enum VConnectionHandler::E_WORK_STATUS DB4DConnectionHandler::Handle ( VError& o
 									extraData->ReadFromStream( &stream);
 									if (stream.CloseReading() == VE_OK)
 									{
-										VImpCreator<VDB4DContext>::GetImpObject(fContext)->SetExtraData( extraData);
+										dynamic_cast<VDB4DContext*>(fContext)->SetExtraData( extraData);
 									}
 								}
 								ReleaseRefCountable( &extraData);
@@ -351,7 +351,7 @@ enum VConnectionHandler::E_WORK_STATUS DB4DConnectionHandler::Handle ( VError& o
 
 	if (err == VE_OK)
 	{
-		VDB4DContext *context = VImpCreator<VDB4DContext>::GetImpObject(fContext);
+		VDB4DContext *context = dynamic_cast<VDB4DContext*>(fContext);
 		if (context != nil)
 		{
 			const VValueBag *extradata = context->GetExtraData();
@@ -372,12 +372,16 @@ enum VConnectionHandler::E_WORK_STATUS DB4DConnectionHandler::Handle ( VError& o
 		
 		bool postpone = false;
 
+		// There are no LOGOUT or QUIT commands in the protocol so a client simply closes its socket and the server receives the "connection broken" error.
+		// Let's suppress it here.
+		StErrorContextInstaller		errorContext ( VE_SRVR_CONNECTION_BROKEN, VE_OK );
+
 		TaskState state = currentTask->GetState();
 		while (state != TS_DYING && state != TS_DEAD && err == VE_OK && !fShouldStop && !postpone) 
 		{
 			sWORD header[3];
 			err = fEndPoint->ReadExactly(&header[0], 6);
-			//xbox_assert ( err == VE_OK && err != VE_SRVR_CONNECTION_BROKEN );
+			xbox_assert ( err == VE_OK || err == VE_SRVR_CONNECTION_BROKEN ); // Assert dialog on all other types of errors
 			if (err == VE_OK)
 			{
 				sWORD reqid = header[0];
@@ -991,7 +995,7 @@ VTCPEndPoint* DB4DClientSession::Restore ( VTCPEndPoint& inEndPoint, VError& out
 				{
 					ByteSwap(&tagretour);
 					if (tagretour != kTagRetourOpenConnection)
-						err = VE_DB4D_INVALID_PARAMETER;
+						err = VE_SRVR_SESSION_PROTOCOL_FAILED;
 				}
 			}
 		}
@@ -1192,7 +1196,7 @@ IStreamRequest*	DB4DNetManager::CreateRequest( CDB4DBaseContext *inContext, sWOR
 									err = endpoint->WriteExactly((void*)xid, xlen);
 									
 									// write context extra data if any
-									const VValueBag *extra = (parent == nil) ? nil : VImpCreator<VDB4DContext>::GetImpObject(parent)->GetExtraData();
+									const VValueBag *extra = (parent == nil) ? nil : dynamic_cast<VDB4DContext*>(parent)->GetExtraData();
 									if (extra != nil)
 									{
 										VPtrStream stream;
@@ -1242,7 +1246,7 @@ IStreamRequest*	DB4DNetManager::CreateRequest( CDB4DBaseContext *inContext, sWOR
 								{
 									VTaskLock lock(&fMutex);
 									fEndPointsByContext.insert(make_pair(inContext, endpoint));
-									VImpCreator<BaseTaskInfo>::GetImpObject(inContext)->SetRemoteConnection(this);
+									dynamic_cast<BaseTaskInfo*>(inContext)->SetRemoteConnection(this);
 								}
 								{
 									VTaskLock lock(&sMutex);
@@ -1956,7 +1960,7 @@ VError RemoteRecordCache::RetainCacheRecord(RecIDType inRecIndex, CDB4DRecord* &
 			if (tt != nil)
 			{
 				sel = new PetiteSel(base, fContext->GetEncapsuleur(), tablenum);
-				xsel = new VDB4DSelection(VDBMgr::GetManager(), VImpCreator<VDB4DBase>::GetImpObject(xbase), tt, sel);
+				xsel = new VDB4DSelection(VDBMgr::GetManager(), dynamic_cast<VDB4DBase*>(xbase), tt, sel);
 			}
 
 			if (found == row->fRelatedRecords.end())

@@ -24,7 +24,6 @@ class DeclarationVisitor : public Visitor
 {
 private:
 	JavaScriptParserDelegate *fDelegate;
-	void *fDelegateCookie;
 	std::vector< Symbols::ISymbol * > fOwnershipStack;
 	ISymbolTable *fSymTable;
 	Symbols::IFile *fOwningFile;
@@ -81,16 +80,18 @@ private:
 	void SetSymbolTypesFromScriptDoc(Symbols::ISymbol* inSym, bool inAddToUpdateList = true, bool inUpdateSymbol = false);
 	void SetSymbolPrototypes(Symbols::ISymbol* inSym, const VectorOfVString& inTypes, bool inAddToUpdateList, bool inUpdateSymbol);
 	void SetSymbolClassKindFromScriptDoc(Symbols::ISymbol* inSym);
+	
+	Symbols::ISymbol* RetainSymbolPrototype(const VString& inSymbolName, const ESymbolFileExecContext& inExecContext);
 
 public:
-	DeclarationVisitor( ISymbolTable *inSymTable, Symbols::IFile *inFile, JavaScriptParserDelegate *inDelegate, void *inDelegateCookie );
+	DeclarationVisitor( ISymbolTable *inSymTable, Symbols::IFile *inFile, JavaScriptParserDelegate *inDelegate );
 	virtual ~DeclarationVisitor();
 
 	ISymbolTable *GetSymbolTable() { return fSymTable; }
 };
 
-DeclarationVisitor::DeclarationVisitor( ISymbolTable *inSymTable, Symbols::IFile *inFile, JavaScriptParserDelegate *inDelegate, void *inDelegateCookie ) : 
-fSymTable( inSymTable ), fOwningFile( inFile ), fDelegate( inDelegate ), fDelegateCookie( inDelegateCookie )
+DeclarationVisitor::DeclarationVisitor( ISymbolTable *inSymTable, Symbols::IFile *inFile, JavaScriptParserDelegate *inDelegate ) : 
+fSymTable( inSymTable ), fOwningFile( inFile ), fDelegate( inDelegate )
 {
 	// The global symbol table is always the root of our ownership stack
 	fOwnershipStack.push_back( NULL );
@@ -98,8 +99,9 @@ fSymTable( inSymTable ), fOwningFile( inFile ), fDelegate( inDelegate ), fDelega
 	if (fDelegate) {
 		// If we have a delegate, ask them for the context symbol for adding new declarations.
 		// We will add this to the ownership list after the global symbol table.
-		Symbols::ISymbol *contextSymbol = fDelegate->GetDeclarationContext( fDelegateCookie );
-		if (contextSymbol)	fOwnershipStack.push_back( contextSymbol );
+		Symbols::ISymbol *contextSymbol = fDelegate->GetDeclarationContext( );
+		if (contextSymbol)
+			fOwnershipStack.push_back( contextSymbol );
 	}
 }
 
@@ -152,8 +154,9 @@ void DeclarationVisitor::GetLikeNamedSubSymbols( Symbols::ISymbol *inOwner, cons
 
 	// Check the symbol table too
 	if ( !inOwner || (inOwner && inOwner->HasID() ) )
-	{	
-		std::vector< Symbols::ISymbol * > syms = fSymTable->GetSymbolsByName( inOwner, inText );
+	{
+        Symbols::IFile* pOwnerFile = (inText == "exports") ? this->fOwningFile : NULL;
+		std::vector< Symbols::ISymbol * > syms = fSymTable->GetSymbolsByName( inOwner, inText, pOwnerFile );
 		for (std::vector< Symbols::ISymbol * >::iterator iter = syms.begin(); iter != syms.end(); ++iter)
 			outSubSymbols.push_back( *iter );
 	}
@@ -197,7 +200,7 @@ bool DeclarationVisitor::VisitReturnStatementNode( ReturnStatementNode *inNode )
 	// symbol, then we want to replace it if we've been given futher information.  However, if we
 	// have not been given any return type information from this call though, we will retain the
 	// original data.
-	Symbols::ISymbol *refFakeSym = const_cast< Symbols::ISymbol * >( fakeSym->Dereference() );
+	Symbols::ISymbol *refFakeSym = const_cast< Symbols::ISymbol * >( fakeSym->RetainReferencedSymbol() );
 	
 	functionOwner->AddReturnTypes( refFakeSym->GetPrototypes() );
 	fakeSym->Release();
@@ -726,7 +729,7 @@ bool DeclarationVisitor::QualifiedLookup( class Node *inNode, Symbols::ISymbol *
 
 		// So let's look for the symbol on our left-hand side
 		std::vector< Symbols::ISymbol * > lookup_list;
-		lookup_list.push_back( const_cast< Symbols::ISymbol * >( lhsSym->Dereference() ) );
+		lookup_list.push_back( const_cast< Symbols::ISymbol * >( lhsSym->RetainReferencedSymbol() ) );
 		Symbols::ISymbol *temp = lookup_list.back();
 		while (!lookup_list.empty()) {
 			Symbols::ISymbol *lookup = lookup_list.back();
@@ -739,7 +742,7 @@ bool DeclarationVisitor::QualifiedLookup( class Node *inNode, Symbols::ISymbol *
 			{
 				// We only care about public properties, since this is a qualified lookup
 				if (sym->IsPublicPropertyKind() )
-					*outSymbol = const_cast< Symbols::ISymbol * >( sym->Dereference() );
+					*outSymbol = const_cast< Symbols::ISymbol * >( sym->RetainReferencedSymbol() );
 				sym->Release();
 			}
 
@@ -851,7 +854,7 @@ void DeclarationVisitor::CreateNewInstance( Symbols::ISymbol *inLHS, Symbols::IS
 	// function expression and we want that function expression), so we need to dereference the lhs.
 	if ( NULL != inLHS && NULL != inOfThisType )
 	{
-		Symbols::ISymbol *refOfThisType =  const_cast< Symbols::ISymbol * >( inOfThisType->Dereference() );
+		Symbols::ISymbol *refOfThisType =  const_cast< Symbols::ISymbol * >( inOfThisType->RetainReferencedSymbol() );
 
 		// Internal instantiation
 		if ( ! inLevel || refOfThisType->GetName() != CVSTR("Function") )
@@ -1001,10 +1004,10 @@ Symbols::ISymbol *DeclarationVisitor::GetSymbolFromLeftHandSideNode( class LeftH
 			//	sym->AddAuxillaryKindInformation(Symbols::ISymbol::kKindUndefined);
 			std::vector< Symbols::ISymbol * >::const_iterator it = find(fSymbolsToAdd.begin(), fSymbolsToAdd.end(), sym);
 			if (it != fSymbolsToAdd.end() && inNode->GetLineNumber() == sym->GetLineNumber())
-				sym->AddAuxillaryKindInformation(Symbols::ISymbol::kKindUndefined);
+                ( sym->GetName() == "exports" ) ? sym->RemoveAuxillaryKindInformation(Symbols::ISymbol::kKindUndefined) : sym->AddAuxillaryKindInformation(Symbols::ISymbol::kKindUndefined);
 
 			// This is the point where we need to dereference what this symbol may be referencing
-			Symbols::ISymbol *refSym = const_cast< Symbols::ISymbol * >( sym->Dereference() );
+			Symbols::ISymbol *refSym = const_cast< Symbols::ISymbol * >( sym->RetainReferencedSymbol() );
 
 			// Now we want to see if we can find the sub-symbol from the RHS of the dot operator.  The LHS gives us the
 			// reference to a symbol. However, since we know this is for assignment (it must be, that's all the declaration
@@ -1097,6 +1100,29 @@ Symbols::ISymbol *DeclarationVisitor::GetSymbolFromLeftHandSideNode( class LeftH
 	return NULL;
 }
 
+Symbols::ISymbol*  DeclarationVisitor::RetainSymbolPrototype(const VString& inSymbolName, const ESymbolFileExecContext& inExecContext)
+{
+	Symbols::ISymbol* ret = NULL;
+
+	std::vector<Symbols::ISymbol*> syms;
+	GetLikeNamedSubSymbols(NULL, inSymbolName, syms);
+	
+	std::vector< Symbols::ISymbol * >::iterator it;
+	for (it = syms.begin(); it != syms.end(); ++it)
+	{
+		if( !ret )
+		{
+			Symbols::ISymbol* sym = GetLikeNamedSubSymbol((*it), "prototype");
+			if( sym && sym->GetFile()->GetExecutionContext() == inExecContext )
+				ret = sym;
+		}
+		
+		(*it)->Release();
+	}
+
+	return ret;
+}
+
 bool DeclarationVisitor::VisitRightHandSideOfAssignment( Symbols::ISymbol *inLHS, class Node *inNode, bool inForFakeAssignment )
 {
 	// This function performs the actual assignment of information from the RHS to the LHS.  Generally,
@@ -1110,7 +1136,7 @@ bool DeclarationVisitor::VisitRightHandSideOfAssignment( Symbols::ISymbol *inLHS
 		Symbols::ISymbol *ident = NULL;
 		if (QualifiedLookup( inNode, &ident )) {
 			// The left-hand side now references the right-hand side
-			Symbols::ISymbol *temp = const_cast< Symbols::ISymbol * >( ident->Dereference() );
+			Symbols::ISymbol *temp = const_cast< Symbols::ISymbol * >( ident->RetainReferencedSymbol() );
 			inLHS->SetReferenceSymbol( temp );
 			temp->Release();
 			ident->Release();
@@ -1169,8 +1195,32 @@ bool DeclarationVisitor::VisitRightHandSideOfAssignment( Symbols::ISymbol *inLHS
 		Symbols::ISymbol *newExpr = NULL;
 		if (QualifiedLookup( dynamic_cast< LeftHandSideExpressionNode * >( dynamic_cast< NewNode * >( inNode )->GetOperand() ), &newExpr ))
 		{
-			CreateNewInstance( inLHS, newExpr );
-			newExpr->Release();
+			if( newExpr &&
+				newExpr->GetAuxillaryKindInformation() & Symbols::ISymbol::kKindEntityModel )
+			{
+				Symbols::ISymbol* prototype = NULL;
+
+				ESymbolFileExecContext execCtx = newExpr->GetFile()->GetExecutionContext();
+					 
+				// Special case : new entity model returns an entity, not an entity model
+				prototype = RetainSymbolPrototype(newExpr->GetName(), execCtx);
+				if( prototype )
+					inLHS->AddPrototype(prototype);
+				ReleaseRefCountable( &prototype );
+				
+				prototype = RetainSymbolPrototype("Entity", execCtx);
+				if( prototype )
+					inLHS->AddPrototype(prototype);
+				ReleaseRefCountable( &prototype );
+
+				// First of all, release the memory
+				newExpr->Release();
+			}
+			else
+			{
+				CreateNewInstance( inLHS, newExpr );
+				newExpr->Release();
+			}
 		}
 	}
 	else if (dynamic_cast< FunctionExpressionNode * >( inNode )) {
@@ -1266,7 +1316,6 @@ bool DeclarationVisitor::VisitRightHandSideOfAssignment( Symbols::ISymbol *inLHS
 	} else if (dynamic_cast< FunctionCallExpressionNode * >( inNode )) {
 		// We have a function call, so we want to find the function's symbol and determine it's return
 		// type, as that will be the right-hand symbol's new prototype.
-		VString functionCallIdent;
 		Node *functionCallLHS = dynamic_cast< FunctionCallExpressionNode * >( inNode )->GetLHS();
 		Symbols::ISymbol *functionCall = NULL;
 		if (QualifiedLookup( functionCallLHS, &functionCall )) {
@@ -1291,8 +1340,6 @@ bool DeclarationVisitor::VisitRightHandSideOfAssignment( Symbols::ISymbol *inLHS
 				CreateNewInstance( inLHS, functionCall );
 			else
 			{
-				bool entityModelAssign = false;
-
 				// Kludge to manage the "[ds.]SomeEntityModel.anyMethodReturningAnEntity" 
 				// assignment case: it will create a new instance of "SomeEntityModel" with
 				// the left hand side expression
@@ -1342,6 +1389,57 @@ bool DeclarationVisitor::VisitRightHandSideOfAssignment( Symbols::ISymbol *inLHS
 						}
 					}
 				}
+
+                // This is the right placeholder for setting up our symbol in case of require call
+                // inNode contains the name of the module file, we must get its FileID
+                // Using the FileID, we must get the UniqueID of symbol exports defined in the required module file
+                // Using the UniqueID of exports symbols, we must set the ReferenceID of ou symbol
+                if( functionCall->GetName() == "require" )
+                {
+                    // Get require args i.e. the module name
+                    FunctionCallArgumentsNode* args = dynamic_cast<FunctionCallExpressionNode*>(inNode)->GetArgs();
+                    
+                    // Check if we only have 1 arg i.e. only one module name specified
+                    if( args->ArgumentCount() == 1 )
+                    {
+                        // Get the module name node
+                        StringLiteralNode* module = dynamic_cast<StringLiteralNode*>(args->GetArgument(0));
+                        if( module )
+                        {
+                            VString moduleName = module->GetValue();
+                            // Strip ' from module name
+                            if( moduleName.BeginsWith("'") || moduleName.BeginsWith("\"") )  moduleName.Remove(1, 1);
+                            if( moduleName.EndsWith("'") || moduleName.EndsWith("\"") )    moduleName.Remove(moduleName.GetLength(), 1);
+                            
+                            // Once we have the module name, we have to get its unique file ID
+                            std::vector<Symbols::IFile*> files = this->fSymTable->GetFilesByName(moduleName);
+                            if( files.size() >= 1 )
+                            {
+                                std::vector<Symbols::IFile*>::const_iterator file;
+                                for(file=files.begin(); file!=files.end(); file++)
+                                {
+									if(		(*file)->GetBaseFolder() == eSymbolFileBaseFolderServerModules ||
+											((*file)->GetBaseFolder() == eSymbolFileBaseFolderProject && (*file)->GetPath().BeginsWith("Modules/")) )
+                                    {
+                                        // Once we have the module file ID, we can get all "exports" symbols and search for the one declared in our module file
+                                        std::vector<Symbols::ISymbol*> exports = this->fSymTable->GetSymbolsByName(NULL, "exports", (*file));
+                                        if( exports.size() == 1 )
+                                        {
+                                            // Use this symbol as a reference for the LHS symbol
+                                            inLHS->SetReferenceSymbol(exports.at(0));
+                                            functionCall->AddReturnType(exports.at(0));
+                                            break;
+                                        }
+                                    }                                    
+                                }
+								
+								// Release memory
+								for(file=files.begin(); file!=files.end(); file++)
+									(*file)->Release();
+                            }
+                        }
+                    }
+                }
 
 				// It wasn't an Entity Model assignment
 				inLHS->AddPrototypes( functionCall->GetReturnTypes() );
@@ -1436,7 +1534,7 @@ void DeclarationVisitor::SetSymbolReturnTypesFromScriptDoc(Symbols::ISymbol* inS
 					Symbols::ISymbol *returnTypeSym = NULL;
 					if (UnqualifiedLookup( *itReturn, &returnTypeSym ))
 					{
-						Symbols::ISymbol *refReturnTypeSym = const_cast<Symbols::ISymbol *>( returnTypeSym->Dereference() );
+						Symbols::ISymbol *refReturnTypeSym = const_cast<Symbols::ISymbol *>( returnTypeSym->RetainReferencedSymbol() );
 						Symbols::ISymbol *prototype = GetLikeNamedSubSymbol( refReturnTypeSym, "prototype" );
 						if (NULL != prototype)
 						{
@@ -1469,9 +1567,6 @@ void DeclarationVisitor::SetSymbolReturnTypesFromScriptDoc(Symbols::ISymbol* inS
 
 void DeclarationVisitor::SetSymbolClassesFromScriptDoc(Symbols::ISymbol* inSym, bool inAddToUpdateList, bool inUpdateSymbol)
 {						 
-	bool complete = true;
-	sLONG nbrTypes = 0;
-
 	ScriptDocComment *comment = ScriptDocComment::Create( inSym->GetScriptDocComment() );
 	if ( NULL != comment )
 	{
@@ -1497,9 +1592,6 @@ void DeclarationVisitor::SetSymbolClassesFromScriptDoc(Symbols::ISymbol* inSym, 
 
 void DeclarationVisitor::SetSymbolTypesFromScriptDoc(Symbols::ISymbol* inSym, bool inAddToUpdateList, bool inUpdateSymbol)
 {						 
-	bool complete = true;
-	sLONG nbrTypes = 0;
-
 	ScriptDocComment *comment = ScriptDocComment::Create( inSym->GetScriptDocComment() );
 	if ( NULL != comment )
 	{
@@ -1568,9 +1660,9 @@ void DeclarationVisitor::SetSymbolClassKindFromScriptDoc(Symbols::ISymbol* inSym
 }
 
 
-Visitor *Visitor::GetDeclarationParser( ISymbolTable *inSymTable, Symbols::IFile *inOwningFile, JavaScriptParserDelegate *inDelegate, void *inDelegateCookie )
+Visitor *Visitor::GetDeclarationParser( ISymbolTable *inSymTable, Symbols::IFile *inOwningFile, JavaScriptParserDelegate *inDelegate )
 {
-	return new DeclarationVisitor( inSymTable, inOwningFile, inDelegate, inDelegateCookie );
+	return new DeclarationVisitor( inSymTable, inOwningFile, inDelegate );
 }
 
 #if VERSIONDEBUG

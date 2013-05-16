@@ -1759,9 +1759,19 @@ Bittab* IndexHeaderBTree::Fourche(OccupableStack* curstack, BTitemIndex* val1, u
 									VDB4DProgressIndicator* InProgress, const VCompareOptions& inOptions, Bittab* dejasel, BTitemIndex** outVal)
 {
 	Bittab* b;
-	err = VE_OK;
 	sLONG nb;
 	
+#if debug_checkIndexFourche
+	bool checktwice = true;
+	if (err == -3)
+	{
+		err = VE_OK;
+		checktwice = false;
+	}
+#endif
+
+	err = VE_OK;
+
 	Occupy(curstack, true);
 	b = new Bittab;
 	if (b!=nil)
@@ -1805,6 +1815,41 @@ Bittab* IndexHeaderBTree::Fourche(OccupableStack* curstack, BTitemIndex* val1, u
 	Free(curstack, true);
 	if (err != VE_OK)
 		err = ThrowError(VE_DB4D_CANNOTCOMPLETESCANOFINDEX, DBaction_SearchingInIndex);
+
+#if debug_checkIndexFourche
+	if (checktwice && err == 0 && b != nil && outVal == nil)
+	{
+		bool oldTempNewIndexFourche = gTempNewIndexFourche;
+		gTempNewIndexFourche = !gTempNewIndexFourche;
+
+		err = -3;
+		Bittab* b2 = Fourche(curstack, val1, xstrict1, val2, xstrict2, context, err, InProgress, inOptions, dejasel, outVal);
+
+		if (b2 != nil)
+		{
+			Bittab* b3 = b->Clone(err);
+			b3->moins(b2);
+			if (!b3->IsEmpty())
+			{
+				sLONG xdebug = 1; // put a break here
+				assert(b3->IsEmpty());
+			}
+
+			b2->moins(b);
+			if (!b2->IsEmpty())
+			{
+				sLONG xdebug = 1; // put a break here
+				assert(b2->IsEmpty());
+			}
+
+			QuickReleaseRefCountable(b3);
+			QuickReleaseRefCountable(b2);
+		}
+
+		gTempNewIndexFourche = oldTempNewIndexFourche;
+	}
+#endif
+
 	return(b);
 }
 
@@ -4703,6 +4748,58 @@ VError BTreePageIndex::ParseAll(OccupableStack* curstack, Bittab* b, BTitemIndex
 	return err;
 }
 
+bool gTempNewIndexFourche = false;
+
+VError BTreePageIndex::SelectAllKeys(OccupableStack* curstack, Bittab* b, BaseTaskInfo* context, ProgressEncapsuleur* InProgress, BTitemIndex** outVal)
+{
+	VError err = VE_OK;
+	VTask::Yield();
+	if (!InProgress->Increment())
+		err = ThrowError(VE_DB4D_ACTIONCANCELEDBYUSER, noaction);
+	if (err == VE_OK)
+	{
+		bool canCont = true;
+		sLONG nb = btp->nkeys;
+		assert(nb>=0 && nb<= kNbKeyParPageIndex);
+		for (sLONG i = 0; i < nb && canCont && err == VE_OK; ++i)
+		{
+			BTreePageIndex* sousBT=GetSousPage(curstack, i, err, context);
+			if (sousBT!=nil)
+			{
+				err = sousBT->SelectAllKeys(curstack, b, context, InProgress, outVal);
+				sousBT->Free(curstack, true);
+			}
+
+			if (IsCluster)
+			{
+				entete->GetClusterSel(curstack)->AddSelToBittab(curstack, GetQui(i), b, context, err);
+			}
+			else
+			{
+				err = b->Set(GetQui(i), false);
+			}
+			if (outVal != nil)
+			{
+				canCont = false;
+				if (*outVal != nil)
+					entete->FreeKey(*outVal);
+				*outVal = CopyKey(i);
+			}
+		}
+		if (canCont && err == VE_OK)
+		{
+			BTreePageIndex* sousBT=GetSousPage(curstack, nb, err, context);
+			if (sousBT!=nil)
+			{
+				err = sousBT->SelectAllKeys(curstack, b, context, InProgress, outVal);
+				sousBT->Free(curstack, true);
+			}
+		}
+
+	}
+	return err;
+}
+
 
 VError BTreePageIndex::Fourche(OccupableStack* curstack, Bittab* b, BTitemIndex* val1, uBOOL xstrict1, BTitemIndex* val2, uBOOL xstrict2, 
 								BaseTaskInfo* context, ProgressEncapsuleur* InProgress, const VCompareOptions& inOptions, BTitemIndex** outVal)
@@ -4727,86 +4824,308 @@ VError BTreePageIndex::Fourche(OccupableStack* curstack, Bittab* b, BTitemIndex*
 		nb=btp->nkeys;
 		
 		assert(nb>=0 && nb<= kNbKeyParPageIndex);
- 		for (i=0;i<nb && canCont;i++)
+
+		if (gTempNewIndexFourche) // new algorithm
 		{
-			if (val1==nil)
+			sLONG mostleft = 0, mostright = 0;
+			bool mostleftIsEqual = false, mostrightIsEqual = false;
+
+			if (val1 != nil)
 			{
-				rescomp=CR_BIGGER;
-				rescompNonDiac = CR_BIGGER;
+				bool cont = true;
+				sLONG left = 0;
+				sLONG right = nb;
+				sLONG lastequal = -2;
+				while (cont)
+				{
+					if ((right-left) <= 1)
+					{
+						cont = false;
+						rescomp = CompareKeys(mostleft, val1, inOptions);
+
+						if (rescomp == CR_BIGGER)
+						{
+							--mostleft;
+							if (mostleft == 0)
+							{
+								rescomp = CompareKeys(mostleft, val1, inOptions);
+
+								if (rescomp == CR_BIGGER)
+									--mostleft;
+								else if ((rescomp == CR_EQUAL) && !xstrict1)
+									mostleftIsEqual= true;
+							}
+
+						}
+						else if (rescomp == CR_SMALLER || ((rescomp == CR_EQUAL) && xstrict1))
+						{
+							if (lastequal != -2)
+							{
+								mostleft = lastequal;
+								mostleftIsEqual = true;
+							}
+						}
+						else
+						{
+							mostleftIsEqual = true;
+							if (mostleft > 0)
+							{
+								rescomp = CompareKeys(mostleft-1, val1, inOptions);
+
+								if (rescomp == CR_EQUAL)
+									--mostleft;
+							}
+						}
+					}
+					else
+					{
+						mostleft = left + ((right - left + 1) / 2);
+						rescomp = CompareKeys( mostleft, val1, inOptions);
+
+						if (((rescomp == CR_EQUAL) && !xstrict1) || rescomp == CR_BIGGER)
+						{
+							right = mostleft;
+							if (rescomp == CR_EQUAL)
+								lastequal = mostleft;
+						}
+						else
+						{
+							left = mostleft;
+						}
+					}
+				}
+				
 			}
 			else
 			{
-				rescomp = CompareKeys(i, val1, inOptions);
-				if (diacritical)
-					rescompNonDiac = CompareKeys(i, val1, OptionsNonDiac);
-				else
-					rescompNonDiac = rescomp;
+				mostleft = -1;
+				mostleftIsEqual = false;
 			}
-			
-			egal=((rescomp==CR_EQUAL) && !xstrict1) || (rescomp==CR_BIGGER);
-			if ( (rescompNonDiac==CR_BIGGER) || ( (rescompNonDiac==CR_EQUAL) && !xstrict1) )
+
+
+			if (val2 != nil)
 			{
+				bool cont = true;
+				sLONG left = 0;
+				sLONG right = nb;
+				sLONG lastequal = -2;
+				while (cont)
+				{
+					if ((right-left) <= 1)
+					{
+						cont = false;
+						rescomp = CompareKeys(mostright, val2, inOptions);
+
+						if (rescomp == CR_SMALLER)
+						{
+							++mostright;
+							if (mostright == (nb-1))
+							{
+								rescomp = CompareKeys(mostright, val2, inOptions);
+
+								if (rescomp == CR_SMALLER)
+									++mostright;
+								else if ((rescomp == CR_EQUAL) && !xstrict2)
+									mostrightIsEqual= true;
+							}
+
+						}
+						else if (rescomp == CR_BIGGER || ((rescomp == CR_EQUAL) && xstrict2))
+						{
+							if (mostright == 1)
+							{
+								rescomp = CompareKeys(mostright-1, val2, inOptions);
+								if (rescomp == CR_BIGGER || rescomp == CR_EQUAL)
+								{
+									--mostright;
+									if (rescomp == CR_EQUAL)
+										mostrightIsEqual = true;
+								}
+							}
+							else if (lastequal != -2)
+							{
+								mostright = lastequal;
+								mostrightIsEqual = true;
+							}
+						}
+						else
+						{
+							mostrightIsEqual = true;
+							if (mostright < (nb-1))
+							{
+								rescomp = CompareKeys(mostright+1, val2, inOptions);
+
+								if (rescomp == CR_EQUAL)
+									++mostright;
+							}
+						}
+					}
+					else
+					{
+						mostright = left + ((right - left + 1) / 2);
+						rescomp = CompareKeys(mostright, val2, inOptions);
+
+						if ( ((rescomp == CR_EQUAL) && !xstrict2) || rescomp == CR_SMALLER)
+						{
+							if (rescomp == CR_EQUAL)
+								lastequal = mostright;
+							left = mostright;
+						}
+						else
+						{
+							right = mostright;
+						}
+					}
+				}			
+			}
+			else
+			{
+				mostright = nb;
+				mostrightIsEqual = false;
+			}
+
+			sLONG needFourcheRight = -2;
+			sLONG begin = mostleft, end = mostright;
+			
+			if (!mostleftIsEqual)
+				++begin;
+
+			if (mostrightIsEqual)
+				++end;
+
+			for (i = begin; i <=  mostright && canCont && err == VE_OK; ++i)
+			{
+				if ((i != mostright) || mostrightIsEqual)
+				{
+					if (IsCluster)
+					{
+						entete->GetClusterSel(curstack)->AddSelToBittab(curstack, GetQui(i), b, context, err);
+					}
+					else
+					{
+						err = b->Set(GetQui(i), false);
+					}
+					if (outVal != nil)
+					{
+						canCont = false;
+						if (*outVal != nil)
+							entete->FreeKey(*outVal);
+						*outVal = CopyKey(i);
+					}
+				}
 				sousBT=GetSousPage(curstack, i, err, context);
 				if (sousBT!=nil)
 				{
-					err = sousBT->Fourche(curstack, b, val1, xstrict1, val2, xstrict2, context, InProgress, inOptions, outVal);
+					if (i > begin && i < end)
+					{
+						err = sousBT->SelectAllKeys(curstack, b,context, InProgress, outVal);
+					}
+					else
+					{
+						err = sousBT->Fourche(curstack, b, val1, xstrict1, val2, xstrict2, context, InProgress, inOptions, outVal);
+					}
 					sousBT->Free(curstack, true);
 				}
 			}
-			
-			if (err != VE_OK)
-				break;
 
-			if (val2==nil)
+			if (mostrightIsEqual && canCont && err == VE_OK)
 			{
-				rescomp=CR_SMALLER;
-				rescompNonDiac = CR_SMALLER;
-			}
-			else
-			{
-				rescomp = CompareKeys(i, val2, inOptions);
-				if (diacritical)
-					rescompNonDiac = CompareKeys(i, val2, OptionsNonDiac);
-				else
-					rescompNonDiac = rescomp;
-			}
-			
-			if ( (((rescomp==CR_EQUAL) && !xstrict2) || (rescomp==CR_SMALLER)) && egal )
-			{
-				if (IsCluster)
+				if (testAssert(mostright < nb))
 				{
-					entete->GetClusterSel(curstack)->AddSelToBittab(curstack, GetQui(i), b, context, err);
+					sousBT=GetSousPage(curstack, mostright+1, err, context);
+					if (sousBT!=nil)
+					{
+						err = sousBT->Fourche(curstack, b, val1, xstrict1, val2, xstrict2, context, InProgress, inOptions, outVal);
+						sousBT->Free(curstack, true);
+					}
+
+				}
+			}
+
+		}
+		else // old algorithm
+		{
+ 			for (i=0;i<nb && canCont;i++)
+			{
+				if (val1==nil)
+				{
+					rescomp=CR_BIGGER;
+					rescompNonDiac = CR_BIGGER;
 				}
 				else
 				{
-					err = b->Set(GetQui(i), false);
+					rescomp = CompareKeys(i, val1, inOptions);
+					if (diacritical)
+						rescompNonDiac = CompareKeys(i, val1, OptionsNonDiac);
+					else
+						rescompNonDiac = rescomp;
 				}
-				if (outVal != nil)
+				
+				egal=((rescomp==CR_EQUAL) && !xstrict1) || (rescomp==CR_BIGGER);
+				if ( (rescompNonDiac==CR_BIGGER) || ( (rescompNonDiac==CR_EQUAL) && !xstrict1) )
 				{
-					canCont = false;
-					if (*outVal != nil)
-						entete->FreeKey(*outVal);
-					*outVal = CopyKey(i);
-				}
-			}
-			
-			if (i==(nb-1) && err == VE_OK && canCont)
-			{
-				if ( ((rescompNonDiac==CR_EQUAL) && !xstrict2) || (rescompNonDiac==CR_SMALLER) )
-				{
-					sousBT=GetSousPage(curstack, i+1, err, context);
+					sousBT=GetSousPage(curstack, i, err, context);
 					if (sousBT!=nil)
 					{
 						err = sousBT->Fourche(curstack, b, val1, xstrict1, val2, xstrict2, context, InProgress, inOptions, outVal);
 						sousBT->Free(curstack, true);
 					}
 				}
+				
+				if (err != VE_OK)
+					break;
+
+				if (val2==nil)
+				{
+					rescomp=CR_SMALLER;
+					rescompNonDiac = CR_SMALLER;
+				}
+				else
+				{
+					rescomp = CompareKeys(i, val2, inOptions);
+					if (diacritical)
+						rescompNonDiac = CompareKeys(i, val2, OptionsNonDiac);
+					else
+						rescompNonDiac = rescomp;
+				}
+				
+				if ( (((rescomp==CR_EQUAL) && !xstrict2) || (rescomp==CR_SMALLER)) && egal )
+				{
+					if (IsCluster)
+					{
+						entete->GetClusterSel(curstack)->AddSelToBittab(curstack, GetQui(i), b, context, err);
+					}
+					else
+					{
+						err = b->Set(GetQui(i), false);
+					}
+					if (outVal != nil)
+					{
+						canCont = false;
+						if (*outVal != nil)
+							entete->FreeKey(*outVal);
+						*outVal = CopyKey(i);
+					}
+				}
+				
+				if (i==(nb-1) && err == VE_OK && canCont)
+				{
+					if ( ((rescompNonDiac==CR_EQUAL) && !xstrict2) || (rescompNonDiac==CR_SMALLER) )
+					{
+						sousBT=GetSousPage(curstack, i+1, err, context);
+						if (sousBT!=nil)
+						{
+							err = sousBT->Fourche(curstack, b, val1, xstrict1, val2, xstrict2, context, InProgress, inOptions, outVal);
+							sousBT->Free(curstack, true);
+						}
+					}
+				}
+				
+				if (err != VE_OK)
+					break;
+				if (rescompNonDiac==CR_BIGGER) 
+					break; // sort de la boucle
 			}
-			
-			if (err != VE_OK)
-				break;
-			if (rescompNonDiac==CR_BIGGER) 
-				break; // sort de la boucle
 		}
 	}
 	
@@ -8550,6 +8869,21 @@ IndexInfo* CreIndexInfoFromField_UUID(void)
 	return(ind);
 }
 
+#if debugLeaksAll
+
+void IndexInfoFromField::GetDebugInfo(VString& outText) const
+{
+	VString tablename;
+	VString fieldname;
+	if (fic != nil)
+		fic->GetName(tablename);
+	if (crit != nil)
+		crit->GetName(fieldname);
+	outText = "IndexInfoFromField : Table : "+tablename+" , Field : "+fieldname;
+}
+
+#endif
+
 
 
 
@@ -10525,6 +10859,20 @@ IndexInfo* CreIndexInfoFromMultipleField(void)
 	ind=new IndexInfoFromMultipleField;
 	return(ind);
 }
+
+
+#if debugLeaksAll
+
+void IndexInfoFromMultipleField::GetDebugInfo(VString& outText) const
+{
+	VString s;
+	IdentifyIndex(s, true, true);
+	outText = "IndexInfoFromMultipleField : "+s;
+}
+
+#endif
+
+
 
 									/* -----------------------------------------------  */
 									

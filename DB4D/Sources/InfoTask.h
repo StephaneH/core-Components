@@ -150,6 +150,12 @@ class JSEntityMethodReference
 			init();
 		}
 
+		JSEntityMethodReference(sLONG ref) // for RemoteFunctionCall glue
+		{
+			init();
+			fMethod = (const EntityMethod*)(ref); // will not be used as a pointer
+		}
+
 	private:
 		const EntityModel* fDataClass;
 		const EntityAttribute* fAttribute;
@@ -398,8 +404,37 @@ class DB4DJSRuntimeDelegate : public IJSRuntimeDelegate
 };
 
 
+class RemoteEntityCollection;
 
-class BaseTaskInfo : /*public ObjInCacheMemory,*/ public VComponentImp<CDB4DBaseContext>
+
+class ENTITY_API RemotePage
+{
+	public:
+
+		RemotePage()
+		{
+			fStart = 0;
+			fLen = -1;
+		}
+
+		void Clear()
+		{
+			fStart = 0;
+			fLen = -1;
+			fKeys.clear();
+		}
+
+		//protected:
+		RecIDType fStart;
+		RecIDType fLen;
+		VectorOfVString fKeys;
+};
+
+
+typedef map<RemoteEntityCollection*, RemotePage> RemotePageMap;
+
+
+class ENTITY_API BaseTaskInfo : /*public ObjInCacheMemory,*/ public CDB4DBaseContext
 {
 	public:
 		BaseTaskInfo(Base4D *xbd, CUAGSession* inUserSession, VJSGlobalContext* inJSContext, CDB4DBase* owner, bool islocal = false);
@@ -833,8 +868,15 @@ class BaseTaskInfo : /*public ObjInCacheMemory,*/ public VComponentImp<CDB4DBase
 
 		virtual void CleanUpForReuse();
 
+		RemotePage* GetRemotePage(RemoteEntityCollection* sel);
+
+		IRefCountable* GetExtraData(void* selector);
+		void SetExtraData(void* selector, IRefCountable* data);
+
 
 	protected:
+
+		typedef map<void*, IRefCountable*> DataMap;
 
 		sLONG		_GetNextStructLockRef() const;
 
@@ -910,6 +952,10 @@ class BaseTaskInfo : /*public ObjInCacheMemory,*/ public VComponentImp<CDB4DBase
 
 		SetOfModels fAlreadyCalledRestrict;
 
+		RemotePageMap fRemotePages;
+
+		DataMap fDataMap;
+
 		//mutable VCriticalSection fTransactionMutex;
 		mutable VCriticalSection fcurtransForNeedsByteMutex;
 
@@ -928,7 +974,7 @@ typedef BaseTaskInfo *BaseTaskInfoPtr;
 
 inline Transaction* GetCurrentTransaction(const BaseTaskInfo* owner) { return owner == nil ? nil : owner->GetCurrentTransaction(); };
 
-BaseTaskInfo* ConvertContext(CDB4DBaseContext *inContext);
+ENTITY_API BaseTaskInfo* ConvertContext(CDB4DBaseContext *inContext);
 
 
 

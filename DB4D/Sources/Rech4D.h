@@ -16,8 +16,8 @@
 #ifndef __RECH4D__
 #define __RECH4D__
 
-enum { aucuntokenrech=0L, r_ParentG, r_ParentD, r_Fin, r_Line, r_BoolOperator, r_Script, r_Not, r_LineArray, r_LineJoin, r_Sel, r_EMComp, 
-		r_InterpConst, r_InterpAtt, r_InterpOper, r_RecordExist, r_InterpFormula, r_JSScript };
+enum { aucuntokenrech=0L, r_ParentG, r_ParentD, r_Fin, r_Line, r_LineEM, r_BoolOperator, r_Script, r_Not, r_LineArray, r_LineEMArray, r_LineJoin, r_LineEMJoin, r_Sel, r_EmSel, r_EMComp, 
+		r_InterpConst, r_InterpAtt, r_InterpOper, r_RecordExist, r_RecordEntityExist, r_InterpFormula, r_JSScript };
 
 class OptimizedQuery;
 
@@ -32,26 +32,27 @@ namespace QueryKeys
 	CREATE_BAGKEY( steps);
 };
 
+class EntityCollection;
 
 
-class InstanceMap : public map<sLONG, sLONG>
+class InstanceMap : public map<EntityModel*, sLONG>
 {
 public:
-	sLONG GetInstance(sLONG TableNumber) const
+	sLONG GetInstance(EntityModel* model) const
 	{
-		InstanceMap::const_iterator found = find(TableNumber);
+		InstanceMap::const_iterator found = find(model);
 		if (found == end())
 			return 0;
 		else
 			return found->second;
 	}
 
-	sLONG GetInstanceAndIncrement(sLONG TableNumber)
+	sLONG GetInstanceAndIncrement(EntityModel* model)
 	{
-		InstanceMap::iterator found = find(TableNumber);
+		InstanceMap::iterator found = find(model);
 		if (found == end())
 		{
-			(*this)[TableNumber] = 1;
+			(*this)[model] = 1;
 			return 0;
 		}
 		else
@@ -77,7 +78,12 @@ class RechToken : public Obj4D, public IObjCounter
 
 		virtual RechToken* Clone() const;
 
-		virtual void addInstance(sLONG numtable, sLONG howmany)
+		virtual VError BuildString(VString& outStr)
+		{
+			return ThrowBaseError(VE_UNIMPLEMENTED);
+		}
+
+		virtual void addInstance(const EntityModel* model, sLONG howmany)
 		{
 		};
 	
@@ -105,6 +111,7 @@ class RechTokenFormula : public RechToken
 		{
 			TypToken = r_InterpFormula;
 		}
+
 };
 
 
@@ -118,6 +125,7 @@ class RechTokenBoolOper : public RechToken
 		virtual VError PutInto(VStream& buf);
 		virtual VError GetFrom(VStream& buf, Table* target);
 		
+		virtual VError BuildString(VString& outStr);
 		virtual RechToken* Clone() const;
 };
 
@@ -151,6 +159,23 @@ class RechTokenSel : public RechToken
 };
 
 
+
+class RechTokenEmSel : public RechToken
+{
+public:
+	EntityCollection* fSel;
+	sLONG fNumInstance;
+
+	RechTokenEmSel(EntityCollection* sel, sLONG numinstance) { TypToken = r_EmSel; fSel = sel; sel->Retain(); fNumInstance = numinstance; };
+	virtual void Dispose(void);
+
+	virtual VError PutInto(VStream& buf);
+	virtual VError GetFrom(VStream& buf, Table* target);
+
+	virtual RechToken* Clone() const;
+};
+
+
 class RechTokenSimpleComp : public RechToken
 {
 	public:
@@ -175,9 +200,46 @@ class RechTokenSimpleComp : public RechToken
 
 		virtual RechToken* Clone() const;
 
-		virtual void addInstance(sLONG numtable, sLONG howmany)
+		virtual void addInstance(const EntityModel* model, sLONG howmany)
 		{
+			/*
 			if (numtable == numfile)
+				numinstance += howmany;
+				*/
+		}
+};
+
+
+class RechTokenEMSimpleComp : public RechToken
+{
+	public:
+		const EntityAttribute* fAtt;
+		sLONG numinstance;
+		sWORD comparaison;
+		ValPtr	ch;
+		VCompareOptions fOptions;
+		Boolean fIsDataDirect;
+		uBOOL fIsNeverNull;
+		uBOOL fCheckForNull;
+		bool fSimpleDate;
+		VString fParam;
+		sLONG fExpectedType;
+		VRegexMatcher* fRegMatcher;
+		RechTokenSimpleComp* fCopyForLocalModel;
+
+		RechTokenEMSimpleComp(void) { TypToken = r_LineEM; /*fIsDiacritic = false;*/ fIsNeverNull = 2; fCheckForNull = false; fRegMatcher = nil; fCopyForLocalModel = nil;};
+		virtual void Dispose(void);
+		virtual VError PutInto(VStream& buf);
+		virtual VError GetFrom(VStream& buf, Table* target);
+		void CheckIfDataIsDirect(Table* target);
+		RechTokenSimpleComp* CopyIntoRechTokenSimpleComp();
+
+		virtual VError BuildString(VString& outStr);
+		virtual RechToken* Clone() const;
+
+		virtual void addInstance(const EntityModel* model, sLONG howmany)
+		{
+			if (model == fAtt->GetModel()->GetRootBaseEm())
 				numinstance += howmany;
 		}
 };
@@ -195,14 +257,41 @@ class RechTokenRecordExist : public RechToken
 		virtual VError GetFrom(VStream& buf, Table* target);
 		virtual RechToken* Clone() const;
 
-		virtual void addInstance(sLONG numtable, sLONG howmany)
+		virtual void addInstance(const EntityModel* model, sLONG howmany)
 		{
+			/*
 			if (numtable == numfile)
 				numinstance += howmany;
+				*/
 		}
 
 };
 
+
+
+class RechTokenEntityRecordExist : public RechToken
+{
+	public:
+		EntityModel* fModel;
+		sLONG numinstance;
+		uBOOL fCheckIfExists;
+		RechTokenRecordExist* fCopyForLocalModel;
+
+		RechTokenEntityRecordExist(void) { TypToken = r_RecordEntityExist; fCopyForLocalModel = nil;}
+		virtual VError PutInto(VStream& buf);
+		virtual VError GetFrom(VStream& buf, Table* target);
+		virtual RechToken* Clone() const;
+		virtual void Dispose(void);
+
+		RechTokenRecordExist* CopyIntoRechTokenRecordExist();
+
+		virtual void addInstance(const EntityModel* model, sLONG howmany)
+		{
+			if (model == fModel->GetRootBaseEm())
+				numinstance += howmany;
+		}
+
+};
 
 
 
@@ -217,6 +306,7 @@ class RechTokenEmComp : public RechToken
 		VCompareOptions fOptions;
 		VString fParam;
 		uBOOL fCheckForNull;
+		bool fSimpleDate;
 		VRegexMatcher* fRegMatcher;
 
 		RechTokenEmComp(void) { TypToken = r_EMComp; fCheckForNull = false; fRegMatcher = nil; }
@@ -224,7 +314,9 @@ class RechTokenEmComp : public RechToken
 		virtual VError PutInto(VStream& buf);
 		virtual VError GetFrom(VStream& buf, Table* target);
 		virtual RechToken* Clone() const;
-		virtual void addInstance(sLONG numtable, sLONG howmany);
+		virtual VError BuildString(VString& outStr);
+
+		virtual void addInstance(const EntityModel* model, sLONG howmany);
 		
 };
 
@@ -274,10 +366,76 @@ public:
 
 	virtual RechToken* Clone() const;
 
-	virtual void addInstance(sLONG numtable, sLONG howmany)
+	virtual void addInstance(const EntityModel* model, sLONG howmany)
 	{
+		/*
 		if (numtable == numfile)
 			numinstance += howmany;
+			*/
+	}
+};
+
+
+class RechTokenEmArrayComp : public RechToken
+{
+public:
+	const EntityAttribute* fAtt;
+	sLONG numinstance;
+	sWORD comparaison;
+	DB4DArrayOfValues* values;
+	Boolean fIsDataDirect;
+	//Boolean fIsDiacritic;
+	VCompareOptions fOptions;
+	uBOOL fIsNeverNull;
+	bool fSimpleDate;
+	VString fParam;
+	sLONG fExpectedType;
+	RechTokenArrayComp* fCopyForLocalModel;
+
+	RechTokenEmArrayComp(void) { TypToken = r_LineEMArray; values = nil; /*fIsDiacritic = false;*/ fIsNeverNull = 2; fCopyForLocalModel = nil;};
+	virtual void Dispose(void);
+	virtual VError PutInto(VStream& buf);
+	virtual VError GetFrom(VStream& buf, Table* target);
+	void CheckIfDataIsDirect(Table* target);
+	RechTokenArrayComp* CopyIntoRechTokenArrayComp();
+
+	virtual RechToken* Clone() const;
+//	virtual VError BuildString(VString& outStr);
+
+	virtual void addInstance(const EntityModel* model, sLONG howmany)
+	{
+		if (model == fAtt->GetModel()->GetRootBaseEm())
+			numinstance += howmany;
+	}
+};
+
+
+
+class RechTokenEmJoin : public RechToken
+{
+public:
+	EntityModel* fRootBaseEm;
+	const EntityAttribute* fAtt;
+	sLONG numinstance;
+	sWORD comparaison;
+	EntityModel* fRootBaseEmOther;
+	const EntityAttribute* fAttOther;
+	sLONG numinstanceOther;
+	VCompareOptions fOptions;
+
+	RechTokenEmJoin(void) { TypToken = r_LineEMJoin; };
+	virtual void Dispose(void);
+	virtual VError PutInto(VStream& buf);
+	virtual VError GetFrom(VStream& buf, Table* target);
+
+	virtual RechToken* Clone() const;
+
+	virtual void addInstance(const EntityModel* model, sLONG howmany)
+	{
+		if (model == fRootBaseEm)
+			numinstance += howmany;
+		if (model == fRootBaseEmOther)
+			numinstanceOther += howmany;
 	}
 };
 
@@ -301,14 +459,18 @@ public:
 
 	virtual RechToken* Clone() const;
 
-	virtual void addInstance(sLONG numtable, sLONG howmany)
+	virtual void addInstance(const EntityModel* model, sLONG howmany)
 	{
+		/*
 		if (numtable == numfile)
 			numinstance += howmany;
 		if (numtable == numfileOther)
 			numinstanceOther += howmany;
+			*/
 	}
 };
+
+
 
 class RechTokenInterpConst : public RechToken
 {
@@ -367,6 +529,12 @@ class RechTokenJavaScript : public RechToken
 			RechTokenJavaScript* result = new RechTokenJavaScript(fJSCode);
 			return result;
 		}
+
+		virtual VError BuildString(VString& outStr)
+		{
+			outStr = "$("+fJSCode+")";
+			return VE_OK;
+		}
 };
 
 
@@ -418,7 +586,8 @@ class QueryValueMap : public map<VString, QueryParamElement>
 		}
 };
 
-class SearchTab : public Obj4D, public IObjCounter
+
+class ENTITY_API SearchTab : public Obj4D, public IObjCounter
 {
 	public:
 		SearchTab(Table* destination, Boolean CanDelete = true) 
@@ -432,11 +601,23 @@ class SearchTab : public Obj4D, public IObjCounter
 			fAllowJSCode = false;
 		}
 
+		SearchTab(EntityModel* destModel, Boolean CanDelete = true) 
+		{ 
+			fMustDisplay = false; 
+			sousselect = false; 
+			destFile = nil; 
+			curtoken = 0; 
+			fCanDelete = CanDelete; 
+			fModel = destModel;
+			fAllowJSCode = false;
+		}
+
+
 		virtual ~SearchTab();
 
 		inline void SetTarget(Table* destination)
 		{
-			destFile = RetainRefCountable(destination); 
+			 CopyRefCountable(&destFile, destination); 
 		}
 
 		void SetSubSelect(Boolean SubSelection) { sousselect = SubSelection; };
@@ -465,9 +646,18 @@ class SearchTab : public Obj4D, public IObjCounter
 		void AddSearchLineArray(Field* cri, sLONG comp, const VString& inParamToCompare, const VCompareOptions& inOptions, sLONG numinstance = 0);
 
 		void AddSearchLineJoin(Field* cri, sLONG comp, Field* OtherCri, Boolean isDiacritic = false, sLONG numinstance = 0, sLONG numinstanceOther = 0);
+		void AddSearchLineJoinEm(const EntityAttribute* att, sLONG comp, const EntityAttribute* OtherAtt, Boolean isDiacritic, sLONG numinstance = 0, sLONG numinstanceOther = 0);
 
 		void AddSearchLineRecordExists(sLONG numfile, uBOOL checkIfExists, sLONG numinstance);
 		void AddSearchLineRecordExists(Table* inTable, uBOOL checkIfExists, sLONG numinstance);
+
+		void AddSearchLineEntityRecordExists(EntityModel* model, uBOOL checkIfExists, sLONG numinstance);
+
+		void AddSearchLineEmSimple(const EntityAttribute* att, sLONG comp, const VValueSingle* ValueToCompare, const VCompareOptions& inOptions, sLONG numinstance = 0, bool checkfornull = false);
+		void AddSearchLineEmSimple(const EntityAttribute* att, sLONG comp, const VString& inParamToCompare, const VCompareOptions& inOptions, sLONG numinstance = 0, bool checkfornull = false);
+
+		void AddSearchLineEmArray(const EntityAttribute* att, sLONG comp, DB4DArrayOfValues *Values, const VCompareOptions& inOptions, sLONG numinstance = 0);
+		void AddSearchLineEmArray(const EntityAttribute* att, sLONG comp, const VString& inParamToCompare, const VCompareOptions& inOptions, sLONG numinstance = 0);
 
 		void AddSearchLineBoolOper(sLONG BoolOper);
 		void AddSearchLineNotOperator(void);
@@ -475,6 +665,7 @@ class SearchTab : public Obj4D, public IObjCounter
 		void AddSearchLineCloseParenthesis(void);
 
 		void AddSearchLineSel(Selection* sel, sLONG numinstance = 0);
+		void AddSearchLineEmSel(EntityCollection* sel, sLONG numinstance = 0);
 		
 		sLONG GetNbLine(void) const { return((sLONG)fLines.size()); };
 		
@@ -514,7 +705,7 @@ class SearchTab : public Obj4D, public IObjCounter
 		VError GetParams(vector<VString>& outParamNames, QueryParamElementVector& outParamValues);
 		VError SetParams(const vector<VString>& inParamNames, const QueryParamElementVector& inParamValues);
 
-		inline EntityModel* GetModel()
+		inline EntityModel* GetModel() const
 		{
 			return fModel;
 		}
@@ -528,6 +719,9 @@ class SearchTab : public Obj4D, public IObjCounter
 		{
 			fAllowJSCode = b;
 		}
+
+		VError BuildQueryString(BaseTaskInfo* context, VString outQuery);
+
 
 	protected:
 		RechTokenVector fLines;
@@ -546,7 +740,7 @@ class SearchTab : public Obj4D, public IObjCounter
 									/* ================================================ */
 
 
-class VDB4DQueryPathModifiers : public VComponentImp<CDB4DQueryPathModifiers>
+class VDB4DQueryPathModifiers : public CDB4DQueryPathModifiers
 {
 	public:
 		
@@ -613,19 +807,19 @@ class RechNode : public VObject
 								BaseTaskInfo* context, DB4D_Way_of_Locking HowToLock, Bittab *exceptions, sLONG limit, Bittab &Nulls, RechNode* &transformation);
 
 		virtual uBOOL PerformSeq(sLONG nf, FicheInMem* curfic, BaseTaskInfo *tfb, VDB4DProgressIndicator* InProgress, 
-									BaseTaskInfo* context, DB4D_Way_of_Locking HowToLock, Bittab *exceptions, sLONG limit, EntityModel* model) 
+									BaseTaskInfo* context, DB4D_Way_of_Locking HowToLock, Bittab *exceptions, sLONG limit, LocalEntityModel* model) 
 		{ 
 			return(false); 
 		};
 
 		virtual uBOOL PerformFullSeq(sLONG nf, FicheInMem* curfic, BaseTaskInfo *tfb, VDB4DProgressIndicator* InProgress, 
-									BaseTaskInfo* context, DB4D_Way_of_Locking HowToLock, Bittab *exceptions, sLONG limit, EntityModel* model) 
+									BaseTaskInfo* context, DB4D_Way_of_Locking HowToLock, Bittab *exceptions, sLONG limit, LocalEntityModel* model) 
 		{ 
 			return PerformSeq(nf, curfic, tfb, InProgress, context,  HowToLock, exceptions, limit, model);
 		};
 
 		virtual uBOOL PerformSeq(FicheOnDisk* ficD, BaseTaskInfo *tfb, VDB4DProgressIndicator* InProgress, 
-								BaseTaskInfo* context, DB4D_Way_of_Locking HowToLock, Bittab *exceptions, sLONG limit, EntityModel* model) 
+								BaseTaskInfo* context, DB4D_Way_of_Locking HowToLock, Bittab *exceptions, sLONG limit, LocalEntityModel* model) 
 		{ 
 			return(false); 
 		};
@@ -682,12 +876,12 @@ class RechNode : public VObject
 		virtual void AdjusteIntl(VIntlMgr* inIntl)
 		{ ; }
 
-		virtual VValueSingle* Compute(EntityRecord* erec, BaseTaskInfo* context, VError& err)
+		virtual VValueSingle* Compute(LocalEntityRecord* erec, BaseTaskInfo* context, VError& err)
 		{
 			return nil;
 		}
 
-		virtual uBOOL PerformSeqOnEm(EntityRecord* erec, BaseTaskInfo* context)
+		virtual uBOOL PerformSeqOnEm(LocalEntityRecord* erec, BaseTaskInfo* context)
 		{ 
 			return(false); 
 		}
@@ -714,10 +908,10 @@ class RechNodeScript : public RechNode
 		virtual ~RechNodeScript();
 
 		virtual uBOOL PerformSeq(sLONG nf, FicheInMem* curfic, BaseTaskInfo *tfb, VDB4DProgressIndicator* InProgress, 
-								BaseTaskInfo* context, DB4D_Way_of_Locking HowToLock, Bittab *exceptions, sLONG limit, EntityModel* model);
+								BaseTaskInfo* context, DB4D_Way_of_Locking HowToLock, Bittab *exceptions, sLONG limit, LocalEntityModel* model);
 
 		virtual uBOOL PerformSeq(FicheOnDisk* ficD, BaseTaskInfo *tfb, VDB4DProgressIndicator* InProgress, 
-								BaseTaskInfo* context, DB4D_Way_of_Locking HowToLock, Bittab *exceptions, sLONG limit, EntityModel* model);
+								BaseTaskInfo* context, DB4D_Way_of_Locking HowToLock, Bittab *exceptions, sLONG limit, LocalEntityModel* model);
 		
 		virtual void DisplayTree(Base4D* bd, sLONG level, VString* result, VValueBag* bagResult = nil);
 		virtual void Describe(Base4D* bd, VString& result);
@@ -747,10 +941,10 @@ class RechNodeJSScript : public RechNode
 		virtual ~RechNodeJSScript();
 
 		virtual uBOOL PerformSeq(sLONG nf, FicheInMem* curfic, BaseTaskInfo *tfb, VDB4DProgressIndicator* InProgress, 
-								BaseTaskInfo* context, DB4D_Way_of_Locking HowToLock, Bittab *exceptions, sLONG limit, EntityModel* model);
+								BaseTaskInfo* context, DB4D_Way_of_Locking HowToLock, Bittab *exceptions, sLONG limit, LocalEntityModel* model);
 
 		virtual uBOOL PerformSeq(FicheOnDisk* ficD, BaseTaskInfo *tfb, VDB4DProgressIndicator* InProgress, 
-								BaseTaskInfo* context, DB4D_Way_of_Locking HowToLock, Bittab *exceptions, sLONG limit, EntityModel* model);
+								BaseTaskInfo* context, DB4D_Way_of_Locking HowToLock, Bittab *exceptions, sLONG limit, LocalEntityModel* model);
 		
 		virtual void DisplayTree(Base4D* bd, sLONG level, VString* result, VValueBag* bagResult = nil);
 		virtual void Describe(Base4D* bd, VString& result);
@@ -771,10 +965,10 @@ class RechNodeSeq : public RechNode
 		RechNodeSeq(void);
 		// virtual ~RechNodeSeq();
 		virtual uBOOL PerformSeq(sLONG nf, FicheInMem* curfic, BaseTaskInfo *tfb, VDB4DProgressIndicator* InProgress, 
-			BaseTaskInfo* context, DB4D_Way_of_Locking HowToLock, Bittab *exceptions, sLONG limit, EntityModel* model);
+			BaseTaskInfo* context, DB4D_Way_of_Locking HowToLock, Bittab *exceptions, sLONG limit, LocalEntityModel* model);
 
 		virtual uBOOL PerformSeq(FicheOnDisk* ficD, BaseTaskInfo *tfb, VDB4DProgressIndicator* InProgress, 
-			BaseTaskInfo* context, DB4D_Way_of_Locking HowToLock, Bittab *exceptions, sLONG limit, EntityModel* model);
+			BaseTaskInfo* context, DB4D_Way_of_Locking HowToLock, Bittab *exceptions, sLONG limit, LocalEntityModel* model);
 	
 		virtual void Describe(Base4D* bd, VString& result);
 		virtual void DisplayTree(Base4D* bd, sLONG level, VString* result, VValueBag* bagResult = nil);
@@ -813,11 +1007,11 @@ class RechNodeEmSeq : public RechNode
 		}
 
 		virtual uBOOL PerformSeq(sLONG nf, FicheInMem* curfic, BaseTaskInfo *tfb, VDB4DProgressIndicator* InProgress, 
-			BaseTaskInfo* context, DB4D_Way_of_Locking HowToLock, Bittab *exceptions, sLONG limit, EntityModel* model);
+			BaseTaskInfo* context, DB4D_Way_of_Locking HowToLock, Bittab *exceptions, sLONG limit, LocalEntityModel* model);
 		
 
 		virtual uBOOL PerformSeq(FicheOnDisk* ficD, BaseTaskInfo *tfb, VDB4DProgressIndicator* InProgress, 
-			BaseTaskInfo* context, DB4D_Way_of_Locking HowToLock, Bittab *exceptions, sLONG limit, EntityModel* model);
+			BaseTaskInfo* context, DB4D_Way_of_Locking HowToLock, Bittab *exceptions, sLONG limit, LocalEntityModel* model);
 		
 
 		virtual void Describe(Base4D* bd, VString& result);
@@ -830,7 +1024,7 @@ class RechNodeEmSeq : public RechNode
 			rt->fOptions.SetIntlManager(inIntl);
 		}
 
-		virtual VValueSingle* Compute(EntityRecord* erec, BaseTaskInfo* context, VError& err);
+		virtual VValueSingle* Compute(LocalEntityRecord* erec, BaseTaskInfo* context, VError& err);
 
 		void CalcTarget(sLONG nf);
 
@@ -847,10 +1041,10 @@ class RechNodeWithArraySeq : public RechNode
 		virtual ~RechNodeWithArraySeq();
 
 		virtual uBOOL PerformSeq(sLONG nf, FicheInMem* curfic, BaseTaskInfo *tfb, VDB4DProgressIndicator* InProgress, 
-			BaseTaskInfo* context, DB4D_Way_of_Locking HowToLock, Bittab *exceptions, sLONG limit, EntityModel* model);
+			BaseTaskInfo* context, DB4D_Way_of_Locking HowToLock, Bittab *exceptions, sLONG limit, LocalEntityModel* model);
 
 		virtual uBOOL PerformSeq(FicheOnDisk* ficD, BaseTaskInfo *tfb, VDB4DProgressIndicator* InProgress, 
-			BaseTaskInfo* context, DB4D_Way_of_Locking HowToLock, Bittab *exceptions, sLONG limit, EntityModel* model);
+			BaseTaskInfo* context, DB4D_Way_of_Locking HowToLock, Bittab *exceptions, sLONG limit, LocalEntityModel* model);
 
 		virtual void Describe(Base4D* bd, VString& result);
 		virtual void DisplayTree(Base4D* bd, sLONG level, VString* result, VValueBag* bagResult = nil);
@@ -884,14 +1078,14 @@ public:
 	}
 
 	virtual uBOOL PerformSeq(sLONG nf, FicheInMem* curfic, BaseTaskInfo *tfb, VDB4DProgressIndicator* InProgress, 
-		BaseTaskInfo* context, DB4D_Way_of_Locking HowToLock, Bittab *exceptions, sLONG limit, EntityModel* model)
+		BaseTaskInfo* context, DB4D_Way_of_Locking HowToLock, Bittab *exceptions, sLONG limit, LocalEntityModel* model)
 	{
 		assert(false);
 		return false;
 	}
 
 	virtual uBOOL PerformSeq(FicheOnDisk* ficD, BaseTaskInfo *tfb, VDB4DProgressIndicator* InProgress, 
-		BaseTaskInfo* context, DB4D_Way_of_Locking HowToLock, Bittab *exceptions, sLONG limit, EntityModel* model)
+		BaseTaskInfo* context, DB4D_Way_of_Locking HowToLock, Bittab *exceptions, sLONG limit, LocalEntityModel* model)
 	{
 		assert(false);
 		return false;
@@ -904,7 +1098,7 @@ public:
 	virtual CDB4DQueryPathNode* BuildQueryPath(Boolean inBefore, Table* target, Base4D* bd, sLONG DejaSel, CDB4DQueryPathNode* parent, sLONG& curvar, sLONG &outvarnum, const CDB4DQueryPathModifiers* inModifiers);
 	//virtual void BuildQueryPathSeq(Boolean inBefore, sLONG& curvar, CDB4DQueryPathNode* parent, Base4D* bd, VString& outString, const CDB4DQueryPathModifiers* inModifiers, Boolean first = true);
 
-	virtual VValueSingle* Compute(EntityRecord* erec, BaseTaskInfo* context, VError& err);
+	virtual VValueSingle* Compute(LocalEntityRecord* erec, BaseTaskInfo* context, VError& err);
 
 	RechTokenRecordExist *rt;
 };
@@ -932,13 +1126,13 @@ public:
 	virtual uBOOL IsAllIndexe(void) { return(true); };
 
 	virtual uBOOL PerformSeq(sLONG nf, FicheInMem* curfic, BaseTaskInfo *tfb, VDB4DProgressIndicator* InProgress, 
-								BaseTaskInfo* context, DB4D_Way_of_Locking HowToLock, Bittab *exceptions, sLONG limit, EntityModel* model) 
+								BaseTaskInfo* context, DB4D_Way_of_Locking HowToLock, Bittab *exceptions, sLONG limit, LocalEntityModel* model) 
 	{ 
 		return(fResult); 
 	};
 
 	virtual uBOOL PerformSeq(FicheOnDisk* ficD, BaseTaskInfo *tfb, VDB4DProgressIndicator* InProgress, 
-							BaseTaskInfo* context, DB4D_Way_of_Locking HowToLock, Bittab *exceptions, sLONG limit, EntityModel* model) 
+							BaseTaskInfo* context, DB4D_Way_of_Locking HowToLock, Bittab *exceptions, sLONG limit, LocalEntityModel* model) 
 	{ 
 		return(fResult); 
 	};
@@ -947,7 +1141,7 @@ public:
 	virtual void DisplayTree(Base4D* bd, sLONG level, VString* result, VValueBag* bagResult = nil);
 	virtual CDB4DQueryPathNode* BuildQueryPath(Boolean inBefore, Table* target, Base4D* bd, sLONG DejaSel, CDB4DQueryPathNode* parent, sLONG& curvar, sLONG &outvarnum, const CDB4DQueryPathModifiers* inModifiers);
 
-	virtual VValueSingle* Compute(EntityRecord* erec, BaseTaskInfo* context, VError& err);
+	virtual VValueSingle* Compute(LocalEntityRecord* erec, BaseTaskInfo* context, VError& err);
 
 	uBOOL fResult;
 };
@@ -1056,10 +1250,10 @@ class RechNodeExistingSelection : public RechNode
 			BaseTaskInfo* context, DB4D_Way_of_Locking HowToLock, Bittab *exceptions, sLONG limit, Bittab &Nulls, RechNode* &transformation);
 		
 		virtual uBOOL PerformSeq(sLONG nf, FicheInMem* curfic, BaseTaskInfo *tfb, VDB4DProgressIndicator* InProgress, 
-			BaseTaskInfo* context, DB4D_Way_of_Locking HowToLock, Bittab *exceptions, sLONG limit, EntityModel* model);
+			BaseTaskInfo* context, DB4D_Way_of_Locking HowToLock, Bittab *exceptions, sLONG limit, LocalEntityModel* model);
 
 		virtual uBOOL PerformSeq(FicheOnDisk* ficD, BaseTaskInfo *tfb, VDB4DProgressIndicator* InProgress, 
-			BaseTaskInfo* context, DB4D_Way_of_Locking HowToLock, Bittab *exceptions, sLONG limit, EntityModel* model);
+			BaseTaskInfo* context, DB4D_Way_of_Locking HowToLock, Bittab *exceptions, sLONG limit, LocalEntityModel* model);
 
 		uBOOL sub_PerformSeq(sLONG numfiche, BaseTaskInfo* context);
 
@@ -1091,10 +1285,10 @@ class RechNodeOperator : public RechNode
 			BaseTaskInfo* context, DB4D_Way_of_Locking HowToLock, Bittab *exceptions, sLONG limit, Bittab &Nulls, RechNode* &transformation);
 
 		virtual uBOOL PerformSeq(sLONG nf, FicheInMem* curfic, BaseTaskInfo *tfb, VDB4DProgressIndicator* InProgress, 
-			BaseTaskInfo* context, DB4D_Way_of_Locking HowToLock, Bittab *exceptions, sLONG limit, EntityModel* model);
+			BaseTaskInfo* context, DB4D_Way_of_Locking HowToLock, Bittab *exceptions, sLONG limit, LocalEntityModel* model);
 
 		virtual uBOOL PerformSeq(FicheOnDisk* ficD, BaseTaskInfo *tfb, VDB4DProgressIndicator* InProgress, 
-			BaseTaskInfo* context, DB4D_Way_of_Locking HowToLock, Bittab *exceptions, sLONG limit, EntityModel* model);
+			BaseTaskInfo* context, DB4D_Way_of_Locking HowToLock, Bittab *exceptions, sLONG limit, LocalEntityModel* model);
 		
 		virtual uBOOL IsIndexe(void);
 		virtual uBOOL IsAllIndexe(void);
@@ -1150,13 +1344,13 @@ class RechNodeMultiOperator : public RechNode
 			BaseTaskInfo* context, DB4D_Way_of_Locking HowToLock, Bittab *exceptions, sLONG limit, Bittab &Nulls, RechNode* &transformation);
 
 		virtual uBOOL PerformSeq(sLONG nf, FicheInMem* curfic, BaseTaskInfo *tfb, VDB4DProgressIndicator* InProgress, 
-			BaseTaskInfo* context, DB4D_Way_of_Locking HowToLock, Bittab *exceptions, sLONG limit, EntityModel* model);
+			BaseTaskInfo* context, DB4D_Way_of_Locking HowToLock, Bittab *exceptions, sLONG limit, LocalEntityModel* model);
 
 		virtual uBOOL PerformFullSeq(sLONG nf, FicheInMem* curfic, BaseTaskInfo *tfb, VDB4DProgressIndicator* InProgress, 
-			BaseTaskInfo* context, DB4D_Way_of_Locking HowToLock, Bittab *exceptions, sLONG limit, EntityModel* model);
+			BaseTaskInfo* context, DB4D_Way_of_Locking HowToLock, Bittab *exceptions, sLONG limit, LocalEntityModel* model);
 
 		virtual uBOOL PerformSeq(FicheOnDisk* ficD, BaseTaskInfo *tfb, VDB4DProgressIndicator* InProgress, 
-			BaseTaskInfo* context, DB4D_Way_of_Locking HowToLock, Bittab *exceptions, sLONG limit, EntityModel* model);
+			BaseTaskInfo* context, DB4D_Way_of_Locking HowToLock, Bittab *exceptions, sLONG limit, LocalEntityModel* model);
 
 		virtual uBOOL IsIndexe(void);
 		virtual uBOOL IsAllIndexe(void);
@@ -1196,7 +1390,7 @@ class RechNodeMultiOperator : public RechNode
 		void DeleteNode(sLONG pos);
 		ArrayNode& GetArrayNodes() { return Nodes; };
 
-		virtual VValueSingle* Compute(EntityRecord* erec, BaseTaskInfo* context, VError& err);
+		virtual VValueSingle* Compute(LocalEntityRecord* erec, BaseTaskInfo* context, VError& err);
 
 	protected:
 		ArrayNode Nodes;
@@ -1216,13 +1410,13 @@ class RechNodeNot : public RechNodeOperator
 
 
 		virtual uBOOL PerformSeq(sLONG nf, FicheInMem* curfic, BaseTaskInfo *tfb, VDB4DProgressIndicator* InProgress, 
-			BaseTaskInfo* context, DB4D_Way_of_Locking HowToLock, Bittab *exceptions, sLONG limit, EntityModel* model);
+			BaseTaskInfo* context, DB4D_Way_of_Locking HowToLock, Bittab *exceptions, sLONG limit, LocalEntityModel* model);
 
 		virtual uBOOL PerformFullSeq(sLONG nf, FicheInMem* curfic, BaseTaskInfo *tfb, VDB4DProgressIndicator* InProgress, 
-			BaseTaskInfo* context, DB4D_Way_of_Locking HowToLock, Bittab *exceptions, sLONG limit, EntityModel* model);
+			BaseTaskInfo* context, DB4D_Way_of_Locking HowToLock, Bittab *exceptions, sLONG limit, LocalEntityModel* model);
 
 		virtual uBOOL PerformSeq(FicheOnDisk* ficD, BaseTaskInfo *tfb, VDB4DProgressIndicator* InProgress, 
-			BaseTaskInfo* context, DB4D_Way_of_Locking HowToLock, Bittab *exceptions, sLONG limit, EntityModel* model);
+			BaseTaskInfo* context, DB4D_Way_of_Locking HowToLock, Bittab *exceptions, sLONG limit, LocalEntityModel* model);
 
 		virtual void FullyDescribe(Base4D* bd, VString& result);
 		virtual void Describe(Base4D* bd, VString& result);
@@ -1242,7 +1436,7 @@ class RechNodeNot : public RechNodeOperator
 
 		virtual void AdjusteIntl(VIntlMgr* inIntl);
 
-		virtual VValueSingle* Compute(EntityRecord* erec, BaseTaskInfo* context, VError& err);
+		virtual VValueSingle* Compute(LocalEntityRecord* erec, BaseTaskInfo* context, VError& err);
 
 	protected:
 
@@ -1317,13 +1511,13 @@ class RechNodeSubQuery : public RechNode
 			BaseTaskInfo* context, DB4D_Way_of_Locking HowToLock, Bittab *exceptions, sLONG limit, Bittab &Nulls, RechNode* &transformation);
 
 		virtual uBOOL PerformSeq(sLONG nf, FicheInMem* curfic, BaseTaskInfo *tfb, VDB4DProgressIndicator* InProgress, 
-			BaseTaskInfo* context, DB4D_Way_of_Locking HowToLock, Bittab *exceptions, sLONG limit, EntityModel* model);
+			BaseTaskInfo* context, DB4D_Way_of_Locking HowToLock, Bittab *exceptions, sLONG limit, LocalEntityModel* model);
 
 		virtual uBOOL PerformFullSeq(sLONG nf, FicheInMem* curfic, BaseTaskInfo *tfb, VDB4DProgressIndicator* InProgress, 
-			BaseTaskInfo* context, DB4D_Way_of_Locking HowToLock, Bittab *exceptions, sLONG limit, EntityModel* model);
+			BaseTaskInfo* context, DB4D_Way_of_Locking HowToLock, Bittab *exceptions, sLONG limit, LocalEntityModel* model);
 
 		virtual uBOOL PerformSeq(FicheOnDisk* ficD, BaseTaskInfo *tfb, VDB4DProgressIndicator* InProgress, 
-			BaseTaskInfo* context, DB4D_Way_of_Locking HowToLock, Bittab *exceptions, sLONG limit, EntityModel* model);
+			BaseTaskInfo* context, DB4D_Way_of_Locking HowToLock, Bittab *exceptions, sLONG limit, LocalEntityModel* model);
 
 		VError GenereData(VDB4DProgressIndicator* InProgress, BaseTaskInfo* context, DB4D_Way_of_Locking HowToLock, VValueBag* curdesc, OptimizedQuery *query);
 
@@ -1383,7 +1577,7 @@ class RechNodeSubQuery : public RechNode
 
 typedef VStackArrayRetainedPtrOf<CDB4DQueryPathNode*, 5> ArrayQueryPathNode;
 
-class VDB4DQueryPathNode : public VComponentImp<CDB4DQueryPathNode>
+class VDB4DQueryPathNode : public CDB4DQueryPathNode
 {
 	public:
 		virtual CDB4DQueryPathNode* GetParent() const;
@@ -1479,7 +1673,7 @@ class OptimizedQuery : public Obj4D, public IObjCounter
 			return fQueryPlan;
 		}
 
-		VValueSingle* Compute(EntityRecord* erec, BaseTaskInfo* context, VError& err);
+		VValueSingle* Compute(LocalEntityRecord* erec, BaseTaskInfo* context, VError& err);
 
 		static void BuildQueryFulltext(VValueBag* step, VString& fulltext, sLONG level);
 
@@ -1488,7 +1682,7 @@ class OptimizedQuery : public Obj4D, public IObjCounter
 			return fMaxRecords;
 		}
 
-		inline EntityModel* GetModel()
+		inline LocalEntityModel* GetModel()
 		{
 			return fModel;
 		}
@@ -1532,7 +1726,7 @@ class OptimizedQuery : public Obj4D, public IObjCounter
 		Boolean fDescribeExecution;
 		VValueBag* fExecutionDescription;
 		VValueBag* fQueryPlan;
-		EntityModel* fModel;
+		LocalEntityModel* fModel;
 };
 
 

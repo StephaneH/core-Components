@@ -381,8 +381,8 @@ VError Relation::ExtendRelationFields(const CDB4DFieldArray& inSourceFields, con
 	{
 		if (*cur != nil && *curdest != nil)
 		{
-			Field* source = VImpCreator<VDB4DField>::GetImpObject(*cur)->GetField();
-			Field* dest = VImpCreator<VDB4DField>::GetImpObject(*curdest)->GetField();
+			Field* source = dynamic_cast<VDB4DField*>(*cur)->GetField();
+			Field* dest = dynamic_cast<VDB4DField*>(*curdest)->GetField();
 			if (source->GetTyp() != dest->GetTyp())
 				err = VE_DB4D_FIELDTYPENOTMATCHING;
 			else

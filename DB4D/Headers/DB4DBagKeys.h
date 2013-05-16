@@ -50,6 +50,7 @@ namespace d4
 	CREATE_BAGKEY(indexed);
 	CREATE_BAGKEY(identifying);
 	CREATE_BAGKEY(multiLine);
+	CREATE_BAGKEY(simpleDate);
 
 	CREATE_BAGKEY(onGet);
 	CREATE_BAGKEY(onSet);
@@ -69,6 +70,11 @@ namespace d4
 	CREATE_BAGKEY(singleEntityName);
 	CREATE_BAGKEY(className);
 	CREATE_BAGKEY(collectionName);
+	CREATE_BAGKEY(noEdit);
+	CREATE_BAGKEY(noSave);
+	CREATE_BAGKEY(allow);
+	CREATE_BAGKEY(publishAsJSGlobal);
+	CREATE_BAGKEY(allowOverrideStamp);
 
 	CREATE_BAGKEY(queryStatement);
 	CREATE_BAGKEY(applyToModel);
@@ -146,6 +152,10 @@ namespace d4
 
 	CREATE_BAGKEY(events);
 
+	CREATE_BAGKEY(outsideCatalogs);
+	CREATE_BAGKEY(user);
+	CREATE_BAGKEY(password);
+
 };
 
 
@@ -213,6 +223,7 @@ namespace DB4DBagKeys
 	CREATE_BAGKEY( primary_key);
 	CREATE_BAGKEY( field_name);
 	CREATE_BAGKEY( field_uuid);
+	CREATE_BAGKEY_WITH_DEFAULT_SCALAR( hide_in_REST, XBOX::VBoolean, bool, false);
 	CREATE_BAGKEY_WITH_DEFAULT_SCALAR( styled_text, XBOX::VBoolean, bool, false);
 	CREATE_BAGKEY_WITH_DEFAULT_SCALAR( outside_blob, XBOX::VBoolean, bool, false);
 	CREATE_BAGKEY_WITH_DEFAULT_SCALAR( enterable, XBOX::VBoolean, bool, true);

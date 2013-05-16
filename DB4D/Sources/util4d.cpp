@@ -74,6 +74,51 @@ sLONG IOccupable::sNBActions = 0;
 const Feature feature_SendSubTableID = {1,0xF0021170,0xF0021200,0xA0021300};	// 11.7 HF1, 12.0 HF1, 13.0 alpha 2
 
 
+VDB4DProgressIndicatorWrapper::VDB4DProgressIndicatorWrapper(VDB4DProgressIndicator* inWrappedProgressIndicator):
+    XBOX::VObject(),
+    fProgressIndicator(nil)
+{
+    if (inWrappedProgressIndicator == nil)
+    {
+        fProgressIndicator = new VDB4DProgressIndicator(); 
+    }
+    else
+    {
+        fProgressIndicator = XBOX::RetainRefCountable(inWrappedProgressIndicator);
+    }
+}
+
+bool VDB4DProgressIndicatorWrapper::SetTitleAfterKind(DB4D_ProgressIndicatorKind inKind)
+{
+    return SetProgressIndicatorTitleForKind(*fProgressIndicator,inKind);
+}
+
+VDB4DProgressIndicatorWrapper::~VDB4DProgressIndicatorWrapper()
+{
+    XBOX::ReleaseRefCountable(&fProgressIndicator);
+}
+
+bool SetProgressIndicatorTitleForKind(VDB4DProgressIndicator& inPi, DB4D_ProgressIndicatorKind inKind)
+{
+    XBOX::VString title;
+    bool modified = true;
+    switch(inKind)
+    {
+        case PK_UniquenessChecking:
+            gs(1005,34,title);
+			break;
+		default:
+            modified = false;
+			break;
+    }
+    if(modified)
+    {
+        inPi.SetTitle(title);
+    }
+    return modified;
+    
+}
+
 void trackDebugMsg(const VString& mess)
 {
 	sLONG ntask = VTask::GetCurrentID();
@@ -232,6 +277,35 @@ sLONG StrHashTable::GetValue(const VString& valuename) const
 
 
 // ----------------------------------------------------------------------------------------
+bool CompareLessVStringNoIntl::operator () (const VString& str1, const VString& str2) const
+{
+	const UniChar* pc1 = str1.GetCPointer();
+	const UniChar* pc2 = str2.GetCPointer();
+	sLONG len1 = str1.GetLength();
+	sLONG len2 = str2.GetLength();
+	sLONG len = len1;
+	if (len1>len2)
+		len = len2;
+	for (sLONG i = 0; i < len; ++i)
+	{
+		UniChar c1 = *pc1;
+		++pc1;
+		UniChar c2 = *pc2;
+		++pc2;
+		if (c1 >= 'a' && c1 <= 'z')
+			c1 = c1 - 32;
+		if (c2 >= 'a' && c2 <= 'z')
+			c2 = c2 - 32;
+		
+		if (c1 < c2)
+			return true;
+		else if (c1 > c2)
+			return false;
+	}
+
+	return len1 < len2;
+}
+
 
 
 Enumeration::Enumeration(const ConstUniCharPtr* from)
@@ -2690,11 +2764,11 @@ void VErrorDB4D_OnEM::DumpToString( VString& outString) const
 
 
 
-VErrorDB4D_OnEMRec::VErrorDB4D_OnEMRec( VError inErrCode, ActionDB4D inAction, const Base4D *inBase, const EntityModel* em, sLONG entityNum)
+VErrorDB4D_OnEMRec::VErrorDB4D_OnEMRec( VError inErrCode, ActionDB4D inAction, const Base4D *inBase, const EntityModel* em, const VString& key)
 :VErrorDB4D_OnEM(inErrCode, inAction, inBase, em)
 {
-	fEntityNum = entityNum;
-	GetBag()->SetString(Db4DError::EntityNum, ToString(entityNum));
+	fEntityKey = key;
+	GetBag()->SetString(Db4DError::EntityNum, key);
 }
 
 
@@ -2929,7 +3003,7 @@ void xTempObject::operator delete(void* inAddr)
 															/* ----------------------- */
 
 
-sLONG xMultiFieldDataOffset::Set(sLONG xoffset, EntityAttribute* inAtt, Boolean xascent) 
+sLONG xMultiFieldDataOffset::Set(sLONG xoffset, db4dEntityAttribute* inAtt, Boolean xascent) 
 { 
 	offset = xoffset; 
 	typ = inAtt->ComputeScalarType();
@@ -2981,7 +3055,7 @@ sLONG xMultiFieldDataOffset::Set(sLONG xoffset, EntityAttribute* inAtt, Boolean 
 
 sLONG xMultiFieldDataOffset::Set(sLONG xoffset, AttributePath* inAttPath, Boolean xascent) 
 { 
-	const EntityAttribute* att = inAttPath->LastPart()->fAtt;
+	const db4dEntityAttribute* att = (db4dEntityAttribute*)(inAttPath->LastPart()->fAtt);
 
 	offset = xoffset; 
 	typ = att->ComputeScalarType();
@@ -3078,13 +3152,13 @@ xMultiFieldDataOffsets::xMultiFieldDataOffsets(Field* cri, sLONG typ, Boolean as
 }
 
 
-xMultiFieldDataOffsets::xMultiFieldDataOffsets(EntityAttribute* att, Boolean ascent)
+xMultiFieldDataOffsets::xMultiFieldDataOffsets(db4dEntityAttribute* att, Boolean ascent)
 {
 	count = 0;
 	fWithExpression = false;
 	fWithAttributes = true;
 	ismulti = false;
-	fOwner = att->GetOwner()->GetMainTable();
+	fOwner = att->GetTable();
 	fLen = AddOffset(0, att, ascent);
 }
 
@@ -3095,6 +3169,20 @@ xMultiFieldDataOffsets::~xMultiFieldDataOffsets()
 	{
 		offsets[i].Release();
 	}
+}
+
+bool xMultiFieldDataOffsets::IsAllDescent() const
+{
+	bool alldesc = true;
+	for (sLONG i = 0; i < count; ++i)
+	{
+		if (offsets[i].IsAscent())
+		{
+			alldesc = false;
+			break;
+		}
+	}
+	return alldesc;
 }
 
 
@@ -3129,7 +3217,7 @@ Boolean xMultiFieldDataOffsets::AddOffset(DB4DLanguageExpression* inExpression, 
 }
 
 
-sLONG xMultiFieldDataOffsets::AddOffset(sLONG offset, EntityAttribute* inAtt, Boolean ascent)
+sLONG xMultiFieldDataOffsets::AddOffset(sLONG offset, db4dEntityAttribute* inAtt, Boolean ascent)
 {
 	if (count<kMaxMultiFieldData)
 	{
@@ -5415,7 +5503,7 @@ VDB4DProgressIndicator* IRequestReply::RetainProgressParam(CDB4DBaseContext* inC
 {
 	VDB4DProgressIndicator* result = nil;
 	VTask* curtask = VTask::GetCurrent();
-	const VValueBag *extradata = VImpCreator<BaseTaskInfo>::GetImpObject(inContext)->RetainExtraData();
+	const VValueBag *extradata = dynamic_cast<BaseTaskInfo*>(inContext)->RetainExtraData();
 	if (extradata != nil)
 	{
 		VUUID clientUID;
@@ -5962,6 +6050,161 @@ void debug_DelBlobAddrInTrans(const RecordIDInTrans& blobID)
 }
 
 #endif
+
+#if debugLeaksAll
+
+uBOOL debug_candumpleaksAll = 0;
+uBOOL debug_canRegisterLeaksAll = 0;
+
+
+IDebugRefCountable::mapOfRefCountables IDebugRefCountable::objs;
+VCriticalSection IDebugRefCountable::objsMutex;
+
+
+IDebugRefCountable::IDebugRefCountable()
+{
+	if (debug_candumpleaksAll)
+		DumpStackCrawls();
+	if (debug_canRegisterLeaksAll && OKToTrackDebug())
+		RegisterStackCrawl(this);
+}
+
+IDebugRefCountable::~IDebugRefCountable()
+{
+	if (debug_candumpleaksAll)
+		DumpStackCrawls();
+	UnRegisterStackCrawl(this);
+}
+
+sLONG IDebugRefCountable::Retain(const char* DebugInfo) const
+{
+	if (debug_candumpleaksAll)
+		DumpStackCrawls();
+	if (debug_canRegisterLeaksAll && OKToTrackDebug())
+		RegisterStackCrawl(this);
+	return IRefCountable::Retain(DebugInfo);
+}
+
+sLONG IDebugRefCountable::Release(const char* DebugInfo) const
+{
+	if (debug_candumpleaksAll)
+		DumpStackCrawls();
+	if (debug_canRegisterLeaksAll && OKToTrackDebug())
+		RegisterStackCrawl(this);
+	return IRefCountable::Release(DebugInfo);
+}
+
+
+
+void IDebugRefCountable::DumpStackCrawls()
+{
+	VFile ff("f:\\dump.txt");
+	if (ff.Exists())
+		ff.Delete();
+
+	{
+		VFileStream stream(&ff, FO_CreateIfNotFound);
+		stream.OpenWriting();
+		DumpStackCrawls(stream);
+		stream.CloseWriting();
+	}
+	sLONG xdebug = 1;
+
+	/*
+	VString s;
+	DumpStackCrawls(s);
+	DebugMsg(s);
+	*/
+	/*
+	VTaskLock lock(&objsMutex);
+	for (mapOfRefCountables::iterator cur = objs.begin(),end = objs.end(); cur != end; ++cur)
+	{
+		VString title;
+		cur->first->GetDebugInfo(title);
+		DebugMsg(title+"\n\n");
+		for (StackCrawlCollection::iterator curs = cur->second.begin(), ends = cur->second.end(); curs != ends; ++curs)
+		{
+			VStr<2048> ss;
+			curs->Dump(ss);
+			DebugMsg(ss);
+			DebugMsg(L"\n\n\n\n");
+		}
+		DebugMsg(L"\n\n\n\n -------------------------------------------------------- \n\n\n\n");
+	}
+	*/
+}
+
+
+void IDebugRefCountable::DumpStackCrawls(VStream& outStream)
+{
+	VTaskLock lock(&objsMutex);
+	for (mapOfRefCountables::iterator cur = objs.begin(),end = objs.end(); cur != end; ++cur)
+	{
+		VString title;
+		cur->first->GetDebugInfo(title);
+		outStream.PutText(title+"\n\n");
+		for (StackCrawlCollection::iterator curs = cur->second.begin(), ends = cur->second.end(); curs != ends; ++curs)
+		{
+			VStr<2048> ss;
+			curs->Dump(ss);
+			outStream.PutText(ss + "\n\n\n\n");
+		}
+		outStream.PutText("\n\n\n\n -------------------------------------------------------- \n\n\n\n");
+	}
+	
+}
+
+
+void IDebugRefCountable::DumpStackCrawls(VString& outText)
+{
+	VTaskLock lock(&objsMutex);
+	for (mapOfRefCountables::iterator cur = objs.begin(),end = objs.end(); cur != end; ++cur)
+	{
+		VString title;
+		cur->first->GetDebugInfo(title);
+		outText += title+"\n\n";
+		for (StackCrawlCollection::iterator curs = cur->second.begin(), ends = cur->second.end(); curs != ends; ++curs)
+		{
+			VStr<2048> ss;
+			curs->Dump(ss);
+			outText += ss;
+			outText += "\n\n\n\n";
+		}
+		outText += "\n\n\n\n -------------------------------------------------------- \n\n\n\n";
+	}
+}
+
+
+void IDebugRefCountable::RegisterStackCrawl(const IDebugRefCountable* obj)
+{
+	VTaskLock lock(&objsMutex);
+	VStackCrawl crawl;
+	crawl.LoadFrames(0, kMaxScrawlFrames);
+	objs[obj].insert(crawl);
+	/*
+	StackCrawlCollection* stacks = &(objs[obj]);
+	stacks->insert(crawl);
+	*/
+
+}
+
+
+void IDebugRefCountable::UnRegisterStackCrawl(const IDebugRefCountable* obj)
+{
+	VTaskLock lock(&objsMutex);
+	objs.erase(obj);
+}
+
+
+
+
+
+#else
+
+//typedef IRefCountable IDebugRefCountable;
+
+#endif
+
 
 
 #if debugLeakCheck_Strong
@@ -6940,9 +7183,15 @@ OccupablePool::OccupablePool()
 	fWaitForMemMgr = 0;
 	fWaitMemMgrSync = nil;
 
-	fTaskDataKey = VTask::CreateDataKey( RemoveOccupableStackFromThread);
+	//fTaskDataKey = VTask::CreateDataKey( RemoveOccupableStackFromThread); // move to later execution
 	//fGlobalStamp = 0;
 }
+
+void OccupablePool::init()
+{
+	fTaskDataKey = VTask::CreateDataKey( RemoveOccupableStackFromThread);
+}
+
 
 
 OccupablePool::~OccupablePool()

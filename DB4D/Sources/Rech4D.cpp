@@ -155,6 +155,24 @@ RechToken* RechTokenBoolOper::Clone() const
 }
 
 
+VError RechTokenBoolOper::BuildString(VString& outStr)
+{
+	switch (BoolLogic)
+	{
+		case DB4D_And:
+			outStr = " and ";
+			break;
+		case DB4D_OR:
+			outStr = " or ";
+			break;
+		case DB4D_Except:
+			outStr = " except ";
+			break;
+	}
+	return VE_OK;
+}
+
+
 
 					/* ---------------------------------------- */
 
@@ -193,6 +211,59 @@ RechToken* RechTokenInterpOper::Clone() const
 	result->oper = oper;
 
 	return result;
+}
+
+
+void BuildCompOperString(sLONG oper, VString& outStr)
+{
+	switch (oper)
+	{
+		case DB4D_Equal:
+			outStr = " === ";
+			break;
+		case DB4D_NotEqual:
+			outStr = " !== ";
+			break;
+		case DB4D_Greater:
+			outStr = " > ";
+			break;
+		case DB4D_GreaterOrEqual:
+			outStr = " >= ";
+			break;
+		case DB4D_Lower:
+			outStr = " < ";
+			break;
+		case DB4D_LowerOrEqual:
+			outStr = " <= ";
+			break;
+		case DB4D_Contains_KeyWord:
+			outStr = " %% ";
+			break;
+		case DB4D_DoesntContain_KeyWord:
+			outStr = " except ";
+			break;
+		case DB4D_BeginsWith:
+			outStr = " begin ";
+			break;
+		case DB4D_Contains_KeyWord_BeginingWith:
+			outStr = " %% ";
+			break;
+		case DB4D_Regex_Match:
+			outStr = " matches ";
+			break;
+		case DB4D_IN:
+			outStr = " in ";
+			break;
+		case DB4D_Like:
+			outStr = " == ";
+			break;
+		case DB4D_NotLike:
+			outStr = " != ";
+			break;
+		case DB4D_Regex_Not_Match:
+			outStr = " !%* ";
+			break;
+	}
 }
 
 
@@ -304,6 +375,135 @@ RechToken* RechTokenSimpleComp::Clone() const
 
 
 
+
+VError RechTokenEMSimpleComp::PutInto(VStream& buf)
+{
+	VError err = VE_DB4D_NOTIMPLEMENTED;
+	return(err);
+}
+
+VError RechTokenEMSimpleComp::GetFrom(VStream& buf, Table* target)
+{
+	VError err = VE_DB4D_NOTIMPLEMENTED;
+	return(err);
+}
+
+
+void RechTokenEMSimpleComp::CheckIfDataIsDirect(Table* target)
+{
+}
+
+
+void RechTokenEMSimpleComp::Dispose(void)
+{
+	if (ch != nil) 
+		delete ch;
+	fIsNeverNull = 2;
+	QuickReleaseRefCountable(fRegMatcher);
+	if (fCopyForLocalModel != nil)
+	{
+		fCopyForLocalModel->Dispose();
+		delete fCopyForLocalModel;
+	}
+}
+
+RechTokenSimpleComp* RechTokenEMSimpleComp::CopyIntoRechTokenSimpleComp()
+{
+	if (fCopyForLocalModel == nil)
+	{
+		fCopyForLocalModel = new RechTokenSimpleComp();
+		LocalEntityModel* locmodel = dynamic_cast<LocalEntityModel*>(fAtt->GetModel());
+		if (locmodel != nil)
+		{
+			fCopyForLocalModel->numfile = locmodel->GetMainTable()->GetNum();
+			fCopyForLocalModel->numfield = fAtt->GetFieldPos();
+		}
+		else
+		{
+			fCopyForLocalModel->numfile = 0;
+			fCopyForLocalModel->numfield = 0;
+		}
+		fCopyForLocalModel->numinstance = numinstance;
+		fCopyForLocalModel->comparaison = comparaison;
+		if (ch == nil)
+			fCopyForLocalModel->ch = nil;
+		else
+			fCopyForLocalModel->ch = ch->Clone();
+		fCopyForLocalModel->fIsDataDirect = fIsDataDirect;
+		fCopyForLocalModel->fOptions = fOptions;
+		fCopyForLocalModel->fIsNeverNull = fIsNeverNull;
+		fCopyForLocalModel->fParam = fParam;
+		fCopyForLocalModel->fExpectedType = fExpectedType;
+		fCopyForLocalModel->fCheckForNull = fCheckForNull;
+		fCopyForLocalModel->fRegMatcher = RetainRefCountable(fRegMatcher);
+	}
+
+	return fCopyForLocalModel;
+}
+
+
+RechToken* RechTokenEMSimpleComp::Clone() const
+{
+	RechTokenEMSimpleComp* result = new RechTokenEMSimpleComp();
+
+	result->fAtt = fAtt;
+	result->numinstance = numinstance;
+	result->comparaison = comparaison;
+	if (ch == nil)
+		result->ch = nil;
+	else
+		result->ch = ch->Clone();
+	result->fIsDataDirect = fIsDataDirect;
+	result->fOptions = fOptions;
+	result->fIsNeverNull = fIsNeverNull;
+	result->fParam = fParam;
+	result->fExpectedType = fExpectedType;
+	result->fSimpleDate = fSimpleDate;
+	result->fCheckForNull = fCheckForNull;
+	result->fRegMatcher = RetainRefCountable(fRegMatcher);
+	return result;
+}
+
+VError RechTokenEMSimpleComp::BuildString(VString& outStr)
+{
+	VString soper;
+	VString attname;
+	fAtt->GetName(attname);
+	BuildCompOperString(comparaison, soper);
+	VString lastpart;
+	if (!fParam.IsEmpty())
+	{
+		lastpart = fParam;
+	}
+	else if (fRegMatcher != nil)
+	{
+	}
+	else if (comparaison == DB4D_IsNull || comparaison == DB4D_IsNotNull)
+	{
+		lastpart = "null";
+		if (comparaison == DB4D_IsNull)
+			soper = " is ";
+		else
+			soper = " is not ";
+	}
+	else if (ch != nil)
+	{
+		ch->GetString(lastpart);
+	}
+
+	outStr = attname + soper + lastpart;
+
+	return VE_OK;
+}
+
+
+
+
+
+					/* ---------------------------------------- */
+
+
+
 VError RechTokenRecordExist::PutInto(VStream& buf)
 {
 	VError err;
@@ -352,6 +552,63 @@ RechToken* RechTokenRecordExist::Clone() const
 
 
 
+VError RechTokenEntityRecordExist::PutInto(VStream& buf)
+{
+	VError err = VE_DB4D_NOTIMPLEMENTED;
+
+	return(err);
+}
+
+VError RechTokenEntityRecordExist::GetFrom(VStream& buf, Table* target)
+{
+	VError err = VE_DB4D_NOTIMPLEMENTED;
+
+	return(err);
+}
+
+
+RechToken* RechTokenEntityRecordExist::Clone() const
+{
+	RechTokenEntityRecordExist* result = new RechTokenEntityRecordExist();
+
+	result->fModel = fModel;
+	result->numinstance = numinstance;
+	result->fCheckIfExists = fCheckIfExists;
+
+	return result;
+}
+
+void RechTokenEntityRecordExist::Dispose(void)
+{
+	if (fCopyForLocalModel != nil)
+	{
+		fCopyForLocalModel->Dispose();
+		delete fCopyForLocalModel;
+	}
+}
+
+RechTokenRecordExist* RechTokenEntityRecordExist::CopyIntoRechTokenRecordExist()
+{
+	if (fCopyForLocalModel == nil)
+	{
+		fCopyForLocalModel = new RechTokenRecordExist();
+
+		fCopyForLocalModel->numfile = 0;
+		LocalEntityModel* locmodel = dynamic_cast<LocalEntityModel*>(fModel);
+		if (locmodel != nil)
+			fCopyForLocalModel->numfile = locmodel->GetMainTable()->GetNum();
+		fCopyForLocalModel->numinstance = numinstance;
+		fCopyForLocalModel->fCheckIfExists = fCheckIfExists;
+	}
+
+	return fCopyForLocalModel;
+}
+
+
+					/* ---------------------------------------- */
+
+
+
 void RechTokenEmComp::Dispose(void)
 {
 	if (ch != nil) 
@@ -384,6 +641,7 @@ RechToken* RechTokenEmComp::Clone() const
 	result->fParam = fParam;
 	result->fRegMatcher = RetainRefCountable(fRegMatcher);
 	result->fExpectedType = fExpectedType;
+	result->fSimpleDate = fSimpleDate;
 	result->numinstance = numinstance;
 
 
@@ -391,11 +649,44 @@ RechToken* RechTokenEmComp::Clone() const
 }
 
 
-void RechTokenEmComp::addInstance(sLONG numtable, sLONG howmany)
+VError RechTokenEmComp::BuildString(VString& outStr)
+{
+	VString soper;
+	VString attname;
+	fAttPath.GetString(attname);
+	BuildCompOperString(comparaison, soper);
+	VString lastpart;
+	if (!fParam.IsEmpty())
+	{
+		lastpart = fParam;
+	}
+	else if (fRegMatcher != nil)
+	{
+	}
+	else if (comparaison == DB4D_IsNull || comparaison == DB4D_IsNotNull)
+	{
+		lastpart = "null";
+		if (comparaison == DB4D_IsNull)
+			soper = " is ";
+		else
+			soper = " is not ";
+	}
+	else if (ch != nil)
+	{
+		ch->GetString(lastpart);
+	}
+
+	outStr = attname + soper + lastpart;
+
+	return VE_OK;
+}
+
+
+
+void RechTokenEmComp::addInstance(const EntityModel* model, sLONG howmany)
 {
 	const EntityAttributeInstance* attinst = fAttPath.FirstPart();
-	sLONG target = attinst->fAtt->GetOwner()->GetMainTable()->GetNum();
-	if (numtable == target)
+	if (model == attinst->fAtt->GetModel()->GetRootBaseEm())
 		numinstance += howmany;
 }
 
@@ -611,6 +902,91 @@ RechToken* RechTokenArrayComp::Clone() const
 			/* --------------------------------------------------------- */
 
 
+
+VError RechTokenEmArrayComp::PutInto(VStream& buf)
+{
+	VError err = VE_DB4D_NOTIMPLEMENTED;
+	return(err);
+}
+
+
+VError RechTokenEmArrayComp::GetFrom(VStream& buf, Table* target)
+{
+	VError err = VE_DB4D_NOTIMPLEMENTED;
+	return(err);
+}
+
+
+void RechTokenEmArrayComp::CheckIfDataIsDirect(Table* target)
+{
+}
+
+
+void RechTokenEmArrayComp::Dispose(void)
+{
+	fIsNeverNull = 2;
+	if (values != nil) 
+		values->Release();
+	if (fCopyForLocalModel != nil)
+	{
+		fCopyForLocalModel->Dispose();
+		delete fCopyForLocalModel;
+	}
+}
+
+
+
+RechTokenArrayComp* RechTokenEmArrayComp::CopyIntoRechTokenArrayComp()
+{
+	if (fCopyForLocalModel == nil)
+	{
+		fCopyForLocalModel = new RechTokenArrayComp();
+		LocalEntityModel* locmodel = dynamic_cast<LocalEntityModel*>(fAtt->GetModel());
+		if (locmodel != nil)
+		{
+			fCopyForLocalModel->numfile = locmodel->GetMainTable()->GetNum();
+			fCopyForLocalModel->numfield = fAtt->GetFieldPos();
+		}
+		else
+		{
+			fCopyForLocalModel->numfile = 0;
+			fCopyForLocalModel->numfield = 0;
+		}
+		fCopyForLocalModel->numinstance = numinstance;
+		fCopyForLocalModel->comparaison = comparaison;
+		fCopyForLocalModel->values = RetainRefCountable(values);
+		fCopyForLocalModel->fIsDataDirect = fIsDataDirect;
+		fCopyForLocalModel->fOptions = fOptions;
+		fCopyForLocalModel->fIsNeverNull = fIsNeverNull;
+		fCopyForLocalModel->fParam = fParam;
+		fCopyForLocalModel->fExpectedType = fExpectedType;
+	}
+
+	return fCopyForLocalModel;
+}
+
+
+RechToken* RechTokenEmArrayComp::Clone() const
+{
+	RechTokenEmArrayComp* result = new RechTokenEmArrayComp();
+
+	result->fAtt = fAtt;
+	result->numinstance = numinstance;
+	result->comparaison = comparaison;
+	result->values = RetainRefCountable(values);
+	result->fIsDataDirect = fIsDataDirect;
+	result->fOptions = fOptions;
+	result->fIsNeverNull = fIsNeverNull;
+	result->fParam = fParam;
+	result->fExpectedType = fExpectedType;
+	result->fSimpleDate = fSimpleDate;
+	return result;
+}
+
+
+				/* --------------------------------------------------------- */
+
+
 VError RechTokenJoin::PutInto(VStream& buf)
 {
 	VError err;
@@ -688,6 +1064,48 @@ RechToken* RechTokenJoin::Clone() const
 				/* --------------------------------------------------------- */
 
 
+VError RechTokenEmJoin::PutInto(VStream& buf)
+{
+	VError err = VE_OK;
+
+	return(err);
+}
+
+VError RechTokenEmJoin::GetFrom(VStream& buf, Table* target)
+{
+	VError err = VE_OK;
+
+	return(err);
+}
+
+
+void RechTokenEmJoin::Dispose(void)
+{
+}
+
+
+RechToken* RechTokenEmJoin::Clone() const
+{
+	RechTokenEmJoin* result = new RechTokenEmJoin();
+
+	result->fRootBaseEm = fRootBaseEm;
+	result->fAtt = fAtt;
+	result->numinstance = numinstance;
+	result->comparaison = comparaison;
+	result->fRootBaseEmOther = fRootBaseEmOther;
+	result->fAttOther = fAttOther;
+	result->numinstanceOther = numinstanceOther;
+	result->fOptions = fOptions;
+
+	return result;
+}
+
+
+
+				/* --------------------------------------------------------- */
+
+
+
 void RechTokenSel::Dispose(void)
 {
 	fSel->Release();
@@ -719,6 +1137,46 @@ VError RechTokenSel::GetFrom(VStream& buf, Table* target)
 RechToken* RechTokenSel::Clone() const
 {
 	RechTokenSel* result = new RechTokenSel(fSel, fNumInstance);
+
+	return result;
+}
+
+
+
+				/* --------------------------------------------------------- */
+
+
+void RechTokenEmSel::Dispose(void)
+{
+	fSel->Release();
+}
+
+
+
+VError RechTokenEmSel::PutInto(VStream& buf)
+{
+	VError err;
+
+	err = RechToken::PutInto(buf);
+	err = VE_DB4D_NOTIMPLEMENTED;
+
+	return(err);
+}
+
+VError RechTokenEmSel::GetFrom(VStream& buf, Table* target)
+{
+	VError err;
+
+	err = RechToken::GetFrom(buf, target);
+	err = VE_DB4D_NOTIMPLEMENTED;
+
+	return(err);
+}
+
+
+RechToken* RechTokenEmSel::Clone() const
+{
+	RechTokenEmSel* result = new RechTokenEmSel(fSel, fNumInstance);
 
 	return result;
 }
@@ -780,11 +1238,13 @@ void SearchTab::AddSearchLineEm(AttributePath& attpath, sLONG comp, const VStrin
 	SetCompOptionWithOperator(rt->fOptions, comp);
 
 	ValueKind datakind = attpath.LastPart()->fAtt->GetDataKind();
+	bool simpleDate = attpath.LastPart()->fAtt->isSimpleDate();
 
 	rt->ch = nil;
 	rt->fParam = inParamToCompare;
 	fParamValues[inParamToCompare] = QueryParamElement();
 	rt->fExpectedType = (sLONG)datakind;
+	rt->fSimpleDate = simpleDate;
 
 	rt->fCheckForNull = false;
 
@@ -899,13 +1359,16 @@ void SearchTab::AddSearchLineSimple(Field* cri, sLONG comp, const VValueSingle* 
 void SearchTab::AddSearchLineSimple(sLONG numfile, sLONG numfield, sLONG comp, const VValueSingle* ValueToCompare, Boolean isDiacritic, sLONG numinstance, bool checkfornull)
 {
 	Field* cri;
-	if (numfile == 0)
-		cri = destFile->RetainField(numfield);
-	else
-		cri = destFile->GetOwner()->RetainField(numfile, numfield);
-	AddSearchLineSimple(cri, comp, ValueToCompare, isDiacritic, numinstance, checkfornull);
-	if (cri != nil)
-		cri->Release();
+	if (testAssert(destFile != nil))
+	{
+		if (numfile == 0)
+			cri = destFile->RetainField(numfield);
+		else
+			cri = destFile->GetOwner()->RetainField(numfile, numfield);
+		AddSearchLineSimple(cri, comp, ValueToCompare, isDiacritic, numinstance, checkfornull);
+		if (cri != nil)
+			cri->Release();
+	}
 }
 
 
@@ -949,26 +1412,32 @@ void SearchTab::AddSearchLineSimple(Field* cri, sLONG comp, const VValueSingle* 
 void SearchTab::AddSearchLineSimple(sLONG numfile, sLONG numfield, sLONG comp, const VValueSingle* ValueToCompare, const VCompareOptions& inOptions, sLONG numinstance, bool checkfornull)
 {
 	Field* cri;
-	if (numfile == 0)
-		cri = destFile->RetainField(numfield);
-	else
-		cri = destFile->GetOwner()->RetainField(numfile, numfield);
-	AddSearchLineSimple(cri, comp, ValueToCompare, inOptions, numinstance, checkfornull);
-	if (cri != nil)
-		cri->Release();
+	if (testAssert(destFile != nil))
+	{
+		if (numfile == 0)
+			cri = destFile->RetainField(numfield);
+		else
+			cri = destFile->GetOwner()->RetainField(numfile, numfield);
+		AddSearchLineSimple(cri, comp, ValueToCompare, inOptions, numinstance, checkfornull);
+		if (cri != nil)
+			cri->Release();
+	}
 }
 
 
 void SearchTab::AddSearchLineSimple(sLONG numfile, sLONG numfield, sLONG comp, const VString& inParamToCompare, const VCompareOptions& inOptions, sLONG numinstance, bool checkfornull)
 {
 	Field* cri;
-	if (numfile == 0)
-		cri = destFile->RetainField(numfield);
-	else
-		cri = destFile->GetOwner()->RetainField(numfile, numfield);
-	AddSearchLineSimple(cri, comp, inParamToCompare, inOptions, numinstance, checkfornull);
-	if (cri != nil)
-		cri->Release();
+	if (testAssert(destFile != nil))
+	{
+		if (numfile == 0)
+			cri = destFile->RetainField(numfield);
+		else
+			cri = destFile->GetOwner()->RetainField(numfile, numfield);
+		AddSearchLineSimple(cri, comp, inParamToCompare, inOptions, numinstance, checkfornull);
+		if (cri != nil)
+			cri->Release();
+	}
 	
 }
 
@@ -1008,11 +1477,137 @@ void SearchTab::AddSearchLineSel(Selection* sel, sLONG numinstance)
 }
 
 
+void SearchTab::AddSearchLineEmSel(EntityCollection* sel, sLONG numinstance)
+{
+	if (testAssert(sel != nil))
+	{
+		RechTokenEmSel *rt = new RechTokenEmSel(sel, numinstance);
+		fLines.push_back(rt);
+	}
+}
+
 void SearchTab::AddSearchLineArray(Field* cri, sLONG comp, DB4DArrayOfValues *Values, Boolean isDiacritic, sLONG numinstance)
 {
 	VCompareOptions options;
 	options.SetDiacritical( isDiacritic);
 	AddSearchLineArray( cri, comp, Values, options, numinstance);
+}
+
+
+void SearchTab::AddSearchLineEmSimple(const EntityAttribute* att, sLONG comp, const VValueSingle* ValueToCompare, const VCompareOptions& inOptions, sLONG numinstance, bool checkfornull)
+{
+	CheckForNullOn(comp, checkfornull);
+	if (testAssert(att != nil))
+	{
+		RechTokenEMSimpleComp *rt;
+
+		rt = new RechTokenEMSimpleComp;
+		rt->fOptions = inOptions;
+		rt->fAtt = att;
+		rt->numinstance = numinstance;
+		rt->comparaison = comp;
+		SetCompOptionWithOperator(rt->fOptions, comp);
+		sLONG tt = att->ComputeScalarType();
+		if (tt == VK_IMAGE)
+			tt = VK_STRING;
+		rt->ch = ValueToCompare->ConvertTo(tt);
+		rt->fExpectedType = tt;
+		rt->fSimpleDate = att->isSimpleDate();
+		if (rt->ch != nil)
+		{
+			fLines.push_back(rt);
+		}
+		rt->fCheckForNull = checkfornull;
+		rt->fIsDataDirect = false;
+		if (rt->comparaison == DB4D_Regex_Not_Match || rt->comparaison == DB4D_Regex_Match)
+		{
+			rt->fIsDataDirect = false;
+			VString s;
+			ValueToCompare->GetString(s);
+			VError err;
+			rt->fRegMatcher = VRegexMatcher::Create(s, &err);
+		}
+	}
+}
+
+
+void SearchTab::AddSearchLineEmSimple(const EntityAttribute* att, sLONG comp, const VString& inParamToCompare, const VCompareOptions& inOptions, sLONG numinstance, bool checkfornull)
+{
+	CheckForNullOn(comp, checkfornull);
+	if (testAssert(att != nil))
+	{
+		RechTokenEMSimpleComp *rt;
+
+		rt = new RechTokenEMSimpleComp;
+		rt->fOptions = inOptions;
+		rt->fAtt = att;
+		rt->numinstance = numinstance;
+		rt->comparaison = comp;
+		SetCompOptionWithOperator(rt->fOptions, comp);
+		rt->ch = nil;
+		rt->fParam = inParamToCompare;
+		fParamValues[inParamToCompare] = QueryParamElement();
+		rt->fExpectedType = att->ComputeScalarType();
+		rt->fSimpleDate = att->isSimpleDate();
+		fLines.push_back(rt);
+		rt->fIsDataDirect = false;
+	}
+}
+
+
+void SearchTab::AddSearchLineEmArray(const EntityAttribute* att, sLONG comp, DB4DArrayOfValues *Values, const VCompareOptions& inOptions, sLONG numinstance)
+{
+	RechTokenEmArrayComp *rt;
+
+	assert(att != nil);
+	rt = new RechTokenEmArrayComp;
+	rt->fOptions = inOptions;
+	rt->fAtt = att;
+	rt->numinstance = numinstance;
+	rt->comparaison = comp;
+	rt->fExpectedType = att->ComputeScalarType();
+	rt->fSimpleDate = att->isSimpleDate();
+	SetCompOptionWithOperator(rt->fOptions, comp);
+
+	if ( rt->fOptions.IsLike() && ( (rt->fExpectedType == VK_TEXT) || (rt->fExpectedType == VK_STRING) || (rt->fExpectedType == VK_TEXT_UTF8) || (rt->fExpectedType == VK_STRING_UTF8) ) )
+	{
+		// si aucune des valeurs ne contient de wildcard, on enleve le like
+		const VInlineString *begin = (const VInlineString*) Values->GetFirstPtr();
+		const VInlineString *end = begin + Values->Count();
+		bool found = false;
+		for( const VInlineString *i = begin ; (i != end) && !found ; ++i)
+			found = std::find( i->fString, i->fString + i->fLength, GetWildChar(nil)) != i->fString + i->fLength;
+		if (!found)
+			rt->fOptions.SetLike( false);
+	}
+
+	rt->values = GenerateConstArrayOfValues(Values, rt->fExpectedType, inOptions);
+	rt->fIsDataDirect = false;
+	fLines.push_back(rt);
+}
+
+
+void SearchTab::AddSearchLineEmArray(const EntityAttribute* att, sLONG comp, const VString& inParamToCompare, const VCompareOptions& inOptions, sLONG numinstance)
+{
+	RechTokenEmArrayComp *rt;
+
+	assert(att != nil);
+	rt = new RechTokenEmArrayComp;
+	rt->fOptions = inOptions;
+	rt->fAtt = att;
+	rt->numinstance = numinstance;
+	rt->comparaison = comp;
+	rt->fExpectedType = att->ComputeScalarType();
+	SetCompOptionWithOperator(rt->fOptions, comp);
+	rt->fSimpleDate = att->isSimpleDate();
+
+	rt->values = nil;
+	rt->fParam = inParamToCompare;
+	fParamValues[inParamToCompare] = QueryParamElement();
+
+	rt->fIsDataDirect = false;
+	fLines.push_back(rt);
+
 }
 
 
@@ -1101,6 +1696,28 @@ void SearchTab::AddSearchLineJoin(Field* cri, sLONG comp, Field* OtherCri, Boole
 }
 
 
+void SearchTab::AddSearchLineJoinEm(const EntityAttribute* att, sLONG comp, const EntityAttribute* OtherAtt, Boolean isDiacritic, sLONG numinstance, sLONG numinstanceOther)
+{
+	RechTokenEmJoin *rt;
+
+	assert(att != nil && OtherAtt != nil);
+	rt = new RechTokenEmJoin;
+	rt->fAtt = att;
+	rt->fRootBaseEm = att->GetOwner()->GetRootBaseEm();
+	rt->numinstance = numinstance;
+	rt->comparaison = comp;
+	rt->fAttOther = OtherAtt;
+	rt->fRootBaseEmOther = OtherAtt->GetOwner()->GetRootBaseEm();
+	rt->numinstanceOther = numinstanceOther;
+	rt->fOptions.SetDiacritical( isDiacritic);
+	//SetCompOptionWithOperator(rt->fOptions, comp);
+	rt->fOptions.SetLike(false);
+	rt->fOptions.SetBeginsWith(false);
+	fLines.push_back(rt);
+}
+
+
+
 void SearchTab::AddSearchLineRecordExists(sLONG numfile, uBOOL checkIfExists, sLONG numinstance)
 {
 	RechTokenRecordExist* rt = new RechTokenRecordExist;
@@ -1115,6 +1732,16 @@ void SearchTab::AddSearchLineRecordExists(Table* inTable, uBOOL checkIfExists, s
 {
 	if (testAssert(inTable != nil))
 		AddSearchLineRecordExists(inTable->GetNum(), checkIfExists, numinstance);
+}
+
+
+void SearchTab::AddSearchLineEntityRecordExists(EntityModel* model, uBOOL checkIfExists, sLONG numinstance)
+{
+	RechTokenEntityRecordExist* rt = new RechTokenEntityRecordExist;
+	rt->fModel = model;
+	rt->numinstance = numinstance;
+	rt->fCheckIfExists = checkIfExists;
+	fLines.push_back(rt);
 }
 
 
@@ -1329,7 +1956,7 @@ static bool GetJSCode(const VString& input, sLONG& curpos, VString& result)
 }
 
 
-static bool GetNextWord(const VString& input, sLONG& curpos, VString& result)
+bool GetNextWord(const VString& input, sLONG& curpos, VString& result)
 {
 	UniChar c;
 	result.Clear();
@@ -1356,7 +1983,7 @@ static bool GetNextWord(const VString& input, sLONG& curpos, VString& result)
 				}
 				else
 				{
-					if (first && c == 32)
+					if (first && (c == 32 || c == 9 || c == 10 || c == 13))
 					{
 						curpos++;
 					}
@@ -1413,7 +2040,7 @@ static bool GetNextWord(const VString& input, sLONG& curpos, VString& result)
 							{
 								if (isregularword)
 								{
-									if (c == 32 && !result.IsEmpty() && !insidequotes && !insidedoublequotes)
+									if ((c == 32 || c == 9 || c == 10 || c == 13) && !result.IsEmpty() && !insidequotes && !insidedoublequotes)
 										c = 0;
 									else
 										result.AppendUniChar(c);
@@ -1452,9 +2079,10 @@ const CoupleCharLongArray xrech_keywords =
 	"order", keyword_order,
 	"by", keyword_by,
 	"=", keyword_like,
+	"==", keyword_like,
 	"eq", keyword_like,
 	"like", keyword_like,
-	"==", keyword_equal,
+	"===", keyword_equal,
 	"is", keyword_equal,
 	"eqeq", keyword_equal,
 	"#", keyword_notlike,
@@ -1507,10 +2135,10 @@ static void GetCompOperLiteral(DB4DComparator keyword, VString& outKeywordString
 	switch (keyword)
 	{
 		case DB4D_Like:
-			outKeywordString = "=";
+			outKeywordString = "==";
 			break;
 		case DB4D_Equal:
-			outKeywordString = "==";
+			outKeywordString = "===";
 			break;
 		case DB4D_NotLike:
 			outKeywordString = "!=";
@@ -1543,9 +2171,9 @@ const StrHashTable RechKeywords(xrech_keywords, false);
 class JoinPart
 {
 	public:
-		Field* fSourceField;
+		const EntityAttribute* fSourceAtt;
 		sLONG fSourceInstance;
-		Field* fDestField;
+		const EntityAttribute* fDestAtt;
 		sLONG fDestInstance;
 };
 
@@ -1568,7 +2196,7 @@ typedef map<AttributePath, CachedJoinPath> CachedJoinPathMap;
 class JoinCache
 {
 	public:
-		Join& GetPath(const AttributePath& inAttPath, sLONG root)
+		Join& GetPath(const AttributePath& inAttPath)
 		{
 			Join* join = FindPath(inAttPath);
 			if (join == nil)
@@ -1592,7 +2220,6 @@ class JoinCache
 					newjoin = *join;
 					curAttInst = curAttInst + subpath.GetAll()->size();
 					previnstance = (*join)[join->size()-1].fDestInstance;
-					root = -1;
 				}
 				else
 					subpath.Clear();
@@ -1610,73 +2237,25 @@ class JoinCache
 							for (vector<EntityRelation*>::const_iterator cur = path.begin(), end = path.end(); cur != end; cur++)
 							{
 								JoinPart part;
-								part.fSourceField = (*cur)->GetSourceField();
-								part.fDestField = (*cur)->GetDestField();
-								sLONG sourcetablenum = part.fSourceField->GetOwner()->GetNum();
-								sLONG desttablenum = part.fDestField->GetOwner()->GetNum();
+								part.fSourceAtt = (*cur)->GetSourceAtt();
+								part.fDestAtt = (*cur)->GetDestAtt();
+
+								EntityModel*  sourceEm = part.fSourceAtt->GetOwner()->GetRootBaseEm();
+								EntityModel* destEm = part.fDestAtt->GetOwner()->GetRootBaseEm();
 
 								part.fSourceInstance = previnstance;
-								if (desttablenum == sourcetablenum)
-									dejainstance.GetInstanceAndIncrement(sourcetablenum);
+								if (sourceEm == destEm)
+									dejainstance.GetInstanceAndIncrement(sourceEm);
 
-								part.fDestInstance = dejainstance.GetInstanceAndIncrement(desttablenum);
+								part.fDestInstance = dejainstance.GetInstanceAndIncrement(destEm);
 
 								previnstance = part.fDestInstance;
 
-								/*
-
-								if (sourcetablenum == desttablenum)
-								{
-									if (sourcetablenum == root)
-									{
-										root = -1;
-										part.fSourceInstance = 0;
-										part.fDestInstance = dejainstance.GetInstanceAndIncrement(desttablenum);
-										lastdestnum = desttablenum;
-									}
-									else
-									{
-										part.fSourceInstance = dejainstance.GetInstanceAndIncrement(sourcetablenum);
-										part.fDestInstance = dejainstance.GetInstance(desttablenum);
-										lastdestnum = desttablenum;
-									}
-								}
-								else
-								{
-									if (sourcetablenum == root)
-										part.fSourceInstance = 0;
-									else
-										part.fSourceInstance = dejainstance.GetInstanceAndIncrement(sourcetablenum);
-									part.fDestInstance = dejainstance.GetInstance(desttablenum);
-									lastdestnum = desttablenum;
-								}
-								*/
-
-								/*
-								if (sourcetablenum == root)
-									part.fSourceInstance = 0;
-								else
-									part.fSourceInstance = dejainstance.GetInstance(sourcetablenum);
-								if (sourcetablenum == desttablenum)
-									part.fDestInstance = dejainstance.GetInstanceAndIncrement(desttablenum);
-								else
-								{
-									if (desttablenum == root)
-										part.fDestInstance = 0;
-									else
-										part.fDestInstance = dejainstance.GetInstance(desttablenum);
-								}
-								*/
+								
 								newjoin.push_back(part);
 
-								/*
-								AddSearchLineJoin((*cur)->GetSourceField(), DB4D_Equal, (*cur)->GetDestField(), false, instancesource, instancedest);
-								AddSearchLineBoolOper(DB4D_And);
-								*/
 							}
 
-							/*if (lastdestnum != -1)
-								dejainstance.GetInstanceAndIncrement(lastdestnum);*/
 						}
 					}
 					++curAttInst;
@@ -1695,7 +2274,7 @@ class JoinCache
 			for (Join::iterator cur = join.begin(), end = join.end(); cur != end; ++cur)
 			{
 				outLastDestInstance = cur->fDestInstance;
-				query.AddSearchLineJoin(cur->fSourceField, DB4D_Equal, cur->fDestField, false, cur->fSourceInstance, cur->fDestInstance);
+				query.AddSearchLineJoinEm(cur->fSourceAtt, DB4D_Equal, cur->fDestAtt, false, cur->fSourceInstance, cur->fDestInstance);
 				query.AddSearchLineBoolOper(DB4D_And);				
 			}
 		}
@@ -1777,8 +2356,6 @@ VError SearchTab::BuildFromString(const VString& input, VString& outOrderBy, Bas
 	Boolean waitforcunj = false;
 	bool autofillValue = false;
 	VError err = VE_OK;
-	Field* cri = nil;
-	Field* cri2 = nil;
 	AttributePath attpath;
 	DB4DComparator oper = (DB4DComparator)0;
 	sLONG curkeyword;
@@ -1786,6 +2363,8 @@ VError SearchTab::BuildFromString(const VString& input, VString& outOrderBy, Bas
 	sLONG lastFieldpos = -1;
 	JoinCache cachePath;
 	const InstanceMap& dejainstance = cachePath.GetInstances();
+
+	assert(model != nil);
 
 	SetDisplayTree(true);
 
@@ -1853,8 +2432,6 @@ VError SearchTab::BuildFromString(const VString& input, VString& outOrderBy, Bas
 				}
 				else
 				{
-					cri = nil;
-					cri2 = nil;
 					if (curkeyword == keyword_not)
 					{
 						AddSearchLineNotOperator();
@@ -1889,43 +2466,13 @@ VError SearchTab::BuildFromString(const VString& input, VString& outOrderBy, Bas
 							if (!stop)
 							{
 								lastFieldpos = previouspos;
-								if (model == nil)
+								if (attpath.FromPath(model, s, true))
 								{
-									VString	stable;
-									VString sfield;
-									sLONG p = s.FindUniChar(CHAR_FULL_STOP);
-
-									if (p == 0)
-										cri = destFile->FindAndRetainFieldRef(s);
-									else
-									{
-										stable = s;
-										sfield = s;
-										stable.Remove(p,stable.GetLength()-p+1);
-										sfield.Remove(1,p);
-										cri = destFile->GetOwner()->FindAndRetainFieldRef(stable, sfield);
-									}
-
-									if (cri == nil)
-									{
-										err = VE_DB4D_WRONGFIELDREF;
-									}
-									else
-									{
-										waitforfield = false;
-										waitforoper = true;
-									}
+									waitforfield = false;
+									waitforoper = true;
 								}
 								else
-								{
-									if (attpath.FromPath(model, s, true))
-									{
-										waitforfield = false;
-										waitforoper = true;
-									}
-									else
-										err = VE_DB4D_WRONGFIELDREF;
-								}
+									err = VE_DB4D_WRONGFIELDREF;
 							}
 						}
 					}
@@ -1984,36 +2531,20 @@ VError SearchTab::BuildFromString(const VString& input, VString& outOrderBy, Bas
 					if (oper == 0)
 					{
 						bool tryformula = false;
-						if (model == nil)
+						
+						if (attpath.LastPart() != nil && attpath.LastPart()->fAtt->GetDataKind() == VK_BOOLEAN)
 						{
-							if (cri != nil && cri->GetTyp() == VK_BOOLEAN)
-							{
-								oper = DB4D_Like;
-								waitforoper = false;
-								waitforvalue = true;
-								autofillValue = true;
-							}
-							else
-							{
-								tryformula = true;
-								//err = VE_DB4D_WRONG_COMP_OPERATOR;
-							}
+							oper = DB4D_Like;
+							waitforoper = false;
+							waitforvalue = true;
+							autofillValue = true;
 						}
 						else
 						{
-							if (attpath.LastPart() != nil && attpath.LastPart()->fAtt->GetDataKind() == VK_BOOLEAN)
-							{
-								oper = DB4D_Like;
-								waitforoper = false;
-								waitforvalue = true;
-								autofillValue = true;
-							}
-							else
-							{
-								tryformula = true;
-								//err = VE_DB4D_WRONG_COMP_OPERATOR;
-							}
+							tryformula = true;
+							//err = VE_DB4D_WRONG_COMP_OPERATOR;
 						}
+						
 
 						if (tryformula)
 						{
@@ -2046,326 +2577,249 @@ VError SearchTab::BuildFromString(const VString& input, VString& outOrderBy, Bas
 								checkfornull = true;
 						}
 
-						if (model == nil)
+						if (keepmodel)
 						{
-							if (!s.IsEmpty() && s[0] == ':')
-							{
-								s.Remove(1,1);
-								VCompareOptions options;
-								options.SetDiacritical(false);
-								if (oper == DB4D_IN)
-									AddSearchLineArray(cri, oper, s, options);
-								else
-									AddSearchLineSimple(cri, oper, s, options, false);
-								cri->Release();
-								cri = nil;
-								oper = (DB4DComparator)0;
-								waitforvalue = false;
-								waitforcunj = true;
-							}
-							else
-							{
-								VString	stable;
-								VString sfield;
-								sLONG p = s.FindUniChar(CHAR_FULL_STOP);
-
-								if (p == 0)
-									cri2 = destFile->FindAndRetainFieldRef(s);
-								else
-								{
-									stable = s;
-									sfield = s;
-									stable.Remove(p,stable.GetLength()-p+1);
-									sfield.Remove(1,p);
-									cri2 = destFile->GetOwner()->FindAndRetainFieldRef(stable, sfield);
-								}
-							}
+							AddSearchLineEm(attpath, oper, &s, false, checkfornull);
 						}
 						else
-							cri2 = nil;
-
-						if (cri2 == nil)
 						{
-							if (model == nil)
+							sLONG lastdestinstance = 0;
+							const EntityAttributeInstance* attinst = attpath.FirstPart();
+							const EntityAttributeInstance* next = attpath.NextPart();
+							bool needparenthesis = (next != nil);
+							if (needparenthesis)
+								AddSearchLineOpenParenthesis();
+
+							if (testAssert(attinst != nil))
 							{
-								if (cri != nil)
+								const EntityAttribute* att = attinst->fAtt;
+								EntityAttributeKind kind = att->GetKind();
+								if ( (next != nil) || (kind == eattr_relation_1toN || kind == eattr_relation_Nto1 || kind == eattr_composition))
 								{
-									if (oper == DB4D_IN)
+									Join& join = cachePath.GetPath(attpath);
+									cachePath.InsertJoinIntoQuery(join, *this, lastdestinstance);
+									attinst = attpath.LastPart();
+								}
+								bool okfield = false;
+
+								att = attinst->fAtt;
+								kind = att->GetKind();
+								uBOOL checkExists = 2;
+								if (kind == eattr_relation_1toN || kind == eattr_relation_Nto1 || kind == eattr_composition)
+								{
+									if (checkfornull)
 									{
-										VCompareOptions options;
-										options.SetDiacritical(false);
-										DB4DArrayOfValues* values = BuildArrayOfValuesFromString(s, cri->GetTyp(), options);
-										AddSearchLineArray(cri, oper, values, options, 0);
-										QuickReleaseRefCountable(values);
+										if (oper == DB4D_Equal || oper == DB4D_Like)
+											checkExists = 0;
+										else if (oper == DB4D_NotEqual || oper == DB4D_NotLike)
+											checkExists = 1;
 									}
-									else
-										AddSearchLineSimple(cri, oper, &s, false, 0, checkfornull);
-									cri->Release();
-									cri = nil;
 								}
-							}
-							else
-							{
-								if (keepmodel)
-								{
-									AddSearchLineEm(attpath, oper, &s, false, checkfornull);
-								}
-								else
-								{
-									sLONG lastdestinstance = 0;
-									const EntityAttributeInstance* attinst = attpath.FirstPart();
-									const EntityAttributeInstance* next = attpath.NextPart();
-									bool needparenthesis = (next != nil);
-									if (needparenthesis)
-										AddSearchLineOpenParenthesis();
 
-									if (testAssert(attinst != nil))
+								if (att->GetKind() == eattr_computedField && !att->BehavesAsStorage())
+								{
+									if (att->GetScriptKind() == script_javascript && context != nil)
 									{
-										const EntityAttribute* att = attinst->fAtt;
-										EntityAttributeKind kind = att->GetKind();
-										if ( (next != nil) || (kind == eattr_relation_1toN || kind == eattr_relation_Nto1 || kind == eattr_composition))
-										{
-											Join& join = cachePath.GetPath(attpath, model->GetMainTable()->GetNum());
-											cachePath.InsertJoinIntoQuery(join, *this, lastdestinstance);
-											attinst = attpath.LastPart();
-										}
-										bool okfield = false;
+										VJSContext jscontext(context->GetJSContext());
 
-										att = attinst->fAtt;
-										kind = att->GetKind();
-										uBOOL checkExists = 2;
-										if (kind == eattr_relation_1toN || kind == eattr_relation_Nto1 || kind == eattr_composition)
+										VJSObject* objfunc = nil;
+										VJSObject localObjFunc(jscontext);
+										VectorOfVString params;
+										if (att->GetScriptObjFunc(script_attr_query, context->GetJSContext(), context, localObjFunc))
+											objfunc = &localObjFunc;
+										if (objfunc == nil)
 										{
+											params.push_back("compOper");
+											params.push_back("compValue");
+											objfunc = context->getContextOwner()->GetJSFunction(att->GetScriptNum(script_attr_query), att->GetScriptStatement(script_attr_query), &params);
+										}
+										if (objfunc != nil)
+										{
+											okfield = true;
+											EntityModel* sousEm = att->GetOwner();
+											VJSValue result(jscontext);
+											JS4D::ExceptionRef excep;
+											vector<VJSValue> params;
+											VJSValue compOper(jscontext);
+											VJSValue compValue(jscontext);
+											VString sOper;
+											GetCompOperLiteral(oper, sOper);
+											compOper.SetString(sOper);
 											if (checkfornull)
+												compValue.SetNull();
+											else
 											{
-												if (oper == DB4D_Equal || oper == DB4D_Like)
-													checkExists = 0;
-												else if (oper == DB4D_NotEqual || oper == DB4D_NotLike)
-													checkExists = 1;
-											}
-										}
-
-										if (att->GetKind() == eattr_computedField)
-										{
-											if (att->GetScriptKind() == script_javascript && context != nil)
-											{
-												VJSContext jscontext(context->GetJSContext());
-
-												VJSObject* objfunc = nil;
-												VJSObject localObjFunc(jscontext);
-												VectorOfVString params;
-												if (att->GetScriptObjFunc(script_attr_query, context->GetJSContext(), context, localObjFunc))
-													objfunc = &localObjFunc;
-												if (objfunc == nil)
+												VValueSingle* cvx = nil;
+												bool isarray = false;
+												if (!s.IsEmpty() && s[0] == ':')
 												{
-													params.push_back("compOper");
-													params.push_back("compValue");
-													objfunc = context->getContextOwner()->GetJSFunction(att->GetScriptNum(script_attr_query), att->GetScriptStatement(script_attr_query), &params);
+													if (qparams != nil)
+													{
+														s.Remove(1,1);
+														sLONG paramNum = s.GetLong();
+														if (paramNum > 0 && paramNum <= qparams->size())
+														{
+															QueryParamElement* xqp = &(*qparams)[paramNum-1];
+															if (xqp->fType == DB4D_QPE_scalar)
+															{
+																const VValueSingle* xcvx = xqp->fScalar;
+																if (xcvx != nil)
+																	cvx = xcvx->ConvertTo(att->ComputeScalarType());
+															}
+															else if (xqp->fType == DB4D_QPE_array)
+															{
+																isarray = true;
+																compValue = *(xqp->fArray);
+															}
+														}
+													}
 												}
-												if (objfunc != nil)
+												else
+													cvx = s.ConvertTo(att->ComputeScalarType());
+
+												if (!isarray)
 												{
-													okfield = true;
-													EntityModel* sousEm = att->GetOwner();
-													VJSValue result(jscontext);
-													JS4D::ExceptionRef excep;
-													vector<VJSValue> params;
-													VJSValue compOper(jscontext);
-													VJSValue compValue(jscontext);
-													VString sOper;
-													GetCompOperLiteral(oper, sOper);
-													compOper.SetString(sOper);
-													if (checkfornull)
+													if (cvx == nil)
 														compValue.SetNull();
 													else
 													{
-														VValueSingle* cvx = nil;
-														bool isarray = false;
-														if (!s.IsEmpty() && s[0] == ':')
-														{
-															if (qparams != nil)
-															{
-																s.Remove(1,1);
-																sLONG paramNum = s.GetLong();
-																if (paramNum > 0 && paramNum <= qparams->size())
-																{
-																	QueryParamElement* xqp = &(*qparams)[paramNum-1];
-																	if (xqp->fType == DB4D_QPE_scalar)
-																	{
-																		const VValueSingle* xcvx = xqp->fScalar;
-																		if (xcvx != nil)
-																			cvx = xcvx->ConvertTo(att->ComputeScalarType());
-																	}
-																	else if (xqp->fType == DB4D_QPE_array)
-																	{
-																		isarray = true;
-																		compValue = *(xqp->fArray);
-																	}
-																}
-															}
-														}
-														else
-															cvx = s.ConvertTo(att->ComputeScalarType());
-
-														if (!isarray)
-														{
-															if (cvx == nil)
-																compValue.SetNull();
-															else
-															{
-																compValue.SetVValue(*cvx);
-																delete cvx;
-															}
-														}
-													}
-													params.push_back(compOper);
-													params.push_back(compValue);
-													VJSObject emjs(jscontext, VJSEntityModel::CreateInstance(jscontext, sousEm));
-													emjs.CallFunction(*objfunc, &params, &result, &excep);
-													VString sresult;
-													result.GetString(sresult);
-													if (sresult.IsEmpty())
-														err = VE_DB4D_WRONGFIELDREF;
-													else
-													{
-
-														SearchTab subquery(sousEm->GetMainTable(), true);
-														VString orderbys;
-														subquery.AllowJSCode(fAllowJSCode);
-														err = subquery.BuildFromString(sresult, orderbys, context, sousEm, false);
-														if (err == VE_OK)
-														{
-															if (subquery.GetNbLine() > 1)
-																AddSearchLineOpenParenthesis();
-															for (RechTokenVector::const_iterator cursous = subquery.fLines.begin(), endsous = subquery.fLines.end(); cursous != endsous; cursous++)
-															{
-																const RechToken* rt = *cursous;
-																RechToken* xrt = rt->Clone();
-																sLONG xnf = sousEm->GetMainTable()->GetNum();
-																xrt->addInstance(xnf, lastdestinstance);
-																fLines.push_back(xrt);
-															}
-															if (subquery.GetNbLine() > 1)
-																AddSearchLineCloseParenthesis();
-														}
+														compValue.SetVValue(*cvx);
+														delete cvx;
 													}
 												}
-												else
-												{
-													okfield = true;
-													if (!s.IsEmpty() && s[0] == ':')
-													{
-														s.Remove(1,1);
-														VCompareOptions options;
-														options.SetDiacritical(false);
-														AddSearchLineEm(attpath, oper, s, options, lastdestinstance);
-													}
-													else
-														AddSearchLineEm(attpath, oper, &s, false, checkfornull, lastdestinstance);
-												}
-
 											}
+											params.push_back(compOper);
+											params.push_back(compValue);
+											VJSObject emjs(jscontext, VJSEntityModel::CreateInstance(jscontext, sousEm));
+											emjs.CallFunction(*objfunc, &params, &result, &excep);
+											VString sresult;
+											result.GetString(sresult);
+											if (sresult.IsEmpty())
+												err = VE_DB4D_WRONGFIELDREF;
 											else
 											{
-												okfield = true;
-												if (s == L"false" || s == L"0")
-													AddSearchLineNotOperator();
-												const SearchTab* sousQuery = att->GetScriptQuery();
-												if (sousQuery == nil || sousQuery->GetNbLine() == 0)
-													err = VE_DB4D_WRONGFIELDREF;
-												else
+
+												SearchTab subquery(sousEm, true);
+												VString orderbys;
+												subquery.AllowJSCode(fAllowJSCode);
+												err = subquery.BuildFromString(sresult, orderbys, context, sousEm, false);
+												if (err == VE_OK)
 												{
-													if (sousQuery->GetNbLine() > 1)
+													if (subquery.GetNbLine() > 1)
 														AddSearchLineOpenParenthesis();
-													for (RechTokenVector::const_iterator cursous = sousQuery->fLines.begin(), endsous = sousQuery->fLines.end(); cursous != endsous; cursous++)
+													for (RechTokenVector::const_iterator cursous = subquery.fLines.begin(), endsous = subquery.fLines.end(); cursous != endsous; cursous++)
 													{
 														const RechToken* rt = *cursous;
 														RechToken* xrt = rt->Clone();
-														sLONG xnf = sousQuery->GetTargetFile()->GetNum();
-														xrt->addInstance(xnf, lastdestinstance);
+														xrt->addInstance(sousEm->GetRootBaseEm(), lastdestinstance);
 														fLines.push_back(xrt);
 													}
-													if (sousQuery->GetNbLine() > 1)
+													if (subquery.GetNbLine() > 1)
 														AddSearchLineCloseParenthesis();
 												}
 											}
 										}
-
-										if (att->GetKind() == eattr_alias)
-										{
-											assert(att->GetKind() != eattr_alias);  // break here
-										}
-
-										if (checkExists != 2 || att->GetKind() == eattr_storage)
+										else
 										{
 											okfield = true;
-
-											if (checkExists != 2)
+											if (!s.IsEmpty() && s[0] == ':')
 											{
-												EntityModel* submodel = att->GetSubEntityModel();
-												if (testAssert(submodel != nil))
-												{
-													AddSearchLineRecordExists(submodel->GetMainTable(), checkExists, lastdestinstance);
-												}
+												s.Remove(1,1);
+												VCompareOptions options;
+												options.SetDiacritical(false);
+												AddSearchLineEm(attpath, oper, s, options, lastdestinstance);
+											}
+											else
+												AddSearchLineEm(attpath, oper, &s, false, checkfornull, lastdestinstance);
+										}
+
+									}
+									else
+									{
+										okfield = true;
+										if (s == L"false" || s == L"0")
+											AddSearchLineNotOperator();
+										const SearchTab* sousQuery = att->GetScriptQuery();
+										if (sousQuery == nil || sousQuery->GetNbLine() == 0)
+											err = VE_DB4D_WRONGFIELDREF;
+										else
+										{
+											if (sousQuery->GetNbLine() > 1)
+												AddSearchLineOpenParenthesis();
+											for (RechTokenVector::const_iterator cursous = sousQuery->fLines.begin(), endsous = sousQuery->fLines.end(); cursous != endsous; cursous++)
+											{
+												const RechToken* rt = *cursous;
+												RechToken* xrt = rt->Clone();
+												xrt->addInstance(sousQuery->GetModel()->GetRootBaseEm(), lastdestinstance);
+												fLines.push_back(xrt);
+											}
+											if (sousQuery->GetNbLine() > 1)
+												AddSearchLineCloseParenthesis();
+										}
+									}
+								}
+
+								if (att->GetKind() == eattr_alias  && !att->BehavesAsStorage())
+								{
+									assert(att->GetKind() != eattr_alias);  // break here
+								}
+
+								if (checkExists != 2 || att->GetKind() == eattr_storage || att->BehavesAsStorage())
+								{
+									okfield = true;
+
+									if (checkExists != 2)
+									{
+										EntityModel* submodel = att->GetSubEntityModel();
+										if (testAssert(submodel != nil))
+										{
+											AddSearchLineEntityRecordExists(submodel, checkExists, lastdestinstance);
+										}
+									}
+									else
+									{
+										if (!s.IsEmpty() && s[0] == ':')
+										{
+											s.Remove(1,1);
+											VCompareOptions options;
+											options.SetDiacritical(false);
+											if (oper == DB4D_IN)
+												AddSearchLineEmArray(att, oper, s, options, lastdestinstance);
+											else
+												AddSearchLineEmSimple(att, oper, s, options, lastdestinstance);
+										}
+										else
+										{
+											if (oper == DB4D_IN)
+											{
+												VCompareOptions options;
+												options.SetDiacritical(false);
+												DB4DArrayOfValues* values = BuildArrayOfValuesFromString(s, att->ComputeScalarType(), options);
+												AddSearchLineEmArray(att, oper, values, options, lastdestinstance);
+												QuickReleaseRefCountable(values);
 											}
 											else
 											{
-												Field* xcri = att->RetainField();
-												if (testAssert(xcri != nil))
-												{
-													if (!s.IsEmpty() && s[0] == ':')
-													{
-														s.Remove(1,1);
-														VCompareOptions options;
-														options.SetDiacritical(false);
-														if (oper == DB4D_IN)
-															AddSearchLineArray(xcri, oper, s, options, lastdestinstance);
-														else
-															AddSearchLineSimple(xcri, oper, s, options, lastdestinstance);
-													}
-													else
-													{
-														if (oper == DB4D_IN)
-														{
-															VCompareOptions options;
-															options.SetDiacritical(false);
-															DB4DArrayOfValues* values = BuildArrayOfValuesFromString(s, xcri->GetTyp(), options);
-															AddSearchLineArray(xcri, oper, values, options, lastdestinstance);
-															QuickReleaseRefCountable(values);
-														}
-														else
-															AddSearchLineSimple(xcri, oper, &s, false, lastdestinstance, checkfornull);
-													}
-												}
-												QuickReleaseRefCountable(xcri);
+												VCompareOptions options;
+												options.SetDiacritical(false);
+												AddSearchLineEmSimple(att, oper, &s, options, lastdestinstance, checkfornull);
 											}
 										}
-
-										
-										if (!okfield)
-											err = VE_DB4D_WRONGFIELDREF;
 									}
-
-									if (needparenthesis)
-										AddSearchLineCloseParenthesis();
 								}
 
+								
+								if (!okfield)
+									err = VE_DB4D_WRONGFIELDREF;
 							}
 
-							oper = (DB4DComparator)0;
-							waitforvalue = false;
-							waitforcunj = true;
+							if (needparenthesis)
+								AddSearchLineCloseParenthesis();
 						}
-						else
-						{
-							AddSearchLineJoin(cri, oper, cri2);
-							cri->Release();
-							cri2->Release();
-							cri = nil;
-							cri2 = nil;
-							oper = (DB4DComparator)0;
-							waitforvalue = false;
-							waitforcunj = true;
-						}
+
+						oper = (DB4DComparator)0;
+						waitforvalue = false;
+						waitforcunj = true;
 					}
 					else
 					{
@@ -2426,12 +2880,14 @@ VError SearchTab::BuildFromString(const VString& input, VString& outOrderBy, Bas
 
 	} while(!stop && err == VE_OK);
 
-	if (cri != nil)
-		cri->Release();
-
 	if (err != VE_OK)
 	{
-		err = destFile->ThrowError(err, DBaction_BuildingQueryFromString);
+		if (fModel != nil)
+			err = fModel->ThrowError(err);
+		else if (destFile != nil)
+			err = destFile->ThrowError(err, DBaction_BuildingQueryFromString);
+		else
+			ThrowBaseError(err);
 	}
 	return err;
 }
@@ -2466,131 +2922,251 @@ VError SearchTab::ReplaceParams(BaseTaskInfo* context)
 		RechToken* tok = *cur;
 		if (tok != nil)
 		{
-			if (tok->GetTyp() == r_EMComp)
+			switch (tok->GetTyp())
 			{
-				RechTokenEmComp* tokem = (RechTokenEmComp*)tok;
-				if (! tokem->fParam.IsEmpty())
+				case r_EMComp:
 				{
-					delete tokem->ch;
-					bool deja = false;
-					if (tokem->fParam.GetUniChar(1) == '$')
+					RechTokenEmComp* tokem = (RechTokenEmComp*)tok;
+					if (! tokem->fParam.IsEmpty())
 					{
-						if (tokem->fParam == L"$userid" || tokem->fParam == L"$currentUserID")
+						delete tokem->ch;
+						bool deja = false;
+						if (tokem->fParam.GetUniChar(1) == '$')
 						{
-							deja = true;
-							VUUID userid;
-							if (context != nil)
-								context->GetCurrentUserID(userid);
-							tokem->ch = (VValueSingle*) VValueSingle::NewValueFromValueKind(tokem->fExpectedType);
-							tokem->ch->FromVUUID(userid);
+							if (tokem->fParam == L"$userid" || tokem->fParam == L"$currentUserID")
+							{
+								deja = true;
+								VUUID userid;
+								if (context != nil)
+									context->GetCurrentUserID(userid);
+								tokem->ch = (VValueSingle*) VValueSingle::NewValueFromValueKind(tokem->fExpectedType);
+								tokem->ch->FromVUUID(userid);
+							}
+							else if (tokem->fParam == L"$username" || tokem->fParam == L"$currentUser")
+							{
+								deja = true;
+								VString username;
+								if (context != nil)
+									context->GetCurrentUserName(username);
+								tokem->ch = (VValueSingle*) VValueSingle::NewValueFromValueKind(tokem->fExpectedType);
+								tokem->ch->FromString(username);
+							}
+							else if (tokem->fParam == L"$currentdate")
+							{
+								VTime now;
+								VTime::Now(now);
+								tokem->ch = (VValueSingle*) VValueSingle::NewValueFromValueKind(tokem->fExpectedType);
+								tokem->ch->FromTime(now);
+							}
 						}
-						else if (tokem->fParam == L"$username" || tokem->fParam == L"$currentUser")
+						if (!deja)
 						{
-							deja = true;
-							VString username;
-							if (context != nil)
-								context->GetCurrentUserName(username);
-							tokem->ch = (VValueSingle*) VValueSingle::NewValueFromValueKind(tokem->fExpectedType);
-							tokem->ch->FromString(username);
+							QueryParamElement* qpe = &fParamValues[tokem->fParam];
+							if (qpe->fType != DB4D_QPE_scalar || qpe->fScalar == nil)
+							{
+								tokem->ch = (VValueSingle*) VValueSingle::NewValueFromValueKind(tokem->fExpectedType);
+							}
+							else
+							{
+								if (tokem->fSimpleDate && qpe->fSimpleDateScalar != nil)
+									tokem->ch = qpe->fSimpleDateScalar->ConvertTo(tokem->fExpectedType);
+								else
+								{
+									if (tokem->fSimpleDate && tokem->fExpectedType == VK_TIME && qpe->fScalar->GetValueKind() == VK_STRING)
+									{
+										VString* s = (VString*)qpe->fScalar;
+										VectorOfVString arr;
+										s->GetSubStrings(',', arr, false, false);
+										if (arr.size() > 1)
+											tokem->ch = arr[1].ConvertTo(tokem->fExpectedType);
+										else
+											tokem->ch = qpe->fScalar->ConvertTo(tokem->fExpectedType);
+									}
+									else
+										tokem->ch = qpe->fScalar->ConvertTo(tokem->fExpectedType);
+								}
+							}
 						}
-						else if (tokem->fParam == L"$currentdate")
-						{
-						}
-					}
-					if (!deja)
-					{
-						QueryParamElement* qpe = &fParamValues[tokem->fParam];
-						if (qpe->fType != DB4D_QPE_scalar || qpe->fScalar == nil)
-						{
-							tokem->ch = (VValueSingle*) VValueSingle::NewValueFromValueKind(tokem->fExpectedType);
-						}
+						if (tokem->ch == nil)
+							err = ThrowBaseError(memfull);
 						else
 						{
-							tokem->ch = qpe->fScalar->ConvertTo(tokem->fExpectedType);
-						}
-					}
-					if (tokem->ch == nil)
-						err = ThrowBaseError(memfull);
-					else
-					{
-						if (tokem->comparaison == DB4D_Regex_Not_Match || tokem->comparaison == DB4D_Regex_Match)
-						{
-							VString s;
-							tokem->ch->GetString(s);
-							tokem->fRegMatcher = VRegexMatcher::Create(s, &err);
+							if (tokem->comparaison == DB4D_Regex_Not_Match || tokem->comparaison == DB4D_Regex_Match)
+							{
+								VString s;
+								tokem->ch->GetString(s);
+								tokem->fRegMatcher = VRegexMatcher::Create(s, &err);
+							}
 						}
 					}
 				}
-			}
-			else if (tok->GetTyp() == r_Line)
-			{
-				RechTokenSimpleComp* toksimple = (RechTokenSimpleComp*)tok;
-				if (! toksimple->fParam.IsEmpty())
+				break;
+
+				case r_Line:
 				{
-					delete toksimple->ch;
-					bool deja = false;
-					if (toksimple->fParam.GetUniChar(1) == '$')
+					RechTokenSimpleComp* toksimple = (RechTokenSimpleComp*)tok;
+					if (! toksimple->fParam.IsEmpty())
 					{
-						if (toksimple->fParam == L"$userid" || toksimple->fParam == L"$currentUserID")
+						delete toksimple->ch;
+						bool deja = false;
+						if (toksimple->fParam.GetUniChar(1) == '$')
 						{
-							deja = true;
-							VUUID userid;
-							if (context != nil)
-								context->GetCurrentUserID(userid);
-							toksimple->ch = (VValueSingle*) VValueSingle::NewValueFromValueKind(toksimple->fExpectedType);
-							toksimple->ch->FromVUUID(userid);
+							if (toksimple->fParam == L"$userid" || toksimple->fParam == L"$currentUserID")
+							{
+								deja = true;
+								VUUID userid;
+								if (context != nil)
+									context->GetCurrentUserID(userid);
+								toksimple->ch = (VValueSingle*) VValueSingle::NewValueFromValueKind(toksimple->fExpectedType);
+								toksimple->ch->FromVUUID(userid);
+							}
+							else if (toksimple->fParam == L"$username" || toksimple->fParam == L"$currentUser")
+							{
+								deja = true;
+								VString username;
+								if (context != nil)
+									context->GetCurrentUserName(username);
+								toksimple->ch = (VValueSingle*) VValueSingle::NewValueFromValueKind(toksimple->fExpectedType);
+								toksimple->ch->FromString(username);
+							}
+							else if (toksimple->fParam == L"$currentdate")
+							{
+							}
 						}
-						else if (toksimple->fParam == L"$username" || toksimple->fParam == L"$currentUser")
+						if (!deja)
 						{
-							deja = true;
-							VString username;
-							if (context != nil)
-								context->GetCurrentUserName(username);
-							toksimple->ch = (VValueSingle*) VValueSingle::NewValueFromValueKind(toksimple->fExpectedType);
-							toksimple->ch->FromString(username);
+							QueryParamElement* qpe = &fParamValues[toksimple->fParam];
+							if (qpe->fType != DB4D_QPE_scalar || qpe->fScalar == nil)
+							{
+								toksimple->ch = (VValueSingle*) VValueSingle::NewValueFromValueKind(toksimple->fExpectedType);
+							}
+							else
+							{
+								toksimple->ch = qpe->fScalar->ConvertTo(toksimple->fExpectedType);
+							}
 						}
-						else if (toksimple->fParam == L"$currentdate")
-						{
-						}
-					}
-					if (!deja)
-					{
-						QueryParamElement* qpe = &fParamValues[toksimple->fParam];
-						if (qpe->fType != DB4D_QPE_scalar || qpe->fScalar == nil)
-						{
-							toksimple->ch = (VValueSingle*) VValueSingle::NewValueFromValueKind(toksimple->fExpectedType);
-						}
+						if (toksimple->ch == nil)
+							err = ThrowBaseError(memfull);
 						else
 						{
-							toksimple->ch = qpe->fScalar->ConvertTo(toksimple->fExpectedType);
-						}
-					}
-					if (toksimple->ch == nil)
-						err = ThrowBaseError(memfull);
-					else
-					{
-						if (toksimple->comparaison == DB4D_Regex_Not_Match || toksimple->comparaison == DB4D_Regex_Match)
-						{
-							toksimple->fIsDataDirect = false;
-							VString s;
-							toksimple->ch->GetString(s);
-							toksimple->fRegMatcher = VRegexMatcher::Create(s, &err);
+							if (toksimple->comparaison == DB4D_Regex_Not_Match || toksimple->comparaison == DB4D_Regex_Match)
+							{
+								toksimple->fIsDataDirect = false;
+								VString s;
+								toksimple->ch->GetString(s);
+								toksimple->fRegMatcher = VRegexMatcher::Create(s, &err);
+							}
 						}
 					}
 				}
-			}
-			else if (tok->GetTyp() == r_LineArray)
-			{
-				RechTokenArrayComp* tokarray = (RechTokenArrayComp*)tok;
-				if (! tokarray->fParam.IsEmpty())
+				break;
+
+				case r_LineEM:
+				  {
+					  RechTokenEMSimpleComp* toksimple = (RechTokenEMSimpleComp*)tok;
+					  if (! toksimple->fParam.IsEmpty())
+					  {
+						  delete toksimple->ch;
+						  bool deja = false;
+						  if (toksimple->fParam.GetUniChar(1) == '$')
+						  {
+							  if (toksimple->fParam == L"$userid" || toksimple->fParam == L"$currentUserID")
+							  {
+								  deja = true;
+								  VUUID userid;
+								  if (context != nil)
+									  context->GetCurrentUserID(userid);
+								  toksimple->ch = (VValueSingle*) VValueSingle::NewValueFromValueKind(toksimple->fExpectedType);
+								  toksimple->ch->FromVUUID(userid);
+							  }
+							  else if (toksimple->fParam == L"$username" || toksimple->fParam == L"$currentUser")
+							  {
+								  deja = true;
+								  VString username;
+								  if (context != nil)
+									  context->GetCurrentUserName(username);
+								  toksimple->ch = (VValueSingle*) VValueSingle::NewValueFromValueKind(toksimple->fExpectedType);
+								  toksimple->ch->FromString(username);
+							  }
+							  else if (toksimple->fParam == L"$currentdate")
+							  {
+							  }
+						  }
+						  if (!deja)
+						  {
+							  QueryParamElement* qpe = &fParamValues[toksimple->fParam];
+							  if (qpe->fType != DB4D_QPE_scalar || qpe->fScalar == nil)
+							  {
+								  toksimple->ch = (VValueSingle*) VValueSingle::NewValueFromValueKind(toksimple->fExpectedType);
+							  }
+							  else
+							  {
+								  if (toksimple->fSimpleDate && qpe->fSimpleDateScalar != nil)
+								  {
+									  toksimple->ch = qpe->fSimpleDateScalar->ConvertTo(toksimple->fExpectedType);
+								  }
+								  else
+								  {
+									  if (toksimple->fSimpleDate && toksimple->fExpectedType == VK_TIME && qpe->fScalar->GetValueKind() == VK_STRING)
+									  {
+										  VString* s = (VString*)qpe->fScalar;
+										  VectorOfVString arr;
+										  s->GetSubStrings(',', arr, false, false);
+										  if (arr.size() > 1)
+											  toksimple->ch = arr[1].ConvertTo(toksimple->fExpectedType);
+										  else
+											  toksimple->ch = qpe->fScalar->ConvertTo(toksimple->fExpectedType);
+									  }
+									  else
+										  toksimple->ch = qpe->fScalar->ConvertTo(toksimple->fExpectedType);
+								  }
+							  }
+						  }
+						  if (toksimple->ch == nil)
+							  err = ThrowBaseError(memfull);
+						  else
+						  {
+							  if (toksimple->comparaison == DB4D_Regex_Not_Match || toksimple->comparaison == DB4D_Regex_Match)
+							  {
+								  toksimple->fIsDataDirect = false;
+								  VString s;
+								  toksimple->ch->GetString(s);
+								  toksimple->fRegMatcher = VRegexMatcher::Create(s, &err);
+							  }
+						  }
+					  }
+				  }
+				  break;
+
+				case r_LineArray:
 				{
-					QueryParamElement* qpe = &fParamValues[tokarray->fParam];
-					if (qpe->fType == DB4D_QPE_array && qpe->fArray != nil)
+					RechTokenArrayComp* tokarray = (RechTokenArrayComp*)tok;
+					if (! tokarray->fParam.IsEmpty())
 					{
-						QuickReleaseRefCountable(tokarray->values);
-						tokarray->values = GenerateConstArrayOfValues(*qpe->fArray, tokarray->fExpectedType, tokarray->fOptions);
+						QueryParamElement* qpe = &fParamValues[tokarray->fParam];
+						if (qpe->fType == DB4D_QPE_array && qpe->fArray != nil)
+						{
+							QuickReleaseRefCountable(tokarray->values);
+							tokarray->values = GenerateConstArrayOfValues(*qpe->fArray, tokarray->fExpectedType, tokarray->fOptions);
+						}
 					}
 				}
+				break;
+
+				case r_LineEMArray:
+				  {
+					  RechTokenEmArrayComp* tokarray = (RechTokenEmArrayComp*)tok;
+					  if (! tokarray->fParam.IsEmpty())
+					  {
+						  QueryParamElement* qpe = &fParamValues[tokarray->fParam];
+						  if (qpe->fType == DB4D_QPE_array && qpe->fArray != nil)
+						  {
+							  QuickReleaseRefCountable(tokarray->values);
+							  tokarray->values = GenerateConstArrayOfValues(*qpe->fArray, tokarray->fExpectedType, tokarray->fOptions);
+						  }
+					  }
+				  }
+				  break;
 			}
 		}
 	}
@@ -2722,6 +3298,20 @@ VError SearchTab::Add(const SearchTab& other)
 }
 
 
+VError SearchTab::BuildQueryString(BaseTaskInfo* context, VString outQuery)
+{
+	outQuery.Clear();
+	for (RechTokenVector::iterator cur = fLines.begin(), end = fLines.end(); cur != end; ++cur)
+	{
+		VString s;
+		(*cur)->BuildString(s);
+		outQuery += s;
+	}
+	return VE_OK;
+}
+
+
+
 
 
 
@@ -2772,7 +3362,7 @@ RechNodeJSScript::~RechNodeJSScript()
 
 
 uBOOL RechNodeJSScript::PerformSeq(FicheOnDisk* ficD, BaseTaskInfo *tfb, VDB4DProgressIndicator* InProgress, 
-						 BaseTaskInfo* context, DB4D_Way_of_Locking HowToLock, Bittab *exceptions, sLONG limit, EntityModel* model)
+						 BaseTaskInfo* context, DB4D_Way_of_Locking HowToLock, Bittab *exceptions, sLONG limit, LocalEntityModel* model)
 {
 	uBOOL result = 2;
 	if (!parseError)
@@ -2798,13 +3388,13 @@ uBOOL RechNodeJSScript::PerformSeq(FicheOnDisk* ficD, BaseTaskInfo *tfb, VDB4DPr
 
 
 uBOOL RechNodeJSScript::PerformSeq(sLONG nf, FicheInMem* curfic, BaseTaskInfo *tfb, VDB4DProgressIndicator* InProgress, 
-						 BaseTaskInfo* context, DB4D_Way_of_Locking HowToLock, Bittab *exceptions, sLONG limit, EntityModel* model)
+						 BaseTaskInfo* context, DB4D_Way_of_Locking HowToLock, Bittab *exceptions, sLONG limit, LocalEntityModel* model)
 {
 	uBOOL result = 2;
 
 	if (curfic != nil && context != nil && model != nil && !parseError)
 	{
-		EntityRecord* erec = new EntityRecord(model, curfic, context, DB4D_Do_Not_Lock);
+		LocalEntityRecord* erec = new LocalEntityRecord(model, curfic, context);
 		if (erec != nil)
 		{
 			erec->CallDBEvent(dbev_load, context);
@@ -2838,7 +3428,7 @@ uBOOL RechNodeJSScript::PerformSeq(sLONG nf, FicheInMem* curfic, BaseTaskInfo *t
 
 			if (!parseError)
 			{
-				VJSObject therecord(jscontext, VJSEntitySelectionIterator::CreateInstance(jscontext, new EntitySelectionIterator(erec, context->GetEncapsuleur())));
+				VJSObject therecord(jscontext, VJSEntitySelectionIterator::CreateInstance(jscontext, new EntitySelectionIterator(erec, context)));
 
 				JS4D::ExceptionRef excep;
 				VJSValue outResult(jscontext);
@@ -2924,7 +3514,7 @@ RechNodeScript::~RechNodeScript()
 }
 
 uBOOL RechNodeScript::PerformSeq(sLONG nf, FicheInMem* curfic, BaseTaskInfo *tfb, VDB4DProgressIndicator* InProgress, 
-								 BaseTaskInfo* context, DB4D_Way_of_Locking HowToLock, Bittab *exceptions, sLONG limit, EntityModel* model)
+								 BaseTaskInfo* context, DB4D_Way_of_Locking HowToLock, Bittab *exceptions, sLONG limit, LocalEntityModel* model)
 {
 	Boolean result = false;
 	VError err = VE_OK;
@@ -2940,12 +3530,12 @@ uBOOL RechNodeScript::PerformSeq(sLONG nf, FicheInMem* curfic, BaseTaskInfo *tfb
 		
 		if (cacherec != nil)
 		{
-			VImpCreator<VDB4DRecord>::GetImpObject(cacherec)->SetRec(curfic);
+			dynamic_cast<VDB4DRecord*>(cacherec)->SetRec(curfic);
 
 			uBOOL subres = rt->expression->ExecuteForQuery(context->GetEncapsuleur(), fLanguageContext, cacherec, err);
 			if (subres)
 				result = true;
-			VImpCreator<VDB4DRecord>::GetImpObject(cacherec)->SetRec(nil);
+			dynamic_cast<VDB4DRecord*>(cacherec)->SetRec(nil);
 		}
 	}
 
@@ -2955,7 +3545,7 @@ uBOOL RechNodeScript::PerformSeq(sLONG nf, FicheInMem* curfic, BaseTaskInfo *tfb
 
 
 uBOOL RechNodeScript::PerformSeq(FicheOnDisk* ficD, BaseTaskInfo *tfb, VDB4DProgressIndicator* InProgress, 
-								 BaseTaskInfo* context, DB4D_Way_of_Locking HowToLock, Bittab *exceptions, sLONG limit, EntityModel* model)
+								 BaseTaskInfo* context, DB4D_Way_of_Locking HowToLock, Bittab *exceptions, sLONG limit, LocalEntityModel* model)
 {
 	// executer le script qui doit retourner une boolean
 	// le contexte d'execution doit etre remplis avec tfb
@@ -2985,12 +3575,12 @@ uBOOL RechNodeScript::PerformSeq(FicheOnDisk* ficD, BaseTaskInfo *tfb, VDB4DProg
 
 			if (cacherec != nil)
 			{
-				VImpCreator<VDB4DRecord>::GetImpObject(cacherec)->SetRec(cachefiche);
+				dynamic_cast<VDB4DRecord*>(cacherec)->SetRec(cachefiche);
 
 				uBOOL subres = rt->expression->ExecuteForQuery(context->GetEncapsuleur(), fLanguageContext, cacherec, err);
 				if (subres)
 					result = true;
-				VImpCreator<VDB4DRecord>::GetImpObject(cacherec)->SetRec(nil);
+				dynamic_cast<VDB4DRecord*>(cacherec)->SetRec(nil);
 			}
 			cachefiche->SetAssocData(nil);
 		}
@@ -3288,19 +3878,19 @@ void GetOperString(sWORD comparaison, VString& soper)
 			break;
 
 		case DB4D_Equal:
-			soper = L" = ";
+			soper = L" === ";
 			break;
 
 		case DB4D_Like:
-			soper = L" LIKE ";
+			soper = L" == ";
 			break;
 
 		case DB4D_NotEqual:
-			soper = L" # ";
+			soper = L" !== ";
 			break;
 
 		case DB4D_NotLike:
-			soper = L" NOT LIKE ";
+			soper = L" != ";
 			break;
 
 		case DB4D_Greater:
@@ -3355,7 +3945,7 @@ RechNodeSeq::RechNodeSeq(void)
 
 
 uBOOL RechNodeSeq::PerformSeq(sLONG nf, FicheInMem* curfic, BaseTaskInfo *tfb, VDB4DProgressIndicator* InProgress, 
-							  BaseTaskInfo* context, DB4D_Way_of_Locking HowToLock, Bittab *exceptions, sLONG limit, EntityModel* model)
+							  BaseTaskInfo* context, DB4D_Way_of_Locking HowToLock, Bittab *exceptions, sLONG limit, LocalEntityModel* model)
 {
 	uBOOL ok = false;
 	ValPtr cv;
@@ -3483,7 +4073,7 @@ uBOOL RechNodeSeq::PerformSeq(sLONG nf, FicheInMem* curfic, BaseTaskInfo *tfb, V
 
 
 uBOOL RechNodeSeq::PerformSeq(FicheOnDisk* ficD, BaseTaskInfo *tfb, VDB4DProgressIndicator* InProgress, 
-							  BaseTaskInfo* context, DB4D_Way_of_Locking HowToLock, Bittab *exceptions, sLONG limit, EntityModel* model)
+							  BaseTaskInfo* context, DB4D_Way_of_Locking HowToLock, Bittab *exceptions, sLONG limit, LocalEntityModel* model)
 {
 	uBOOL ok = false;
 	sLONG typondisk;
@@ -3817,7 +4407,7 @@ void RechNodeSeq::DisplayTree(Base4D* bd, sLONG level, VString* result, VValueBa
 
 
 uBOOL RechNodeEmSeq::PerformSeq(FicheOnDisk* ficD, BaseTaskInfo *tfb, VDB4DProgressIndicator* InProgress, 
-								   BaseTaskInfo* context, DB4D_Way_of_Locking HowToLock, Bittab *exceptions, sLONG limit, EntityModel* model)
+								   BaseTaskInfo* context, DB4D_Way_of_Locking HowToLock, Bittab *exceptions, sLONG limit, LocalEntityModel* model)
 {
 	uBOOL result = 2;
 	if (cachefiche == nil)
@@ -3840,14 +4430,14 @@ uBOOL RechNodeEmSeq::PerformSeq(FicheOnDisk* ficD, BaseTaskInfo *tfb, VDB4DProgr
 
 
 uBOOL RechNodeEmSeq::PerformSeq(sLONG nf, FicheInMem* curfic, BaseTaskInfo *tfb, VDB4DProgressIndicator* InProgress, 
-								   BaseTaskInfo* context, DB4D_Way_of_Locking HowToLock, Bittab *exceptions, sLONG limit, EntityModel* model)
+								   BaseTaskInfo* context, DB4D_Way_of_Locking HowToLock, Bittab *exceptions, sLONG limit, LocalEntityModel* model)
 {
 	uBOOL ok = 2;
 	VError err = VE_OK;
 	ValueKind vk;
 	if (curfic != nil && context != nil && model != nil)
 	{
-		EntityRecord* erec = new EntityRecord(model, curfic, context, DB4D_Do_Not_Lock);
+		LocalEntityRecord* erec = new LocalEntityRecord(model, curfic, context);
 		if (erec != nil)
 		{
 			erec->CallDBEvent(dbev_load, context);
@@ -3947,10 +4537,10 @@ uBOOL RechNodeEmSeq::PerformSeq(sLONG nf, FicheInMem* curfic, BaseTaskInfo *tfb,
 					{
 						if (rt->comparaison == DB4D_Equal || rt->comparaison == DB4D_Like)
 						{
-							ok = val->getRelatedSelection() == nil || val->getRelatedSelection()->GetQTfic() == 0;
+							ok = val->getRelatedSelection() == nil || val->getRelatedSelection()->GetLength(context) == 0;
 						}
 						else
-							ok = !(val->getRelatedSelection() == nil || val->getRelatedSelection()->GetQTfic() == 0);
+							ok = !(val->getRelatedSelection() == nil || val->getRelatedSelection()->GetLength(context) == 0);
 					}
 					if (ok == 2)
 						ok = 3;
@@ -3975,7 +4565,7 @@ uBOOL RechNodeEmSeq::PerformSeq(sLONG nf, FicheInMem* curfic, BaseTaskInfo *tfb,
 }
 
 
-VValueSingle* RechNodeEmSeq::Compute(EntityRecord* erec, BaseTaskInfo* context, VError& err)
+VValueSingle* RechNodeEmSeq::Compute(LocalEntityRecord* erec, BaseTaskInfo* context, VError& err)
 {
 	Boolean ok = 2;
 	ValueKind vk;
@@ -4078,10 +4668,10 @@ VValueSingle* RechNodeEmSeq::Compute(EntityRecord* erec, BaseTaskInfo* context, 
 			{
 				if (rt->comparaison == DB4D_Equal || rt->comparaison == DB4D_Like)
 				{
-					ok = val->getRelatedSelection() == nil || val->getRelatedSelection()->GetQTfic() == 0;
+					ok = val->getRelatedSelection() == nil || val->getRelatedSelection()->GetLength(context) == 0;
 				}
 				else
-					ok = !(val->getRelatedSelection() == nil || val->getRelatedSelection()->GetQTfic() == 0);
+					ok = !(val->getRelatedSelection() == nil || val->getRelatedSelection()->GetLength(context) == 0);
 			}
 			if (ok != 2)
 				result = new VBoolean(ok);
@@ -4226,7 +4816,7 @@ void RechNodeEmSeq::CalcTarget(sLONG nf)
 	if (rt->fAttPath.Count() > 0)
 	{
 		const EntityAttributeInstance* attinst = rt->fAttPath.FirstPart();
-		target = attinst->fAtt->GetOwner()->GetMainTable()->GetNum();
+		target = ((db4dEntityAttribute*)(attinst->fAtt))->GetTable()->GetNum();
 	}
 	if (target != nf || rt->numinstance != 0)
 	{
@@ -4261,7 +4851,7 @@ RechNodeWithArraySeq::~RechNodeWithArraySeq(void)
 
 
 uBOOL RechNodeWithArraySeq::PerformSeq(sLONG nf, FicheInMem* curfic, BaseTaskInfo *tfb, VDB4DProgressIndicator* InProgress, 
-									   BaseTaskInfo* context, DB4D_Way_of_Locking HowToLock, Bittab *exceptions, sLONG limit, EntityModel* model)
+									   BaseTaskInfo* context, DB4D_Way_of_Locking HowToLock, Bittab *exceptions, sLONG limit, LocalEntityModel* model)
 {
 	uBOOL ok = false;
 	ValPtr cv;
@@ -4288,7 +4878,7 @@ uBOOL RechNodeWithArraySeq::PerformSeq(sLONG nf, FicheInMem* curfic, BaseTaskInf
 
 
 uBOOL RechNodeWithArraySeq::PerformSeq(FicheOnDisk* ficD, BaseTaskInfo *tfb, VDB4DProgressIndicator* InProgress, BaseTaskInfo* context, 
-									   DB4D_Way_of_Locking HowToLock, Bittab *exceptions, sLONG limit, EntityModel* model)
+									   DB4D_Way_of_Locking HowToLock, Bittab *exceptions, sLONG limit, LocalEntityModel* model)
 {
 	uBOOL ok = false;
 	sLONG typondisk;
@@ -4527,19 +5117,19 @@ void RechNodeWithArraySeq::Describe(Base4D* bd, VString& result)
 		break;
 
 	case DB4D_Equal:
-		s2 = L" = ";
+		s2 = L" === ";
 		break;
 
 	case DB4D_Like:
-		s2 = L" LIKE ";
+		s2 = L" == ";
 		break;
 
 	case DB4D_NotEqual:
-		s2 = L" # ";
+		s2 = L" !== ";
 		break;
 
 	case DB4D_NotLike:
-		s2 = L" NOT LIKE ";
+		s2 = L" != ";
 		break;
 
 	case DB4D_Greater:
@@ -4875,7 +5465,7 @@ VError RechNodeIndex::Perform(OptimizedQuery *query, Bittab **super, Bittab* fil
 					b = sel->GetBittab()->Clone(err);
 				}
 			}
-
+			QuickReleaseRefCountable(sel);
 		}
 		else if (fParseAllIndex)
 		{
@@ -5272,7 +5862,7 @@ void RechNodeConst::Describe(Base4D* bd, VString& result)
 }
 
 
-VValueSingle* RechNodeConst::Compute(EntityRecord* erec, BaseTaskInfo* context, VError& err)
+VValueSingle* RechNodeConst::Compute(LocalEntityRecord* erec, BaseTaskInfo* context, VError& err)
 {
 	VValueSingle* result = nil;
 
@@ -5313,7 +5903,7 @@ CDB4DQueryPathNode* RechNodeRecordExist::BuildQueryPath(Boolean inBefore, Table*
 }
 
 
-VValueSingle* RechNodeRecordExist::Compute(EntityRecord* erec, BaseTaskInfo* context, VError& err)
+VValueSingle* RechNodeRecordExist::Compute(LocalEntityRecord* erec, BaseTaskInfo* context, VError& err)
 {
 	// a faire
 	assert(false);
@@ -5796,14 +6386,14 @@ uBOOL RechNodeExistingSelection::sub_PerformSeq(sLONG numfiche, BaseTaskInfo* co
 
 
 uBOOL RechNodeExistingSelection::PerformSeq(sLONG nf, FicheInMem* curfic, BaseTaskInfo *tfb, VDB4DProgressIndicator* InProgress, 
-											BaseTaskInfo* context, DB4D_Way_of_Locking HowToLock, Bittab *exceptions, sLONG limit, EntityModel* model)
+											BaseTaskInfo* context, DB4D_Way_of_Locking HowToLock, Bittab *exceptions, sLONG limit, LocalEntityModel* model)
 {
 	return sub_PerformSeq(curfic->GetNum(), context);
 }
 
 
 uBOOL RechNodeExistingSelection::PerformSeq(FicheOnDisk* ficD, BaseTaskInfo *tfb, VDB4DProgressIndicator* InProgress, BaseTaskInfo* context, 
-											DB4D_Way_of_Locking HowToLock, Bittab *exceptions, sLONG limit, EntityModel* model)
+											DB4D_Way_of_Locking HowToLock, Bittab *exceptions, sLONG limit, LocalEntityModel* model)
 {
 	return sub_PerformSeq(ficD->getnumfic(), context);
 }
@@ -6081,7 +6671,7 @@ VError RechNodeOperator::Perform(OptimizedQuery *query, Bittab **super, Bittab* 
 
 
 uBOOL RechNodeOperator::PerformSeq(sLONG nf, FicheInMem* curfic, BaseTaskInfo *tfb, VDB4DProgressIndicator* InProgress, 
-								   BaseTaskInfo* context, DB4D_Way_of_Locking HowToLock, Bittab *exceptions, sLONG limit, EntityModel* model)
+								   BaseTaskInfo* context, DB4D_Way_of_Locking HowToLock, Bittab *exceptions, sLONG limit, LocalEntityModel* model)
 {
 	uBOOL ok,ok2;
 
@@ -6145,7 +6735,7 @@ uBOOL RechNodeOperator::PerformSeq(sLONG nf, FicheInMem* curfic, BaseTaskInfo *t
 
 
 uBOOL RechNodeOperator::PerformSeq(FicheOnDisk* ficD, BaseTaskInfo *tfb, VDB4DProgressIndicator* InProgress, BaseTaskInfo* context, 
-								   DB4D_Way_of_Locking HowToLock, Bittab *exceptions, sLONG limit, EntityModel* model)
+								   DB4D_Way_of_Locking HowToLock, Bittab *exceptions, sLONG limit, LocalEntityModel* model)
 {
 	uBOOL ok,ok2;
 
@@ -6853,7 +7443,7 @@ VError RechNodeMultiOperator::Perform(OptimizedQuery *query, Bittab **super, Bit
 }
 
 
-VValueSingle* RechNodeMultiOperator::Compute(EntityRecord* erec, BaseTaskInfo* context, VError& err)
+VValueSingle* RechNodeMultiOperator::Compute(LocalEntityRecord* erec, BaseTaskInfo* context, VError& err)
 {
 	VValueSingle* result = nil;
 	uBOOL ok = OperBool == DB4D_And, ok2;
@@ -6943,7 +7533,7 @@ VValueSingle* RechNodeMultiOperator::Compute(EntityRecord* erec, BaseTaskInfo* c
 
 
 uBOOL RechNodeMultiOperator::PerformSeq(sLONG nf, FicheInMem* curfic, BaseTaskInfo *tfb, VDB4DProgressIndicator* InProgress, 
-										BaseTaskInfo* context, DB4D_Way_of_Locking HowToLock, Bittab *exceptions, sLONG limit, EntityModel* model)
+										BaseTaskInfo* context, DB4D_Way_of_Locking HowToLock, Bittab *exceptions, sLONG limit, LocalEntityModel* model)
 {
 	uBOOL ok = OperBool == DB4D_And, ok2;
 
@@ -7005,7 +7595,7 @@ uBOOL RechNodeMultiOperator::PerformSeq(sLONG nf, FicheInMem* curfic, BaseTaskIn
 
 
 uBOOL RechNodeMultiOperator::PerformFullSeq(sLONG nf, FicheInMem* curfic, BaseTaskInfo *tfb, VDB4DProgressIndicator* InProgress, 
-										BaseTaskInfo* context, DB4D_Way_of_Locking HowToLock, Bittab *exceptions, sLONG limit, EntityModel* model)
+										BaseTaskInfo* context, DB4D_Way_of_Locking HowToLock, Bittab *exceptions, sLONG limit, LocalEntityModel* model)
 {
 	uBOOL ok = OperBool == DB4D_And, ok2;
 
@@ -7081,7 +7671,7 @@ uBOOL RechNodeMultiOperator::PerformFullSeq(sLONG nf, FicheInMem* curfic, BaseTa
 
 
 uBOOL RechNodeMultiOperator::PerformSeq(FicheOnDisk* ficD, BaseTaskInfo *tfb, VDB4DProgressIndicator* InProgress, 
-										BaseTaskInfo* context, DB4D_Way_of_Locking HowToLock, Bittab *exceptions, sLONG limit, EntityModel* model)
+										BaseTaskInfo* context, DB4D_Way_of_Locking HowToLock, Bittab *exceptions, sLONG limit, LocalEntityModel* model)
 {
 	uBOOL ok = OperBool == DB4D_And, ok2;
 
@@ -7648,7 +8238,7 @@ VError RechNodeNot::Perform(OptimizedQuery *query, Bittab **super, Bittab* filtr
 }
 
 
-VValueSingle* RechNodeNot::Compute(EntityRecord* erec, BaseTaskInfo* context, VError& err)
+VValueSingle* RechNodeNot::Compute(LocalEntityRecord* erec, BaseTaskInfo* context, VError& err)
 {
 	VValueSingle* result = nil;
 	if (left != nil)
@@ -7670,7 +8260,7 @@ VValueSingle* RechNodeNot::Compute(EntityRecord* erec, BaseTaskInfo* context, VE
 
 
 uBOOL RechNodeNot::PerformSeq(sLONG nf, FicheInMem* curfic, BaseTaskInfo *tfb, VDB4DProgressIndicator* InProgress, 
-							  BaseTaskInfo* context, DB4D_Way_of_Locking HowToLock, Bittab *exceptions, sLONG limit, EntityModel* model)
+							  BaseTaskInfo* context, DB4D_Way_of_Locking HowToLock, Bittab *exceptions, sLONG limit, LocalEntityModel* model)
 {
 	uBOOL ok;
 
@@ -7687,7 +8277,7 @@ uBOOL RechNodeNot::PerformSeq(sLONG nf, FicheInMem* curfic, BaseTaskInfo *tfb, V
 
 
 uBOOL RechNodeNot::PerformFullSeq(sLONG nf, FicheInMem* curfic, BaseTaskInfo *tfb, VDB4DProgressIndicator* InProgress, 
-							  BaseTaskInfo* context, DB4D_Way_of_Locking HowToLock, Bittab *exceptions, sLONG limit, EntityModel* model)
+							  BaseTaskInfo* context, DB4D_Way_of_Locking HowToLock, Bittab *exceptions, sLONG limit, LocalEntityModel* model)
 {
 	uBOOL ok;
 
@@ -7704,7 +8294,7 @@ uBOOL RechNodeNot::PerformFullSeq(sLONG nf, FicheInMem* curfic, BaseTaskInfo *tf
 
 
 uBOOL RechNodeNot::PerformSeq(FicheOnDisk* ficD, BaseTaskInfo *tfb, VDB4DProgressIndicator* InProgress, 
-							  BaseTaskInfo* context, DB4D_Way_of_Locking HowToLock, Bittab *exceptions, sLONG limit, EntityModel* model)
+							  BaseTaskInfo* context, DB4D_Way_of_Locking HowToLock, Bittab *exceptions, sLONG limit, LocalEntityModel* model)
 {
 	uBOOL ok;
 
@@ -8941,7 +9531,7 @@ VError RechNodeSubQuery::Perform(OptimizedQuery *query, Bittab **super, Bittab* 
 
 
 uBOOL RechNodeSubQuery::PerformSeq(sLONG nf, FicheInMem* curfic, BaseTaskInfo *tfb, VDB4DProgressIndicator* InProgress, 
-								   BaseTaskInfo* context, DB4D_Way_of_Locking HowToLock, Bittab *exceptions, sLONG limit, EntityModel* model)
+								   BaseTaskInfo* context, DB4D_Way_of_Locking HowToLock, Bittab *exceptions, sLONG limit, LocalEntityModel* model)
 {
 	uBOOL ok = false;
 	ValPtr cv;
@@ -8975,7 +9565,7 @@ uBOOL RechNodeSubQuery::PerformSeq(sLONG nf, FicheInMem* curfic, BaseTaskInfo *t
 
 
 uBOOL RechNodeSubQuery::PerformFullSeq(sLONG nf, FicheInMem* curfic, BaseTaskInfo *tfb, VDB4DProgressIndicator* InProgress, 
-										BaseTaskInfo* context, DB4D_Way_of_Locking HowToLock, Bittab *exceptions, sLONG limit, EntityModel* model)
+										BaseTaskInfo* context, DB4D_Way_of_Locking HowToLock, Bittab *exceptions, sLONG limit, LocalEntityModel* model)
 {
 	uBOOL ok = false;
 	VError err = VE_OK;
@@ -9023,7 +9613,7 @@ uBOOL RechNodeSubQuery::PerformFullSeq(sLONG nf, FicheInMem* curfic, BaseTaskInf
 
 
 uBOOL RechNodeSubQuery::PerformSeq(FicheOnDisk* ficD, BaseTaskInfo *tfb, VDB4DProgressIndicator* InProgress, BaseTaskInfo* context, 
-								   DB4D_Way_of_Locking HowToLock, Bittab *exceptions, sLONG limit, EntityModel* model)
+								   DB4D_Way_of_Locking HowToLock, Bittab *exceptions, sLONG limit, LocalEntityModel* model)
 {
 	uBOOL ok = false;
 	sLONG typondisk;
@@ -9126,6 +9716,7 @@ RechNode* OptimizedQuery::xBuildNodes(SearchTab *model, RechNode* dejaleft)
 	RechNodeEmSeq* rnEmSeq;
 	RechNodeRecordExist* rnRecExist;
 	RechTokenJoin* xrt;
+	RechTokenEmJoin* yrt;
 	RechNodeExistingSelection* rnsel;
 	Selection* sel;
 	sLONG seltarget;
@@ -9148,7 +9739,8 @@ RechNode* OptimizedQuery::xBuildNodes(SearchTab *model, RechNode* dejaleft)
 	{
 		tt = rt->GetTyp();	
 		{
-			if (tt == r_Line || tt == r_Script || tt == r_LineArray || tt == r_ParentG || tt == r_Not || tt == r_LineJoin || tt == r_Sel || tt == r_EMComp || tt == r_RecordExist || tt == r_JSScript)
+			if (tt == r_Line || tt == r_LineEM || tt == r_Script || tt == r_LineArray || tt == r_LineEMArray || tt == r_ParentG || tt == r_Not || tt == r_LineJoin || tt == r_LineEMJoin 
+				|| tt == r_Sel || tt == r_EmSel || tt == r_EMComp || tt == r_RecordExist || tt == r_JSScript || tt == r_RecordEntityExist)
 			{
 				if (tt == r_Not)
 				{
@@ -9179,12 +9771,27 @@ RechNode* OptimizedQuery::xBuildNodes(SearchTab *model, RechNode* dejaleft)
 								seltarget = sel->GetParentFile()->GetNum();
 								rnsel = new RechNodeExistingSelection(sel);
 								if (seltarget != nf || ((RechTokenSel*)rt)->fNumInstance != fDefaultInstance)
-								{
-									
+								{	
 									rnsel->SetTarget(seltarget, ((RechTokenSel*)rt)->fNumInstance);
 								}
 								
 								rn2 = rnsel;
+								break;
+
+							case r_EmSel:
+								{
+									LocalEntityCollection* EMsel = dynamic_cast<LocalEntityCollection*>(((RechTokenEmSel*)rt)->fSel);
+									sel = EMsel->GetSel();
+									assert(sel != nil);
+									seltarget = sel->GetParentFile()->GetNum();
+									rnsel = new RechNodeExistingSelection(sel);
+									if (seltarget != nf || ((RechTokenEmSel*)rt)->fNumInstance != fDefaultInstance)
+									{
+										rnsel->SetTarget(seltarget, ((RechTokenEmSel*)rt)->fNumInstance);
+									}
+
+									rn2 = rnsel;
+								}
 								break;
 
 							case r_Line:
@@ -9192,6 +9799,14 @@ RechNode* OptimizedQuery::xBuildNodes(SearchTab *model, RechNode* dejaleft)
 								rnseq->rt = (RechTokenSimpleComp*)rt;
 								if (((RechTokenSimpleComp*)rt)->numfile != nf || ((RechTokenSimpleComp*)rt)->numinstance != fDefaultInstance)
 									rnseq->SetTarget(((RechTokenSimpleComp*)rt)->numfile, ((RechTokenSimpleComp*)rt)->numinstance);
+								rn2 = rnseq;
+							break;
+
+							case r_LineEM:
+								rnseq = new RechNodeSeq;
+								rnseq->rt = ((RechTokenEMSimpleComp*)rt)->CopyIntoRechTokenSimpleComp();
+								if (rnseq->rt->numfile != nf || rnseq->rt->numinstance != fDefaultInstance)
+									rnseq->SetTarget(rnseq->rt->numfile, rnseq->rt->numinstance);
 								rn2 = rnseq;
 							break;
 
@@ -9203,6 +9818,17 @@ RechNode* OptimizedQuery::xBuildNodes(SearchTab *model, RechNode* dejaleft)
 									rnarrayseq->values->Retain();
 								if (((RechTokenArrayComp*)rt)->numfile != nf || ((RechTokenSimpleComp*)rt)->numinstance != fDefaultInstance)
 									rnarrayseq->SetTarget(((RechTokenArrayComp*)rt)->numfile, ((RechTokenSimpleComp*)rt)->numinstance);
+								rn2 = rnarrayseq;
+								break;
+
+							case r_LineEMArray:
+								rnarrayseq = new RechNodeWithArraySeq;
+								rnarrayseq->rt = ((RechTokenEmArrayComp*)rt)->CopyIntoRechTokenArrayComp();
+								rnarrayseq->values = rnarrayseq->rt->values;
+								if (rnarrayseq->values != nil)
+									rnarrayseq->values->Retain();
+								if (rnarrayseq->rt->numfile != nf || rnarrayseq->rt->numinstance != fDefaultInstance)
+									rnarrayseq->SetTarget(rnarrayseq->rt->numfile, rnarrayseq->rt->numinstance);
 								rn2 = rnarrayseq;
 								break;
 
@@ -9219,6 +9845,22 @@ RechNode* OptimizedQuery::xBuildNodes(SearchTab *model, RechNode* dejaleft)
 								rn2 = rnjoin;
 								break;
 
+							case r_LineEMJoin:
+								{
+									yrt = (RechTokenEmJoin*)rt;
+									sLONG numfile = 0, numfileother = 0;
+									LocalEntityModel* locmodel = dynamic_cast<LocalEntityModel*>(yrt->fAtt->GetModel());
+									LocalEntityModel* locmodelother = dynamic_cast<LocalEntityModel*>(yrt->fAttOther->GetModel());
+									if (locmodel != nil)
+										numfile = locmodel->GetMainTable()->GetNum();
+									if (locmodelother != nil)
+										numfileother = locmodelother->GetMainTable()->GetNum();
+
+									rnjoin = new RechNodeBaseJoin(numfile, yrt->fAtt->GetFieldPos(), numfileother, yrt->fAttOther->GetFieldPos(), yrt->fOptions, yrt->numinstance, yrt->numinstanceOther);
+									rn2 = rnjoin;
+								}
+								break;
+
 							case r_EMComp:
 								rnEmSeq = new RechNodeEmSeq;
 								rnEmSeq->rt = (RechTokenEmComp*)rt;
@@ -9231,6 +9873,14 @@ RechNode* OptimizedQuery::xBuildNodes(SearchTab *model, RechNode* dejaleft)
 								rnRecExist->rt = (RechTokenRecordExist*)rt;
 								if (((RechTokenRecordExist*)rt)->numfile != nf || ((RechTokenRecordExist*)rt)->numinstance != fDefaultInstance)
 									rnRecExist->SetTarget(((RechTokenRecordExist*)rt)->numfile, ((RechTokenRecordExist*)rt)->numinstance);
+								rn2 = rnRecExist;
+								break;
+
+							case r_RecordEntityExist:
+								rnRecExist = new RechNodeRecordExist;
+								rnRecExist->rt = ((RechTokenEntityRecordExist*)rt)->CopyIntoRechTokenRecordExist();
+								if (rnRecExist->rt->numfile != nf || rnRecExist->rt->numinstance != fDefaultInstance)
+									rnRecExist->SetTarget(rnRecExist->rt->numfile, rnRecExist->rt->numinstance);
 								rn2 = rnRecExist;
 								break;
 
@@ -11351,105 +12001,67 @@ VError OptimizedQuery::AnalyseSearch(SearchTab *model, BaseTaskInfo* context, bo
 	RechNode* Permutant;
 	VError err = VE_OK;
 
-	fModel = model->GetModel();
+	fModel = dynamic_cast<LocalEntityModel*>(model->GetModel());
 
+	if (fModel != nil)
 	{
-	StErrorContextInstaller errs(true);
-	fic = model->GetTargetFile();
-	nf = fic->GetNum();
-
-	if (!forcompute)
-	{
-		if (fQueryPlan != nil)
-			fQueryPlan->Release();
-
-		if (model->MustDisplay())
-		{
-			fQueryPlan = new VValueBag();
-		}
-		else
-			fQueryPlan = nil;
-
-
-		if (fic != nil)
-		{
-			if (context != nil && context->ShouldDescribeQuery() && fic->GetOwner()->GetStructure() != nil)
-			{
-				model->SetDisplayTree(true);
-			}
-		}
+		fic = fModel->GetMainTable();
+		model->SetTarget(fic);
 	}
-	
-	model->ReplaceParams(context);
-	
-	errQuery = 0;
-	model->PosToFirstToken();
-
-	root = xBuildNodes(model, nil); // construit un arbre a partir de la formule lineaire (avec parentheses)
-	err = VTask::GetCurrent()->GetLastError();
+	else
+		fic = model->GetTargetFile();
 
 	if (fic != nil)
 	{
-		Base4D *bd = fic->GetOwner();
-		if (model->MustDisplay())
-		{
-			DebugMsg(L"  \n\n");
-			if (root != nil)
-				root->DisplayTree(bd, 0, nil);
-			DebugMsg(L"  \n");
-		}
-	}
-
-	if (err == VE_OK)
-		root = xFlattenNodes(root, nil); // remplace les RechNodeOperator par des RechNodeMultiOperator
-
-	err = VTask::GetCurrent()->GetLastError();
-
-	if (fic != nil)
-	{
-		Base4D *bd = fic->GetOwner();
-		if (false && model->MustDisplay())
-		{
-			DebugMsg(L"  \n\n");
-			if (root != nil)
-				root->DisplayTree(bd, 0, nil);
-			DebugMsg(L"  \n");
-		}
-	}
-
-	if (err == VE_OK && !forcompute)
-	{
-		{
-			RechNodeArray ListOfSub;
-			JoinPath xpath;
-			xBuildSubQueries(root, &ListOfSub, xpath);
-			root = xBuildSubQueryFrom(&ListOfSub, xpath);
-			err = VTask::GetCurrent()->GetLastError();
-		}
-
-		if (fic != nil)
-		{
-			Base4D *bd = fic->GetOwner();
-			if (false && model->MustDisplay())
-			{
-				DebugMsg(L"  \n\n");
-				if (root != nil)
-					root->DisplayTree(bd, 0, nil);
-				DebugMsg(L"  \n");
-			}
-		}
-
-		if (err == VE_OK)
-			root = xTransformIndex(root, fic, context); // trouve les comparaison qui peuvent etre indexees
-		err = VTask::GetCurrent()->GetLastError();
-		//root = xCreerFourche(root, &deja); // recherche les fourchettes indexees
-		if (err == VE_OK)
-			root = xPurgeNilAndSolvePath(root, context); // retire les branche vides crees par les fourchettes indexees et les subqueries sur la target principale
-														// resoud aussi les chemins d'acces des jointures
-		err = VTask::GetCurrent()->GetLastError();
+		StErrorContextInstaller errs(true);
 		
+		nf = fic->GetNum();
+
+		if (!forcompute)
+		{
+			if (fQueryPlan != nil)
+				fQueryPlan->Release();
+
+			if (model->MustDisplay())
+			{
+				fQueryPlan = new VValueBag();
+			}
+			else
+				fQueryPlan = nil;
+
+
+			if (fic != nil)
+			{
+				if (context != nil && context->ShouldDescribeQuery() && fic->GetOwner()->GetStructure() != nil)
+				{
+					model->SetDisplayTree(true);
+				}
+			}
+		}
+		
+		model->ReplaceParams(context);
+		
+		errQuery = 0;
+		model->PosToFirstToken();
+
+		root = xBuildNodes(model, nil); // construit un arbre a partir de la formule lineaire (avec parentheses)
+		err = VTask::GetCurrent()->GetLastError();
+
+		if (fic != nil)
+		{
+			Base4D *bd = fic->GetOwner();
+			if (model->MustDisplay())
+			{
+				DebugMsg(L"  \n\n");
+				if (root != nil)
+					root->DisplayTree(bd, 0, nil);
+				DebugMsg(L"  \n");
+			}
+		}
+
 		if (err == VE_OK)
-			root = xSplitSubQueryOnSubTables(root, context, nil); // si il y a plusieurs comparaisons sur des champs de sous tables, il faut les gerer separement
+			root = xFlattenNodes(root, nil); // remplace les RechNodeOperator par des RechNodeMultiOperator
+
 		err = VTask::GetCurrent()->GetLastError();
 
 		if (fic != nil)
@@ -11464,86 +12076,135 @@ VError OptimizedQuery::AnalyseSearch(SearchTab *model, BaseTaskInfo* context, bo
 			}
 		}
 
-		if (err == VE_OK)
-			xPermuteAnds(root); // permute les comparaisons separees par des AND pour mettre les index full avant les partiels
-													// eux meme avant les comparaisons sequentielles
-		err = VTask::GetCurrent()->GetLastError();
-
-		if (fic != nil)
+		if (err == VE_OK && !forcompute)
 		{
-			Base4D *bd = fic->GetOwner();
-			if (model->MustDisplay())
 			{
-				DebugMsg(L"  \n\n");
-				if (root != nil)
-					root->DisplayTree(bd, 0, nil);
-				DebugMsg(L"  \n");
+				RechNodeArray ListOfSub;
+				JoinPath xpath;
+				xBuildSubQueries(root, &ListOfSub, xpath);
+				root = xBuildSubQueryFrom(&ListOfSub, xpath);
+				err = VTask::GetCurrent()->GetLastError();
 			}
-		}
 
-		/*
-		do
-		{
-			Permutant = nil;
-		} while (xPermuteAnds_PartialIndex(root, &Permutant)); // permute les comparaisons separees par des AND 
-															// pour mettres les index partiels et full avant les comparaisons sequentielles
-		do
-		{
-			Permutant = nil;
-		} while (xPermuteAnds_FullIndex(root, &Permutant)); // permute les comparaisons separees par des AND 
-															// pour mettres les full index d'abord
-		do
-		{
-			Permutant = nil;
-		} while (xPermuteAnds_Joins(root, &Permutant)); // permute les jointures separees par des AND 
-																									// pour mettres celles des autres tables d'abord
-
-	*/
-
-		uBOOL mustinverse;
-		root = xRemoveRecordExist(root, mustinverse);
-
-		root = xRegroupJoinPaths(root, true, context, nf);
-
-		if (err == VE_OK)
-			root = xTransformSeq(root, false); // regarde si les comparaisons indexees sont reliees par des OU a des comparaison sequentielles
-										// et si oui, les transforme en sequentielles
-		err = VTask::GetCurrent()->GetLastError();
-			
-		if (fic != nil)
-		{
-			Base4D *bd = fic->GetOwner();
-			if (model->MustDisplay())
+			if (fic != nil)
 			{
-				DebugMsg(L"  \n\n");
-				if (root != nil)
-					root->DisplayTree(bd, 0, &fResult, fQueryPlan);
-				DebugMsg(fResult);
-				if (context != nil)
+				Base4D *bd = fic->GetOwner();
+				if (false && model->MustDisplay())
 				{
-					context->SetQueryDescription(fResult);
-					context->SetQueryPlan(fQueryPlan);
+					DebugMsg(L"  \n\n");
+					if (root != nil)
+						root->DisplayTree(bd, 0, nil);
+					DebugMsg(L"  \n");
 				}
-				DebugMsg(L"  \n\n");
+			}
 
+			if (err == VE_OK)
+				root = xTransformIndex(root, fic, context); // trouve les comparaison qui peuvent etre indexees
+			err = VTask::GetCurrent()->GetLastError();
+			//root = xCreerFourche(root, &deja); // recherche les fourchettes indexees
+			if (err == VE_OK)
+				root = xPurgeNilAndSolvePath(root, context); // retire les branche vides crees par les fourchettes indexees et les subqueries sur la target principale
+															// resoud aussi les chemins d'acces des jointures
+			err = VTask::GetCurrent()->GetLastError();
+			
+			if (err == VE_OK)
+				root = xSplitSubQueryOnSubTables(root, context, nil); // si il y a plusieurs comparaisons sur des champs de sous tables, il faut les gerer separement
+			err = VTask::GetCurrent()->GetLastError();
 
-
-	#if 0
-				CDB4DQueryPathNode* queryplan = BuildQueryPath(true, nil);
-				if (testAssert(queryplan != nil))
+			if (fic != nil)
+			{
+				Base4D *bd = fic->GetOwner();
+				if (false && model->MustDisplay())
 				{
-					VString sss;
-					queryplan->BuildFullString(sss, 0);
-					DebugMsg(sss);
+					DebugMsg(L"  \n\n");
+					if (root != nil)
+						root->DisplayTree(bd, 0, nil);
+					DebugMsg(L"  \n");
+				}
+			}
+
+			if (err == VE_OK)
+				xPermuteAnds(root); // permute les comparaisons separees par des AND pour mettre les index full avant les partiels
+														// eux meme avant les comparaisons sequentielles
+			err = VTask::GetCurrent()->GetLastError();
+
+			if (fic != nil)
+			{
+				Base4D *bd = fic->GetOwner();
+				if (model->MustDisplay())
+				{
+					DebugMsg(L"  \n\n");
+					if (root != nil)
+						root->DisplayTree(bd, 0, nil);
+					DebugMsg(L"  \n");
+				}
+			}
+
+			/*
+			do
+			{
+				Permutant = nil;
+			} while (xPermuteAnds_PartialIndex(root, &Permutant)); // permute les comparaisons separees par des AND 
+																// pour mettres les index partiels et full avant les comparaisons sequentielles
+			do
+			{
+				Permutant = nil;
+			} while (xPermuteAnds_FullIndex(root, &Permutant)); // permute les comparaisons separees par des AND 
+																// pour mettres les full index d'abord
+			do
+			{
+				Permutant = nil;
+			} while (xPermuteAnds_Joins(root, &Permutant)); // permute les jointures separees par des AND 
+																										// pour mettres celles des autres tables d'abord
+
+		*/
+
+			uBOOL mustinverse;
+			root = xRemoveRecordExist(root, mustinverse);
+
+			root = xRegroupJoinPaths(root, true, context, nf);
+
+			if (err == VE_OK)
+				root = xTransformSeq(root, false); // regarde si les comparaisons indexees sont reliees par des OU a des comparaison sequentielles
+											// et si oui, les transforme en sequentielles
+			err = VTask::GetCurrent()->GetLastError();
+				
+			if (fic != nil)
+			{
+				Base4D *bd = fic->GetOwner();
+				if (model->MustDisplay())
+				{
+					DebugMsg(L"  \n\n");
+					if (root != nil)
+						root->DisplayTree(bd, 0, &fResult, fQueryPlan);
+					DebugMsg(fResult);
+					if (context != nil)
+					{
+						context->SetQueryDescription(fResult);
+						context->SetQueryPlan(fQueryPlan);
+					}
 					DebugMsg(L"  \n\n");
 
-					queryplan->Release();
+
+
+		#if 0
+					CDB4DQueryPathNode* queryplan = BuildQueryPath(true, nil);
+					if (testAssert(queryplan != nil))
+					{
+						VString sss;
+						queryplan->BuildFullString(sss, 0);
+						DebugMsg(sss);
+						DebugMsg(L"  \n\n");
+
+						queryplan->Release();
+					}
+		#endif
 				}
-	#endif
 			}
 		}
 	}
-	}
+	else
+		err = ThrowBaseError(VE_DB4D_QUERY_NOT_THE_RIGHT_MODEL, DBaction_ExecutingQuery);
 
 	if (err != VE_OK)
 	{
@@ -11720,7 +12381,7 @@ Selection* OptimizedQuery::Perform(Bittab* DejaSel, VDB4DProgressIndicator* InPr
 }
 
 
-VValueSingle* OptimizedQuery::Compute(EntityRecord* erec, BaseTaskInfo* context, VError& err)
+VValueSingle* OptimizedQuery::Compute(LocalEntityRecord* erec, BaseTaskInfo* context, VError& err)
 {
 	if (root == nil)
 		return nil;
@@ -13637,6 +14298,7 @@ VError ColumnFormulas::Execute(Selection* Sel, BaseTaskInfo* context, VDB4DProgr
 							}
 							deja->CopyActionFrom(&fActions[i],i);
 							deja->fCurrec = fCurrec;
+							ind->Release();
 						}
 
 					}

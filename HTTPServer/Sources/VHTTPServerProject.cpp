@@ -173,6 +173,7 @@ VHTTPServerProject::VHTTPServerProject (VHTTPServer *inServer, const XBOX::VValu
 , fPostProcessingRegExCacheLock()
 , fSocketDescriptor (-1)
 , fSSLSocketDescriptor (-1)
+, fReuseAddressSocketOption (true)
 , fAuthenticationManager (NULL)
 , fErrorProcessingHandler (NULL)
 , fAuthenticationDelegate (NULL)
@@ -219,6 +220,9 @@ void VHTTPServerProject::Clear()
 
 	fPreProcessingRegExCache.clear();
 	fPostProcessingRegExCache.clear();
+
+	fSocketDescriptor = fSSLSocketDescriptor = -1;
+	fReuseAddressSocketOption = true;
 }
 
 
@@ -227,7 +231,11 @@ void VHTTPServerProject::_ResetListener()
 	if (!fReuseConnectionListener)
 	{
 		VHTTPConnectionListener * httpCL = dynamic_cast<VHTTPConnectionListener*>(fConnectionListener);
+
+#if !VERSION_LINUX
+		//jmo - TODO : For some reason, this line froze the Linux Server
 		XBOX::ReleaseRefCountable (&httpCL);
+#endif
 	}
 
 	fConnectionListener = NULL;
@@ -263,6 +271,7 @@ XBOX::VError VHTTPServerProject::StartProcessing()
 	if (fConnectionListener && fConnectionListener->IsListening())
 	{
 		XBOX::VTime::Now (fStartingTime);
+		fServerTaskID = VTaskMgr::Get()->GetCurrentTaskID();
 		_Tell_DidStart();
 
 		return VE_OK;
@@ -315,6 +324,8 @@ XBOX::VError VHTTPServerProject::StartProcessing()
 		if (fSSLSocketDescriptor != -1)
 			dynamic_cast<VHTTPConnectionListener *>(fConnectionListener)->SetSSLSocketDescriptor (fSSLSocketDescriptor);
 		
+		dynamic_cast<VHTTPConnectionListener *>(fConnectionListener)->SetReuseAddressSocketOption (fReuseAddressSocketOption);
+
 		error = fConnectionListener->StartListening();
 	}
 
@@ -328,8 +339,9 @@ XBOX::VError VHTTPServerProject::StartProcessing()
 	{
 		fConnectionListener->StopListening();
 		fHTTPServer->RemoveConnectionListener (fConnectionListener);
+		_ResetListener(); // YT 10-Oct-2012 - ACI0077816
 
-		fHTTPServer->GetVirtualHostManager()->Notify_DidStop();
+		_Tell_DidStop();
 	}
 
 	return error;
@@ -362,13 +374,11 @@ XBOX::VError VHTTPServerProject::StopProcessing()
 	fServerTaskID = 0;
 	fStartingTime.Clear();
 
-	_Tell_DidStop();
-
 	fConnectionListener->StopListening();
 	fHTTPServer->RemoveConnectionListener (fConnectionListener);
 	_ResetListener();
 
-	fHTTPServer->GetVirtualHostManager()->Notify_DidStop();
+	_Tell_DidStop();
 
 	XBOX::VTask::GetCurrent()->Sleep (1000);
 
@@ -606,7 +616,7 @@ void VHTTPServerProject::_AddVirtualFoldersFromSettings (VVirtualHost *ioVirtual
 			// Temp for WAK3 - Support "webComponents" VirtualFolder
 			// TODO: Use .waResources settings later
 			XBOX::VFilePath	webComponentsPath (wakandaServerFolder->GetPath());
-			webComponentsPath.ToSubFolder (CVSTR ("resources")).ToSubFolder (CVSTR ("Web Components"));
+			webComponentsPath.ToSubFolder (CVSTR ("Resources")).ToSubFolder (CVSTR ("Web Components"));
 			virtualFolder = fHTTPServer->RetainVirtualFolder (webComponentsPath.GetPath(), indexFileName, CVSTR ("webComponents"));
 			if (NULL != virtualFolder)
 				ioVirtualHost->AddVirtualFolder (virtualFolder);

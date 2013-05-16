@@ -18,23 +18,58 @@
 //#include "kernelIPC/VComponentLibrary.h"
 #include "DB4DComponent.h"
 #include "javascript_db4d.h"
-#include "Backup.h"
 #include <set>
+
+#include "RemoteEntity/Sources/RemoteEntityComponent.h"
+
+
+#if DB4DasDLL
+
+CDB4DManager* CDB4DManager::sManager = nil;
+
+CDB4DManager* CDB4DManager::RetainManager(XBOX::VLocalizationManager* inLocalizationManager)
+{
+	if (sManager == nil)
+	{
+		sManager = new VDB4DMgr(inLocalizationManager);
+	}
+	else
+	{
+		VDB4DMgr* xmanager = dynamic_cast<VDB4DMgr*>(sManager);
+
+		if (xmanager->GetManager()->GetDefaultLocalization() == nil && inLocalizationManager != nil)
+		{
+			xmanager->GetManager()->SetDefaultLocalization(inLocalizationManager);
+		}
+	}
+	return RetainRefCountable(sManager);
+}
+
+#endif
 
 
 const void* kNullRawRecord = (void*)-2;
 
+
+#if DB4DasComponent
+
 const sLONG				kCOMPONENT_TYPE_COUNT	= 2;
 const CImpDescriptor	kCOMPONENT_TYPE_LIST[]	= {
 	{ CDB4DManager::Component_Type, VImpCreator<VDB4DMgr>::CreateImp },
-	{ CDB4DJournalParser::Component_Type, VImpCreator<VDB4DJournalParser>::CreateImp }
+//	{ CDB4DJournalParser::Component_Type, VImpCreator<VDB4DJournalParser>::CreateImp }
 	};
 
 VComponentLibrary* gDB4DCompLib = nil;
 
+#endif
+
+
 void XBOX::xDllMain (void)
 {
+#if DB4DasComponent
 	gDB4DCompLib = new VComponentLibrary(kCOMPONENT_TYPE_LIST, kCOMPONENT_TYPE_COUNT);
+#endif
+
 }
 
 
@@ -54,6 +89,7 @@ QueryParamElement::QueryParamElement(XBOX::VJSArray& inArray)
 {
 	fArray = new VJSArray(inArray);
 	fScalar = nil;
+	fSimpleDateScalar = nil;
 	fType = DB4D_QPE_array;
 	XBOX::JS4D::ProtectValue(fArray->GetContextRef(), *fArray);
 }
@@ -74,6 +110,8 @@ void QueryParamElement::Duplicate()
 	{
 		if (fScalar != nil)
 			fScalar = fScalar->Clone();
+		if (fSimpleDateScalar != nil)
+			fSimpleDateScalar = fSimpleDateScalar->Clone();
 	}
 	else if (fType == DB4D_QPE_array)
 	{
@@ -92,6 +130,8 @@ void QueryParamElement::Dispose()
 	{
 		if (fScalar != nil)
 			delete fScalar;
+		if (fSimpleDateScalar != nil)
+			delete fSimpleDateScalar;
 	}
 	else if (fType == DB4D_QPE_array)
 	{
@@ -128,9 +168,13 @@ DB4DKeyWordList::~DB4DKeyWordList()
 
 
 
-VDB4DMgr::VDB4DMgr()
+VDB4DMgr::VDB4DMgr(XBOX::VLocalizationManager* inLocalizationManager)
 {
+#if DB4DasDLL
+	fManager = VDBMgr::RetainManager(inLocalizationManager);
+#else
 	fManager = VDBMgr::RetainManager(gDB4DCompLib);
+#endif
 	assert( fManager != nil);
 }
 
@@ -156,6 +200,11 @@ IBackupTool* VDB4DMgr::CreateBackupTool()
 	return VDBMgr::CreateBackupTool();
 }
 
+IJournalTool* VDB4DMgr::CreateJournalTool()
+{
+	return VDBMgr::CreateJournalTool();
+}
+
 XBOX::VError VDB4DMgr::GetJournalInfos(const XBOX::VFilePath& inDataFilePath,XBOX::VFilePath& outJournalPath,XBOX::VUUID& outJournalDataLink)
 {
 	return VDBMgr::GetJournalInfo(inDataFilePath,outJournalPath,outJournalDataLink);
@@ -169,7 +218,7 @@ CDB4DBase* VDB4DMgr::OpenRemoteBase( CDB4DBase* inLocalDB, const VUUID& inBaseID
 	Base4D* localdb = nil;
 	if (inLocalDB != nil)
 	{
-		localdb = VImpCreator<VDB4DBase>::GetImpObject(inLocalDB)->GetBase();
+		localdb = dynamic_cast<VDB4DBase*>(inLocalDB)->GetBase();
 	}
 
 	VString serverAddress;
@@ -258,11 +307,12 @@ CDB4DBase* VDB4DMgr::OpenRemoteBase( CDB4DBase* inLocalDB, const VString& inBase
 }
 
 
-
+/*
 void* VDB4DMgr::GetComponentLibrary() const
 {
 	return (void*)gDB4DCompLib;
 }
+*/
 
 
 void VDB4DMgr::__test(const VString& command)
@@ -303,7 +353,7 @@ void VDB4DMgr::__test(const VString& command)
 						CDB4DTable* tt = base->FindAndRetainTable(L"t1", context);
 						if (tt != nil)
 						{
-							Base4D* bd = VImpCreator<VDB4DBase>::GetImpObject(base)->GetBase();
+							Base4D* bd = dynamic_cast<VDB4DBase*>(base)->GetBase();
 
 							IRequest* req = bd->CreateRequest(context, Req_TestServer + kRangeReqDB4D);
 							if (req == nil)
@@ -956,7 +1006,7 @@ CDB4DRawDataBase* VDB4DMgr::OpenRawDataBaseWithEm(CDB4DBase* inStructureDB, XBOX
 	{
 		if (xstruct != nil)
 			xdata->SetStruct(xstruct);
-		Base4D* structdb = VImpCreator<VDB4DBase>::GetImpObject(inStructureDB)->GetBase();
+		Base4D* structdb = dynamic_cast<VDB4DBase*>(inStructureDB)->GetBase();
 		for (sLONG i = 1, nb = inStructureDB->CountTables(nil); i <= nb; i++)
 		{
 			Table* tt = structdb->RetainTable(i);
@@ -1148,12 +1198,12 @@ void VDB4DMgr::CloseConnectionWithClient(CDB4DContext* inContext)
 {
 	fManager->CloseClientConnection(inContext); // pour les connections sur le server
 
-	VImpCreator<VDB4DContext>::GetImpObject(inContext)->CloseAllConnections(); // pour les connections sur le client
+	dynamic_cast<VDB4DContext*>(inContext)->CloseAllConnections(); // pour les connections sur le client
 	
 	/*
 	if (inContext != nil)
 	{
-		VArrayRetainedOwnedPtrOf<CDB4DBaseContextPtr>* contexts = VImpCreator<VDB4DContext>::GetImpObject(inContext)->GetContexts();
+		VArrayRetainedOwnedPtrOf<CDB4DBaseContextPtr>* contexts = dynamic_cast<VDB4DContext*>(inContext)->GetContexts();
 		for (VArrayRetainedOwnedPtrOf<CDB4DBaseContextPtr>::Iterator cur = contexts->First(), end = contexts->End(); cur != end; cur++)
 		{
 			DB4DNetManager::CloseConnection(*cur); // pour les connections sur le client
@@ -1191,10 +1241,10 @@ VErrorDB4D VDB4DMgr::IsValidTableName( const VString& inName, EValidateNameOptio
 	}
 	else if (inBase != NULL)
 	{
-		Base4D *base = VImpCreator<VDB4DBase>::GetImpObject(inBase)->GetBase();
+		Base4D *base = dynamic_cast<VDB4DBase*>(inBase)->GetBase();
 		if (testAssert(base != NULL))
 		{
-			Table *table = (inTable != NULL) ? VImpCreator<VDB4DTable>::GetImpObject(inTable)->GetTable() : NULL;
+			Table *table = (inTable != NULL) ? dynamic_cast<VDB4DTable*>(inTable)->GetTable() : NULL;
 			Table *other = base->FindAndRetainTableRef( inName);
 
 			if ( (other != nil) && (other != table) )
@@ -1217,10 +1267,10 @@ VErrorDB4D VDB4DMgr::IsValidLinkName( const VString& inName, EValidateNameOption
 	}
 	else if (inBase != NULL)
 	{
-		Base4D *base = VImpCreator<VDB4DBase>::GetImpObject(inBase)->GetBase();
+		Base4D *base = dynamic_cast<VDB4DBase*>(inBase)->GetBase();
 		if (testAssert(base != NULL))
 		{
-			Relation *relation = (inRelation != NULL) ? VImpCreator<VDB4DRelation>::GetImpObject(inRelation)->GetRel() : NULL;
+			Relation *relation = (inRelation != NULL) ? dynamic_cast<VDB4DRelation*>(inRelation)->GetRel() : NULL;
 			Relation *other = base->FindAndRetainRelationByName( inName);
 
 			if (other != nil)
@@ -1247,10 +1297,10 @@ VErrorDB4D VDB4DMgr::IsValidFieldName( const VString& inName, EValidateNameOptio
 	}
 	else if (inTable != NULL)
 	{
-		Table *table = VImpCreator<VDB4DTable>::GetImpObject(inTable)->GetTable();
+		Table *table = dynamic_cast<VDB4DTable*>(inTable)->GetTable();
 		if (testAssert(table != NULL))
 		{
-			Field *field = (inField != NULL) ? VImpCreator<VDB4DField>::GetImpObject(inField)->GetField() : NULL;
+			Field *field = (inField != NULL) ? dynamic_cast<const VDB4DField*>(inField)->GetField() : NULL;
 			Field *other = table->FindAndRetainFieldRef( inName);
 
 			if ( (other != nil) && (other != field) )
@@ -1340,6 +1390,15 @@ IDB4D_GraphicsIntf *VDB4DMgr::GetGraphicsInterface() const
 	return fManager->GetGraphicsInterface();
 }
 
+void VDB4DMgr::SetSQLInterface (IDB4D_SQLIntf *inSQLIntf)
+{
+	fManager->SetSQLInterface(inSQLIntf);
+}
+	
+IDB4D_SQLIntf *VDB4DMgr::GetSQLInterface () const
+{
+	return fManager->GetSQLInterface();
+}
 
 void VDB4DMgr::GetStaticRequiredJSFiles(std::vector<XBOX::VFilePath>& outFiles)
 {
@@ -1373,13 +1432,16 @@ void VDB4DMgr::InitializeJSGlobalObject( VJSGlobalContext* inContext, CDB4DBaseC
 		inBaseContext->GetContextOwner()->SetJSContext( inContext);
 		::SetDB4DContextInJSContext( jsContext, inBaseContext->GetContextOwner());
 
+		CDB4DBase* xbase = inBaseContext->GetOwner();
+		Base4D* base = dynamic_cast<VDB4DBase*>(xbase)->GetBase();
 		XBOX::VJSObject globalObject( jsContext.GetGlobalObject());
-		XBOX::VJSObject database( VJSDatabase::CreateInstance( jsContext, inBaseContext->GetOwner()));
+		XBOX::VJSObject database( VJSDatabase::CreateInstance( jsContext, base));
 		globalObject.SetProperty( CVSTR( "db"), database, XBOX::JS4D::PropertyAttributeReadOnly | XBOX::JS4D::PropertyAttributeDontDelete, NULL);
 		globalObject.SetProperty( CVSTR( "ds"), database, XBOX::JS4D::PropertyAttributeReadOnly | XBOX::JS4D::PropertyAttributeDontDelete, NULL);
 		globalObject.SetProperty("BackupSettings", VJSBackupSettings::CreateInstance(jsContext,NULL), JS4D::PropertyAttributeDontDelete | JS4D::PropertyAttributeReadOnly); 
 
-		VJSDatabase::PutAllModelsInGlobalObject(globalObject, inBaseContext->GetOwner(), inBaseContext);
+		BaseTaskInfo* context = ConvertContext(inBaseContext);
+		VJSDatabase::PutAllModelsInGlobalObject(globalObject, context->GetBase(), context);
 	}
 
 }
@@ -1387,7 +1449,8 @@ void VDB4DMgr::InitializeJSGlobalObject( VJSGlobalContext* inContext, CDB4DBaseC
 
 void VDB4DMgr::PutAllEmsInGlobalObject(VJSObject& globalObject, CDB4DBaseContext *inBaseContext)
 {
-	VJSDatabase::PutAllModelsInGlobalObject(globalObject, inBaseContext->GetOwner(), inBaseContext);
+	BaseTaskInfo* context = ConvertContext(inBaseContext);
+	VJSDatabase::PutAllModelsInGlobalObject(globalObject, context->GetBase(), context);
 }
 
 
@@ -1440,13 +1503,13 @@ void VDB4DMgr::UninitializeJSContext( XBOX::VJSGlobalContext *inContext, CDB4DBa
 
 VJSObject VDB4DMgr::CreateJSDatabaseObject( const VJSContext& inContext, CDB4DBaseContext *inBaseContext)
 {
-	return VJSDatabase::CreateInstance( inContext, inBaseContext->GetOwner());
+	return VJSDatabase::CreateInstance( inContext,ConvertContext(inBaseContext)->GetBase());
 }
 
 
 VJSObject VDB4DMgr::CreateJSEMObject( const VString& emName, const VJSContext& inContext, CDB4DBaseContext *inBaseContext)
 {
-	return VJSDatabase::CreateJSEMObject( emName, inContext, inBaseContext);
+	return VJSDatabase::CreateJSEMObject( emName, inContext, ConvertContext(inBaseContext));
 }
 
 VJSObject VDB4DMgr::CreateJSBackupSettings(const VJSContext& inContext,IBackupSettings* retainedBackupSettings)
@@ -1518,10 +1581,14 @@ IHTTPRequestHandler* VDB4DMgr::AddRestRequestHandler( VErrorDB4D& outError, CDB4
 {
 	outError = VE_OK;
 
+	fManager->SetRestPrefix(inPattern);
 	RestRequestHandler *resthandler = NULL;
 	if (inHTTPServerProject != NULL)
 	{
-		VString pattern = (!inPattern.IsEmpty()) ? inPattern : L"(?i)/rest/.*";
+		VString pattern = (!inPattern.IsEmpty()) ? inPattern : L"rest";
+		pattern.Insert( CVSTR( "(?i)/"), 1);
+		pattern += CVSTR( "/.*");
+
 		resthandler = new RestRequestHandler( inBase, pattern, inEnabled, inApplicationRef);
 		if (resthandler != NULL)
 		{
@@ -1575,20 +1642,18 @@ VDB4DBase::~VDB4DBase()
 
 const IBackupSettings* VDB4DBase::RetainBackupSettings()
 {
-	if (fBackupSettings)
-		fBackupSettings->Retain();
-	return fBackupSettings;
+	if(fBase)
+	{
+		return fBase->RetainBackupSettings();
+	}
+	return NULL;
 }
 
 void  VDB4DBase::SetRetainedBackupSettings(IBackupSettings* inSettings)
 {
-	if (inSettings == NULL)
+	if (fBase)
 	{
-		XBOX::ReleaseRefCountable(&fBackupSettings);
-	}
-	else
-	{
-		XBOX::CopyRefCountable(&fBackupSettings,inSettings);
+		fBase->SetRetainedBackupSettings(inSettings);
 	}
 }
 
@@ -1612,7 +1677,7 @@ static BaseTaskInfo* GetBaseTaskInfo(CDB4DBaseContextPtr inContext, Base4D* base
 	BaseTaskInfoPtr context = nil;
 	if (inContext != nil)
 	{
-		context = (VImpCreator<BaseTaskInfo>::GetImpObject(inContext));
+		context = (dynamic_cast<BaseTaskInfo*>(inContext));
 		assert(context->GetBase() == base);
 	}
 	return context;
@@ -1702,7 +1767,7 @@ VError VDB4DBase::AddTable( CDB4DTable *inTable, CDB4DBaseContextPtr inContext)
 	{
 		if (inTable != nil)
 		{
-			Table* tt = VImpCreator<VDB4DTable>::GetImpObject(inTable)->GetTable();
+			Table* tt = dynamic_cast<VDB4DTable*>(inTable)->GetTable();
 			tt->CanNowBeSaved();
 			tt->CanNowKeepStamp(kDefaultKeepStamp);
 			err = fBase->AddTable(tt, true, inContext);
@@ -1829,7 +1894,7 @@ VError VDB4DBase::CreateFullTextIndexOnOneField(CDB4DField* target, VDB4DProgres
 		if (outResult != nil)
 			outindex = &ind;
 
-		err = fBase->CreFullTextIndexOnField(VImpCreator<VDB4DField>::GetImpObject(target)->GetField(), inContext, InProgress,
+		err = fBase->CreFullTextIndexOnField(dynamic_cast<const VDB4DField*>(target)->GetField(), inContext, InProgress,
 											inIndexName, outindex, ForceCreate, event);
 		if (outResult != nil && *outindex != NULL)
 		{
@@ -1851,7 +1916,7 @@ VError VDB4DBase::DropFullTextIndexOnOneField(CDB4DField* target, VDB4DProgressI
 	// ObjLocker locker(inContext, fBase);
 	// if (locker.CanWork())
 	{
-		err = fBase->DeleteFullTextIndexOnField(VImpCreator<VDB4DField>::GetImpObject(target)->GetField(), inContext, InProgress, event);
+		err = fBase->DeleteFullTextIndexOnField(dynamic_cast<const VDB4DField*>(target)->GetField(), inContext, InProgress, event);
 	}
 	// else
 		// err = VE_DB4D_OBJECT_IS_LOCKED_BY_OTHER_CONTEXT;
@@ -1872,7 +1937,7 @@ VError VDB4DBase::CreateIndexOnOneField(CDB4DField* target, sLONG IndexTyp, Bool
 		if (outResult != nil)
 			outindex = &ind;
 		
-		err = fBase->CreIndexOnField(VImpCreator<VDB4DField>::GetImpObject(target)->GetField(), IndexTyp, UniqueKeys, inContext, InProgress,
+		err = fBase->CreIndexOnField(dynamic_cast<const VDB4DField*>(target)->GetField(), IndexTyp, UniqueKeys, inContext, InProgress,
 										inIndexName, outindex, ForceCreate, event);
 		
 		if (outResult != nil && *outindex != nil)	// sc 02/07/2007 ACI0052845, outindex is NULL if the index has not been created.
@@ -1906,7 +1971,7 @@ VError VDB4DBase::CreateIndexOnMultipleField(const CDB4DFieldArray& inTargets, s
 		for (i = 1, cur = inTargets.First(); cur != end; cur++, i++)
 		{
 			CDB4DField* xcri = *cur;
-			Field* cri = VImpCreator<VDB4DField>::GetImpObject(xcri)->GetField();
+			Field* cri = dynamic_cast<const VDB4DField*>(xcri)->GetField();
 			assert(cri != nil);
 			fields.SetNthField(i, cri);
 		}
@@ -2034,7 +2099,7 @@ VError VDB4DBase::DropIndexOnOneField(CDB4DField* target, sLONG IndexTyp, VDB4DP
 	// ObjLocker locker(inContext, fBase);
 	// if (locker.CanWork())
 	{
-		err = fBase->DeleteIndexOnField(VImpCreator<VDB4DField>::GetImpObject(target)->GetField(), inContext, IndexTyp, InProgress, event);
+		err = fBase->DeleteIndexOnField(dynamic_cast<const VDB4DField*>(target)->GetField(), inContext, IndexTyp, InProgress, event);
 	}
 	// else
 		// err = VE_DB4D_OBJECT_IS_LOCKED_BY_OTHER_CONTEXT;
@@ -2060,7 +2125,7 @@ VError VDB4DBase::DropIndexOnMultipleField(const CDB4DFieldArray& inTargets, sLO
 		for (i = 1, cur = inTargets.First(); cur != end; cur++, i++)
 		{
 			CDB4DField* xcri = *cur;
-			Field* cri = VImpCreator<VDB4DField>::GetImpObject(xcri)->GetField();
+			Field* cri = dynamic_cast<const VDB4DField*>(xcri)->GetField();
 			assert(cri != nil);
 			fields.SetNthField(i, cri);
 		}
@@ -2125,14 +2190,14 @@ VError VDB4DBase::DropIndexOnMultipleField(const VValueBag& IndexDefinition, VDB
 
 
 #if debuglr
-CComponent* VDB4DBase::Retain(const char* DebugInfo)
+sLONG VDB4DBase::Retain(const char* DebugInfo) const
 {
-	return VComponentImp<CDB4DBase>::Retain(DebugInfo);
+	return IRefCountable::Retain(DebugInfo);
 }
 
-void VDB4DBase::Release(const char* DebugInfo)
+sLONG VDB4DBase::Release(const char* DebugInfo) const
 {
-	VComponentImp<CDB4DBase>::Release(DebugInfo);
+	return IRefCountable::Release(DebugInfo);
 }
 #endif
 
@@ -2154,7 +2219,8 @@ void VDB4DBase::CloseAndRelease(Boolean WaitUntilFullyClosed)
 #if trackClose
 	trackDebugMsg("Begining of Close and Release\n");
 #endif
-	Flush(true);
+	if (!fBase->IsWriteProtected())
+		Flush(true);
 #if UseDB4DJSContext
 	releaseAllTempStores();
 #endif
@@ -2449,7 +2515,7 @@ CDB4DIndex* VDB4DBase::RetainCompositeIndex(const CDB4DFieldArray& inTargets, Bo
 	for (i = 1, cur = inTargets.First(); cur != end; cur++, i++)
 	{
 		CDB4DField* xcri = *cur;
-		Field* cri = VImpCreator<VDB4DField>::GetImpObject(xcri)->GetField();
+		Field* cri = dynamic_cast<const VDB4DField*>(xcri)->GetField();
 		assert(cri != nil);
 		fields.SetNthField(i, cri);
 	}
@@ -2547,8 +2613,8 @@ CDB4DRelation *VDB4DBase::CreateRelation(const VString &inRelationName, const VS
 		if (inSourceField != NULL &&& inDestinationField != NULL)
 		{
 			Relation *rel = fBase->CreateRelation( inRelationName, inCounterRelationName
-						, VImpCreator<VDB4DField>::GetImpObject(inSourceField)->GetField()
-						, VImpCreator<VDB4DField>::GetImpObject(inDestinationField)->GetField()
+						, dynamic_cast<const VDB4DField*>(inSourceField)->GetField()
+						, dynamic_cast<const VDB4DField*>(inDestinationField)->GetField()
 						, err, inContext);
 
 			if (rel != NULL)
@@ -2574,7 +2640,7 @@ static void CopyAndRetainFieldArray(const CDB4DFieldArray& infields, FieldArray&
 {
 	for (CDB4DFieldArray::ConstIterator cur = infields.First(), end = infields.End(); cur != end; cur++)
 	{
-		Field* cri =  VImpCreator<VDB4DField>::GetImpObject(*cur)->GetField();
+		Field* cri =  dynamic_cast<const VDB4DField*>(*cur)->GetField();
 		if (testAssert(cri != nil))
 			cri->Retain();
 		outfields.Add(cri);
@@ -2586,7 +2652,7 @@ static void CopyFieldArray(const CDB4DFieldArray& infields, FieldArray& outfield
 {
 	for (CDB4DFieldArray::ConstIterator cur = infields.First(), end = infields.End(); cur != end; cur++)
 	{
-		Field* cri =  VImpCreator<VDB4DField>::GetImpObject(*cur)->GetField();
+		Field* cri =  dynamic_cast<const VDB4DField*>(*cur)->GetField();
 		outfields.Add(cri);
 	}
 }
@@ -2685,8 +2751,8 @@ CDB4DRelation* VDB4DBase::FindAndRetainRelation(CDB4DField* inSourceField, CDB4D
 	if (inSourceField != nil && inDestinationField != nil)
 	{
 		Relation* xrel = fBase->FindAndRetainRelation(
-				VImpCreator<VDB4DField>::GetImpObject(inSourceField)->GetField()
-				, VImpCreator<VDB4DField>::GetImpObject(inDestinationField)->GetField());
+				dynamic_cast<const VDB4DField*>(inSourceField)->GetField()
+				, dynamic_cast<const VDB4DField*>(inDestinationField)->GetField());
 		
 		if (xrel != NULL)
 		{
@@ -2727,8 +2793,8 @@ VError VDB4DBase::GetAndRetainRelations(RelationArray &outRelations, CDB4DBaseCo
 VErrorDB4D VDB4DBase::IsFieldsKindValidForRelation( CDB4DField* inSourceField, CDB4DField* inDestinationField) const
 {
 	VErrorDB4D err = VE_OK;
-	Field *source = (inSourceField != NULL) ? VImpCreator<VDB4DField>::GetImpObject(inSourceField)->GetField() : NULL;
-	Field *dest = (inDestinationField != NULL) ? VImpCreator<VDB4DField>::GetImpObject(inDestinationField)->GetField() : NULL;
+	Field *source = (inSourceField != NULL) ? dynamic_cast<const VDB4DField*>(inSourceField)->GetField() : NULL;
+	Field *dest = (inDestinationField != NULL) ? dynamic_cast<const VDB4DField*>(inDestinationField)->GetField() : NULL;
 	
 	if (source == nil)
 	{
@@ -3133,7 +3199,7 @@ CDB4DComplexSelection* VDB4DBase::ExecuteQuery( CDB4DComplexQuery *inQuery, CDB4
 		assert(context->GetBase() == fBase);
 	}
 
-	ComplexRech* query = VImpCreator<VDB4DComplexQuery>::GetImpObject(inQuery)->GetQuery();
+	ComplexRech* query = dynamic_cast<VDB4DComplexQuery*>(inQuery)->GetQuery();
 	ComplexOptimizedQuery optimized;
 	fBase->LockIndexes();
 	VError err = optimized.AnalyseSearch(query, context);
@@ -3142,7 +3208,7 @@ CDB4DComplexSelection* VDB4DBase::ExecuteQuery( CDB4DComplexQuery *inQuery, CDB4
 	{
 		ComplexSelection* filtre = nil;
 		if (Filter != nil)
-			filtre = VImpCreator<VDB4DComplexSelection>::GetImpObject(Filter)->GetSel();
+			filtre = dynamic_cast<VDB4DComplexSelection*>(Filter)->GetSel();
 		err = optimized.PerformComplex(filtre, InProgress, context, result, HowToLock, limit);
 		if (err == VE_OK && result != nil)
 		{
@@ -3171,7 +3237,7 @@ VError VDB4DBase::IntegrateJournal(CDB4DJournalParser* inJournal, uLONG8 from, u
 
 	if (inJournal != nil)
 	{
-		DB4DJournalParser* jparser = VImpCreator<VDB4DJournalParser>::GetImpObject(inJournal)->GetJournalParser();
+		DB4DJournalParser* jparser = dynamic_cast<VDB4DJournalParser*>(inJournal)->GetJournalParser();
 		if (jparser != nil)
 		{
 			err = fBase->IntegrateJournal(jparser, from, upto, outCountIntegratedOperations, InProgress);
@@ -3324,7 +3390,7 @@ CDB4DQueryResult* VDB4DBase::RelateOneSelection(sLONG TargetOneTable, VErrorDB4D
 	CDB4DQueryResult* xresult = nil;
 	if (inOptions != nil)
 	{
-		QueryOptions* options = VImpCreator<VDB4DQueryOptions>::GetImpObject(inOptions)->GetOptions();
+		QueryOptions* options = dynamic_cast<VDB4DQueryOptions*>(inOptions)->GetOptions();
 		/* 
 		if (fBase->IsRemote()) // deplace dans Base4D::RelateOneSelection
 		{
@@ -3341,11 +3407,11 @@ CDB4DQueryResult* VDB4DBase::RelateOneSelection(sLONG TargetOneTable, VErrorDB4D
 					for (vector<CDB4DRelation*>::iterator cur = inPath->begin(), end = inPath->end(); cur != end; cur++)
 					{
 						CDB4DRelation* xrel = *cur;
-						path.push_back((VImpCreator<VDB4DRelation>::GetImpObject(xrel))->GetRel());
+						path.push_back((dynamic_cast<VDB4DRelation*>(xrel))->GetRel());
 					}
 				}
 				xresult = new VDB4DQueryResult(tt);
-				err = fBase->RelateOneSelection(options->GetFiltertable(), TargetOneTable, VImpCreator<VDB4DQueryResult>::GetImpObject(xresult)->GetResult(), ConvertContext(inContext), options, InProgress, inPath == nil ? nil : &path);
+				err = fBase->RelateOneSelection(options->GetFiltertable(), TargetOneTable, dynamic_cast<VDB4DQueryResult*>(xresult)->GetResult(), ConvertContext(inContext), options, InProgress, inPath == nil ? nil : &path);
 				if (err != VE_OK)
 				{
 					xresult->Release();
@@ -3370,7 +3436,7 @@ CDB4DQueryResult* VDB4DBase::RelateManySelection(CDB4DField* inRelationStart, VE
 	{
 		if (inOptions != nil)
 		{
-			QueryOptions* options = VImpCreator<VDB4DQueryOptions>::GetImpObject(inOptions)->GetOptions();
+			QueryOptions* options = dynamic_cast<VDB4DQueryOptions*>(inOptions)->GetOptions();
 			/*
 			if (fBase->IsRemote())  // deplace dans Base4D::RelateManySelection
 			{
@@ -3378,10 +3444,10 @@ CDB4DQueryResult* VDB4DBase::RelateManySelection(CDB4DField* inRelationStart, VE
 			else
 			*/
 			{
-				Field* cri = (VImpCreator<VDB4DField>::GetImpObject(inRelationStart))->GetField();
+				Field* cri = (dynamic_cast<const VDB4DField*>(inRelationStart))->GetField();
 				CDB4DTable* tt = inRelationStart->GetOwner();
 				xresult = new VDB4DQueryResult(tt);
-				err = fBase->RelateManySelection(options->GetFiltertable(), cri, VImpCreator<VDB4DQueryResult>::GetImpObject(xresult)->GetResult(), ConvertContext(inContext), options, InProgress);
+				err = fBase->RelateManySelection(options->GetFiltertable(), cri, dynamic_cast<VDB4DQueryResult*>(xresult)->GetResult(), ConvertContext(inContext), options, InProgress);
 				if (err != VE_OK)
 				{
 					xresult->Release();
@@ -3407,7 +3473,7 @@ CDB4DRecord* VDB4DBase::BuildRecordFromServer(VStream* from, CDB4DBaseContext* i
 	if (inContext != nil)
 		context = ConvertContext(inContext);
 
-	FicheInMem* fic = fBase->BuildRecordFromServer(from, context, (VImpCreator<VDB4DTable>::GetImpObject(inTable))->GetTable(), outError);
+	FicheInMem* fic = fBase->BuildRecordFromServer(from, context, (dynamic_cast<VDB4DTable*>(inTable))->GetTable(), outError);
 
 	if (fic != nil)
 	{
@@ -3425,7 +3491,7 @@ CDB4DRecord* VDB4DBase::BuildRecordFromServer(VStream* from, CDB4DBaseContext* i
 
 CDB4DRecord* VDB4DBase::BuildRecordFromClient(VStream* from, CDB4DBaseContext* inContext, CDB4DTable* inTable, VErrorDB4D& outError)
 {
-	Table* owner = (VImpCreator<VDB4DTable>::GetImpObject(inTable))->GetTable();
+	Table* owner = (dynamic_cast<VDB4DTable*>(inTable))->GetTable();
 	CDB4DRecord* result = nil;
 	FicheInMem* fic = nil;
 	BaseTaskInfo* context = nil;
@@ -3452,11 +3518,11 @@ CDB4DRecord* VDB4DBase::BuildRecordFromClient(VStream* from, CDB4DBaseContext* i
 CDB4DSelection* VDB4DBase::BuildSelectionFromServer(VStream* from, CDB4DBaseContext* inContext, CDB4DTable* inTable, VErrorDB4D& outErr)
 {
 	CDB4DSelection* result = nil;
-	Selection* sel = fBase->BuildSelectionFromServer(from, inContext, (VImpCreator<VDB4DTable>::GetImpObject(inTable))->GetTable(), outErr);
+	Selection* sel = fBase->BuildSelectionFromServer(from, inContext, (dynamic_cast<VDB4DTable*>(inTable))->GetTable(), outErr);
 
 	if (sel != nil)
 	{
-		result = new VDB4DSelection(fManager, this, (VImpCreator<VDB4DTable>::GetImpObject(inTable))->GetTable(), sel);
+		result = new VDB4DSelection(fManager, this, (dynamic_cast<VDB4DTable*>(inTable))->GetTable(), sel);
 	}
 
 	return result;
@@ -3466,11 +3532,11 @@ CDB4DSelection* VDB4DBase::BuildSelectionFromServer(VStream* from, CDB4DBaseCont
 CDB4DSelection* VDB4DBase::BuildSelectionFromClient(VStream* from, CDB4DBaseContext* inContext, CDB4DTable* inTable, VErrorDB4D& outErr)
 {
 	CDB4DSelection* result = nil;
-	Selection* sel = fBase->BuildSelectionFromClient(from, inContext, (VImpCreator<VDB4DTable>::GetImpObject(inTable))->GetTable(), outErr);
+	Selection* sel = fBase->BuildSelectionFromClient(from, inContext, (dynamic_cast<VDB4DTable*>(inTable))->GetTable(), outErr);
 
 	if (sel != nil)
 	{
-		result = new VDB4DSelection(fManager, this, (VImpCreator<VDB4DTable>::GetImpObject(inTable))->GetTable(), sel);
+		result = new VDB4DSelection(fManager, this, (dynamic_cast<VDB4DTable*>(inTable))->GetTable(), sel);
 	}
 
 	return result;
@@ -3484,7 +3550,7 @@ CDB4DSet* VDB4DBase::BuildSetFromServer(VStream* from, CDB4DBaseContext* inConte
 
 	if (sel != nil)
 	{
-		result = new VDB4DSet(this, (VImpCreator<VDB4DTable>::GetImpObject(inTable))->GetTable(), sel);
+		result = new VDB4DSet(this, (dynamic_cast<VDB4DTable*>(inTable))->GetTable(), sel);
 		sel->Release();
 	}
 
@@ -3499,7 +3565,7 @@ CDB4DSet* VDB4DBase::BuildSetFromClient(VStream* from, CDB4DBaseContext* inConte
 
 	if (sel != nil)
 	{
-		result = new VDB4DSet(this, (VImpCreator<VDB4DTable>::GetImpObject(inTable))->GetTable(), sel);
+		result = new VDB4DSet(this, (dynamic_cast<VDB4DTable*>(inTable))->GetTable(), sel);
 		sel->Release();
 	}
 
@@ -3630,11 +3696,12 @@ VErrorDB4D VDB4DBase::ImportRecords(CDB4DBaseContext* inContext, VFolder* inFold
 	return err;
 }
 
-
+/*
 sLONG VDB4DBase::CountEntityModels(CDB4DBaseContext* context, bool onlyRealOnes) const
 {
 	return fBase->CountEntityModels(onlyRealOnes);
 }
+*/
 
 
 VErrorDB4D VDB4DBase::RetainAllEntityModels(vector<XBOX::VRefPtr<CDB4DEntityModel> >& outList, CDB4DBaseContext* context, bool onlyRealOnes) const
@@ -3731,11 +3798,14 @@ VError VDB4DBase::SaveToBag(VValueBag& outBag)
 IHTTPRequestHandler *VDB4DBase::AddRestRequestHandler( VErrorDB4D& outError, IHTTPServerProject* inHTTPServerProject, RIApplicationRef inApplicationRef, const VString& inPattern, bool inEnabled)
 {
 	outError = VE_OK;
+	fManager->SetRestPrefix(inPattern);
 
 	RestRequestHandler *resthandler = NULL;
 	if (inHTTPServerProject != NULL)
 	{
-		VString pattern = (!inPattern.IsEmpty()) ? inPattern : L"(?i)/rest/.*";
+		VString pattern = (!inPattern.IsEmpty()) ? inPattern : L"rest";
+		pattern.Insert( CVSTR( "(?i)/"), 1);
+		pattern += CVSTR( "/.*");
 		resthandler = new RestRequestHandler( this, pattern, inEnabled, inApplicationRef);
 		if (resthandler != NULL)
 		{
@@ -3810,7 +3880,7 @@ VErrorDB4D VDB4DBase::CompactInto(VFile* destData, IDB4D_DataToolsIntf* inDataTo
 
 VJSObject VDB4DBase::CreateJSDatabaseObject( const VJSContext& inContext)
 {
-	return VJSDatabase::CreateInstance(inContext, this);
+	return VJSDatabase::CreateInstance(inContext, fBase);
 }
 
 
@@ -3825,6 +3895,16 @@ bool VDB4DBase::CatalogJSParsingError(VFile* &outRetainedFile, VString& outMessa
 		return false;
 }
 
+VErrorDB4D VDB4DBase::ExecuteSQLExpression (DB4DSQLExpression *inExpression)
+{
+	xbox_assert(inExpression != NULL);
+
+	Base4D	*base;
+
+	base = GetBase();
+
+	return XBOX::VE_OK;
+}
 
 
 //=================================================================================
@@ -3915,7 +3995,7 @@ VError VDB4DSchema::SaveToBag( VValueBag& ioBag, VString& outKind) const
 
 /*
 
-VDB4DBaseContext::VDB4DBaseContext( VDBMgr *inManager, CDB4DBase *inBase, bool islocal):fBase( VImpCreator<VDB4DBase>::GetImpObject(inBase)->GetBase(), this, islocal)
+VDB4DBaseContext::VDB4DBaseContext( VDBMgr *inManager, CDB4DBase *inBase, bool islocal):fBase( dynamic_cast<VDB4DBase*>(inBase)->GetBase(), this, islocal)
 {
 	fManager = inManager;
 	fOwner = inBase;
@@ -4047,7 +4127,7 @@ VError VDB4DBaseContext::SetRelationAutoLoadNto1(const CDB4DRelation* inRel, DB4
 		return VE_DB4D_WRONG_RELATIONREF;
 	else
 	{
-		const Relation* rel = VImpCreator<VDB4DRelation>::GetImpObject(inRel)->GetRel();
+		const Relation* rel = dynamic_cast<VDB4DRelation*>(inRel)->GetRel();
 		return fBase.SetRelationAutoLoadNto1(rel, inAutoLoadState);
 	}
 }
@@ -4059,7 +4139,7 @@ VError VDB4DBaseContext::SetRelationAutoLoad1toN(const CDB4DRelation* inRel, DB4
 		return VE_DB4D_WRONG_RELATIONREF;
 	else
 	{
-		const Relation* rel = VImpCreator<VDB4DRelation>::GetImpObject(inRel)->GetRel();
+		const Relation* rel = dynamic_cast<VDB4DRelation*>(inRel)->GetRel();
 		return fBase.SetRelationAutoLoad1toN(rel, inAutoLoadState);
 	}
 }
@@ -4070,7 +4150,7 @@ Boolean VDB4DBaseContext::IsRelationAutoLoadNto1(const CDB4DRelation* inRel) con
 	if (inRel != nil)
 	{
 		Boolean unknown;
-		const Relation* rel = VImpCreator<VDB4DRelation>::GetImpObject(inRel)->GetRel();
+		const Relation* rel = dynamic_cast<VDB4DRelation*>(inRel)->GetRel();
 		res = fBase.IsRelationAutoLoadNto1(rel, unknown);
 	}
 
@@ -4084,7 +4164,7 @@ Boolean VDB4DBaseContext::IsRelationAutoLoad1toN(const CDB4DRelation* inRel) con
 	if (inRel != nil)
 	{
 		Boolean unknown;
-		const Relation* rel = VImpCreator<VDB4DRelation>::GetImpObject(inRel)->GetRel();
+		const Relation* rel = dynamic_cast<VDB4DRelation*>(inRel)->GetRel();
 		res = fBase.IsRelationAutoLoad1toN(rel, unknown);
 	}
 
@@ -4099,7 +4179,7 @@ DB4D_Rel_AutoLoadState VDB4DBaseContext::GetRelationAutoLoadNto1State(const CDB4
 	if (inRel != nil)
 	{
 		Boolean unknown;
-		const Relation* rel = VImpCreator<VDB4DRelation>::GetImpObject(inRel)->GetRel();
+		const Relation* rel = dynamic_cast<VDB4DRelation*>(inRel)->GetRel();
 		Boolean res2 = fBase.IsRelationAutoLoadNto1(rel, unknown);
 		if (!unknown)
 			if (res2)
@@ -4119,7 +4199,7 @@ DB4D_Rel_AutoLoadState VDB4DBaseContext::GetRelationAutoLoad1toNState(const CDB4
 	if (inRel != nil)
 	{
 		Boolean unknown;
-		const Relation* rel = VImpCreator<VDB4DRelation>::GetImpObject(inRel)->GetRel();
+		const Relation* rel = dynamic_cast<VDB4DRelation*>(inRel)->GetRel();
 		Boolean res2 = fBase.IsRelationAutoLoad1toN(rel, unknown);
 		if (!unknown)
 			if (res2)
@@ -4133,19 +4213,19 @@ DB4D_Rel_AutoLoadState VDB4DBaseContext::GetRelationAutoLoad1toNState(const CDB4
 
 void VDB4DBaseContext::ExcludeTableFromAutoRelationDestination(CDB4DTable* inTableToExclude)
 {
-	fBase.ExcludeTableFromAutoRelationDestination(VImpCreator<VDB4DTable>::GetImpObject(inTableToExclude)->GetTable());
+	fBase.ExcludeTableFromAutoRelationDestination(dynamic_cast<VDB4DTable*>(inTableToExclude)->GetTable());
 }
 
 
 void VDB4DBaseContext::IncludeBackTableToAutoRelationDestination(CDB4DTable* inTableToInclude)
 {
-	fBase.IncludeBackTableToAutoRelationDestination(VImpCreator<VDB4DTable>::GetImpObject(inTableToInclude)->GetTable());
+	fBase.IncludeBackTableToAutoRelationDestination(dynamic_cast<VDB4DTable*>(inTableToInclude)->GetTable());
 }
 
 
 Boolean VDB4DBaseContext::IsTableExcludedFromAutoRelationDestination(CDB4DTable* inTableToCheck) const
 {
-	return fBase.IsTableExcludedFromAutoRelationDestination(VImpCreator<VDB4DTable>::GetImpObject(inTableToCheck)->GetTable());
+	return fBase.IsTableExcludedFromAutoRelationDestination(dynamic_cast<VDB4DTable*>(inTableToCheck)->GetTable());
 }
 
 
@@ -4176,7 +4256,7 @@ const VValueBag* VDB4DBaseContext::RetainExtraData() const
 LockPtr VDB4DBaseContext::LockDataBaseDef(const CDB4DBase* inBase, sLONG inTimeOut, Boolean inForReadOnly, const VValueBag **outLockerExtraData)
 {
 	if (testAssert(inBase != nil))
-		return (LockPtr)fBase.LockDataBaseDef(VImpCreator<VDB4DBase>::GetImpObject(inBase)->GetBase(), inTimeOut, inForReadOnly, outLockerExtraData);
+		return (LockPtr)fBase.LockDataBaseDef(dynamic_cast<VDB4DBase*>(inBase)->GetBase(), inTimeOut, inForReadOnly, outLockerExtraData);
 	else
 		return nil;
 }
@@ -4185,7 +4265,7 @@ LockPtr VDB4DBaseContext::LockDataBaseDef(const CDB4DBase* inBase, sLONG inTimeO
 LockPtr VDB4DBaseContext::LockTableDef(const CDB4DTable* inTable, Boolean inWithFields, sLONG inTimeOut, Boolean inForReadOnly, const VValueBag **outLockerExtraData)
 {
 	if (testAssert(inTable != nil))
-		return (LockPtr)fBase.LockTableDef(VImpCreator<VDB4DTable>::GetImpObject(inTable)->GetTable(), inWithFields, inTimeOut, inForReadOnly, outLockerExtraData);
+		return (LockPtr)fBase.LockTableDef(dynamic_cast<VDB4DTable*>(inTable)->GetTable(), inWithFields, inTimeOut, inForReadOnly, outLockerExtraData);
 	else
 		return nil;
 }
@@ -4194,7 +4274,7 @@ LockPtr VDB4DBaseContext::LockTableDef(const CDB4DTable* inTable, Boolean inWith
 LockPtr VDB4DBaseContext::LockFieldDef(const CDB4DField* inField, sLONG inTimeOut, Boolean inForReadOnly, const VValueBag **outLockerExtraData)
 {
 	if (testAssert(inField != nil))
-		return (LockPtr)fBase.LockFieldDef(VImpCreator<VDB4DField>::GetImpObject(inField)->GetField(), inTimeOut, inForReadOnly, outLockerExtraData);
+		return (LockPtr)fBase.LockFieldDef(dynamic_cast<const VDB4DField*>(inField)->GetField(), inTimeOut, inForReadOnly, outLockerExtraData);
 	else
 		return nil;
 }
@@ -4203,7 +4283,7 @@ LockPtr VDB4DBaseContext::LockFieldDef(const CDB4DField* inField, sLONG inTimeOu
 LockPtr VDB4DBaseContext::LockRelationDef(const CDB4DRelation* inRelation, Boolean inWithRelatedFields, sLONG inTimeOut, Boolean inForReadOnly, const VValueBag **outLockerExtraData)
 {
 	if (testAssert(inRelation != nil))
-		return (LockPtr)fBase.LockRelationDef(VImpCreator<VDB4DRelation>::GetImpObject(inRelation)->GetRel(), inWithRelatedFields, inTimeOut, inForReadOnly, outLockerExtraData);
+		return (LockPtr)fBase.LockRelationDef(dynamic_cast<VDB4DRelation*>(inRelation)->GetRel(), inWithRelatedFields, inTimeOut, inForReadOnly, outLockerExtraData);
 	else
 		return nil;
 }
@@ -4212,7 +4292,7 @@ LockPtr VDB4DBaseContext::LockRelationDef(const CDB4DRelation* inRelation, Boole
 LockPtr VDB4DBaseContext::LockIndexDef(const CDB4DIndex* inIndex, sLONG inTimeOut, Boolean inForReadOnly, const VValueBag **outLockerExtraData)
 {
 	if (testAssert(inIndex != nil))
-		return (LockPtr)fBase.LockIndexDef(VImpCreator<VDB4DIndex>::GetImpObject(inIndex)->GetInd(), inTimeOut, inForReadOnly, outLockerExtraData);
+		return (LockPtr)fBase.LockIndexDef(dynamic_cast<VDB4DIndex*>(inIndex)->GetInd(), inTimeOut, inForReadOnly, outLockerExtraData);
 	else
 		return nil;
 }
@@ -4339,7 +4419,7 @@ CDB4DRemoteRecordCache* VDB4DBaseContext::StartCachingRemoteRecords(CDB4DSelecti
 		{
 			RemoteRecordCache* remoterecords = result->GetRemoteRecordCache();
 
-			err = remoterecords->StartCachingRemoteRecords(VImpCreator<VDB4DSelection>::GetImpObject(inSel)->GetSel(), FromRecIndex, ToRecIndex, inWayOfLocking);
+			err = remoterecords->StartCachingRemoteRecords(dynamic_cast<VDB4DSelection*>(inSel)->GetSel(), FromRecIndex, ToRecIndex, inWayOfLocking);
 		}
 
 		if (err != VE_OK)
@@ -4536,7 +4616,7 @@ RecIDType VDB4DSet::FindPreviousOne(RecIDType inFirstToLook) const
 VError VDB4DSet::And(const CDB4DSet& other)
 {
 	VError err = VE_OK;
-	VDB4DSet *xother = const_cast<VDB4DSet*> (VImpCreator<VDB4DSet>::GetImpObject(&other));
+	VDB4DSet *xother = const_cast<VDB4DSet*> (dynamic_cast<const VDB4DSet*>(&other));
 
 	if (fSet != nil && xother->fSet != nil)
 	{
@@ -4550,7 +4630,7 @@ VError VDB4DSet::And(const CDB4DSet& other)
 VError VDB4DSet::Or(const CDB4DSet& other)
 {
 	VError err = VE_OK;
-	VDB4DSet *xother = const_cast<VDB4DSet*> (VImpCreator<VDB4DSet>::GetImpObject(&other));
+	VDB4DSet *xother = const_cast<VDB4DSet*> (dynamic_cast<const VDB4DSet*>(&other));
 
 	if (fSet != nil && xother->fSet != nil)
 	{
@@ -4564,7 +4644,7 @@ VError VDB4DSet::Or(const CDB4DSet& other)
 VError VDB4DSet::Minus(const CDB4DSet& other)
 {
 	VError err = VE_OK;
-	VDB4DSet *xother = const_cast<VDB4DSet*> (VImpCreator<VDB4DSet>::GetImpObject(&other));
+	VDB4DSet *xother = const_cast<VDB4DSet*> (dynamic_cast<const VDB4DSet*>(&other));
 
 	if (fSet != nil && xother->fSet != nil)
 	{
@@ -4592,7 +4672,7 @@ VError VDB4DSet::CloneFrom(const CDB4DSet& other)
 {
 	VError err = VE_OK;
 
-	VDB4DSet *xother = const_cast<VDB4DSet*> (VImpCreator<VDB4DSet>::GetImpObject(&other));
+	VDB4DSet *xother = const_cast<VDB4DSet*> (dynamic_cast<const VDB4DSet*>(&other));
 
 	if (fSet != nil)
 	{
@@ -5108,7 +5188,7 @@ Boolean VDB4DSelection::SortSelection(DB4D_FieldID inFieldID, Boolean inAscendin
 Boolean VDB4DSelection::SortSelection(CDB4DSortingCriteriasPtr inCriterias, VDB4DProgressIndicator* InProgress, CDB4DBaseContextPtr inContext)
 {
 	{
-		VDB4DSortingCriterias *SC = VImpCreator<VDB4DSortingCriterias>::GetImpObject(inCriterias);
+		VDB4DSortingCriterias *SC = dynamic_cast<VDB4DSortingCriterias*>(inCriterias);
 		VError err;
 		return SortSelection(SC->GetSortTab(), InProgress, inContext, err, false, true);
 	}
@@ -5136,44 +5216,10 @@ Boolean VDB4DSelection::SortSelectionOnClient(DB4D_FieldID inFieldID, Boolean in
 Boolean VDB4DSelection::SortSelectionOnClient(CDB4DSortingCriteriasPtr inCriterias, VDB4DProgressIndicator* InProgress, CDB4DBaseContextPtr inContext)
 {
 	{
-		VDB4DSortingCriterias *SC = VImpCreator<VDB4DSortingCriterias>::GetImpObject(inCriterias);
+		VDB4DSortingCriterias *SC = dynamic_cast<VDB4DSortingCriterias*>(inCriterias);
 		VError err;
 		return SortSelection(SC->GetSortTab(), InProgress, inContext, err, false, false);
 	}
-}
-
-
-Boolean VDB4DSelection::SortSelection(const VString orderString, VDB4DProgressIndicator* InProgress, CDB4DBaseContextPtr inContext)
-{
-	VError err = VE_OK;
-	Boolean result = false;
-	if (fModel != nil)
-	{
-		EntityModel* model = VImpCreator<EntityModel>::GetImpObject(fModel);
-		EntityAttributeSortedSelection sortorder(model);
-		if (sortorder.BuildFromString(orderString, ConvertContext(inContext), false, true, nil))
-		{
-			Selection* newsel = fSel->SortSel(err, model, &sortorder, ConvertContext(inContext), InProgress);
-			if (newsel != nil)
-			{
-				result = true;
-				if (newsel != fSel)
-				{
-					newsel->SetModificationCounter(fSel->GetModificationCounter() + 1);
-					fSel->Release();
-					fSel=newsel;
-				}
-				else
-				{
-					newsel->Release();
-				}
-			}
-		}
-
-	}
-
-	return result;
-
 }
 
 
@@ -6011,7 +6057,7 @@ VError VDB4DSelection::CollectionToData(DB4DCollectionManager& Collection, CDB4D
 							if (b != nil)
 							{
 								CDB4DBase* xbase = fTable->GetOwner()->RetainBaseX();
-								outLockedRecords = new VDB4DSet(VImpCreator<VDB4DBase>::GetImpObject(xbase), fTable, b);
+								outLockedRecords = new VDB4DSet(dynamic_cast<VDB4DBase*>(xbase), fTable, b);
 								xbase->Release();
 								b->Release();
 							}
@@ -6075,13 +6121,13 @@ VErrorDB4D VDB4DSelection::GetDistinctValues(CDB4DEntityAttribute* inAttribute, 
 	BaseTaskInfo* context = ConvertContext(inContext);
 	EntityAttribute* att = nil;
 	if (inAttribute != nil)
-		att = VImpCreator<EntityAttribute>::GetImpObject(inAttribute);
+		att = dynamic_cast<EntityAttribute*>(inAttribute);
 	if (att != nil)
 	{
 		outCollection.SetCollectionSize(0);
 		if (fSel != nil)
 		{
-			err = fSel->GetDistinctValues(att, outCollection, context, InProgress, inOptions);
+			err = fSel->GetDistinctValues((db4dEntityAttribute*)att, outCollection, context, InProgress, inOptions);
 		}
 	}
 	else
@@ -6106,7 +6152,7 @@ VError VDB4DSelection::GetDistinctValues(CDB4DField* inField, DB4DCollectionMana
 	VError err = VE_OK;
 	Field* cri = nil;
 	if (inField != nil)
-		cri = (VImpCreator<VDB4DField>::GetImpObject(inField))->GetField();
+		cri = (dynamic_cast<VDB4DField*>(inField))->GetField();
 	BaseTaskInfo* context = ConvertContext(inContext);
 
 	if (cri != nil && cri->GetOwner() == fTable)
@@ -6185,12 +6231,12 @@ VError VDB4DSelection::DeleteRecords(CDB4DBaseContextPtr inContext, CDB4DSet* ou
 			Bittab* b = nil;
 			if (outNotDeletedOnes != nil)
 			{
-				b = (VImpCreator<VDB4DSet>::GetImpObject(outNotDeletedOnes))->GetBittab();
+				b = (dynamic_cast<VDB4DSet*>(outNotDeletedOnes))->GetBittab();
 			}
 			EntityModel* model = nil;
 			if (fModel != nil)
-				model = VImpCreator<EntityModel>::GetImpObject(fModel);
-			err = fSel->DeleteRecords(context, b, nil, InProgress, fTable, model);
+				model = dynamic_cast<EntityModel*>(fModel);
+			err = fSel->DeleteRecords(context, b, nil, InProgress, fTable);
 		}
 	}
 
@@ -6223,7 +6269,7 @@ VError VDB4DSelection::RemoveSet(CDB4DBaseContextPtr inContext, CDB4DSet* inRecs
 	Bittab* b = nil;
 	if (inRecsToRemove != nil)
 	{
-		b = (VImpCreator<VDB4DSet>::GetImpObject(inRecsToRemove))->GetBittab();
+		b = (dynamic_cast<VDB4DSet*>(inRecsToRemove))->GetBittab();
 		if (fSel != nil)
 		{
 			if (fSel->IsRemote())
@@ -6474,7 +6520,7 @@ CDB4DSelection* VDB4DSelection::RelateOneSelection(sLONG TargetOneTable, VError&
 		if (fSel->IsRemoteLike())
 		{
 			CDB4DQueryOptions* options = fBase->NewQueryOptions();
-			//VImpCreator<VDB4DQueryOptions>::GetImpObject(options)->GetOptions()->SetFilterTable(fTable);
+			//dynamic_cast<VDB4DQueryOptions*>(options)->GetOptions()->SetFilterTable(fTable);
 			options->SetFilter(this);
 			options->SetWayOfLocking(HowToLock);
 			options->SetWantsLockedSet(outLockSet != nil);
@@ -6511,7 +6557,7 @@ CDB4DSelection* VDB4DSelection::RelateOneSelection(sLONG TargetOneTable, VError&
 
 				Bittab* lockedset = nil;
 				if (outLockSet != nil)
-					lockedset = (VImpCreator<VDB4DSet>::GetImpObject(outLockSet))->GetBittab();
+					lockedset = (dynamic_cast<VDB4DSet*>(outLockSet))->GetBittab();
 
 				assert(fBase->GetBase() == db);
 
@@ -6525,7 +6571,7 @@ CDB4DSelection* VDB4DSelection::RelateOneSelection(sLONG TargetOneTable, VError&
 						if (testAssert(xrel != nil))
 						{
 							xs.AddSearchLineBoolOper(DB4D_And);
-							Relation* rel = (VImpCreator<VDB4DRelation>::GetImpObject(xrel))->GetRel();
+							Relation* rel = (dynamic_cast<VDB4DRelation*>(xrel))->GetRel();
 							xs.AddSearchLineJoin(rel->GetSource(), DB4D_Like, rel->GetDest());
 						}
 
@@ -6567,7 +6613,7 @@ CDB4DSelection* VDB4DSelection::RelateManySelection(CDB4DField* inRelationStart,
 			if (fSel->IsRemoteLike())
 			{
 				CDB4DQueryOptions* options = fBase->NewQueryOptions();
-				//VImpCreator<VDB4DQueryOptions>::GetImpObject(options)->GetOptions()->SetFilterTable(fTable);
+				//dynamic_cast<VDB4DQueryOptions*>(options)->GetOptions()->SetFilterTable(fTable);
 				options->SetFilter(this);
 				options->SetWayOfLocking(HowToLock);
 				options->SetWantsLockedSet(outLockSet != nil);
@@ -6589,7 +6635,7 @@ CDB4DSelection* VDB4DSelection::RelateManySelection(CDB4DField* inRelationStart,
 			}
 			else
 			{
-				Field* cri = (VImpCreator<VDB4DField>::GetImpObject(inRelationStart))->GetField();
+				Field* cri = (dynamic_cast<VDB4DField*>(inRelationStart))->GetField();
 				if (testAssert(cri != nil))
 				{
 					Table* dest = cri->GetOwner();
@@ -6603,7 +6649,7 @@ CDB4DSelection* VDB4DSelection::RelateManySelection(CDB4DField* inRelationStart,
 
 					Bittab* lockedset = nil;
 					if (outLockSet != nil)
-						lockedset = (VImpCreator<VDB4DSet>::GetImpObject(outLockSet))->GetBittab();
+						lockedset = (dynamic_cast<VDB4DSet*>(outLockSet))->GetBittab();
 
 					assert(fBase->GetBase() == db);
 
@@ -6716,7 +6762,7 @@ CDB4DEntityModel* VDB4DSelection::GetModel() const
 	return fModel;
 }
 
-
+/*
 CDB4DEntityRecord* VDB4DSelection::LoadEntity( RecIDType inEntityIndex, DB4D_Way_of_Locking HowToLock, CDB4DBaseContextPtr inContext, Boolean* outLockWasKeptInTrans)
 {
 	if (fSel->IsRemoteLike())
@@ -6736,7 +6782,7 @@ CDB4DEntityRecord* VDB4DSelection::LoadEntity( RecIDType inEntityIndex, DB4D_Way
 		RecIDType recordID = GetSelectedRecordID( inEntityIndex, inContext);
 		if (fModel != nil)
 		{
-			EntityModel* xmodel = VImpCreator<EntityModel>::GetImpObject(fModel);
+			EntityModel* xmodel = dynamic_cast<EntityModel*>(fModel);
 			if (okperm(context, xmodel, DB4D_EM_Read_Perm) || okperm(context, xmodel, DB4D_EM_Update_Perm) || okperm(context, xmodel, DB4D_EM_Delete_Perm))
 			{
 				FicheInMem *fiche = LoadFicheInMem( recordID, HowToLock, context, false, outLockWasKeptInTrans);
@@ -6757,6 +6803,7 @@ CDB4DEntityRecord* VDB4DSelection::LoadEntity( RecIDType inEntityIndex, DB4D_Way
 		return result;
 	}
 }
+*/
 
 void VDB4DSelection::SetQueryPlan(VValueBag* queryplan)
 {
@@ -6778,17 +6825,17 @@ VValueBag* VDB4DSelection::GetQueryPath()
 	return fSel->GetQueryPath();
 }
 
-
+/*
 VError VDB4DSelection::ConvertToJSObject(CDB4DBaseContext* inContext, VJSArray& outArr, const VString& inAttributeList, bool withKey, bool allowEmptyAttList, sLONG from, sLONG count)
 {
 	if (fSel != nil && fModel != nil)
 	{
-		return SelToJSObject(ConvertContext(inContext), outArr, VImpCreator<EntityModel>::GetImpObject(fModel), fSel, inAttributeList, withKey, allowEmptyAttList, from, count);
+		return SelToJSObject(ConvertContext(inContext), outArr, dynamic_cast<EntityModel*>(fModel), fSel, inAttributeList, withKey, allowEmptyAttList, from, count);
 	}
 	else
 		return -1;
 }
-
+*/
 
 
 
@@ -6802,7 +6849,7 @@ VError VDB4DSelection::ConvertToJSObject(CDB4DBaseContext* inContext, VJSArray& 
 VErrorDB4D VDB4DFieldCacheCollection::AddField(CDB4DField* inField)
 {
 	assert(inField != nil);
-	return fFieldsCache.AddField(VImpCreator<VDB4DField>::GetImpObject(inField)->GetField());
+	return fFieldsCache.AddField(dynamic_cast<VDB4DField*>(inField)->GetField());
 }
 
 
@@ -7091,6 +7138,26 @@ VError VDB4DField::SetStyledText(Boolean storeOutside, VDB4DProgressIndicator* I
 	if (locker.CanWork())
 	{
 		fCrit->SetStyledText(storeOutside, inContext, InProgress);
+	}
+	else
+		err = VE_DB4D_OBJECT_IS_LOCKED_BY_OTHER_CONTEXT;
+	return err;
+}
+
+
+Boolean VDB4DField::IsHiddenInRest(CDB4DBaseContextPtr inContext) const
+{
+	return fCrit->GetHideInRest();
+}
+
+
+VError VDB4DField::SetHideInRest(Boolean x, VDB4DProgressIndicator* InProgress, CDB4DBaseContextPtr inContext)
+{
+	VError err = VE_OK;
+	ObjLocker locker(inContext, fCrit);
+	if (locker.CanWork())
+	{
+		fCrit->SetHideInRest(x, inContext, InProgress);
 	}
 	else
 		err = VE_DB4D_OBJECT_IS_LOCKED_BY_OTHER_CONTEXT;
@@ -7716,10 +7783,10 @@ CDB4DSelectionPtr VDB4DTable::ExecuteQuery( CDB4DQuery *inQuery, CDB4DBaseContex
 	else
 	{
 		assert(inQuery != nil);
-		VDB4DQuery *query = VImpCreator<VDB4DQuery>::GetImpObject(inQuery);
+		VDB4DQuery *query = dynamic_cast<VDB4DQuery*>(inQuery);
 		VDB4DSelection *xfilter;
 		if (Filter == nil) xfilter = nil;
-		else xfilter = VImpCreator<VDB4DSelection>::GetImpObject(Filter);
+		else xfilter = dynamic_cast<VDB4DSelection*>(Filter);
 		Selection* oldsel = nil;
 
 		BaseTaskInfoPtr context = nil;
@@ -7731,7 +7798,7 @@ CDB4DSelectionPtr VDB4DTable::ExecuteQuery( CDB4DQuery *inQuery, CDB4DBaseContex
 		
 		Bittab* lockedset = nil;
 		if (outLockSet != nil)
-			lockedset = (VImpCreator<VDB4DSet>::GetImpObject(outLockSet))->GetBittab();
+			lockedset = (dynamic_cast<VDB4DSet*>(outLockSet))->GetBittab();
 
 		if (testAssert( query != nil)) {
 			
@@ -7772,9 +7839,9 @@ CDB4DQueryResult* VDB4DTable::ExecuteQuery(CDB4DQuery* inQuery, CDB4DBaseContext
 
 	VDB4DQueryResult* xresult = nil;
 	assert(inQuery != nil);
-	VDB4DQuery *query = VImpCreator<VDB4DQuery>::GetImpObject(inQuery);
+	VDB4DQuery *query = dynamic_cast<VDB4DQuery*>(inQuery);
 	
-	QueryOptions* options = VImpCreator<VDB4DQueryOptions>::GetImpObject(inOptions)->GetOptions();
+	QueryOptions* options = dynamic_cast<VDB4DQueryOptions*>(inOptions)->GetOptions();
 	BaseTaskInfo* context = ConvertContext(inContext);
 	if (context != nil && options->IsDescribeUndef())
 		options->SetDescribeQuery(context->ShouldDescribeQuery());
@@ -7782,7 +7849,7 @@ CDB4DQueryResult* VDB4DTable::ExecuteQuery(CDB4DQuery* inQuery, CDB4DBaseContext
 	if (fTable->IsRemote())
 	{
 		SearchTab* xsearch = query->GetSearchTab();
-		Boolean legacycall = query->WithFormulas() || xsearch->WithArrays();
+		Boolean legacycall = query->WithFormulas();
 		IRequest *req = fTable->GetOwner()->CreateRequest( inContext, Req_ExecuteQuery + kRangeReqDB4D, legacycall);
 		if (req == nil)
 		{
@@ -7990,7 +8057,7 @@ CDB4DSelectionPtr VDB4DTable::SelectAllRecords(CDB4DBaseContextPtr inContext, VE
 
 		Bittab* lockedset = nil;
 		if (outLockSet != nil)
-			lockedset = (VImpCreator<VDB4DSet>::GetImpObject(outLockSet))->GetBittab();
+			lockedset = (dynamic_cast<VDB4DSet*>(outLockSet))->GetBittab();
 
 		DF=fTable->GetDF();
 		sel=new BitSel(DF);
@@ -8594,7 +8661,7 @@ VError VDB4DTable::SetPrimaryKey(const CDB4DFieldArray& inFields, VDB4DProgressI
 			CDB4DField* xcri = *cur;
 			if (xcri != nil)
 			{
-				Field* cri = (VImpCreator<VDB4DField>::GetImpObject(xcri))->GetField();
+				Field* cri = (dynamic_cast<VDB4DField*>(xcri))->GetField();
 				if (cri != nil)
 				{
 					if (cri->GetOwner() == fTable)
@@ -9194,7 +9261,7 @@ VError VDB4DTable::ActivateAutomaticRelations_N_To_1(CDB4DRecord* inRecord, vect
 			req->PutBaseParam( fTable->GetOwner());
 			req->PutThingsToForget( VDBMgr::GetManager(), ConvertContext(InContext));
 			req->PutTableParam( fTable);
-			req->PutFicheInMemParam( VImpCreator<VDB4DRecord>::GetImpObject(inRecord)->GetRec(), InContext);
+			req->PutFicheInMemParam( dynamic_cast<VDB4DRecord*>(inRecord)->GetRec(), InContext);
 			req->GetOutputStream()->PutLong((sLONG)inWayOfLocking.size());
 			if (!inWayOfLocking.empty())
 				req->GetOutputStream()->PutData(&inWayOfLocking[0], inWayOfLocking.size());
@@ -9270,7 +9337,7 @@ VError VDB4DTable::ActivateAutomaticRelations_N_To_1(CDB4DRecord* inRecord, vect
 		return err;
 	}
 	else
-		return  fTable->ActivateAutomaticRelations_N_To_1((inRecord == nil) ? nil : VImpCreator<VDB4DRecord>::GetImpObject(inRecord)->GetRec(), outResult, ConvertContext(InContext), inWayOfLocking);
+		return  fTable->ActivateAutomaticRelations_N_To_1((inRecord == nil) ? nil : dynamic_cast<VDB4DRecord*>(inRecord)->GetRec(), outResult, ConvertContext(InContext), inWayOfLocking);
 }
 
 
@@ -9290,7 +9357,7 @@ VError VDB4DTable::ActivateAutomaticRelations_1_To_N(CDB4DRecord* inRecord, vect
 			req->PutBaseParam( fTable->GetOwner());
 			req->PutThingsToForget( VDBMgr::GetManager(), ConvertContext(InContext));
 			req->PutTableParam( fTable);
-			req->PutFicheInMemParam( VImpCreator<VDB4DRecord>::GetImpObject(inRecord)->GetRec(), InContext);
+			req->PutFicheInMemParam( dynamic_cast<VDB4DRecord*>(inRecord)->GetRec(), InContext);
 			req->GetOutputStream()->PutLong((sLONG)inWayOfLocking.size());
 			if (!inWayOfLocking.empty())
 				req->GetOutputStream()->PutData(&inWayOfLocking[0], inWayOfLocking.size());
@@ -9299,7 +9366,7 @@ VError VDB4DTable::ActivateAutomaticRelations_1_To_N(CDB4DRecord* inRecord, vect
 			else
 			{
 				req->PutBooleanParam(true);
-				req->PutFieldParam(VImpCreator<VDB4DField>::GetImpObject(onOneFieldOnly)->GetField());
+				req->PutFieldParam(dynamic_cast<VDB4DField*>(onOneFieldOnly)->GetField());
 			}
 			req->PutBooleanParam(onOldvalue);
 			req->PutBooleanParam(AutomaticOnly);
@@ -9375,9 +9442,9 @@ VError VDB4DTable::ActivateAutomaticRelations_1_To_N(CDB4DRecord* inRecord, vect
 		return err;
 	}
 	else
-		return  fTable->ActivateAutomaticRelations_1_To_N((inRecord == nil) ? nil : VImpCreator<VDB4DRecord>::GetImpObject(inRecord)->GetRec(), outResult, 
+		return  fTable->ActivateAutomaticRelations_1_To_N((inRecord == nil) ? nil : dynamic_cast<VDB4DRecord*>(inRecord)->GetRec(), outResult, 
 															ConvertContext(InContext), inWayOfLocking, 
-															onOneFieldOnly == nil ? nil : VImpCreator<VDB4DField>::GetImpObject(onOneFieldOnly)->GetField(), onOldvalue,
+															onOneFieldOnly == nil ? nil : dynamic_cast<VDB4DField*>(onOneFieldOnly)->GetField(), onOldvalue,
 															AutomaticOnly, OneLevelOnly);
 }
 
@@ -9399,7 +9466,7 @@ VErrorDB4D VDB4DTable::ActivateAllAutomaticRelations(CDB4DRecord* inRecord, std:
 			req->PutBaseParam( fTable->GetOwner());
 			req->PutThingsToForget( VDBMgr::GetManager(), ConvertContext(InContext));
 			req->PutTableParam( fTable);
-			req->PutFicheInMemParam( VImpCreator<VDB4DRecord>::GetImpObject(inRecord)->GetRec(), InContext);
+			req->PutFicheInMemParam( dynamic_cast<VDB4DRecord*>(inRecord)->GetRec(), InContext);
 			req->GetOutputStream()->PutLong((sLONG)inWayOfLocking.size());
 			if (!inWayOfLocking.empty())
 				req->GetOutputStream()->PutData(&inWayOfLocking[0], inWayOfLocking.size());
@@ -9563,7 +9630,7 @@ VError VDB4DTable::GetOneRow(VStream& inStream, CDB4DBaseContextPtr inContext, s
 CDB4DEntityModel* VDB4DTable::BuildEntityModel()
 {
 #if BuildEmFromTable
-	return EntityModel::BuildEntityModel(fTable, fTable->GetOwner()->GetEntityCatalog(false));
+	return EntityModel::BuildLocalEntityModel(fTable, (LocalEntityModelCatalog*)(fTable->GetOwner()->GetEntityCatalog(false)));
 #else
 	return nil;
 #endif
@@ -9581,6 +9648,18 @@ bool VDB4DTable::GetKeepRecordSyncInfo() const
 }
 
 
+
+VErrorDB4D VDB4DTable::SetHideInRest(bool x, CDB4DBaseContextPtr inContext, VDB4DProgressIndicator* InProgress)
+{
+	return fTable->SetHideInRest( inContext, x, InProgress);
+}
+
+bool VDB4DTable::IsHiddenInRest(CDB4DBaseContextPtr inContext) const
+{
+	return fTable->GetHideInRest();
+}
+
+
 VErrorDB4D VDB4DTable::GetModificationsSinceStampWithPrimKey(uLONG8 stamp, VStream& outStream, uLONG8& outLastStamp, sLONG& outNbRows, 
 														 CDB4DBaseContextPtr inContext, vector<sLONG>& cols,
 														 CDB4DSelection* filter, sLONG8 skip,sLONG8 top,
@@ -9594,7 +9673,7 @@ VErrorDB4D VDB4DTable::GetModificationsSinceStampWithPrimKey(uLONG8 stamp, VStre
 	{
 		Selection* selfilter = nil;
 		if (filter != nil)
-			selfilter = VImpCreator<VDB4DSelection>::GetImpObject(filter)->GetSel();
+			selfilter = dynamic_cast<VDB4DSelection*>(filter)->GetSel();
 		return fTable->GetDF()->GetModificationsSinceStamp(stamp, outStream, outLastStamp, outNbRows, ConvertContext(inContext), cols, selfilter, skip, top, inImageFormats);
 	}
 }
@@ -9749,7 +9828,7 @@ Boolean VDB4DQuery::AddCriteria( const VString& inTableName, const VString& inFi
 
 Boolean VDB4DQuery::AddCriteria( CDB4DField* inField, DB4DComparator inComparator, const XBOX::VValueSingle& inValue, Boolean inDiacritic)
 {
-	Field* f = VImpCreator<VDB4DField>::GetImpObject(inField)->GetField();
+	Field* f = dynamic_cast<VDB4DField*>(inField)->GetField();
 	if (f != nil)
 	{
 		fQuery.AddSearchLineSimple(f, inComparator, &inValue, inDiacritic);
@@ -9769,7 +9848,7 @@ Boolean VDB4DQuery::AddEmCriteria(const VString& inAttributePath, DB4DComparator
 
 Boolean VDB4DQuery::AddCriteria( CDB4DField* inField, DB4DComparator inComparator, DB4DArrayOfValues *inValue, Boolean inDiacritic)
 {
-	Field* f = VImpCreator<VDB4DField>::GetImpObject(inField)->GetField();
+	Field* f = dynamic_cast<VDB4DField*>(inField)->GetField();
 	if (f != nil)
 	{
 		fQuery.AddSearchLineArray(f, inComparator, inValue, inDiacritic);
@@ -9781,8 +9860,8 @@ Boolean VDB4DQuery::AddCriteria( CDB4DField* inField, DB4DComparator inComparato
 
 Boolean VDB4DQuery::AddCriteria( CDB4DField* inField, DB4DComparator inComparator, CDB4DField* inFieldToCompareTo, Boolean inDiacritic)
 {
-	Field* f = VImpCreator<VDB4DField>::GetImpObject(inField)->GetField();
-	Field* f2 = VImpCreator<VDB4DField>::GetImpObject(inFieldToCompareTo)->GetField();
+	Field* f = dynamic_cast<VDB4DField*>(inField)->GetField();
+	Field* f2 = dynamic_cast<VDB4DField*>(inFieldToCompareTo)->GetField();
 	if (f != nil && f2 != nil)
 	{
 		fQuery.AddSearchLineJoin(f, inComparator, f2, inDiacritic);
@@ -9830,8 +9909,10 @@ CDB4DTable* VDB4DQuery::GetTargetTable()
 {
 	if (Owner == nil)
 	{
-		assert(fModel != nil);
+		/*assert(fModel != nil);
 		Owner = fModel->RetainTable();
+		*/
+		return nil;
 	}
 	return Owner;
 }
@@ -9839,7 +9920,7 @@ CDB4DTable* VDB4DQuery::GetTargetTable()
 
 VError VDB4DQuery::BuildFromString(const VString& inQueryText, VString& outOrderby, CDB4DBaseContext* context, CDB4DEntityModel* inModel, const QueryParamElementVector* params)
 {
-	return fQuery.BuildFromString(inQueryText, outOrderby, ConvertContext(context), (inModel == nil) ? nil : VImpCreator<EntityModel>::GetImpObject(inModel), false, (QueryParamElementVector*)params);
+	return fQuery.BuildFromString(inQueryText, outOrderby, ConvertContext(context), (inModel == nil) ? nil : dynamic_cast<EntityModel*>(inModel), false, (QueryParamElementVector*)params);
 }
 
 
@@ -9912,7 +9993,7 @@ VErrorDB4D VDB4DComplexSelection::GetFullRow(RecIDType Row, ComplexSelRow& outRo
 
 CDB4DComplexSelection* VDB4DComplexSelection::And(CDB4DComplexSelection* inOther, VErrorDB4D& outErr)
 {
-	VDB4DComplexSelection* other = VImpCreator<VDB4DComplexSelection>::GetImpObject(inOther);
+	VDB4DComplexSelection* other = dynamic_cast<VDB4DComplexSelection*>(inOther);
 
 	if (fSel == nil || other->fSel == nil)
 	{
@@ -9984,7 +10065,7 @@ sLONG VDB4DComplexSelection::PosOfTarget(const QueryTarget& inTarget)
 		return -1;
 	else
 	{
-		CQTableDef t1(VImpCreator<VDB4DTable>::GetImpObject(inTarget.first)->GetTable(), inTarget.second);
+		CQTableDef t1(dynamic_cast<VDB4DTable*>(inTarget.first)->GetTable(), inTarget.second);
 		return fSel->FindTarget(t1);
 	}
 }
@@ -10021,7 +10102,7 @@ VErrorDB4D VDB4DComplexSelection::RetainColumn(sLONG Column, QueryTarget& outTar
 		if (err == VE_OK)
 		{
 			CDB4DBase* base = xx.GetTable()->GetOwner()->RetainBaseX();
-			CDB4DTable* theTable = new VDB4DTable( fManager, VImpCreator<VDB4DBase>::GetImpObject(base), xx.GetTable());
+			CDB4DTable* theTable = new VDB4DTable( fManager, dynamic_cast<VDB4DBase*>(base), xx.GetTable());
 			base->Release();
 			outTarget.first = theTable;
 			outTarget.second = xx.GetInstance();
@@ -10052,7 +10133,7 @@ VErrorDB4D VDB4DComplexSelection::ToDB4D_ComplexSel(DB4D_ComplexSel& outSel)
 
 void VDB4DComplexQuery::SetSimpleTarget(CDB4DTable* inTarget)
 {
-	fQuery.SetSimpleTarget(VImpCreator<VDB4DTable>::GetImpObject(inTarget)->GetTable());
+	fQuery.SetSimpleTarget(dynamic_cast<VDB4DTable*>(inTarget)->GetTable());
 }
 
 
@@ -10064,33 +10145,33 @@ VError VDB4DComplexQuery::SetComplexTarget(const QueryTargetVector& inTargets)
 
 VError VDB4DComplexQuery::AddCriteria( CDB4DField* inField, sLONG Instance, DB4DComparator inComparator, const XBOX::VValueSingle& inValue, Boolean inDiacritic)
 {
-	return fQuery.AddSearchSimple(VImpCreator<VDB4DField>::GetImpObject(inField)->GetField(), Instance, inComparator, &inValue, inDiacritic);
+	return fQuery.AddSearchSimple(dynamic_cast<VDB4DField*>(inField)->GetField(), Instance, inComparator, &inValue, inDiacritic);
 }
 
 
 VError VDB4DComplexQuery::AddCriteria( CDB4DField* inField, sLONG Instance, DB4DComparator inComparator, DB4DArrayOfValues *inValue, Boolean inDiacritic)
 {
-	return fQuery.AddSearchArray(VImpCreator<VDB4DField>::GetImpObject(inField)->GetField(), Instance, inComparator, inValue, inDiacritic);
+	return fQuery.AddSearchArray(dynamic_cast<VDB4DField*>(inField)->GetField(), Instance, inComparator, inValue, inDiacritic);
 }
 
 
 VError VDB4DComplexQuery::AddJoin( CDB4DField* inField1, sLONG Instance1, DB4DComparator inComparator, CDB4DField* inField2, sLONG Instance2, 
 								  Boolean inDiacritic, bool inLeftJoin, bool inRightJoin)
 {
-	return fQuery.AddSearchJoin(VImpCreator<VDB4DField>::GetImpObject(inField1)->GetField(), Instance1, inComparator,
-								 VImpCreator<VDB4DField>::GetImpObject(inField2)->GetField(), Instance2, inDiacritic, inLeftJoin, inRightJoin);
+	return fQuery.AddSearchJoin(dynamic_cast<VDB4DField*>(inField1)->GetField(), Instance1, inComparator,
+								 dynamic_cast<VDB4DField*>(inField2)->GetField(), Instance2, inDiacritic, inLeftJoin, inRightJoin);
 }
 
 
 VError VDB4DComplexQuery::AddExpression(CDB4DTable* inTable, sLONG Instance, DB4DLanguageExpression* inExpression)
 {
-	return fQuery.AddSearchExpression(inExpression, VImpCreator<VDB4DTable>::GetImpObject(inTable)->GetTable(), Instance);
+	return fQuery.AddSearchExpression(inExpression, dynamic_cast<VDB4DTable*>(inTable)->GetTable(), Instance);
 }
 
 
 VError VDB4DComplexQuery::AddSQLExpression(CDB4DTable* inTable, sLONG Instance, DB4DSQLExpression* inExpression)
 {
-	return fQuery.AddSearchSQLExpression(inExpression, VImpCreator<VDB4DTable>::GetImpObject(inTable)->GetTable(), Instance);
+	return fQuery.AddSearchSQLExpression(inExpression, dynamic_cast<VDB4DTable*>(inTable)->GetTable(), Instance);
 }
 
 
@@ -10172,7 +10253,7 @@ Boolean VDB4DSortingCriterias::AddCriteria(CDB4DField* inField, Boolean inAscend
 	assert(inField != nil);
 	if (inField != nil)
 	{
-		sLONG inTableID = VImpCreator<VDB4DField>::GetImpObject(inField)->GetField()->GetOwner()->GetNum();
+		sLONG inTableID = dynamic_cast<VDB4DField*>(inField)->GetField()->GetOwner()->GetNum();
 		err = fSortTab.AddTriLineField(inTableID, inField->GetID(), inAscending);
 	}
 	else
@@ -10237,7 +10318,7 @@ VError VDB4DSqlQuery::ExecSql(CDB4DSelection* &outSelection, VDB4DProgressIndica
 	if (sel == nil)
 		outSelection = nil;
 	else
-		outSelection = new VDB4DSelection(fManager, VImpCreator<VDB4DBase>::GetImpObject(fOwner->GetOwner()), sel->GetParentFile()->GetTable(), sel);
+		outSelection = new VDB4DSelection(fManager, dynamic_cast<VDB4DBase*>(fOwner->GetOwner()), sel->GetParentFile()->GetTable(), sel);
 	
 	return lasterr;
 }
@@ -10276,9 +10357,9 @@ Boolean VDB4DRecord::GetBoolean( const CDB4DField* inField, Boolean *outValue, B
 	Boolean isOK = false;
 	ValPtr cvs;
 	if (OldOne)
-		cvs = fRecord->GetFieldOldValue( VImpCreator<VDB4DField>::GetImpObject(inField)->GetField(), err);
+		cvs = fRecord->GetFieldOldValue( dynamic_cast<const VDB4DField*>(inField)->GetField(), err);
 	else
-		cvs = fRecord->GetFieldValue( VImpCreator<VDB4DField>::GetImpObject(inField)->GetField(), err);
+		cvs = fRecord->GetFieldValue( dynamic_cast<const VDB4DField*>(inField)->GetField(), err);
 
 	if (cvs != nil) {
 		*outValue = cvs->GetBoolean();
@@ -10318,9 +10399,9 @@ Boolean VDB4DRecord::GetLong( const CDB4DField* inField, sLONG *outValue, Boolea
 	Boolean isOK = false;
 	ValPtr cvs;
 	if (OldOne)
-		cvs = fRecord->GetFieldOldValue( VImpCreator<VDB4DField>::GetImpObject(inField)->GetField(), err);
+		cvs = fRecord->GetFieldOldValue( dynamic_cast<const VDB4DField*>(inField)->GetField(), err);
 	else
-		cvs = fRecord->GetFieldValue( VImpCreator<VDB4DField>::GetImpObject(inField)->GetField(), err);
+		cvs = fRecord->GetFieldValue( dynamic_cast<const VDB4DField*>(inField)->GetField(), err);
 
 	if (cvs != nil) {
 		*outValue = cvs->GetLong();
@@ -10360,9 +10441,9 @@ Boolean VDB4DRecord::GetLong8( const CDB4DField* inField, sLONG8 *outValue, Bool
 	Boolean isOK = false;
 	ValPtr cvs;
 	if (OldOne)
-		cvs = fRecord->GetFieldOldValue( VImpCreator<VDB4DField>::GetImpObject(inField)->GetField(), err);
+		cvs = fRecord->GetFieldOldValue( dynamic_cast<const VDB4DField*>(inField)->GetField(), err);
 	else
-		cvs = fRecord->GetFieldValue( VImpCreator<VDB4DField>::GetImpObject(inField)->GetField(), err);
+		cvs = fRecord->GetFieldValue( dynamic_cast<const VDB4DField*>(inField)->GetField(), err);
 
 	if (cvs != nil) {
 		*outValue = cvs->GetLong8();
@@ -10402,9 +10483,9 @@ Boolean VDB4DRecord::GetReal( const CDB4DField* inField, Real *outValue, Boolean
 	Boolean isOK = false;
 	ValPtr cvs;
 	if (OldOne)
-		cvs = fRecord->GetFieldOldValue( VImpCreator<VDB4DField>::GetImpObject(inField)->GetField(), err);
+		cvs = fRecord->GetFieldOldValue( dynamic_cast<const VDB4DField*>(inField)->GetField(), err);
 	else
-		cvs = fRecord->GetFieldValue( VImpCreator<VDB4DField>::GetImpObject(inField)->GetField(), err);
+		cvs = fRecord->GetFieldValue( dynamic_cast<const VDB4DField*>(inField)->GetField(), err);
 
 	if (cvs != nil) {
 		*outValue = cvs->GetReal();
@@ -10514,9 +10595,9 @@ Boolean VDB4DRecord::GetBlob( const CDB4DField* inField, VBlob **outBlob, Boolea
 	Boolean isOK = false;
 	ValPtr cv;
 	if (OldOne)
-		cv = fRecord->GetFieldOldValue( VImpCreator<VDB4DField>::GetImpObject(inField)->GetField(), err);
+		cv = fRecord->GetFieldOldValue( dynamic_cast<const VDB4DField*>(inField)->GetField(), err);
 	else
-		cv = fRecord->GetFieldValue( VImpCreator<VDB4DField>::GetImpObject(inField)->GetField(), err);
+		cv = fRecord->GetFieldValue( dynamic_cast<const VDB4DField*>(inField)->GetField(), err);
 
 	if (cv != nil) {
 		if (cv->GetValueKind() == VK_BLOB) {
@@ -10560,12 +10641,12 @@ Boolean VDB4DRecord::SetBlob( const CDB4DField* inField, const void *inData, sLO
 {
 	VError err;
 	Boolean isOK = false;
-	ValPtr cv = fRecord->GetFieldValue( VImpCreator<VDB4DField>::GetImpObject(inField)->GetField(), err);
+	ValPtr cv = fRecord->GetFieldValue( dynamic_cast<const VDB4DField*>(inField)->GetField(), err);
 	if (cv != nil) {
 		if (cv->GetValueKind() == VK_BLOB) {
 			VBlob *blob = dynamic_cast<VBlob *>( cv);
 			VError err = blob->FromData( inData, inDataSize);
-			fRecord->Touch(VImpCreator<VDB4DField>::GetImpObject(inField)->GetField());
+			fRecord->Touch(dynamic_cast<const VDB4DField*>(inField)->GetField());
 			isOK = (err == VE_OK);
 		}
 	}
@@ -10597,12 +10678,12 @@ Boolean VDB4DRecord::SetPicture( const CDB4DField* inField,  const XBOX::VValueS
 {
 	VError err;
 	Boolean isOK = false;
-	ValPtr cv = fRecord->GetFieldValue( VImpCreator<VDB4DField>::GetImpObject(inField)->GetField(), err);
+	ValPtr cv = fRecord->GetFieldValue( dynamic_cast<const VDB4DField*>(inField)->GetField(), err);
 	if (cv != nil) {
 		if (cv->GetValueKind() == VK_IMAGE && inPict.GetValueKind()==VK_IMAGE) {
 			VValueSingle *pict = dynamic_cast<VValueSingle *>( cv);
 			pict->FromValue(inPict);
-			fRecord->Touch(VImpCreator<VDB4DField>::GetImpObject(inField)->GetField());
+			fRecord->Touch(dynamic_cast<const VDB4DField*>(inField)->GetField());
 			isOK = (err == VE_OK);
 		}
 	}
@@ -10644,9 +10725,9 @@ Boolean VDB4DRecord::GetPicture( const CDB4DField* inField, VValueSingle **outPi
 	Boolean isOK = false;
 	ValPtr cv;
 	if (OldOne)
-		cv = fRecord->GetFieldOldValue( VImpCreator<VDB4DField>::GetImpObject(inField)->GetField(), err);
+		cv = fRecord->GetFieldOldValue( dynamic_cast<const VDB4DField*>(inField)->GetField(), err);
 	else
-		cv = fRecord->GetFieldValue( VImpCreator<VDB4DField>::GetImpObject(inField)->GetField(), err);
+		cv = fRecord->GetFieldValue( dynamic_cast<const VDB4DField*>(inField)->GetField(), err);
 
 	if (cv != nil) {
 		if (cv->GetValueKind() == VK_IMAGE) {
@@ -10708,10 +10789,10 @@ Boolean VDB4DRecord::SetString( const CDB4DField* inField, const VString& inValu
 {
 	VError err;
 	Boolean isOK = false;
-	ValPtr cv = fRecord->GetFieldValue( VImpCreator<VDB4DField>::GetImpObject(inField)->GetField(), err);
+	ValPtr cv = fRecord->GetFieldValue( dynamic_cast<const VDB4DField*>(inField)->GetField(), err);
 	if (cv != nil) {
 		cv->FromString( inValue);
-		fRecord->Touch(VImpCreator<VDB4DField>::GetImpObject(inField)->GetField());
+		fRecord->Touch(dynamic_cast<const VDB4DField*>(inField)->GetField());
 		isOK = true;
 	}
 	if (outErr != nil)
@@ -10743,10 +10824,10 @@ Boolean VDB4DRecord::SetDuration( const CDB4DField* inField, const VDuration& in
 {
 	VError err;
 	Boolean isOK = false;
-	ValPtr cv = fRecord->GetFieldValue( VImpCreator<VDB4DField>::GetImpObject(inField)->GetField(), err);
+	ValPtr cv = fRecord->GetFieldValue( dynamic_cast<const VDB4DField*>(inField)->GetField(), err);
 	if (cv != nil) {
 		cv->FromDuration( inValue);
-		fRecord->Touch(VImpCreator<VDB4DField>::GetImpObject(inField)->GetField());
+		fRecord->Touch(dynamic_cast<const VDB4DField*>(inField)->GetField());
 		isOK = true;
 	}
 	if (outErr != nil)
@@ -10777,10 +10858,10 @@ Boolean VDB4DRecord::SetTime( const CDB4DField* inField, const VTime& inValue, V
 {
 	VError err;
 	Boolean isOK = false;
-	ValPtr cv = fRecord->GetFieldValue( VImpCreator<VDB4DField>::GetImpObject(inField)->GetField(), err);
+	ValPtr cv = fRecord->GetFieldValue( dynamic_cast<const VDB4DField*>(inField)->GetField(), err);
 	if (cv != nil) {
 		cv->FromTime( inValue);
-		fRecord->Touch(VImpCreator<VDB4DField>::GetImpObject(inField)->GetField());
+		fRecord->Touch(dynamic_cast<const VDB4DField*>(inField)->GetField());
 		isOK = true;
 	}
 	if (outErr != nil)
@@ -10813,10 +10894,10 @@ Boolean VDB4DRecord::SetLong( const CDB4DField* inField, sLONG inValue, VError *
 {
 	VError err;
 	Boolean isOK = false;
-	ValPtr cv = fRecord->GetFieldValue( VImpCreator<VDB4DField>::GetImpObject(inField)->GetField(), err);
+	ValPtr cv = fRecord->GetFieldValue( dynamic_cast<const VDB4DField*>(inField)->GetField(), err);
 	if (cv != nil) {
 		cv->FromLong( inValue);
-		fRecord->Touch(VImpCreator<VDB4DField>::GetImpObject(inField)->GetField());
+		fRecord->Touch(dynamic_cast<const VDB4DField*>(inField)->GetField());
 		isOK = true;
 	}
 	if (outErr != nil)
@@ -10848,10 +10929,10 @@ Boolean VDB4DRecord::SetLong8( const CDB4DField* inField, sLONG8 inValue, VError
 {
 	VError err;
 	Boolean isOK = false;
-	ValPtr cv = fRecord->GetFieldValue( VImpCreator<VDB4DField>::GetImpObject(inField)->GetField(), err);
+	ValPtr cv = fRecord->GetFieldValue( dynamic_cast<const VDB4DField*>(inField)->GetField(), err);
 	if (cv != nil) {
 		cv->FromLong8( inValue);
-		fRecord->Touch(VImpCreator<VDB4DField>::GetImpObject(inField)->GetField());
+		fRecord->Touch(dynamic_cast<const VDB4DField*>(inField)->GetField());
 		isOK = true;
 	}
 	if (outErr != nil)
@@ -10883,10 +10964,10 @@ Boolean VDB4DRecord::SetReal( const CDB4DField* inField, Real inValue, VError *o
 {
 	VError err;
 	Boolean isOK = false;
-	ValPtr cv = fRecord->GetFieldValue( VImpCreator<VDB4DField>::GetImpObject(inField)->GetField(), err);
+	ValPtr cv = fRecord->GetFieldValue( dynamic_cast<const VDB4DField*>(inField)->GetField(), err);
 	if (cv != nil) {
 		cv->FromReal( inValue);
-		fRecord->Touch(VImpCreator<VDB4DField>::GetImpObject(inField)->GetField());
+		fRecord->Touch(dynamic_cast<const VDB4DField*>(inField)->GetField());
 		isOK = true;
 	}
 	if (outErr != nil)
@@ -10918,10 +10999,10 @@ Boolean VDB4DRecord::SetBoolean( const CDB4DField* inField, Boolean inValue, VEr
 {
 	VError err;
 	Boolean isOK = false;
-	ValPtr cv = fRecord->GetFieldValue( VImpCreator<VDB4DField>::GetImpObject(inField)->GetField(), err);
+	ValPtr cv = fRecord->GetFieldValue( dynamic_cast<const VDB4DField*>(inField)->GetField(), err);
 	if (cv != nil) {
 		cv->FromBoolean( inValue);
-		fRecord->Touch(VImpCreator<VDB4DField>::GetImpObject(inField)->GetField());
+		fRecord->Touch(dynamic_cast<const VDB4DField*>(inField)->GetField());
 		isOK = true;
 	}
 	if (outErr != nil)
@@ -10957,7 +11038,7 @@ Boolean VDB4DRecord::IsFieldModified( DB4D_FieldID inFieldID) const
 
 Boolean VDB4DRecord::IsFieldModified( const CDB4DField* inField) const
 {
-	return fRecord->IsModif( VImpCreator<VDB4DField>::GetImpObject(inField)->GetField());
+	return fRecord->IsModif( dynamic_cast<const VDB4DField*>(inField)->GetField());
 }
 
 
@@ -10989,9 +11070,9 @@ Boolean VDB4DRecord::GetString( const CDB4DField* inField, VString& outValue, Bo
 	Boolean isOK = false;
 	ValPtr cvs;
 	if (OldOne)
-		cvs = fRecord->GetFieldOldValue( VImpCreator<VDB4DField>::GetImpObject(inField)->GetField(), err);
+		cvs = fRecord->GetFieldOldValue( dynamic_cast<const VDB4DField*>(inField)->GetField(), err);
 	else
-		cvs = fRecord->GetFieldValue( VImpCreator<VDB4DField>::GetImpObject(inField)->GetField(), err);
+		cvs = fRecord->GetFieldValue( dynamic_cast<const VDB4DField*>(inField)->GetField(), err);
 
 	if (cvs != nil) {
 		cvs->GetString(outValue);
@@ -11031,9 +11112,9 @@ Boolean VDB4DRecord::GetDuration( const CDB4DField* inField, VDuration& outValue
 	Boolean isOK = false;
 	ValPtr cvs;
 	if (OldOne)
-		cvs = fRecord->GetFieldOldValue( VImpCreator<VDB4DField>::GetImpObject(inField)->GetField(), err);
+		cvs = fRecord->GetFieldOldValue( dynamic_cast<const VDB4DField*>(inField)->GetField(), err);
 	else
-		cvs = fRecord->GetFieldValue( VImpCreator<VDB4DField>::GetImpObject(inField)->GetField(), err);
+		cvs = fRecord->GetFieldValue( dynamic_cast<const VDB4DField*>(inField)->GetField(), err);
 
 	if (cvs != nil) {
 		cvs->GetDuration(outValue);
@@ -11073,9 +11154,9 @@ Boolean VDB4DRecord::GetTime( const CDB4DField* inField, VTime& outValue, Boolea
 	Boolean isOK = false;
 	ValPtr cvs;
 	if (OldOne)
-		cvs = fRecord->GetFieldOldValue( VImpCreator<VDB4DField>::GetImpObject(inField)->GetField(), err);
+		cvs = fRecord->GetFieldOldValue( dynamic_cast<const VDB4DField*>(inField)->GetField(), err);
 	else
-		cvs = fRecord->GetFieldValue( VImpCreator<VDB4DField>::GetImpObject(inField)->GetField(), err);
+		cvs = fRecord->GetFieldValue( dynamic_cast<const VDB4DField*>(inField)->GetField(), err);
 
 	if (cvs != nil) {
 		cvs->GetTime(outValue);
@@ -11124,9 +11205,9 @@ Boolean VDB4DRecord::GetVUUID( const CDB4DField* inField, VUUID& outValue, Boole
 	Boolean isOK = false;
 	ValPtr cvs;
 	if (OldOne)
-		cvs = fRecord->GetFieldOldValue( VImpCreator<VDB4DField>::GetImpObject(inField)->GetField(), err);
+		cvs = fRecord->GetFieldOldValue( dynamic_cast<const VDB4DField*>(inField)->GetField(), err);
 	else
-		cvs = fRecord->GetFieldValue( VImpCreator<VDB4DField>::GetImpObject(inField)->GetField(), err);
+		cvs = fRecord->GetFieldValue( dynamic_cast<const VDB4DField*>(inField)->GetField(), err);
 
 	if (cvs != nil) {
 		cvs->GetVUUID(outValue);
@@ -11161,10 +11242,10 @@ Boolean VDB4DRecord::SetVUUID( const CDB4DField* inField, const VUUID& inValue, 
 {
 	VError err;
 	Boolean isOK = false;
-	ValPtr cv = fRecord->GetFieldValue( VImpCreator<VDB4DField>::GetImpObject(inField)->GetField(), err);
+	ValPtr cv = fRecord->GetFieldValue( dynamic_cast<const VDB4DField*>(inField)->GetField(), err);
 	if (cv != nil) {
 		cv->FromVUUID( inValue);
-		fRecord->Touch(VImpCreator<VDB4DField>::GetImpObject(inField)->GetField());
+		fRecord->Touch(dynamic_cast<const VDB4DField*>(inField)->GetField());
 		isOK = true;
 	}
 	if (outErr != nil)
@@ -11212,7 +11293,7 @@ VValueSingle *VDB4DRecord::GetFieldValue( const CDB4DField* inField, Boolean Old
 	Field* cri = nil;
 	if (testAssert(inField != nil))
 	{
-		cri = VImpCreator<VDB4DField>::GetImpObject(inField)->GetField();
+		cri = dynamic_cast<const VDB4DField*>(inField)->GetField();
 		val = fRecord->GetFieldValue(cri, err, false, forQueryOrSort);
 	}
 	else
@@ -11237,7 +11318,7 @@ VValueSingle *VDB4DRecord::GetFieldValue( const CDB4DField* inField, Boolean Old
 Boolean VDB4DRecord::GetFieldIntoBlob( const CDB4DField* inField,  VBlob& outBlob, VErrorDB4D *outErr, Boolean CanCacheData)
 {
 	if (testAssert(inField != nil))
-		return GetFieldIntoBlob(VImpCreator<VDB4DField>::GetImpObject(inField)->GetField()->GetPosInRec(), outBlob, outErr, CanCacheData);
+		return GetFieldIntoBlob(dynamic_cast<const VDB4DField*>(inField)->GetField()->GetPosInRec(), outBlob, outErr, CanCacheData);
 	else
 	{
 		if (outErr != nil)
@@ -11264,7 +11345,7 @@ void VDB4DRecord::SetFieldToNull(const CDB4DField* inField, VError *outErr)
 	if (val != nil)
 	{
 		val->SetNull(true);
-		fRecord->Touch(VImpCreator<VDB4DField>::GetImpObject(inField)->GetField());
+		fRecord->Touch(dynamic_cast<const VDB4DField*>(inField)->GetField());
 	}
 	if (outErr != nil)
 		*outErr = err;
@@ -11303,7 +11384,7 @@ Boolean VDB4DRecord::Drop(VError *outErr)
 {
 	if (fRecord->IsRemote())
 	{
-		Table* owner = VImpCreator<VDB4DTable>::GetImpObject(fOwner)->GetTable();
+		Table* owner = dynamic_cast<VDB4DTable*>(fOwner)->GetTable();
 
 		VError err;
 		Boolean ok = false;
@@ -11354,7 +11435,7 @@ uLONG VDB4DRecord::GetFieldModificationStamp( DB4D_FieldID inFieldID) const
 
 uLONG VDB4DRecord::GetFieldModificationStamp( const CDB4DField* inField) const
 {
-	return fRecord->GetFieldModificationStamp(VImpCreator<VDB4DField>::GetImpObject(inField)->GetField());
+	return fRecord->GetFieldModificationStamp(dynamic_cast<const VDB4DField*>(inField)->GetField());
 }
 
 
@@ -11379,7 +11460,7 @@ void VDB4DRecord::Touch(DB4D_FieldID inFieldID)
 
 void VDB4DRecord::Touch(const CDB4DField* inField)
 {
-	Field* cri = VImpCreator<VDB4DField>::GetImpObject(inField)->GetField();
+	Field* cri = dynamic_cast<const VDB4DField*>(inField)->GetField();
 	fRecord->Touch(cri);
 	if (cri->GetTyp() == VK_UUID)
 	{
@@ -11491,7 +11572,7 @@ void VDB4DRecord::TransferSequenceNumber( CDB4DRecord *inDestination)
 {
 	if (fRecord != nil)
 	{
-		FicheInMem* destination = (inDestination == nil) ? nil : VImpCreator<VDB4DRecord>::GetImpObject(inDestination)->fRecord;
+		FicheInMem* destination = (inDestination == nil) ? nil : dynamic_cast<VDB4DRecord*>(inDestination)->fRecord;
 		fRecord->TransferSeqNumToken( fContext, destination);
 	}
 }
@@ -11552,7 +11633,7 @@ CDB4DRecord* VDB4DRecord::CloneOnlyModifiedValues(VErrorDB4D& err) const
 
 VErrorDB4D VDB4DRecord::RevertModifiedValues(CDB4DRecord* From)
 {
-	FicheInMem* fic = VImpCreator<VDB4DRecord>::GetImpObject(From)->fRecord;
+	FicheInMem* fic = dynamic_cast<VDB4DRecord*>(From)->fRecord;
 	return fRecord->RevertModifiedValues(fContext, fic);
 }
 
@@ -11676,13 +11757,13 @@ VError VDB4DImpExp::RunImport(CDB4DSelection* &outSel, VDB4DProgressIndicator* I
 	{
 		context = ConvertContext(InContext);
 	}
-	VDB4DTable* xtarget = VImpCreator<VDB4DTable>::GetImpObject( target);
+	VDB4DTable* xtarget = dynamic_cast<VDB4DTable*>( target);
 	Selection* sel;
 	VError err = IO.RunImport(sel, context, InProgress);
 	if (sel == nil) outSel = nil;
 	else
 	{
-		outSel = new VDB4DSelection( xtarget->GetManager(), VImpCreator<VDB4DBase>::GetImpObject(xtarget->GetOwner()), IO.GetTarget(), sel);
+		outSel = new VDB4DSelection( xtarget->GetManager(), dynamic_cast<VDB4DBase*>(xtarget->GetOwner()), IO.GetTarget(), sel);
 	}
 	
 	return err;
@@ -11701,12 +11782,12 @@ VError VDB4DImpExp::RunExport(CDB4DSelection* inSel, VDB4DProgressIndicator* InP
 
 	if (inSel != nil)
 	{
-		VDB4DSelection* xinSel = VImpCreator<VDB4DSelection>::GetImpObject( inSel);
+		VDB4DSelection* xinSel = dynamic_cast<VDB4DSelection*>( inSel);
 		sel = xinSel->GetSel();
 	}
 	else sel = nil;
 	
-	VDB4DTable* xtarget = VImpCreator<VDB4DTable>::GetImpObject( target);
+	VDB4DTable* xtarget = dynamic_cast<VDB4DTable*>( target);
 	
 	return IO.RunExport(sel, context, InProgress);
 	
@@ -11729,9 +11810,9 @@ CharSet VDB4DImpExp::GetCharSet()
 
 
 VDB4DCheckAndRepairAgent::VDB4DCheckAndRepairAgent(CDB4DBase* inTarget):
-	fAgent(VImpCreator<VDB4DBase>::GetImpObject( inTarget)->GetBase())
+	fAgent(dynamic_cast<VDB4DBase*>( inTarget)->GetBase())
 {
-	fTarget = VImpCreator<VDB4DBase>::GetImpObject( inTarget);
+	fTarget = dynamic_cast<VDB4DBase*>( inTarget);
 	fTarget->Retain();
 }
 
@@ -11788,7 +11869,7 @@ void VDB4DCheckAndRepairAgent::SetCheckBlobsState(Boolean OnOff)
 
 VDB4DRelation::VDB4DRelation(CDB4DBase* inTarget, Relation* xrel)
 {
-	fTarget = VImpCreator<VDB4DBase>::GetImpObject(inTarget);
+	fTarget = dynamic_cast<VDB4DBase*>(inTarget);
 	fTarget->Retain("VDB4DRelation");
 
 	if (xrel != NULL)
@@ -11812,7 +11893,7 @@ VErrorDB4D VDB4DRelation::ActivateManyToOneS(CDB4DRecord *InRec, CDB4DQueryOptio
 	VError err = VE_OK;
 
 	VDB4DQueryResult* xresult = nil;
-	QueryOptions* options = VImpCreator<VDB4DQueryOptions>::GetImpObject(&inOptions)->GetOptions();
+	QueryOptions* options = dynamic_cast<VDB4DQueryOptions*>(&inOptions)->GetOptions();
 	BaseTaskInfo* context = ConvertContext(inContext);
 	if (fRel != nil)
 	{
@@ -11910,7 +11991,7 @@ VErrorDB4D VDB4DRelation::ActivateManyToOne(CDB4DRecord *InRec, CDB4DQueryOption
 	VError err = VE_OK;
 
 	VDB4DQueryResult* xresult = nil;
-	QueryOptions* options = VImpCreator<VDB4DQueryOptions>::GetImpObject(&inOptions)->GetOptions();
+	QueryOptions* options = dynamic_cast<VDB4DQueryOptions*>(&inOptions)->GetOptions();
 	BaseTaskInfo* context = ConvertContext(inContext);
 	if (fRel != nil)
 	{
@@ -12025,7 +12106,7 @@ VErrorDB4D VDB4DRelation::ActivateOneToMany(CDB4DRecord *InRec, CDB4DQueryOption
 	VError err = VE_OK;
 
 	VDB4DQueryResult* xresult = nil;
-	QueryOptions* options = VImpCreator<VDB4DQueryOptions>::GetImpObject(&inOptions)->GetOptions();
+	QueryOptions* options = dynamic_cast<VDB4DQueryOptions*>(&inOptions)->GetOptions();
 	BaseTaskInfo* context = ConvertContext(inContext);
 	if (fRel != nil)
 	{
@@ -12154,7 +12235,7 @@ VError VDB4DRelation::ActivateManyToOne( CDB4DRecord *InRec, CDB4DRecord* &OutRe
 			}
 			else
 			{
-				VDB4DRecord* rec = VImpCreator<VDB4DRecord>::GetImpObject(InRec);
+				VDB4DRecord* rec = dynamic_cast<VDB4DRecord*>(InRec);
 				FicheInMem* xrec = (FicheInMem*)rec->GetFicheInMem();
 				FicheInMem* result;
 
@@ -12213,7 +12294,7 @@ VError VDB4DRelation::ActivateOneToMany( CDB4DRecord *InRec, CDB4DSelection* &Ou
 			}
 			else
 			{
-				VDB4DRecord* rec = VImpCreator<VDB4DRecord>::GetImpObject(InRec);
+				VDB4DRecord* rec = dynamic_cast<VDB4DRecord*>(InRec);
 				FicheInMem* xrec = (FicheInMem*)rec->GetFicheInMem();
 				Selection* result;
 
@@ -12277,7 +12358,7 @@ VError VDB4DRelation::ActivateManyToOneS( CDB4DRecord *InRec, CDB4DSelection* &O
 			}
 			else
 			{
-				VDB4DRecord* rec = VImpCreator<VDB4DRecord>::GetImpObject(InRec);
+				VDB4DRecord* rec = dynamic_cast<VDB4DRecord*>(InRec);
 				FicheInMem* xrec = (FicheInMem*)rec->GetFicheInMem();
 				Selection* result;
 
@@ -12320,8 +12401,8 @@ VError VDB4DRelation::SetFields(DB4D_RelationType inWhatType, const VString& inN
 	{
 		Base4D* bd = fTarget->GetBase();
 		fRel = bd->CreateRelation(inWhatType, inName
-			, VImpCreator<VDB4DField>::GetImpObject(inSourceField)->GetField()
-			, VImpCreator<VDB4DField>::GetImpObject(inDestinationField)->GetField(), err);
+			, dynamic_cast<VDB4DField*>(inSourceField)->GetField()
+			, dynamic_cast<VDB4DField*>(inDestinationField)->GetField(), err);
 
 	}
 
@@ -12945,7 +13026,7 @@ static Bittab* GetBittabFromCDB4DSelectionPtr(CDB4DSelectionPtr xsel, BaseTaskIn
 
 	if (xsel != nil)
 	{
-		sel = VImpCreator<VDB4DSelection>::GetImpObject(xsel)->GetSel();
+		sel = dynamic_cast<VDB4DSelection*>(xsel)->GetSel();
 	}
 
 	if (sel != nil)
@@ -12986,7 +13067,7 @@ RecIDType VDB4DIndex::FindKey(const VValueSingle &inValToFind, VErrorDB4D& err, 
 			if (Filter == nil)
 				req->PutLongParam(sel_nosel);
 			else
-				req->PutSelectionParam(VImpCreator<VDB4DSelection>::GetImpObject(Filter)->GetSel(), inContext);
+				req->PutSelectionParam(dynamic_cast<VDB4DSelection*>(Filter)->GetSel(), inContext);
 			PutVCompareOptionsIntoStream(inOptions, *(req->GetOutputStream()));
 			req->PutValueParam(&inValToFind);
 			err = req->GetLastError();
@@ -13179,7 +13260,7 @@ CDB4DQueryResult* VDB4DIndex::ScanIndex(CDB4DQueryOptions& inOptions, Boolean Ke
 	CDB4DQueryResult* xresult = nil;
 
 	BaseTaskInfo* context = ConvertContext(inContext);
-	QueryOptions* options = VImpCreator<VDB4DQueryOptions>::GetImpObject(&inOptions)->GetOptions();
+	QueryOptions* options = dynamic_cast<VDB4DQueryOptions*>(&inOptions)->GetOptions();
 
 	if (fInd->IsRemote())
 	{
@@ -13211,7 +13292,7 @@ CDB4DQueryResult* VDB4DIndex::ScanIndex(CDB4DQueryOptions& inOptions, Boolean Ke
 						outError = ThrowBaseError(memfull, noaction);
 					else
 					{
-						QueryResult* result = &(VImpCreator<VDB4DQueryResult>::GetImpObject(xresult)->GetResult());
+						QueryResult* result = &(dynamic_cast<VDB4DQueryResult*>(xresult)->GetResult());
 						outError = req->ReadQueryResultReply(fInd->GetDB(), fInd->GetTargetTable(), result, context);
 					}
 				}
@@ -13225,7 +13306,7 @@ CDB4DQueryResult* VDB4DIndex::ScanIndex(CDB4DQueryOptions& inOptions, Boolean Ke
 		if (sel != nil)
 		{
 			xresult = new VDB4DQueryResult(fInd->GetTargetTable());
-			QueryResult* result = &(VImpCreator<VDB4DQueryResult>::GetImpObject(xresult)->GetResult());
+			QueryResult* result = &(dynamic_cast<VDB4DQueryResult*>(xresult)->GetResult());
 			result->SetSelection(sel);
 			if (options->GetWantsFirstRecord() && !sel->IsEmpty())
 			{
@@ -13277,12 +13358,12 @@ CDB4DSelection* VDB4DIndex::ScanIndex(RecIDType inMaxRecords, Boolean KeepSorted
 	else
 	{
 		if (filter != nil)
-			filtre = VImpCreator<VDB4DSelection>::GetImpObject(filter)->GetSel();
+			filtre = dynamic_cast<VDB4DSelection*>(filter)->GetSel();
 
 		if (inContext != nil)
 		{
 			BaseTaskInfo* context = ConvertContext(inContext);
-			base = VImpCreator<VDB4DBase>::GetImpObject(context->GetOwner());
+			base = dynamic_cast<VDB4DBase*>(context->GetOwner());
 			assert(context->GetBase() == fInd->GetDB());
 		}
 
@@ -13510,7 +13591,7 @@ void VDB4DContext::FreeAllJSFuncs()
 
 		for (ContextByBaseMap::iterator cur = fContexts.begin(), end = fContexts.end(); cur != end; cur++)
 		{
-			BaseTaskInfo* context = VImpCreator<BaseTaskInfo>::GetImpObject(cur->second.fContext);
+			BaseTaskInfo* context = dynamic_cast<BaseTaskInfo*>(cur->second.fContext);
 			context->FreeAllJSMethods();
 		}
 
@@ -13531,7 +13612,7 @@ void VDB4DContext::SetCurrentUser(const VUUID& inUserID, CUAGSession* inSession)
 {
 	for (ContextByBaseMap::iterator cur = fContexts.begin(), end = fContexts.end(); cur != end; cur++)
 	{
-		BaseTaskInfo* context = VImpCreator<BaseTaskInfo>::GetImpObject(cur->second.fContext);
+		BaseTaskInfo* context = dynamic_cast<BaseTaskInfo*>(cur->second.fContext);
 		context->SetCurrentUser(inUserID, inSession);
 	}
 
@@ -13560,7 +13641,7 @@ CDB4DBaseContextPtr VDB4DContext::RetainDataBaseContext(CDB4DBase* inTarget, Boo
 
 	CDB4DBaseContextPtr res = nil;
 
-	Base4D* base = VImpCreator<VDB4DBase>::GetImpObject(inTarget)->GetBase();
+	Base4D* base = dynamic_cast<VDB4DBase*>(inTarget)->GetBase();
 
 	ContextByBaseMap::iterator found = fContexts.find(base);
 	if (found != fContexts.end())
@@ -13571,7 +13652,7 @@ CDB4DBaseContextPtr VDB4DContext::RetainDataBaseContext(CDB4DBase* inTarget, Boo
 	if (ForceCreate && (res == nil))
 	{
 		res = inTarget->NewContext(fUserSession, fJSContext, fIsLocal);
-		VImpCreator<BaseTaskInfo>::GetImpObject(res)->SetContextOwner(this);
+		dynamic_cast<BaseTaskInfo*>(res)->SetContextOwner(this);
 
 		contextElem elem;
 		elem.fContext = res;
@@ -13589,9 +13670,20 @@ CDB4DBaseContextPtr VDB4DContext::RetainDataBaseContext(CDB4DBase* inTarget, Boo
 }
 
 
+BaseTaskInfo* VDB4DContext::RetainDataBaseContext(Base4D* inTarget, Boolean ForceCreate, bool reallyRetain)
+{
+	if (inTarget == nil)
+		return nil;
+	CDB4DBase *basex = inTarget->RetainBaseX();
+	CDB4DBaseContext* context = RetainDataBaseContext(basex, ForceCreate, reallyRetain);
+	QuickReleaseRefCountable(basex);
+	return ConvertContext(context);
+}
+
+
 void VDB4DContext::NowOwns(CDB4DBaseContextPtr context)
 {
-	Base4D* base = VImpCreator<BaseTaskInfo>::GetImpObject(context)->GetBase();
+	Base4D* base = dynamic_cast<BaseTaskInfo*>(context)->GetBase();
 	contextElem* elem = &(fContexts[base]);
 	elem->fContext = RetainRefCountable(context);
 	elem->fMustRelease = true;
@@ -13600,7 +13692,7 @@ void VDB4DContext::NowOwns(CDB4DBaseContextPtr context)
 
 void VDB4DContext::ContainButDoesNotOwn(CDB4DBaseContextPtr context)
 {
-	Base4D* base = VImpCreator<BaseTaskInfo>::GetImpObject(context)->GetBase();
+	Base4D* base = dynamic_cast<BaseTaskInfo*>(context)->GetBase();
 	contextElem* elem = &(fContexts[base]);
 	elem->fContext = context;
 	elem->fMustRelease = false;
@@ -13686,7 +13778,7 @@ void VDB4DContext::SetJSContext(VJSGlobalContext* inJSContext)
 	ContextByBaseMap::iterator cur = fContexts.begin(), end = fContexts.end();
 	for (; cur != end; cur++)
 	{
-		BaseTaskInfo* context = VImpCreator<BaseTaskInfo>::GetImpObject(cur->second.fContext);
+		BaseTaskInfo* context = dynamic_cast<BaseTaskInfo*>(cur->second.fContext);
 		context->SetJSContext(inJSContext, false);
 	}
 	fJSContext = inJSContext;	// sc 24/08/2009 no more retain on JavaScript context
@@ -13754,7 +13846,7 @@ VErrorDB4D VDB4DColumnFormula::Add(CDB4DField* inColumn, DB4D_ColumnFormulae inF
 	if (inColumn == nil)
 		return VE_DB4D_WRONGFIELDREF;
 	else
-	return fFormules.AddAction(inFormula, VImpCreator<VDB4DField>::GetImpObject(inColumn)->GetField());
+	return fFormules.AddAction(inFormula, dynamic_cast<VDB4DField*>(inColumn)->GetField());
 }
 
 
@@ -13770,7 +13862,7 @@ VErrorDB4D VDB4DColumnFormula::Execute(CDB4DSelection* inSel, CDB4DBaseContext* 
 		Selection* sel = nil;
 		if (inSel != nil)
 		{
-			sel = VImpCreator<VDB4DSelection>::GetImpObject(inSel)->GetSel();
+			sel = dynamic_cast<VDB4DSelection*>(inSel)->GetSel();
 		}
 		FicheInMem* currec = nil;
 		if (inCurrentRecord != nil)
@@ -13870,7 +13962,7 @@ sLONG8 VDB4DAutoSeqNumber::GetNewValue(DB4D_AutoSeqToken& ioToken)
 
 void VDB4DAutoSeqNumber::ValidateValue(DB4D_AutoSeqToken inToken, CDB4DTable* inTable, CDB4DBaseContext* context)
 {
-	fSeq->ValidateValue(inToken, VImpCreator<VDB4DTable>::GetImpObject(inTable)->GetTable(), ConvertContext(context));
+	fSeq->ValidateValue(inToken, dynamic_cast<VDB4DTable*>(inTable)->GetTable(), ConvertContext(context));
 }
 
 
@@ -14992,7 +15084,7 @@ VErrorDB4D VDB4DRawDataBase::CompactInto(CDB4DBase* outCompactedBase, IDB4D_Data
 
 	if (outCompactedBase != nil)
 	{
-		target = VImpCreator<VDB4DBase>::GetImpObject(outCompactedBase)->GetBase();
+		target = dynamic_cast<VDB4DBase*>(outCompactedBase)->GetBase();
 	}
 
 	VError err = VE_OK;
@@ -15110,7 +15202,7 @@ VErrorDB4D VDB4DRawDataBase::RecoverByTags(CDB4DBase* outRecoveredBase, IDB4D_Da
 
 	if (outRecoveredBase != nil)
 	{
-		target = VImpCreator<VDB4DBase>::GetImpObject(outRecoveredBase)->GetBase();
+		target = dynamic_cast<VDB4DBase*>(outRecoveredBase)->GetBase();
 	}
 
 	if (fBase != nil && target != nil)
@@ -15156,10 +15248,10 @@ VErrorDB4D VDB4DRawDataBase::RecoverByTags(CDB4DBase* outRecoveredBase, IDB4D_Da
 
 void VDB4DQueryOptions::SetFilter( CDB4DSelection* inFilter)
 {
-	fOptions.SetFilter(inFilter == nil ? nil : VImpCreator<VDB4DSelection>::GetImpObject(inFilter)->GetSel());
+	fOptions.SetFilter(inFilter == nil ? nil : dynamic_cast<VDB4DSelection*>(inFilter)->GetSel());
 	if (inFilter != nil)
 	{
-		fOptions.SetFilterTable(VImpCreator<VDB4DSelection>::GetImpObject(inFilter)->GetTable());
+		fOptions.SetFilterTable(dynamic_cast<VDB4DSelection*>(inFilter)->GetTable());
 	}
 }
 
@@ -15221,7 +15313,7 @@ CDB4DSelection* VDB4DQueryResult::GetSelection()
 		Selection* sel = fResult.GetSelection();
 		if (sel != nil)
 		{
-			fSelection = new VDB4DSelection(VDBMgr::GetManager(), VImpCreator<VDB4DBase>::GetImpObject(fTable->GetOwner()), VImpCreator<VDB4DTable>::GetImpObject(fTable)->GetTable(), sel);
+			fSelection = new VDB4DSelection(VDBMgr::GetManager(), dynamic_cast<VDB4DBase*>(fTable->GetOwner()), dynamic_cast<VDB4DTable*>(fTable)->GetTable(), sel);
 			if (fSelection != nil)
 				sel->Retain();
 			else
@@ -15239,7 +15331,7 @@ CDB4DSet* VDB4DQueryResult::GetSet()
 		Bittab* set = fResult.GetSet();
 		if (set != nil)
 		{
-			fSet = new VDB4DSet(VImpCreator<VDB4DBase>::GetImpObject(fTable->GetOwner()), VImpCreator<VDB4DTable>::GetImpObject(fTable)->GetTable(), set);
+			fSet = new VDB4DSet(dynamic_cast<VDB4DBase*>(fTable->GetOwner()), dynamic_cast<VDB4DTable*>(fTable)->GetTable(), set);
 			if (fSet == nil)
 				ThrowBaseError(memfull, noaction);
 		}
@@ -15274,7 +15366,7 @@ CDB4DSet* VDB4DQueryResult::GetLockedSet()
 		Bittab* set = fResult.GetLockedSet();
 		if (set != nil)
 		{
-			fLockedSet = new VDB4DSet(VImpCreator<VDB4DBase>::GetImpObject(fTable->GetOwner()), VImpCreator<VDB4DTable>::GetImpObject(fTable)->GetTable(), set);
+			fLockedSet = new VDB4DSet(dynamic_cast<VDB4DBase*>(fTable->GetOwner()), dynamic_cast<VDB4DTable*>(fTable)->GetTable(), set);
 			if (fLockedSet == nil)
 				ThrowBaseError(memfull, noaction);
 		}

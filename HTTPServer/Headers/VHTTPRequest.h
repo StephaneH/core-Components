@@ -17,7 +17,6 @@
 #define __HTTP_REQUEST_INCLUDED__
 
 #include "VTCPServer.h"
-#include "VHTTPMessage.h"
 #include "VAuthenticationManager.h"
 
 
@@ -37,7 +36,6 @@ public:
 	void							Reset();
 
 	XBOX::VError					ReadFromEndPoint (XBOX::VTCPEndPoint& inEndPoint, uLONG inTimeout = 0);
-	XBOX::VError					ReadFromStream (XBOX::VStream& inStream);
 
 	HTTPRequestMethod				GetRequestMethod() const { return fRequestMethod; }
 	void							GetRequestMethodString (XBOX::VString& outMethodString) const;

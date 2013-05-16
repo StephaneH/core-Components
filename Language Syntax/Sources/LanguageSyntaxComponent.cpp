@@ -64,17 +64,18 @@ private:
 		VString fFileContents;
 		// (OPTIONAL) The symbol table we will add symbols to
 		ISymbolTable *fSymTable;
-		// Cookie to be passed in to any signals we fire
-		TaskCookie fCookie;
 		// (OPTIONAL) If this item is a part of a job, then the job pointer lives here
 		IJob *fJob;
 		// (OPTIONAL) If the work item is actually an entity model catalog, we need to use
 		// the special interface to handle it.  If this is non-NULL, then we will ignore
 		// the fFileContents field.
 		IEntityModelCatalog *fCatalog;
-		// This field is used to communicate whether a parse was successful or not to
-		// the work item itself.
-		bool fHadParsingError;
+		// This field is used to indicate if the file content has been set (even if the file
+		// content is empty
+		bool fFileContentHasBeenSet;
+		// This field is used to indicate if we have to process parsing regardless file
+		// modification time stamps (usefull case to discard file modification saving)
+		bool fParsingIsMandatory;
 
 		void CleanUp( void ) {
 			if (fSymTable)	fSymTable->Release();
@@ -101,11 +102,13 @@ private:
 	// vector.  So the worker thread should always be using pop_back to get the next item to work on
 	WorkList fWorkQueue;
 	std::vector< class WorkerThread * > fWorkers;
+	std::map< VFilePath, VCriticalSection* > fParseOutlineMutexes;
 	////////////////   ---- End shared resource section
 
+	ParsingStartSignal fParsingStartSignal;
 	ParsingCompleteSignal fParsingCompleteSignal;
 	CompileErrorSignal fCompileErrorSignal;
-	JobCompleteSignal fJobCompleteSignal;
+	PendingParsingRequestSignal fPendingParsingRequestSignal;
 
 	enum { kDefault = 0 };
 	void CreateWorkerThreads( sLONG inNumThreads );		// Pass kDefault to create the default number of threads
@@ -115,23 +118,68 @@ private:
 	bool AnyThreadWorkingOn( const VFilePath &inPath, const void *inCaller );
 	WorkerThread *GetThreadWorkingFor( const void *inCaller );
 
-	void ScheduleTaskHelper( const void *inCaller, const VSymbolFileInfos &inFileInfos, IEntityModelCatalog *inCatalog, const VString &inContents, TaskCookie inCookie, ISymbolTable *inSymTable, Priority inPriority, IJob *inJob = NULL );
+	bool ScheduleTaskHelper( const void *inCaller, const VSymbolFileInfos &inFileInfos, IEntityModelCatalog *inCatalog, const VString &inContents, const bool& inFileContentIsSet, ISymbolTable *inSymTable, Priority inPriority, IJob *inJob, const bool& inParsingMandatory );
+
+	// Used for user feedback, should be incremented each time we schedule a parsing task and decremented each time a parsing task is finished
+	sLONG fFilesToParseCount;
+	bool fParsingStatusStartNotified;
+	void ResetFilesToParseCounter()
+	{
+		fFilesToParseCount=0;
+		fParsingStatusStartNotified=false;
+		fPendingParsingRequestSignal.Trigger(fFilesToParseCount);
+	}
+	void IncrementFilesToParseCounter()
+	{
+		fFilesToParseCount++;
+		if( fFilesToParseCount>=1 && fParsingStatusStartNotified==false )
+		{
+			fParsingStatusStartNotified = true;
+			fPendingParsingRequestSignal.Trigger(fFilesToParseCount);
+		}
+#if VERSIONDEBUG
+		VString msg("[Parsing] Pending(");
+		msg.AppendLong(fFilesToParseCount);
+		msg.AppendString(")\n");
+		DebugMsg(msg);
+#endif
+	}
+	void DecrementFilesToParseCounter()
+	{
+		fFilesToParseCount--;
+		if( fFilesToParseCount<=0 && fParsingStatusStartNotified==true)
+		{
+			fParsingStatusStartNotified = false;
+			fPendingParsingRequestSignal.Trigger(fFilesToParseCount);
+		}
+#if VERSIONDEBUG
+		VString msg("[Parsing] Pending(");
+		msg.AppendLong(fFilesToParseCount);
+		msg.AppendString(")\n");
+		DebugMsg(msg);
+#endif
+	}
 
 public:
 	VDocumentParserManager();
 	virtual ~VDocumentParserManager();
 
 	virtual IJob *CreateJob();
-
+	
+	virtual XBOX::VCriticalSection* GetLockForParseOrOutline(const XBOX::VFilePath&);
+	
+	virtual ParsingStartSignal &GetParsingStartSignal() { return fParsingStartSignal; }
 	virtual ParsingCompleteSignal &GetParsingCompleteSignal() { return fParsingCompleteSignal; }
 	virtual CompileErrorSignal &GetCompileErrorSignal() { return fCompileErrorSignal; }
-	virtual JobCompleteSignal &GetJobCompleteSignal() { return fJobCompleteSignal; }
+	virtual PendingParsingRequestSignal &GetPendingParsingRequestSignal() { return fPendingParsingRequestSignal; }
 
-	virtual void ScheduleTask( const void *inCaller, const VSymbolFileInfos &inFileInfos, const VString &inContents, TaskCookie inCookie, class ISymbolTable *inTable, Priority inPriority = kPriorityNormal );
-	virtual void ScheduleTask( const void *inCaller, const VSymbolFileInfos &inFileInfos, TaskCookie inCookie, class ISymbolTable *inTable, Priority inPriority = kPriorityNormal );
-	virtual void ScheduleTask( const void *inCaller, IEntityModelCatalog *inCatalog, TaskCookie inCookie, class ISymbolTable *inTable, Priority inPriority = kPriorityNormal );
-	virtual void ScheduleTask( const void *inCaller, IJob *inJob, TaskCookie inCookie, class ISymbolTable *inTable, Priority inPriority = kPriorityNormal );
+	virtual bool ScheduleTask( const void *inCaller, const VSymbolFileInfos &inFileInfos, const VString &inContents, class ISymbolTable *inTable, Priority inPriority = kPriorityNormal, const bool& inParsingMandatory = false );
+	virtual bool ScheduleTask( const void *inCaller, const VSymbolFileInfos &inFileInfos, class ISymbolTable *inTable, Priority inPriority = kPriorityNormal, const bool& inParsingMandatory = false );
+	virtual bool ScheduleTask( const void *inCaller, IEntityModelCatalog *inCatalog, class ISymbolTable *inTable, Priority inPriority = kPriorityNormal, const bool& inParsingMandatory = false );
+	virtual bool ScheduleTask( const void *inCaller, IJob *inJob, class ISymbolTable *inTable, Priority inPriority = kPriorityNormal, const bool& inParsingMandatory = false );
 	virtual void UnscheduleTasksForHandler( const void *inCaller );
+	
+	virtual sLONG GetFilesToParseCount() const { return fFilesToParseCount; }
 };
 
 class WorkerThread : public VTask, public JavaScriptParserDelegate {
@@ -151,20 +199,59 @@ private:
 		return 0;
 	}
 	void ExecuteTask();
-	void ParseDocument( VDocumentParserManager::WorkItem *inWorkItem );
+	bool ParseDocument( VDocumentParserManager::WorkItem *inWorkItem, bool& outHasParsingError, bool& outContentOverwritenFromDisk, bool& outTimeStampUpdated );
 	//Symbols::IFile *GetFileForDeclarationParsingUpdate( ISymbolTable *inTable, const VString &inFilePath );
 	Symbols::IFile *GetFileForDeclarationParsingUpdate( ISymbolTable *inTable, const VFilePath &inFilePath, const ESymbolFileBaseFolder inBaseFolder, const ESymbolFileExecContext inExecContext);
 
 
 	// Members for the JavaScriptParserDelegate interface
-	virtual void Error( JavaScriptError::Code code, sLONG line, sLONG offset, void *cookie );
-	virtual void BlockOpener( sLONG line, sLONG offset, void *cookie ) {}
-	virtual void BlockCloser( sLONG line, sLONG offset, void *cookie ) {}
-	virtual Symbols::ISymbol *GetDeclarationContext( void *cookie ) { return NULL; }
+	virtual void Error( XBOX::VFilePath, sLONG inLine, sLONG inOffset, const XBOX::VString& inMessage );
+	virtual Symbols::ISymbol *GetDeclarationContext( ) { return NULL; }
 
 	void ParseEntityModel( ISymbolTable *inTable, Symbols::IFile *inOwnerFile, const VString &inEntityName, std::vector< IEntityModelCatalogAttribute* >& inAttributes, std::vector< IEntityModelCatalogMethod* >& inMethods );
 	Symbols::ISymbol *GetSymbol( ISymbolTable *inTable, const XBOX::VString &inSymbolName, const XBOX::VString &inFileName );
 	void CreateNewInstance( ISymbolTable *inTable, Symbols::ISymbol *inSym, const XBOX::VString &inSymbolName, const XBOX::VString &inFileName );
+	
+	bool _IsJavaScriptContent(const VDocumentParserManager::WorkItem* inWorkItem) const
+	{
+		bool ret = false;
+
+		VString extension;
+		inWorkItem->fFilePath.GetExtension( extension );
+		if( extension == "js" || _IsJSONContent(inWorkItem) )
+			ret = true;
+		
+		return ret;
+	}
+	
+	bool _IsJSONContent(const VDocumentParserManager::WorkItem* inWorkItem) const
+	{
+		bool ret = false;
+		
+		VString extension;
+		inWorkItem->fFilePath.GetExtension( extension );
+
+		if( extension == "waModel" && inWorkItem->fCatalog == NULL && inWorkItem->fFileContents.BeginsWith("{") )
+			ret = true;
+		
+		return ret;
+	}
+	
+	void _PrepareJSONContentForParsing(VDocumentParserManager::WorkItem* inWorkItem, VString& outContent) const
+	{
+		outContent.AppendString("var waModel=");
+		outContent.AppendString(inWorkItem->fFileContents);
+	}
+	
+	bool _IsDataModelContent(const VDocumentParserManager::WorkItem* inWorkItem) const
+	{
+		bool ret = false;
+		
+		if( inWorkItem->fCatalog )
+			ret = true;
+		
+		return ret;
+	}
 
 public:
 	WorkerThread( VDocumentParserManager *inCreator ) : VTask( inCreator, 0, eTaskStylePreemptive, WorkerRunner ), fCurrentWorkItem( NULL ), fManager( inCreator ), fWaitingForWork( true ) {
@@ -249,6 +336,7 @@ public:
 
 VDocumentParserManager::VDocumentParserManager() 
 {
+	ResetFilesToParseCounter();
 	fTaskLock = new VCriticalSection();
 	CreateWorkerThreads( kDefault );
 }
@@ -261,6 +349,15 @@ VDocumentParserManager::~VDocumentParserManager()
 	// We have to ensure our worker thread stops processing whatever work item it
 	// is currently working on.
 	ShutdownWorkerThread( NULL );
+
+	for( std::map< VFilePath, VCriticalSection* >::iterator it=fParseOutlineMutexes.begin(); it!=fParseOutlineMutexes.end(); ++it)
+	{
+		if( it->second )
+		{
+			delete it->second;
+			it->second = NULL;
+		}
+	}
 
 	delete fTaskLock;
 }
@@ -364,7 +461,7 @@ bool VDocumentParserManager::AnyThreadWorkingOn( const VFilePath &inPath, const 
 }
 
 
-void VDocumentParserManager::ScheduleTaskHelper( const void *inCaller, const VSymbolFileInfos &inFileInfos, IEntityModelCatalog *inCatalog, const VString &inContents, TaskCookie inCookie, ISymbolTable *inSymTable, Priority inPriority, IJob *inJob )
+bool VDocumentParserManager::ScheduleTaskHelper( const void *inCaller, const VSymbolFileInfos &inFileInfos, IEntityModelCatalog *inCatalog, const VString &inContents, const bool& inFileContentIsSet, ISymbolTable *inSymTable, Priority inPriority, IJob *inJob, const bool& inParsingMandatory )
 {
 	// We need to iterate over the list of work items already scheduled and see if there is already a
 	// work item for this file and handler.  If there is, we just want to update the priority.  Also, if
@@ -397,79 +494,133 @@ void VDocumentParserManager::ScheduleTaskHelper( const void *inCaller, const VSy
 	}
 	fTaskLock->Unlock();
 
-	if (!bAddToQueue) {
+	if (!bAddToQueue)
+	{
 		// If we are not scheduling this task, but the task is part of a batch of jobs, we need to let the job
 		// know not to expect this document
-		if (inJob)	static_cast< VJobObject * >( inJob )->TaskComplete();
-		return;
+		if (inJob)
+			static_cast< VJobObject * >( inJob )->TaskComplete();
 	}
-
-	// Now we want to create a new work item and add it to the queue.  Once we've added it to the queue, we want to
-	// sort the queue to ensure that all of our work items are in priority order, from lowest to highest.
-	WorkItem *item = new WorkItem;
-	item->fFilePath = inFileInfos.GetFilePath();
-	item->fBaseFolder = inFileInfos.GetBaseFolder();
-	item->fExecutionScope = inFileInfos.GetExecutionContext();
-	item->fHandler = inCaller;
-	item->fPriority = inPriority;
-	item->fFileContents = inContents;
-	item->fSymTable = inSymTable;
-	item->fCookie = inCookie;
-	item->fJob = inJob;
-	item->fCatalog = inCatalog;
-	item->fHadParsingError = false;
-
-	if (item->fCatalog)		item->fCatalog->Retain();
-	if (item->fJob)			item->fJob->Retain();
-	if (item->fSymTable)	item->fSymTable->Retain();
-
-	fTaskLock->Lock();
-	fWorkQueue.insert( fWorkQueue.begin(), item );
-	fWorkQueue.sort( WorkItemComparator );
-
-	// We want to make sure our worker is awake, since there's now some work to do.  However, we have to pick a worker
-	// thread to wake up because each thread is responsible for its own synchronization event.	Lucky for us, our worker
-	// threads are smart enough to track whether they're waiting for work.  So we just loop through and find the first one
-	// that is waiting for work.  If none of them are waiting for work, then we don't have to do anything anyways.
-	for (std::vector< WorkerThread * >::iterator iter = fWorkers.begin(); iter != fWorkers.end(); ++iter) {
-		if ((*iter)->IsWaitingForWork()) {
-			(*iter)->WakeMeUpPlease();
-			break;
+	else
+	{
+		// Now we want to create a new work item and add it to the queue.  Once we've added it to the queue, we want to
+		// sort the queue to ensure that all of our work items are in priority order, from lowest to highest.
+		WorkItem *item = new WorkItem;
+		item->fFilePath					=	inFileInfos.GetFilePath();
+		item->fBaseFolder				=	inFileInfos.GetBaseFolder();
+		item->fExecutionScope			=	inFileInfos.GetExecutionContext();
+		item->fHandler					=	inCaller;
+		item->fPriority					=	inPriority;
+		item->fFileContents				=	inContents;
+		item->fSymTable					=	inSymTable;
+		item->fJob						=	inJob;
+		item->fCatalog					=	inCatalog;
+		item->fFileContentHasBeenSet	=	inFileContentIsSet;
+		item->fParsingIsMandatory		=	inParsingMandatory;
+		
+		if (item->fCatalog)		item->fCatalog->Retain();
+		if (item->fJob)			item->fJob->Retain();
+		if (item->fSymTable)	item->fSymTable->Retain();
+		
+		fTaskLock->Lock();
+		fWorkQueue.insert( fWorkQueue.begin(), item );
+		fWorkQueue.sort( WorkItemComparator );
+		
+		// We want to make sure our worker is awake, since there's now some work to do.  However, we have to pick a worker
+		// thread to wake up because each thread is responsible for its own synchronization event.	Lucky for us, our worker
+		// threads are smart enough to track whether they're waiting for work.  So we just loop through and find the first one
+		// that is waiting for work.  If none of them are waiting for work, then we don't have to do anything anyways.
+		for (std::vector< WorkerThread * >::iterator iter = fWorkers.begin(); iter != fWorkers.end(); ++iter) {
+			if ((*iter)->IsWaitingForWork()) {
+				(*iter)->WakeMeUpPlease();
+				break;
+			}
 		}
+		
+		// Update the count of files to be parsed
+		IncrementFilesToParseCounter();
+		
+		fTaskLock->Unlock();
 	}
-
-	fTaskLock->Unlock();
+	
+#if VERSIONDEBUG
+	if( bAddToQueue )
+	{
+		VString msg("[Scheduling Done] File(");
+		msg.AppendString(inFileInfos.GetFilePath().GetPath());
+		msg.AppendString(") ContentSet(");
+		msg.AppendLong(inFileContentIsSet);
+		msg.AppendString(") ParsingMandatory(");
+		msg.AppendLong(inParsingMandatory);
+		msg.AppendString(")\r\n");
+		DebugMsg(msg);		
+	}
+	else
+	{
+		VString msg("[Scheduling Discarded] File(");
+		msg.AppendString(inFileInfos.GetFilePath().GetPath());
+		msg.AppendString(")\r\n");
+		DebugMsg(msg);
+	}
+#endif
+	
+	return bAddToQueue;
 }
 
-
-
-void VDocumentParserManager::ScheduleTask( const void *inCaller, const VSymbolFileInfos& inFileInfos, const VString &inContents, TaskCookie inCookie, ISymbolTable *inTable, Priority inPriority )
+bool VDocumentParserManager::ScheduleTask( const void *inCaller, const VSymbolFileInfos& inFileInfos, const VString &inContents, ISymbolTable *inTable, Priority inPriority, const bool& inParsingMandatory )
 {
-	ScheduleTaskHelper( inCaller, inFileInfos, NULL, inContents, inCookie, inTable, inPriority );
+	bool res = ScheduleTaskHelper( inCaller, inFileInfos, NULL, inContents, true, inTable, inPriority, NULL, inParsingMandatory );
+	return res;
 }
 
-void VDocumentParserManager::ScheduleTask( const void *inCaller, const VSymbolFileInfos& inFileInfos, TaskCookie inCookie, ISymbolTable *inTable, Priority inPriority )
+bool VDocumentParserManager::ScheduleTask( const void *inCaller, const VSymbolFileInfos& inFileInfos, ISymbolTable *inTable, Priority inPriority, const bool& inParsingMandatory )
 {
-	ScheduleTaskHelper( inCaller, inFileInfos, NULL, CVSTR( "" ), inCookie, inTable, inPriority );
+	bool res = ScheduleTaskHelper( inCaller, inFileInfos, NULL, CVSTR( "" ), false, inTable, inPriority, NULL, inParsingMandatory );
+	return res;
 }
 
-void VDocumentParserManager::ScheduleTask( const void *inCaller, IEntityModelCatalog *inCatalog, TaskCookie inCookie, ISymbolTable *inTable, Priority inPriority )
+bool VDocumentParserManager::ScheduleTask( const void *inCaller, IEntityModelCatalog *inCatalog, ISymbolTable *inTable, Priority inPriority, const bool& inParsingMandatory )
 {
 	VFilePath path;
 	inCatalog->GetCatalogPath( path );
 
 	VSymbolFileInfos fileInfos(path, eSymbolFileBaseFolderProject, eSymbolFileExecContextServer);
 
-	ScheduleTaskHelper( inCaller, fileInfos, inCatalog, CVSTR( "" ), inCookie, inTable, inPriority );	
+	bool res = ScheduleTaskHelper( inCaller, fileInfos, inCatalog, CVSTR( "" ), false, inTable, inPriority, NULL, inParsingMandatory );
+	return res;
 }
 
-void VDocumentParserManager::ScheduleTask( const void *inCaller, IJob *inJob, TaskCookie inCookie, ISymbolTable *inTable, Priority inPriority )
+bool VDocumentParserManager::ScheduleTask( const void *inCaller, IJob *inJob, ISymbolTable *inTable, Priority inPriority, const bool& inParsingMandatory )
 {
+	bool res = true;
+	
 	// Jobs are faily easy to handle -- we just add their items as separate tasks in the queue, but pass in the
 	// job the item is associated with so we can tell when the job is complete.
 	for (int i = 0; i < static_cast< VJobObject * >( inJob )->fFiles.size(); i++) {
-		ScheduleTaskHelper( inCaller, static_cast< VJobObject * >( inJob )->fFiles[ i ], NULL, CVSTR( "" ), inCookie, inTable, inPriority, inJob );
+		res &= ScheduleTaskHelper( inCaller, static_cast< VJobObject * >( inJob )->fFiles[ i ], NULL, CVSTR( "" ), false, inTable, inPriority, inJob, inParsingMandatory );
 	}
+	
+	return res;
+}
+
+VCriticalSection* VDocumentParserManager::GetLockForParseOrOutline(const XBOX::VFilePath& path)
+{
+	VCriticalSection* mutex = NULL;
+
+	fTaskLock->Lock();
+	std::map< VFilePath, VCriticalSection* >::iterator it = fParseOutlineMutexes.find(path);
+	if( it != fParseOutlineMutexes.end() )
+	{
+		mutex = it->second;
+	}
+	else
+	{
+		mutex = new VCriticalSection();
+		fParseOutlineMutexes[path] = mutex;
+	}
+	fTaskLock->Unlock();
+	
+	return mutex;
 }
 
 WorkerThread *VDocumentParserManager::GetThreadWorkingFor( const void *inCaller )
@@ -544,165 +695,181 @@ Symbols::IFile *WorkerThread::GetFileForDeclarationParsingUpdate( ISymbolTable *
 }
 
 
-void WorkerThread::Error( JavaScriptError::Code code, sLONG line, sLONG offset, void *cookie )
+void WorkerThread::Error( XBOX::VFilePath inFilePath, sLONG inLine, sLONG inOffset, const XBOX::VString& inMessage )
 {
- 	VDocumentParserManager::WorkItem *workItem = (VDocumentParserManager::WorkItem *)cookie;
-	workItem->fHadParsingError = true;
-	fManager->fCompileErrorSignal.Trigger( workItem->fFilePath, line, (sLONG)code, workItem->fCookie );
+	fManager->fCompileErrorSignal.Trigger( inFilePath, inLine, inMessage );
 
-#if VERSIONDEBUG  
-	char buff[1024], filePath[1024];
-	char *errorTypes[] = { "No Error", "Syntax Error", "Expected Literal", "Expected Identifier", "Illegal LHS", "Unknown Error" };
-	
-	workItem->fFilePath.GetPath().ToCString(filePath, 1024);
-	sprintf(buff, "\r\n[JavaScript Parsing Error]\r\nFile:  [%s]\r\nLine:  [%d]\r\nError: [%s]\r\n\r\n", filePath, line + 1, ( (code >= 0 && code <= 4) ? errorTypes[code] : errorTypes[5] ) );
-	#if VERSIONWIN
-		OutputDebugStringA(buff);
-	#else
-		fprintf( stderr, buff);
-	#endif
+#if VERSIONDEBUG
+	VString msg("[Parsing Error] File(");
+	msg.AppendString(inFilePath.GetPath());
+	msg.AppendString(") Line(");
+	msg.AppendLong(inLine+1);
+	msg.AppendString(") Message(");
+	msg.AppendString(inMessage);
+	msg.AppendString(")\r\n");
+	DebugMsg(msg);
 #endif
 }
 
-void WorkerThread::ParseDocument( VDocumentParserManager::WorkItem *inWorkItem )
+bool WorkerThread::ParseDocument( VDocumentParserManager::WorkItem *inWorkItem, bool& outHasParsingError, bool& outContentOverwritenFromDisk, bool& outTimeStampUpdated )
 {
 	xbox_assert( inWorkItem );
 
-	if ( inWorkItem->fFilePath.IsFolder() )
-		return;
-
-	// First, open up the file and gather all of its contents.  If we can't open the document, then there
-	// is little point to trying to figure out what parser to use.
-	VTime modTime;
-	if (inWorkItem->fFileContents.IsEmpty()) {
-		VFile file( inWorkItem->fFilePath );
-		file.GetTimeAttributes( &modTime );
-	} else {
-		VTime::Now( modTime );
-	}
-
-	if (IsDying())	return;
-
-	// Now, figure out what parser to use and perform the actual parsing
-	VString extension;
-	inWorkItem->fFilePath.GetExtension( extension );
-	if (extension == "js")
+	bool parsed = false;
+	
+	if( !IsDying() )
 	{
-		VString contents;
-		if (inWorkItem->fFileContents.IsEmpty())
+		if( !inWorkItem->fFilePath.IsFolder() )
 		{
 			VFile file( inWorkItem->fFilePath );
-			VFileStream stream( &file );
-			if (VE_OK == stream.OpenReading())
+			if( file.Exists() )
 			{
-				stream.GuessCharSetFromLeadingBytes( VTC_DefaultTextExport );
-				stream.GetText( contents );
-				stream.CloseReading();
-			}
-		} else {
-			contents = inWorkItem->fFileContents;
-		}
-		
-		if (contents.IsEmpty())	return;
-
-		JavaScriptParser *parser = new JavaScriptParser();
-
-		// We will parse by gathering an AST.  If we manage to get a valid AST back,
-		// then we can see if the user wants it declaration parsed.
-		parser->AssignDelegate( this );
-		JavaScriptAST::Node *program = parser->GetAST( &contents, (void *)inWorkItem );
-
-		// If the parsing pass ran into syntax errors, we do not want to do anything else.  We won't
-		// update the file's parsing date so that it parses again at the soonest possible time.  But
-		// we also don't bother parsing for declarations either, since the structure of the document
-		// isn't clean.  This prevents the symbol table from being overloaded with crap data.  In the
-		// case where the caller who scheduled the task truly needs the information from the file, it
-		// forces them to ensure the file is actually sane.  So this is purely by design.
-		if (NULL != program)
-		{
-			ISymbolTable *symTable = NULL;
-			if (!IsDying() && inWorkItem->fSymTable)
-			{
-				// The first thing we should do is clone the symbol table for use with threads -- we need to do
-				// this to ensure proper thread safety.
-				symTable = inWorkItem->fSymTable->CloneForNewThread();
-
-				// The user wants us to take what we've parsed and scrape some declarations out of it.  So
-				// we need to make a File object for what we just parsed
-				Symbols::IFile *ownerFile = GetFileForDeclarationParsingUpdate( symTable, inWorkItem->fFilePath, inWorkItem->fBaseFolder, inWorkItem->fExecutionScope );
-				if (ownerFile)
+				// Prepare time stamp
+				VTime modTime;
+				if( inWorkItem->fFileContents.IsEmpty() && !inWorkItem->fFileContentHasBeenSet )
+					file.GetTimeAttributes( &modTime );
+				else
 				{
-					// Check to see whether this file has been modified since the last time we did a parsing pass
-					// on it.  We just need to test the modification dates.  If the file has been modified, we want
-					// to remove its old symbols from the database.  If we're working with the file contents being passed
-					// in to us instead of gathered from disk, the modification time is "right now" and should always be
-					// different from the modification time in the database.  This actually serves two purposes -- first is
-					// that it means we will always parse declarations when handed file contents directly.  Second, if the
-					// user does NOT save their changes out to disk and then terminates the application, we will reparse the file's
-					// old contents because the modification stamps are different.  That is why we only compare equality instead of
-					// relativity of the stamps!
-					if (modTime.GetStamp() != ownerFile->GetModificationTimestamp())
+					VTime::Now( modTime );
+					outTimeStampUpdated = true;
+				}
+				
+				
+				// Prepare file content to parse
+				if(inWorkItem->fFileContents.IsEmpty() && !inWorkItem->fFileContentHasBeenSet)
+				{
+					fManager->fTaskLock->Lock();
+					if ( file.Exists() )
 					{
-						// The times do not match, so we need to parse the file.
-						symTable->DeleteSymbolsForFile( ownerFile );
-						ownerFile->SetModificationTimestamp( modTime.GetStamp() );
-						symTable->UpdateFile( ownerFile );
-						JavaScriptAST::Visitor *declParser = JavaScriptAST::Visitor::GetDeclarationParser( symTable, ownerFile, this, (void *)inWorkItem );
-						if (!IsDying())
-							program->Accept( declParser );
-						delete declParser;
+						VFileStream stream( &file );
+						if (VE_OK == stream.OpenReading())
+						{
+							VString contents;
+							stream.GuessCharSetFromLeadingBytes( VTC_DefaultTextExport );
+							stream.GetText( contents );
+							stream.CloseReading();
+							inWorkItem->fFileContents = contents;
+							outContentOverwritenFromDisk = true;
+						}
 					}
-					ownerFile->Release();
+					fManager->fTaskLock->Unlock();
 				}
-				// Release our cloned symbol table
-				symTable->Release();
-			}
-			delete program;
-		}
-		delete parser;
-
-	} else if (inWorkItem->fCatalog && inWorkItem->fSymTable) {
-		Symbols::IFile *ownerFile = GetFileForDeclarationParsingUpdate( inWorkItem->fSymTable, inWorkItem->fFilePath, inWorkItem->fBaseFolder, inWorkItem->fExecutionScope );
-		if (ownerFile) {
-			// Check to see whether this file has been modified since the last time we did a parsing pass
-			// on it.  We just need to test the modification dates.  If the file has been modified, we want
-			// to remove its old symbols from the database.  If we're working with the file contents being passed
-			// in to us instead of gathered from disk, the modification time is "right now" and should always be
-			// different from the modification time in the database.  This actually serves two purposes -- first is
-			// that it means we will always parse declarations when handed file contents directly.  Second, if the
-			// user does NOT save their changes out to disk and then terminates the application, we will reparse the file's
-			// old contents because the modification stamps are different.  That is why we only compare equality instead of
-			// relativity of the stamps!
-			if (modTime.GetStamp() != ownerFile->GetModificationTimestamp()) {
-				// The times do not match, so we need to parse the file.
-				inWorkItem->fSymTable->DeleteSymbolsForFile( ownerFile );
-				ownerFile->SetModificationTimestamp( modTime.GetStamp() );
-				inWorkItem->fSymTable->UpdateFile( ownerFile );
-
-				VectorOfVString entityNames;
-				inWorkItem->fCatalog->GetEntityModelNames( entityNames );
-
-				for (VectorOfVString::iterator iter = entityNames.begin(); iter != entityNames.end(); ++iter)
+				
+				
+				// Prepare parsing
+				if( inWorkItem->fSymTable && !IsDying() )
 				{
-					std::vector<IEntityModelCatalogAttribute* >	attributes;
-					std::vector<IEntityModelCatalogMethod* >	methods;
+					// The first thing we should do is clone the symbol table for use with threads -- we need to do
+					// this to ensure proper thread safety.
+					ISymbolTable* symTable = inWorkItem->fSymTable->CloneForNewThread();
 					
-					inWorkItem->fCatalog->GetEntityModelAttributes( *iter, attributes );
-					inWorkItem->fCatalog->GetEntityModelMethods( *iter, methods );
+					Symbols::IFile *ownerFile = GetFileForDeclarationParsingUpdate( symTable, inWorkItem->fFilePath, inWorkItem->fBaseFolder, inWorkItem->fExecutionScope );
+					if (ownerFile)
+					{
+						// Check to see whether this file has been modified since the last time we did a parsing pass
+						// on it.  We just need to test the modification dates.  If the file has been modified, we want
+						// to remove its old symbols from the database.  If we're working with the file contents being passed
+						// in to us instead of gathered from disk, the modification time is "right now" and should always be
+						// different from the modification time in the database.  This actually serves two purposes -- first is
+						// that it means we will always parse declarations when handed file contents directly.  Second, if the
+						// user does NOT save their changes out to disk and then terminates the application, we will reparse the file's
+						// old contents because the modification stamps are different.  That is why we only compare equality instead of
+						// relativity of the stamps!
+						if ( (modTime.GetStamp() > ownerFile->GetModificationTimestamp()) ||	// The file has been modified and saved
+							 (inWorkItem->fParsingIsMandatory) )								// The file has been modified, not saved yet and we discard modifications
+						{
+							// Now, figure out what parser to use and perform the actual parsing
+							if( _IsJavaScriptContent(inWorkItem) )
+							{
+								// We need to parse the file either for saving or discarding latest modifications
+								symTable->DeleteSymbolsForFile( ownerFile );
+
+								// Notify parsing start
+								fManager->GetParsingStartSignal().Trigger(inWorkItem->fFilePath);
+
+								JavaScriptAST::Visitor* declParser = JavaScriptAST::Visitor::GetDeclarationParser( symTable, ownerFile, this );
+								if( !IsDying() && declParser )
+								{
+									JavaScriptParser *parser = new JavaScriptParser();
+									if( parser )
+									{
+										// We will parse by gathering an AST.  If we manage to get a valid AST back,
+										// then we can see if the user wants it declaration parsed.
+										parser->AssignDelegate( this );
+										
+										if( _IsJSONContent(inWorkItem) )
+										{
+											VString msg;
+											
+											VString content;
+											_PrepareJSONContentForParsing(inWorkItem, content);
+											
+											inWorkItem->fFileContents = content;
+										}
+										
+										JavaScriptAST::Node *program = parser->GetAST( inWorkItem->fFilePath, &inWorkItem->fFileContents, outHasParsingError );
+										if( program )
+										{
+											program->Accept( declParser );
+
+											parsed = true;
+											
+											delete program;
+										}
+										delete parser;
+									}
+									delete declParser;
+								}
+							}
+							else if( _IsDataModelContent(inWorkItem) )
+							{
+								// We need to parse the file either for saving or discarding latest modifications
+								symTable->DeleteSymbolsForFile( ownerFile );
+
+								// Notify parsing start
+								fManager->GetParsingStartSignal().Trigger(inWorkItem->fFilePath);
+
+								VectorOfVString entityNames;
+								inWorkItem->fCatalog->GetEntityModelNames( entityNames );
+								
+								for (VectorOfVString::iterator iter = entityNames.begin(); iter != entityNames.end(); ++iter)
+								{
+									std::vector<IEntityModelCatalogAttribute* >	attributes;
+									std::vector<IEntityModelCatalogMethod* >	methods;
+									
+									inWorkItem->fCatalog->GetEntityModelAttributes( *iter, attributes );
+									inWorkItem->fCatalog->GetEntityModelMethods( *iter, methods );
+									
+									ParseEntityModel( inWorkItem->fSymTable, ownerFile, *iter, attributes, methods );
+
+									parsed = true;
+									
+									for (std::vector<IEntityModelCatalogAttribute* >::iterator it = attributes.begin(); it != attributes.end(); ++it)
+										ReleaseRefCountable(&(*it));
+									
+									for (std::vector<IEntityModelCatalogMethod* >::iterator it = methods.begin(); it != methods.end(); ++it)
+										ReleaseRefCountable(&(*it));
+								}
+							}
+							
+							if( parsed )
+							{
+								ownerFile->SetModificationTimestamp( modTime.GetStamp() );
+								
+								symTable->UpdateFile( ownerFile );
+							}
+						}
+					}
 					
-					ParseEntityModel( inWorkItem->fSymTable, ownerFile, *iter, attributes, methods );
-
-					for (std::vector<IEntityModelCatalogAttribute* >::iterator it = attributes.begin(); it != attributes.end(); ++it)
-						(*it)->Release();
-
-					for (std::vector<IEntityModelCatalogMethod* >::iterator it = methods.begin(); it != methods.end(); ++it)
-						(*it)->Release();
-
-				}
+					ReleaseRefCountable( &ownerFile );
+					ReleaseRefCountable( &symTable );
+				}				
 			}
-			ownerFile->Release();
 		}
 	}
+	
+	return parsed;
+
 }
 
 Symbols::ISymbol *WorkerThread::GetSymbol( ISymbolTable *inTable, const VString &inSymbolName, const VString &inFileName )
@@ -735,7 +902,7 @@ void WorkerThread::CreateNewInstance( ISymbolTable *inTable, Symbols::ISymbol *i
 	std::vector< Symbols::ISymbol * > syms = inTable->GetSymbolsByName( NULL, inSymbolName, files.front() );
 	if (!syms.empty()) {
 		// Now that we have the symbol, we'll see if we can find its prototype property
-		Symbols::ISymbol *temp = const_cast< Symbols::ISymbol * >( syms.front()->Dereference() );
+		Symbols::ISymbol *temp = const_cast< Symbols::ISymbol * >( syms.front()->RetainReferencedSymbol() );
 		std::vector< Symbols::ISymbol * > prototypes = inTable->GetSymbolsByName( temp, "prototype" );
 
 		if (prototypes.empty())
@@ -796,7 +963,7 @@ void WorkerThread::ParseEntityModel( ISymbolTable *inTable, Symbols::IFile *inOw
 			
 			if (dsSym)
 			{
-				Symbols::ISymbol *refDsSym = const_cast< Symbols::ISymbol * >( dsSym->Dereference() );
+				Symbols::ISymbol *refDsSym = const_cast< Symbols::ISymbol * >( dsSym->RetainReferencedSymbol() );
 				entitySym->SetOwner( refDsSym );
 				entitySym->SetKind( Symbols::ISymbol::kKindPublicProperty | Symbols::ISymbol::kKindEntityModel );
 				dsSym->Release();
@@ -980,19 +1147,65 @@ void WorkerThread::ExecuteTask()
 		}
 
 
-		if (fCurrentWorkItem != NULL) {
+		if (fCurrentWorkItem != NULL)
+		{
 			// Now that we have a work item, it's time to start processing it
-			ParseDocument( fCurrentWorkItem );
-
-			// Now that parsing is over, we can fire the completed event
-			fManager->fParsingCompleteSignal.Trigger( fCurrentWorkItem->fFilePath, 0, fCurrentWorkItem->fCookie );
-
-			// If we have a job object, update its internal counter and possibly fire the job complete notification
-			if (fCurrentWorkItem->fJob) {
-				if (static_cast< VJobObject * >( fCurrentWorkItem->fJob )->TaskComplete()) {
-					fManager->fJobCompleteSignal.Trigger( fCurrentWorkItem->fCookie );
+			{
+				// VTaskLock is a scoped lock
+				// Enclosing it in a local scope ensure us to unlock it in any case
+				VTaskLock lock(fManager->GetLockForParseOrOutline(fCurrentWorkItem->fFilePath));
+				bool hasParsingErrors = false;
+				bool hasContentBeenOverwritenFromDisk = false;
+				bool hasTimeStampBeenUpdated = false;
+#if VERSIONDEBUG
+				uLONG tStart = XBOX::VSystem::GetCurrentTime();
+#endif
+				if( !ParseDocument(fCurrentWorkItem, hasParsingErrors, hasContentBeenOverwritenFromDisk, hasTimeStampBeenUpdated) )
+				{
+#if VERSIONDEBUG
+					uLONG tStop = XBOX::VSystem::GetCurrentTime();
+					VString msg("[Parsing Discarded] File(");
+					msg.AppendString(fCurrentWorkItem->fFilePath.GetPath());
+					msg.AppendString(") Length(");
+					msg.AppendLong(fCurrentWorkItem->fFileContents.GetLength());
+					msg.AppendString(") Duration(");
+					msg.AppendLong(tStop-tStart);
+					msg.AppendString("ms)\r\n");
+					DebugMsg(msg);
+#endif
+				}
+				else
+				{
+#if VERSIONDEBUG
+					uLONG tStop = XBOX::VSystem::GetCurrentTime();
+					VString msg("[Parsing Done] File(");
+					msg.AppendString(fCurrentWorkItem->fFilePath.GetPath());
+					msg.AppendString(") ContentSet(");
+					msg.AppendLong(fCurrentWorkItem->fFileContentHasBeenSet);
+					msg.AppendString(") Length(");
+					msg.AppendLong(fCurrentWorkItem->fFileContents.GetLength());
+					msg.AppendString(") ContentOverwritenFromDisk(");
+					msg.AppendLong(hasContentBeenOverwritenFromDisk);
+					msg.AppendString(") ParsingMandatory(");
+					msg.AppendLong(fCurrentWorkItem->fParsingIsMandatory);
+					msg.AppendString(") TimeStampUpdated(");
+					msg.AppendLong(hasTimeStampBeenUpdated);
+					msg.AppendString(") Duration(");
+					msg.AppendLong(tStop-tStart);
+					msg.AppendString("ms)\r\n");
+					DebugMsg(msg);
+#endif
+					// Trigger the event only if the item has been parsed
+					fManager->fParsingCompleteSignal.Trigger( fCurrentWorkItem->fFilePath, hasParsingErrors );
 				}
 			}
+			
+			// Now that parsing is over, we can fire the completed event
+			fManager->DecrementFilesToParseCounter();
+
+			// If we have a job object, update its internal counter and possibly fire the job complete notification
+			if (fCurrentWorkItem->fJob)
+				static_cast< VJobObject * >( fCurrentWorkItem->fJob )->TaskComplete();
 
 			// Now that we've finished, we're able to destroy the work item
 			fManager->fTaskLock->Lock();

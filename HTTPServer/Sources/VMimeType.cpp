@@ -194,12 +194,25 @@ void VMimeTypeManager::Deinit()
 /* static */
 VMimeTypeSP VMimeTypeManager::FindMimeTypeByExtension (const XBOX::VString& inExtension)
 {
+#if LOG_IN_CONSOLE
+	static XBOX::VString sFindMimeTypeByExtensionString ("***Stats on FindMimeTypeByExtension***");
+	static XBOX::VProfilingCounter sFindMimeTypeByExtensionCounter (&sFindMimeTypeByExtensionString, false, true);
+#endif
+
 	XBOX::VString string (inExtension);
 
 	if (string.FindUniChar (CHAR_FULL_STOP) == 1)
 		string.Remove (1, 1);
 
-	VMimeTypeMap::const_iterator found = std::find_if (fExtensionsTypeMap.begin(), fExtensionsTypeMap.end(), EqualFirstVStringFunctor<VMimeTypeSP> (string));
+#if LOG_IN_CONSOLE
+	sFindMimeTypeByExtensionCounter.Start();
+#endif
+
+	VMimeTypeMap::const_iterator found = fExtensionsTypeMap.find (string);
+
+#if LOG_IN_CONSOLE
+	sFindMimeTypeByExtensionCounter.Stop();
+#endif
 
 	if (found != fExtensionsTypeMap.end())
 		return (*found).second.Get();
@@ -338,8 +351,17 @@ MimeTypeKind VMimeTypeManager::GetMimeTypeKind (const XBOX::VString& inContentTy
 /* static */
 VMimeTypeSP VMimeTypeManager::FindMimeTypeByContentType (const XBOX::VString& inContentType)
 {
-	VMimeTypeMap::const_iterator found = std::find_if (fContentTypesMap.begin(), fContentTypesMap.end(), EqualFirstVStringFunctor<VMimeTypeSP> (inContentType));
+#if LOG_IN_CONSOLE
+	static XBOX::VString sFindMimeTypeByContentTypeString ("***Stats on FindMimeTypeByContentType***");
+	static XBOX::VProfilingCounter sFindMimeTypeByContentTypeStringCounter (&sFindMimeTypeByContentTypeString, false, true);
+	sFindMimeTypeByContentTypeStringCounter.Start();
+#endif
 
+	VMimeTypeMap::const_iterator found = fContentTypesMap.find (inContentType);
+
+#if LOG_IN_CONSOLE
+	sFindMimeTypeByContentTypeStringCounter.Stop();
+#endif
 	if (found != fContentTypesMap.end())
 		return (*found).second.Get();
 
@@ -414,7 +436,7 @@ void VMimeTypeManager::_AppendMimeType (VMimeType *inMimeType)
 
 	if (!contentType.IsEmpty())
 	{
-		VMimeTypeMap::const_iterator found = std::find_if (fContentTypesMap.begin(), fContentTypesMap.end(), EqualFirstVStringFunctor<VMimeTypeSP> (contentType));
+		VMimeTypeMap::const_iterator found = fContentTypesMap.find (contentType);
 		
 		if (fContentTypesMap.end() == found)
 		{
@@ -427,7 +449,7 @@ void VMimeTypeManager::_AppendMimeType (VMimeType *inMimeType)
 
 				if (!extension.IsEmpty())
 				{
-					VMimeTypeMap::const_iterator found = std::find_if (fExtensionsTypeMap.begin(), fExtensionsTypeMap.end(), EqualFirstVStringFunctor<VMimeTypeSP> (extension));
+					VMimeTypeMap::const_iterator found = fExtensionsTypeMap.find (extension);
 
 					if (fExtensionsTypeMap.end() == found)
 					{
@@ -475,7 +497,7 @@ void VMimeTypeManager::_UpdateMimeType (VMimeType *inSourceMimeType, VMimeType *
 
 		if (!extension.IsEmpty())
 		{
-			VMimeTypeMap::const_iterator found = std::find_if (fExtensionsTypeMap.begin(), fExtensionsTypeMap.end(), EqualFirstVStringFunctor<VMimeTypeSP> (extension));
+			VMimeTypeMap::const_iterator found = fExtensionsTypeMap.find (extension);
 
 			if ((fExtensionsTypeMap.end() == found) || inOverwrite)
 			{

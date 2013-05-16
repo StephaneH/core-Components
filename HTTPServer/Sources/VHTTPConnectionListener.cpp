@@ -26,8 +26,7 @@
 
 VHTTPConnectionListener::VHTTPConnectionListener (VHTTPServer *inServer, IRequestLogger* inRequestLogger)
 : XBOX::VTask (NULL, 0, XBOX::eTaskStylePreemptive, NULL)
-, fCertificatePath()
-, fKeyPath()
+, fCertificatesFolderPath()
 , fServerListener (NULL)
 , fWorkerPool (NULL)
 , fSelectIOPool (NULL)
@@ -42,6 +41,7 @@ VHTTPConnectionListener::VHTTPConnectionListener (VHTTPServer *inServer, IReques
 , fUsageCounter (1)
 , fSocketDescriptor (-1)
 , fSSLSocketDescriptor (-1)
+, fReuseAddressSocketOption (true)
 , fAbortTask (false)
 {
 	fHTTPServer = XBOX::RetainRefCountable (inServer);
@@ -156,10 +156,9 @@ XBOX::VError VHTTPConnectionListener::AddSelectIOPool (XBOX::VTCPSelectIOPool *i
 }
 
 
-void VHTTPConnectionListener::SetSSLCertificatePaths (const XBOX::VFilePath& inCertificatePath, const XBOX::VFilePath& inKeyPath)
+void VHTTPConnectionListener::SetSSLCertificatesFolderPath (const XBOX::VFilePath& inCertificatesFolderPath)
 {
-	fCertificatePath=inCertificatePath;
-	fKeyPath=inKeyPath;
+	fCertificatesFolderPath.FromFilePath (inCertificatesFolderPath);
 }
 
 
@@ -170,31 +169,63 @@ XBOX::VError VHTTPConnectionListener::StartListening()
 	if (NULL == fServerListener)
 	{
 		fServerListener = new VSockListener  (fRequestLogger);
-		if ((!fCertificatePath.IsEmpty()) && (!fKeyPath.IsEmpty()))
-			fServerListener->SetCertificatePaths (fCertificatePath, fKeyPath);
 
-		/* We just here need to add 2 listeners (one on for http and another one for https)*/
-		bool isOK = true;
-		
-		if (!fSSLMandatory)
-			isOK = fServerListener->AddListeningPort (fListeningIP, fPort, false, fSocketDescriptor);
+		if (fSSLEnabled || fSSLMandatory)
+		{
+			if (fCertificatesFolderPath.IsFolder() && fCertificatesFolderPath.IsValid())
+			{
+				XBOX::VFile keyFile (fCertificatesFolderPath, STRING_KEY_FILE_NAME);
+				XBOX::VFile certFile (fCertificatesFolderPath, STRING_CERT_FILE_NAME);
 
-		if (isOK && fSSLEnabled)
-			fServerListener->AddListeningPort (fListeningIP, fSSLPort, true, fSSLSocketDescriptor);
-		
-		/* Add a VConnectionHandlerFactory for HTTP requests */
-		fConnectionHandlerFactory = new VHTTPConnectionHandlerFactory (fHTTPServer);
-		if (NULL == fConnectionHandlerFactory)
-			error = VE_HTTP_MEMORY_ERROR;
+				if (keyFile.Exists() && certFile.Exists())
+					error = fServerListener->SetCertificateFolder (fCertificatesFolderPath, STRING_KEY_FILE_NAME, STRING_CERT_FILE_NAME);
+			}
+
+			if (XBOX::VE_OK != error)
+			{
+				/*
+				 *	If SSL publication is enabled but not mandatory: Silently disable SSL Publishing 
+				 *	other else, if SSL is Mandatory: no Way... Throw an error and prevent StartListening to run
+				 */
+
+				if (fSSLEnabled)
+				{
+					XBOX::VErrorTaskContext *	errorTaskContext = XBOX::VTask::GetCurrent()->GetErrorContext (false);
+					XBOX::VErrorContext *		errorContext = (errorTaskContext != NULL) ? errorTaskContext->GetLastContext() : NULL;
+
+					errorContext->Flush();
+
+					error = XBOX::VE_OK;
+					fSSLEnabled = false;
+				}
+			}
+		}
 
 		if (XBOX::VE_OK == error)
 		{
-			fAbortTask = false;
+			/* We just here need to add 2 listeners (one on for http and another one for https)*/
+			bool isOK = true;
 
-			if (fServerListener->StartListening())
-				Run();
-			else
-				error = XBOX::ServerNetTools::ThrowNetError (VE_SRVR_FAILED_TO_START_LISTENER);
+			if (!fSSLMandatory)
+				isOK = fServerListener->AddListeningPort (fListeningIP, fPort, false, fSocketDescriptor, fReuseAddressSocketOption);
+
+			if (isOK && fSSLEnabled)
+				fServerListener->AddListeningPort (fListeningIP, fSSLPort, true, fSSLSocketDescriptor, fReuseAddressSocketOption);
+
+			/* Add a VConnectionHandlerFactory for HTTP requests */
+			fConnectionHandlerFactory = new VHTTPConnectionHandlerFactory (fHTTPServer);
+			if (NULL == fConnectionHandlerFactory)
+				error = VE_HTTP_MEMORY_ERROR;
+
+			if (XBOX::VE_OK == error)
+			{
+				fAbortTask = false;
+
+				if (fServerListener->StartListening())
+					Run();
+				else
+					error = XBOX::ServerNetTools::ThrowNetError (VE_SRVR_FAILED_TO_START_LISTENER);
+			}
 		}
 
 		if  (XBOX::VE_OK != error)
@@ -244,6 +275,9 @@ Boolean VHTTPConnectionListener::DoRun()
 
 	while (IsListening())
 	{
+        //jmo - Do not let errors accumulate in thread's error stack
+        XBOX::VErrorContext errCtx(false, false);
+        
 		XTCPSock *	newConnection = fServerListener->GetNewConnectedSocket (1000 /*MsTimeout*/);
 
 		if (NULL != newConnection)
