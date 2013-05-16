@@ -1,0 +1,970 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 46;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		42F429E1147E567800B02139 /* VComponentLibrary.cpp in Sources */ = {isa = PBXBuildFile; fileRef = F439E3F40D51DD3C00F55316 /* VComponentLibrary.cpp */; };
+		42F429E2147E567800B02139 /* Template.cpp in Sources */ = {isa = PBXBuildFile; fileRef = F9EB2F5610764B1B004B9B99 /* Template.cpp */; };
+		42F429E3147E567800B02139 /* SecurityManager.cpp in Sources */ = {isa = PBXBuildFile; fileRef = F9EB2F5710764B1B004B9B99 /* SecurityManager.cpp */; };
+		42F429E7147E567800B02139 /* CoreFoundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 853E53E00FCC2CA40082B740 /* CoreFoundation.framework */; };
+		42F429E8147E567800B02139 /* Kerberos.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F9EB2F8B1079E88D004B9B99 /* Kerberos.framework */; };
+		42F42A6B147E59A600B02139 /* KernelDebug.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F45FAC0512B8D70F007B551A /* KernelDebug.framework */; };
+		42F42A70147E59B500B02139 /* KernelIPCDebug.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F45FABF912B8D70F007B551A /* KernelIPCDebug.framework */; };
+		85192D05103E90FE00E76966 /* KernelDebug.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 85192CF1103E90C100E76966 /* KernelDebug.framework */; };
+		85192D2A103E93A900E76966 /* KernelIPCDebug.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 85192D27103E93A000E76966 /* KernelIPCDebug.framework */; };
+		853E53E10FCC2CA40082B740 /* CoreFoundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 853E53E00FCC2CA40082B740 /* CoreFoundation.framework */; };
+		F47C3DA90E66C6B4007448A6 /* VComponentLibrary.cpp in Sources */ = {isa = PBXBuildFile; fileRef = F439E3F40D51DD3C00F55316 /* VComponentLibrary.cpp */; };
+		F4DC997D1599E9FF004D1218 /* 4DJavaScript.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F4DC99731599E89B004D1218 /* 4DJavaScript.framework */; };
+		F4DC997E1599EA02004D1218 /* 4DJavaScript.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F4DC99751599E89B004D1218 /* 4DJavaScript.framework */; };
+		F9EB2F5810764B1B004B9B99 /* Template.cpp in Sources */ = {isa = PBXBuildFile; fileRef = F9EB2F5610764B1B004B9B99 /* Template.cpp */; };
+		F9EB2F5910764B1B004B9B99 /* SecurityManager.cpp in Sources */ = {isa = PBXBuildFile; fileRef = F9EB2F5710764B1B004B9B99 /* SecurityManager.cpp */; };
+		F9EB2F8C1079E88D004B9B99 /* Kerberos.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F9EB2F8B1079E88D004B9B99 /* Kerberos.framework */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		42F42A57147E594100B02139 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 85192CEA103E90C100E76966 /* Kernel.xcodeproj */;
+			proxyType = 1;
+			remoteGlobalIDString = F464308B113E7A3E00639653;
+			remoteInfo = "Kernel x86_64";
+		};
+		42F42A59147E594500B02139 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 85192D21103E93A000E76966 /* KernelIPC.xcodeproj */;
+			proxyType = 1;
+			remoteGlobalIDString = F46431C0113E7CBD00639653;
+			remoteInfo = "KernelIPC x64";
+		};
+		85192CF0103E90C100E76966 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 85192CEA103E90C100E76966 /* Kernel.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = 8D07F2C80486CC7A007CD1D0;
+			remoteInfo = Kernel;
+		};
+		85192CF2103E90C100E76966 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 85192CEA103E90C100E76966 /* Kernel.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = 0235BC0C071EDC5200BEEE2E;
+			remoteInfo = M_APM;
+		};
+		85192CF4103E90C100E76966 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 85192CEA103E90C100E76966 /* Kernel.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = C9BBA8FD09BC8AC500F3DCFC;
+			remoteInfo = KernelLib;
+		};
+		85192D03103E90F400E76966 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 85192CEA103E90C100E76966 /* Kernel.xcodeproj */;
+			proxyType = 1;
+			remoteGlobalIDString = 8D07F2BC0486CC7A007CD1D0;
+			remoteInfo = Kernel;
+		};
+		85192D26103E93A000E76966 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 85192D21103E93A000E76966 /* KernelIPC.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = 8D07F2C80486CC7A007CD1D0;
+			remoteInfo = KernelIPC;
+		};
+		85192D28103E93A000E76966 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 85192D21103E93A000E76966 /* KernelIPC.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = B54AA6920BEA453E005240A2;
+			remoteInfo = KernelIPCLib;
+		};
+		85192D2B103E93AF00E76966 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 85192D21103E93A000E76966 /* KernelIPC.xcodeproj */;
+			proxyType = 1;
+			remoteGlobalIDString = 8D07F2BC0486CC7A007CD1D0;
+			remoteInfo = KernelIPC;
+		};
+		F45FABF812B8D70F007B551A /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 85192D21103E93A000E76966 /* KernelIPC.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = F46431F9113E7CBD00639653;
+			remoteInfo = "KernelIPC x64";
+		};
+		F45FABFA12B8D70F007B551A /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 85192D21103E93A000E76966 /* KernelIPC.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = F9D1B73112436DB500E98EC6;
+			remoteInfo = "KernelIPC x64 BSD";
+		};
+		F45FAC0212B8D70F007B551A /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 85192CEA103E90C100E76966 /* Kernel.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = F46431A2113E7C4800639653;
+			remoteInfo = "M_APM x64";
+		};
+		F45FAC0412B8D70F007B551A /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 85192CEA103E90C100E76966 /* Kernel.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = F4643159113E7A3E00639653;
+			remoteInfo = "Kernel x64";
+		};
+		F4DC99721599E89B004D1218 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = F4DC996D1599E89B004D1218 /* JavaScript.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = 8D07F2C80486CC7A007CD1D0;
+			remoteInfo = 4DJavaScript;
+		};
+		F4DC99741599E89B004D1218 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = F4DC996D1599E89B004D1218 /* JavaScript.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = F4643803113E9F6000639653;
+			remoteInfo = "4DJavaScript x64";
+		};
+		F4DC997F1599EA1C004D1218 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = F4DC996D1599E89B004D1218 /* JavaScript.xcodeproj */;
+			proxyType = 1;
+			remoteGlobalIDString = 8D07F2BC0486CC7A007CD1D0;
+			remoteInfo = 4DJavaScript;
+		};
+		F4DC99811599EA23004D1218 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = F4DC996D1599E89B004D1218 /* JavaScript.xcodeproj */;
+			proxyType = 1;
+			remoteGlobalIDString = F46437CB113E9F6000639653;
+			remoteInfo = "4DJavaScript x64";
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		42F429E9147E567800B02139 /* CopyFiles */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "$(SRCROOT)/../../../Components";
+			dstSubfolderSpec = 0;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		F47C3D820E66AB57007448A6 /* CopyFiles */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "$(SRCROOT)/../../../Components";
+			dstSubfolderSpec = 0;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
+/* Begin PBXFileReference section */
+		42F429F0147E567800B02139 /* SecurityManagerDebug.bundle */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = SecurityManagerDebug.bundle; sourceTree = BUILT_PRODUCTS_DIR; };
+		42F429FA147E575000B02139 /* components_x64.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; name = components_x64.xcconfig; path = ../../../components_x64.xcconfig; sourceTree = SOURCE_ROOT; };
+		85192CEA103E90C100E76966 /* Kernel.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = Kernel.xcodeproj; path = ../../../../../XToolbox/WAK4/Kernel/Projects/Xcode/Kernel.xcodeproj; sourceTree = SOURCE_ROOT; };
+		85192D21103E93A000E76966 /* KernelIPC.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = KernelIPC.xcodeproj; path = ../../../../../XToolbox/WAK4/KernelIPC/Projects/Xcode/KernelIPC.xcodeproj; sourceTree = SOURCE_ROOT; };
+		853E53E00FCC2CA40082B740 /* CoreFoundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreFoundation.framework; path = /System/Library/Frameworks/CoreFoundation.framework; sourceTree = "<absolute>"; };
+		85E2E76C0ED1D41700FFDCAD /* SecurityManagerDebug.bundle */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = SecurityManagerDebug.bundle; sourceTree = BUILT_PRODUCTS_DIR; };
+		F439E3CE0D51DC9400F55316 /* components.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; name = components.xcconfig; path = ../../../components.xcconfig; sourceTree = SOURCE_ROOT; };
+		F439E3CF0D51DC9400F55316 /* components_base.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; name = components_base.xcconfig; path = ../../../components_base.xcconfig; sourceTree = SOURCE_ROOT; };
+		F439E3D00D51DC9400F55316 /* components_beta.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; name = components_beta.xcconfig; path = ../../../components_beta.xcconfig; sourceTree = SOURCE_ROOT; };
+		F439E3D10D51DC9400F55316 /* components_coverage.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; name = components_coverage.xcconfig; path = ../../../components_coverage.xcconfig; sourceTree = SOURCE_ROOT; };
+		F439E3D20D51DC9400F55316 /* components_debug.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; name = components_debug.xcconfig; path = ../../../components_debug.xcconfig; sourceTree = SOURCE_ROOT; };
+		F439E3D30D51DC9400F55316 /* components_performance.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; name = components_performance.xcconfig; path = ../../../components_performance.xcconfig; sourceTree = SOURCE_ROOT; };
+		F439E3D40D51DC9400F55316 /* components_release.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; name = components_release.xcconfig; path = ../../../components_release.xcconfig; sourceTree = SOURCE_ROOT; };
+		F439E3F40D51DD3C00F55316 /* VComponentLibrary.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = VComponentLibrary.cpp; path = ../../../../../XToolbox/WAK4/KernelIPC/Sources/VComponentLibrary.cpp; sourceTree = SOURCE_ROOT; };
+		F47C3D740E66A78F007448A6 /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		F4DC996D1599E89B004D1218 /* JavaScript.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = JavaScript.xcodeproj; path = ../../../../../XToolbox/WAK4/JavaScript/Projects/Xcode/JavaScript.xcodeproj; sourceTree = SOURCE_ROOT; };
+		F4DC997A1599E8CC004D1218 /* 4DJavaScript.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = 4DJavaScript.framework; path = "/Users/Stephane/sources/sclairet-macsosx107-a/depot/XToolbox/WAK4/Frameworks x86_64/4DJavaScript.framework"; sourceTree = "<absolute>"; };
+		F962079D10A827DA00622530 /* gssapi.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = gssapi.h; path = /System/Library/Frameworks/Kerberos.framework/Headers/gssapi.h; sourceTree = "<absolute>"; };
+		F962079F10A827DA00622530 /* gssapi_krb5.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = gssapi_krb5.h; path = /System/Library/Frameworks/Kerberos.framework/Headers/gssapi_krb5.h; sourceTree = "<absolute>"; };
+		F9EB2F5310764B0B004B9B99 /* SecurityManager.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SecurityManager.h; path = ../../Headers/SecurityManager.h; sourceTree = SOURCE_ROOT; };
+		F9EB2F5410764B0B004B9B99 /* TemplateComponent.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = TemplateComponent.h; path = ../../Headers/TemplateComponent.h; sourceTree = SOURCE_ROOT; };
+		F9EB2F5510764B13004B9B99 /* CSecurityManager.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CSecurityManager.h; path = ../../Interfaces/CSecurityManager.h; sourceTree = SOURCE_ROOT; };
+		F9EB2F5610764B1B004B9B99 /* Template.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Template.cpp; path = ../../Sources/Template.cpp; sourceTree = SOURCE_ROOT; };
+		F9EB2F5710764B1B004B9B99 /* SecurityManager.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = SecurityManager.cpp; path = ../../Sources/SecurityManager.cpp; sourceTree = SOURCE_ROOT; };
+		F9EB2F8B1079E88D004B9B99 /* Kerberos.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Kerberos.framework; path = /System/Library/Frameworks/Kerberos.framework; sourceTree = "<absolute>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		42F429E4147E567800B02139 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				F4DC997E1599EA02004D1218 /* 4DJavaScript.framework in Frameworks */,
+				42F42A6B147E59A600B02139 /* KernelDebug.framework in Frameworks */,
+				42F42A70147E59B500B02139 /* KernelIPCDebug.framework in Frameworks */,
+				42F429E7147E567800B02139 /* CoreFoundation.framework in Frameworks */,
+				42F429E8147E567800B02139 /* Kerberos.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		F47C3D320E669416007448A6 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				F4DC997D1599E9FF004D1218 /* 4DJavaScript.framework in Frameworks */,
+				85192D2A103E93A900E76966 /* KernelIPCDebug.framework in Frameworks */,
+				85192D05103E90FE00E76966 /* KernelDebug.framework in Frameworks */,
+				853E53E10FCC2CA40082B740 /* CoreFoundation.framework in Frameworks */,
+				F9EB2F8C1079E88D004B9B99 /* Kerberos.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		85192CEB103E90C100E76966 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				85192CF5103E90C100E76966 /* libKernelDebug.a */,
+				85192CF3103E90C100E76966 /* libM_APMDebug.a */,
+				85192CF1103E90C100E76966 /* KernelDebug.framework */,
+				F45FAC0312B8D70F007B551A /* libM_APMDebug.a */,
+				F45FAC0512B8D70F007B551A /* KernelDebug.framework */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		85192D22103E93A000E76966 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				85192D27103E93A000E76966 /* KernelIPCDebug.framework */,
+				85192D29103E93A000E76966 /* libKernelIPCDebug.a */,
+				F45FABF912B8D70F007B551A /* KernelIPCDebug.framework */,
+				F45FABFB12B8D70F007B551A /* KernelIPCDebug.framework */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		F439E3B70D51DC2700F55316 = {
+			isa = PBXGroup;
+			children = (
+				F439E3D50D51DCB000F55316 /* config */,
+				F47C3D760E66A7B0007448A6 /* Resources */,
+				F439E3F50D51DECE00F55316 /* Dependencies */,
+				F439E3D60D51DCC200F55316 /* Sources */,
+				F439E4260D51DF7300F55316 /* Frameworks */,
+				F47C3D350E669416007448A6 /* Products */,
+				F4DC997A1599E8CC004D1218 /* 4DJavaScript.framework */,
+			);
+			sourceTree = "<group>";
+		};
+		F439E3D50D51DCB000F55316 /* config */ = {
+			isa = PBXGroup;
+			children = (
+				42F429FA147E575000B02139 /* components_x64.xcconfig */,
+				F439E3CE0D51DC9400F55316 /* components.xcconfig */,
+				F439E3CF0D51DC9400F55316 /* components_base.xcconfig */,
+				F439E3D00D51DC9400F55316 /* components_beta.xcconfig */,
+				F439E3D10D51DC9400F55316 /* components_coverage.xcconfig */,
+				F439E3D20D51DC9400F55316 /* components_debug.xcconfig */,
+				F439E3D30D51DC9400F55316 /* components_performance.xcconfig */,
+				F439E3D40D51DC9400F55316 /* components_release.xcconfig */,
+			);
+			name = config;
+			sourceTree = "<group>";
+		};
+		F439E3D60D51DCC200F55316 /* Sources */ = {
+			isa = PBXGroup;
+			children = (
+				F962079210A827DA00622530 /* Headers kerberos */,
+				F9EB2F5610764B1B004B9B99 /* Template.cpp */,
+				F9EB2F5710764B1B004B9B99 /* SecurityManager.cpp */,
+				F9EB2F5510764B13004B9B99 /* CSecurityManager.h */,
+				F9EB2F5310764B0B004B9B99 /* SecurityManager.h */,
+				F9EB2F5410764B0B004B9B99 /* TemplateComponent.h */,
+				F439E3D70D51DCD800F55316 /* Component */,
+			);
+			name = Sources;
+			sourceTree = "<group>";
+		};
+		F439E3D70D51DCD800F55316 /* Component */ = {
+			isa = PBXGroup;
+			children = (
+				F439E3F40D51DD3C00F55316 /* VComponentLibrary.cpp */,
+			);
+			name = Component;
+			sourceTree = "<group>";
+		};
+		F439E3F50D51DECE00F55316 /* Dependencies */ = {
+			isa = PBXGroup;
+			children = (
+				F4DC996D1599E89B004D1218 /* JavaScript.xcodeproj */,
+				85192D21103E93A000E76966 /* KernelIPC.xcodeproj */,
+				85192CEA103E90C100E76966 /* Kernel.xcodeproj */,
+			);
+			name = Dependencies;
+			sourceTree = "<group>";
+		};
+		F439E4260D51DF7300F55316 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				F9EB2F8B1079E88D004B9B99 /* Kerberos.framework */,
+				853E53E00FCC2CA40082B740 /* CoreFoundation.framework */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		F47C3D350E669416007448A6 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				85E2E76C0ED1D41700FFDCAD /* SecurityManagerDebug.bundle */,
+				42F429F0147E567800B02139 /* SecurityManagerDebug.bundle */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		F47C3D760E66A7B0007448A6 /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				F47C3D740E66A78F007448A6 /* Info.plist */,
+			);
+			name = Resources;
+			sourceTree = "<group>";
+		};
+		F4DC996E1599E89B004D1218 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				F4DC99731599E89B004D1218 /* 4DJavaScript.framework */,
+				F4DC99751599E89B004D1218 /* 4DJavaScript.framework */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		F962079210A827DA00622530 /* Headers kerberos */ = {
+			isa = PBXGroup;
+			children = (
+				F962079D10A827DA00622530 /* gssapi.h */,
+				F962079F10A827DA00622530 /* gssapi_krb5.h */,
+			);
+			name = "Headers kerberos";
+			path = /System/Library/Frameworks/Kerberos.framework/Headers;
+			sourceTree = "<absolute>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		42F429DA147E567800B02139 /* Security Manager x64 */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 42F429EA147E567800B02139 /* Build configuration list for PBXNativeTarget "Security Manager x64" */;
+			buildPhases = (
+				42F429DF147E567800B02139 /* Resources */,
+				42F429E0147E567800B02139 /* Sources */,
+				42F429E4147E567800B02139 /* Frameworks */,
+				42F429E9147E567800B02139 /* CopyFiles */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				42F42A58147E594100B02139 /* PBXTargetDependency */,
+				42F42A5A147E594500B02139 /* PBXTargetDependency */,
+				F4DC99821599EA23004D1218 /* PBXTargetDependency */,
+			);
+			name = "Security Manager x64";
+			productName = CodeEditor;
+			productReference = 42F429F0147E567800B02139 /* SecurityManagerDebug.bundle */;
+			productType = "com.apple.product-type.bundle";
+		};
+		F47C3D330E669416007448A6 /* Security Manager */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = F47C3D390E669417007448A6 /* Build configuration list for PBXNativeTarget "Security Manager" */;
+			buildPhases = (
+				F47C3D300E669416007448A6 /* Resources */,
+				F47C3D310E669416007448A6 /* Sources */,
+				F47C3D320E669416007448A6 /* Frameworks */,
+				F47C3D820E66AB57007448A6 /* CopyFiles */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				85192D04103E90F400E76966 /* PBXTargetDependency */,
+				85192D2C103E93AF00E76966 /* PBXTargetDependency */,
+				F4DC99801599EA1C004D1218 /* PBXTargetDependency */,
+			);
+			name = "Security Manager";
+			productName = CodeEditor;
+			productReference = 85E2E76C0ED1D41700FFDCAD /* SecurityManagerDebug.bundle */;
+			productType = "com.apple.product-type.bundle";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		F439E3B90D51DC2700F55316 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				LastUpgradeCheck = 0420;
+			};
+			buildConfigurationList = F439E3BC0D51DC2700F55316 /* Build configuration list for PBXProject "Security Manager" */;
+			compatibilityVersion = "Xcode 3.2";
+			developmentRegion = English;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				English,
+				Japanese,
+				French,
+				German,
+			);
+			mainGroup = F439E3B70D51DC2700F55316;
+			productRefGroup = F47C3D350E669416007448A6 /* Products */;
+			projectDirPath = "";
+			projectReferences = (
+				{
+					ProductGroup = F4DC996E1599E89B004D1218 /* Products */;
+					ProjectRef = F4DC996D1599E89B004D1218 /* JavaScript.xcodeproj */;
+				},
+				{
+					ProductGroup = 85192CEB103E90C100E76966 /* Products */;
+					ProjectRef = 85192CEA103E90C100E76966 /* Kernel.xcodeproj */;
+				},
+				{
+					ProductGroup = 85192D22103E93A000E76966 /* Products */;
+					ProjectRef = 85192D21103E93A000E76966 /* KernelIPC.xcodeproj */;
+				},
+			);
+			projectRoot = ../..;
+			targets = (
+				F47C3D330E669416007448A6 /* Security Manager */,
+				42F429DA147E567800B02139 /* Security Manager x64 */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXReferenceProxy section */
+		85192CF1103E90C100E76966 /* KernelDebug.framework */ = {
+			isa = PBXReferenceProxy;
+			fileType = wrapper.framework;
+			path = KernelDebug.framework;
+			remoteRef = 85192CF0103E90C100E76966 /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		85192CF3103E90C100E76966 /* libM_APMDebug.a */ = {
+			isa = PBXReferenceProxy;
+			fileType = archive.ar;
+			path = libM_APMDebug.a;
+			remoteRef = 85192CF2103E90C100E76966 /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		85192CF5103E90C100E76966 /* libKernelDebug.a */ = {
+			isa = PBXReferenceProxy;
+			fileType = archive.ar;
+			path = libKernelDebug.a;
+			remoteRef = 85192CF4103E90C100E76966 /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		85192D27103E93A000E76966 /* KernelIPCDebug.framework */ = {
+			isa = PBXReferenceProxy;
+			fileType = wrapper.framework;
+			path = KernelIPCDebug.framework;
+			remoteRef = 85192D26103E93A000E76966 /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		85192D29103E93A000E76966 /* libKernelIPCDebug.a */ = {
+			isa = PBXReferenceProxy;
+			fileType = archive.ar;
+			path = libKernelIPCDebug.a;
+			remoteRef = 85192D28103E93A000E76966 /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		F45FABF912B8D70F007B551A /* KernelIPCDebug.framework */ = {
+			isa = PBXReferenceProxy;
+			fileType = wrapper.framework;
+			path = KernelIPCDebug.framework;
+			remoteRef = F45FABF812B8D70F007B551A /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		F45FABFB12B8D70F007B551A /* KernelIPCDebug.framework */ = {
+			isa = PBXReferenceProxy;
+			fileType = wrapper.framework;
+			path = KernelIPCDebug.framework;
+			remoteRef = F45FABFA12B8D70F007B551A /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		F45FAC0312B8D70F007B551A /* libM_APMDebug.a */ = {
+			isa = PBXReferenceProxy;
+			fileType = archive.ar;
+			path = libM_APMDebug.a;
+			remoteRef = F45FAC0212B8D70F007B551A /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		F45FAC0512B8D70F007B551A /* KernelDebug.framework */ = {
+			isa = PBXReferenceProxy;
+			fileType = wrapper.framework;
+			path = KernelDebug.framework;
+			remoteRef = F45FAC0412B8D70F007B551A /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		F4DC99731599E89B004D1218 /* 4DJavaScript.framework */ = {
+			isa = PBXReferenceProxy;
+			fileType = wrapper.framework;
+			path = 4DJavaScript.framework;
+			remoteRef = F4DC99721599E89B004D1218 /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		F4DC99751599E89B004D1218 /* 4DJavaScript.framework */ = {
+			isa = PBXReferenceProxy;
+			fileType = wrapper.framework;
+			path = 4DJavaScript.framework;
+			remoteRef = F4DC99741599E89B004D1218 /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+/* End PBXReferenceProxy section */
+
+/* Begin PBXResourcesBuildPhase section */
+		42F429DF147E567800B02139 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		F47C3D300E669416007448A6 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		42F429E0147E567800B02139 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				42F429E1147E567800B02139 /* VComponentLibrary.cpp in Sources */,
+				42F429E2147E567800B02139 /* Template.cpp in Sources */,
+				42F429E3147E567800B02139 /* SecurityManager.cpp in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		F47C3D310E669416007448A6 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				F47C3DA90E66C6B4007448A6 /* VComponentLibrary.cpp in Sources */,
+				F9EB2F5810764B1B004B9B99 /* Template.cpp in Sources */,
+				F9EB2F5910764B1B004B9B99 /* SecurityManager.cpp in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		42F42A58147E594100B02139 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			name = "Kernel x86_64";
+			targetProxy = 42F42A57147E594100B02139 /* PBXContainerItemProxy */;
+		};
+		42F42A5A147E594500B02139 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			name = "KernelIPC x64";
+			targetProxy = 42F42A59147E594500B02139 /* PBXContainerItemProxy */;
+		};
+		85192D04103E90F400E76966 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			name = Kernel;
+			targetProxy = 85192D03103E90F400E76966 /* PBXContainerItemProxy */;
+		};
+		85192D2C103E93AF00E76966 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			name = KernelIPC;
+			targetProxy = 85192D2B103E93AF00E76966 /* PBXContainerItemProxy */;
+		};
+		F4DC99801599EA1C004D1218 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			name = 4DJavaScript;
+			targetProxy = F4DC997F1599EA1C004D1218 /* PBXContainerItemProxy */;
+		};
+		F4DC99821599EA23004D1218 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			name = "4DJavaScript x64";
+			targetProxy = F4DC99811599EA23004D1218 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		42F429EB147E567800B02139 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = 42F429FA147E575000B02139 /* components_x64.xcconfig */;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = YES;
+				COPY_PHASE_STRIP = NO;
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(inherited)",
+					"\"$(SRCROOT)/../../../../../XToolbox/WAK4/Frameworks x86_64\"",
+				);
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_MODEL_TUNING = G5;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PRECOMPILE_PREFIX_HEADER = YES;
+				GCC_PREFIX_HEADER = "";
+				INSTALL_PATH = "";
+			};
+			name = Debug;
+		};
+		42F429EC147E567800B02139 /* Coverage */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = 42F429FA147E575000B02139 /* components_x64.xcconfig */;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = YES;
+				COPY_PHASE_STRIP = NO;
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(inherited)",
+					"\"$(SRCROOT)/../../../../../XToolbox/WAK4/Frameworks x86_64\"",
+				);
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_MODEL_TUNING = G5;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PRECOMPILE_PREFIX_HEADER = YES;
+				GCC_PREFIX_HEADER = "";
+				INSTALL_PATH = "";
+				OTHER_LDFLAGS = (
+					"-weak_framework",
+					icuDebug,
+				);
+			};
+			name = Coverage;
+		};
+		42F429ED147E567800B02139 /* Beta */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = 42F429FA147E575000B02139 /* components_x64.xcconfig */;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = YES;
+				COPY_PHASE_STRIP = NO;
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(inherited)",
+					"\"$(SRCROOT)/../../../../../XToolbox/WAK4/Frameworks x86_64\"",
+				);
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_MODEL_TUNING = G5;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PRECOMPILE_PREFIX_HEADER = YES;
+				GCC_PREFIX_HEADER = "";
+				INSTALL_PATH = "";
+			};
+			name = Beta;
+		};
+		42F429EE147E567800B02139 /* Release */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = 42F429FA147E575000B02139 /* components_x64.xcconfig */;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = YES;
+				COPY_PHASE_STRIP = NO;
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(inherited)",
+					"\"$(SRCROOT)/../../../../../XToolbox/WAK4/Frameworks x86_64\"",
+				);
+				GCC_GENERATE_DEBUGGING_SYMBOLS = NO;
+				GCC_MODEL_TUNING = G5;
+				GCC_PRECOMPILE_PREFIX_HEADER = NO;
+				GCC_PREFIX_HEADER = "";
+				GCC_PREPROCESSOR_DEFINITIONS = "VERSIONDEBUG=0";
+				GCC_WARN_ABOUT_RETURN_TYPE = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				INSTALL_PATH = "";
+				OTHER_LDFLAGS = (
+					"-framework",
+					Carbon,
+				);
+			};
+			name = Release;
+		};
+		42F429EF147E567800B02139 /* Performance */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = 42F429FA147E575000B02139 /* components_x64.xcconfig */;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = YES;
+				COPY_PHASE_STRIP = NO;
+				DEPLOYMENT_POSTPROCESSING = NO;
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(inherited)",
+					"\"$(SRCROOT)/../../../../../XToolbox/WAK4/Frameworks x86_64\"",
+				);
+				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
+				GCC_MODEL_TUNING = G5;
+				GCC_PRECOMPILE_PREFIX_HEADER = NO;
+				GCC_PREFIX_HEADER = "";
+				GCC_PREPROCESSOR_DEFINITIONS = "VERSIONDEBUG=0";
+				GCC_WARN_ABOUT_RETURN_TYPE = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				INSTALL_PATH = "";
+				OTHER_LDFLAGS = (
+					"-framework",
+					Carbon,
+				);
+				STRIP_STYLE = debugging;
+			};
+			name = Performance;
+		};
+		F41C68620E66FD9E00B4D3D0 /* Coverage */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = F439E3D10D51DC9400F55316 /* components_coverage.xcconfig */;
+			buildSettings = {
+				ADDITIONAL_SDKS = "";
+				COPY_PHASE_STRIP = NO;
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(FRAMEWORK_SEARCH_PATHS)",
+					"$(FRAMEWORK_SEARCH_PATHS_JSC)",
+				);
+				GCC_GENERATE_TEST_COVERAGE_FILES = YES;
+				GCC_MODEL_TUNING = G4;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PFE_FILE_C_DIALECTS = "c objective-c c++ objective-c++";
+				GCC_PREFIX_HEADER = "../../Sources/$(PROJECT_NAME)PCH.cpp";
+				GCC_PREPROCESSOR_DEFINITIONS = "VERSIONDEBUG=1";
+				GCC_WARN_ABOUT_RETURN_TYPE = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				HEADER_SEARCH_PATHS = (
+					"$(HEADER_SEARCH_PATHS)",
+					"$(HEADER_SEARCH_PATHS_JSC)",
+				);
+				PRODUCT_NAME = SecurityManagerDebug;
+				SEPARATE_STRIP = YES;
+				SKIP_INSTALL = YES;
+			};
+			name = Coverage;
+		};
+		F41C68630E66FD9E00B4D3D0 /* Coverage */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = YES;
+				COPY_PHASE_STRIP = NO;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_MODEL_TUNING = G5;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PRECOMPILE_PREFIX_HEADER = YES;
+				GCC_PREFIX_HEADER = "";
+				INSTALL_PATH = "";
+			};
+			name = Coverage;
+		};
+		F41C68640E66FDAD00B4D3D0 /* Beta */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = F439E3D00D51DC9400F55316 /* components_beta.xcconfig */;
+			buildSettings = {
+				ADDITIONAL_SDKS = "";
+				COPY_PHASE_STRIP = NO;
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(FRAMEWORK_SEARCH_PATHS)",
+					"$(FRAMEWORK_SEARCH_PATHS_JSC)",
+				);
+				GCC_MODEL_TUNING = G5;
+				GCC_OPTIMIZATION_LEVEL = s;
+				GCC_PFE_FILE_C_DIALECTS = "c objective-c c++ objective-c++";
+				GCC_PREFIX_HEADER = "../../Sources/$(PROJECT_NAME)PCH.cpp";
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"VERSIONDEBUG=0",
+					"WITH_DEBUGMSG=1",
+					"WITH_ASSERT=1",
+				);
+				GCC_WARN_ABOUT_RETURN_TYPE = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				HEADER_SEARCH_PATHS = (
+					"$(HEADER_SEARCH_PATHS)",
+					"$(HEADER_SEARCH_PATHS_JSC)",
+				);
+				PRODUCT_NAME = SecurityManagerBeta;
+				SEPARATE_STRIP = YES;
+				SKIP_INSTALL = YES;
+			};
+			name = Beta;
+		};
+		F41C68650E66FDAD00B4D3D0 /* Beta */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = YES;
+				COPY_PHASE_STRIP = NO;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_MODEL_TUNING = G5;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PRECOMPILE_PREFIX_HEADER = YES;
+				GCC_PREFIX_HEADER = "";
+				INSTALL_PATH = "";
+			};
+			name = Beta;
+		};
+		F41C68660E66FDB400B4D3D0 /* Performance */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = F439E3D30D51DC9400F55316 /* components_performance.xcconfig */;
+			buildSettings = {
+				ADDITIONAL_SDKS = "";
+				COPY_PHASE_STRIP = YES;
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(FRAMEWORK_SEARCH_PATHS)",
+					"$(FRAMEWORK_SEARCH_PATHS_JSC)",
+				);
+				GCC_PREFIX_HEADER = "../../Sources/$(PROJECT_NAME)PCH.cpp";
+				GCC_PREPROCESSOR_DEFINITIONS = "VERSIONDEBUG=0";
+				GCC_WARN_ABOUT_RETURN_TYPE = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				HEADER_SEARCH_PATHS = (
+					"$(HEADER_SEARCH_PATHS)",
+					"$(HEADER_SEARCH_PATHS_JSC)",
+				);
+				PRODUCT_NAME = SecurityManagerPerf;
+				SEPARATE_STRIP = YES;
+				SKIP_INSTALL = YES;
+			};
+			name = Performance;
+		};
+		F41C68670E66FDB400B4D3D0 /* Performance */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = YES;
+				COPY_PHASE_STRIP = NO;
+				DEPLOYMENT_POSTPROCESSING = NO;
+				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
+				GCC_MODEL_TUNING = G5;
+				GCC_PRECOMPILE_PREFIX_HEADER = NO;
+				GCC_PREFIX_HEADER = "";
+				GCC_PREPROCESSOR_DEFINITIONS = "VERSIONDEBUG=0";
+				GCC_WARN_ABOUT_RETURN_TYPE = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				INSTALL_PATH = "";
+				OTHER_LDFLAGS = (
+					"-framework",
+					Carbon,
+				);
+				STRIP_STYLE = debugging;
+			};
+			name = Performance;
+		};
+		F439E3BA0D51DC2700F55316 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = F439E3D20D51DC9400F55316 /* components_debug.xcconfig */;
+			buildSettings = {
+				ADDITIONAL_SDKS = "";
+				COPY_PHASE_STRIP = NO;
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(FRAMEWORK_SEARCH_PATHS)",
+					"$(FRAMEWORK_SEARCH_PATHS_JSC)",
+				);
+				GCC_MODEL_TUNING = G4;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PFE_FILE_C_DIALECTS = "objective-c c c++ objective-c++";
+				GCC_PREFIX_HEADER = "../../Sources/$(PROJECT_NAME)PCH.cpp";
+				GCC_PREPROCESSOR_DEFINITIONS = "VERSIONDEBUG=1";
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				HEADER_SEARCH_PATHS = (
+					"$(HEADER_SEARCH_PATHS)",
+					"$(HEADER_SEARCH_PATHS_JSC)",
+				);
+				PRODUCT_NAME = SecurityManagerDebug;
+				SEPARATE_STRIP = YES;
+				SKIP_INSTALL = YES;
+			};
+			name = Debug;
+		};
+		F439E3BB0D51DC2700F55316 /* Release */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = F439E3D40D51DC9400F55316 /* components_release.xcconfig */;
+			buildSettings = {
+				ADDITIONAL_SDKS = "";
+				COPY_PHASE_STRIP = NO;
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(FRAMEWORK_SEARCH_PATHS)",
+					"$(FRAMEWORK_SEARCH_PATHS_JSC)",
+				);
+				GCC_GENERATE_DEBUGGING_SYMBOLS = NO;
+				GCC_PREFIX_HEADER = "../../Sources/$(PROJECT_NAME)PCH.cpp";
+				GCC_PREPROCESSOR_DEFINITIONS = "VERSIONDEBUG=0";
+				GCC_WARN_ABOUT_RETURN_TYPE = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				HEADER_SEARCH_PATHS = (
+					"$(HEADER_SEARCH_PATHS)",
+					"$(HEADER_SEARCH_PATHS_JSC)",
+				);
+				PRODUCT_NAME = SecurityManager;
+				SEPARATE_STRIP = YES;
+				SKIP_INSTALL = YES;
+			};
+			name = Release;
+		};
+		F47C3D370E669417007448A6 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = YES;
+				COPY_PHASE_STRIP = NO;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_MODEL_TUNING = G5;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PRECOMPILE_PREFIX_HEADER = YES;
+				GCC_PREFIX_HEADER = "";
+				INSTALL_PATH = "";
+			};
+			name = Debug;
+		};
+		F47C3D380E669417007448A6 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = YES;
+				COPY_PHASE_STRIP = NO;
+				GCC_GENERATE_DEBUGGING_SYMBOLS = NO;
+				GCC_MODEL_TUNING = G5;
+				GCC_PRECOMPILE_PREFIX_HEADER = NO;
+				GCC_PREFIX_HEADER = "";
+				GCC_PREPROCESSOR_DEFINITIONS = "VERSIONDEBUG=0";
+				GCC_WARN_ABOUT_RETURN_TYPE = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				INSTALL_PATH = "";
+				OTHER_LDFLAGS = (
+					"-framework",
+					Carbon,
+				);
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		42F429EA147E567800B02139 /* Build configuration list for PBXNativeTarget "Security Manager x64" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				42F429EB147E567800B02139 /* Debug */,
+				42F429EC147E567800B02139 /* Coverage */,
+				42F429ED147E567800B02139 /* Beta */,
+				42F429EE147E567800B02139 /* Release */,
+				42F429EF147E567800B02139 /* Performance */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		F439E3BC0D51DC2700F55316 /* Build configuration list for PBXProject "Security Manager" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				F439E3BA0D51DC2700F55316 /* Debug */,
+				F41C68620E66FD9E00B4D3D0 /* Coverage */,
+				F41C68640E66FDAD00B4D3D0 /* Beta */,
+				F439E3BB0D51DC2700F55316 /* Release */,
+				F41C68660E66FDB400B4D3D0 /* Performance */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		F47C3D390E669417007448A6 /* Build configuration list for PBXNativeTarget "Security Manager" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				F47C3D370E669417007448A6 /* Debug */,
+				F41C68630E66FD9E00B4D3D0 /* Coverage */,
+				F41C68650E66FDAD00B4D3D0 /* Beta */,
+				F47C3D380E669417007448A6 /* Release */,
+				F41C68670E66FDB400B4D3D0 /* Performance */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = F439E3B90D51DC2700F55316 /* Project object */;
+}

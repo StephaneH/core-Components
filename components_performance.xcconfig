@@ -1,0 +1,6 @@
+#include "components_base.xcconfig"
+#include "../../XToolbox/WAK4/weak_icu_performance.xcconfig"
+
+GCC_MODEL_TUNING = G5
+PRODUCT_NAME = $(PROJECT_NAME)Perf
+
