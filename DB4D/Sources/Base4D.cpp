@@ -4060,7 +4060,7 @@ VError Base4D::ReadBaseHeader( VFileDesc& inFile, BaseHeader *outHeader, Boolean
 
 			if (err == VE_OK)
 			{
-				if (!DO_NOT_Map_Data_And_Struct && StructID != nil)
+				if (!DO_NOT_Map_Data_And_Struct && StructID != nil && !VDBMgr::GetManager()->IsRunningWakanda())
 				{
 					VUUID xid(outHeader->ID);
 					if (xid != *StructID)
