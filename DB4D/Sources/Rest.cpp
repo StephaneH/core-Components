@@ -1249,6 +1249,7 @@ void RestTools::CallMethod(EntityCollection* sel, EntityRecord* erec, DataSet* i
 	{
 		VJSContext jscontext( fJSGlobalContext);
 		VJSValue result(jscontext);
+		result.SetNull();
 		if (!methParams.empty() || fJsonMethParams.IsEmpty())
 		{
 			if (meth->GetKind() == emeth_sel && sel != nil)

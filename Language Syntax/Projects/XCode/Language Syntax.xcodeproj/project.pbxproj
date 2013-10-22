@@ -461,7 +461,7 @@
 		F437D25A113EC71B009FE5D8 /* components_x64.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; name = components_x64.xcconfig; path = ../../../components_x64.xcconfig; sourceTree = SOURCE_ROOT; };
 		F44E9F501469365C009D4E40 /* ComponentStub.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ComponentStub.cpp; path = ../../Sources/ComponentStub.cpp; sourceTree = SOURCE_ROOT; };
 		F47E9DB716D4DCA900079133 /* DB4D.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = DB4D.xcodeproj; path = ../../../DB4D/projects/Xcode/DB4D.xcodeproj; sourceTree = "<group>"; };
-		F4DB8EFA15205FE9004D8C8C /* JavaScriptCore.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = JavaScriptCore.xcodeproj; path = ../../../../../webkit/534.53/JavaScriptCore/JavaScriptCore.xcodeproj; sourceTree = SOURCE_ROOT; };
+		F4DB8EFA15205FE9004D8C8C /* JavaScriptCore.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = JavaScriptCore.xcodeproj; path = ../../../../../webkit/534.53.W5/JavaScriptCore/JavaScriptCore.xcodeproj; sourceTree = SOURCE_ROOT; };
 		F4FA4BF21455AD83005067C9 /* de.lproj */ = {isa = PBXFileReference; lastKnownFileType = folder; name = de.lproj; path = ../../Resources/de.lproj; sourceTree = SOURCE_ROOT; };
 		F4FA4BF61455AD83005067C9 /* en.lproj */ = {isa = PBXFileReference; lastKnownFileType = folder; name = en.lproj; path = ../../Resources/en.lproj; sourceTree = SOURCE_ROOT; };
 		F4FA4BFA1455AD83005067C9 /* es.lproj */ = {isa = PBXFileReference; lastKnownFileType = folder; name = es.lproj; path = ../../Resources/es.lproj; sourceTree = SOURCE_ROOT; };
