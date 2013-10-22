@@ -1,0 +1,5 @@
+#include "components_base.xcconfig"
+
+DEBUG_INFORMATION_FORMAT = dwarf-with-dsym
+GCC_MODEL_TUNING = G5
+PRODUCT_NAME = $(PROJECT_NAME)Beta

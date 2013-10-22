@@ -1,0 +1,160 @@
+
+/*
+	Format of 4d v11 SQL journal file
+*/
+
+Int32	'4LOG'
+Int32	'DATA'
+UUID	data_file_uuid
+LOOP
+	Int32	'db4d'
+	Int64	operation_sequence_number
+	Int32	operation_size
+	Int32	operation_type
+	Int64	context_id	/* identifies the process that issued the operation */
+	TimeStamp	time_stamp
+	SWITCH
+
+		CASE	operation_type = OpenData, CloseData, StartBackup, StartTransaction, CommitTransaction, RollbackTransaction, CloseContext
+		
+		CASE	operation_type = CreateRecord, ModifyRecord
+			RecordHeader	record_header
+			UUID			table_uuid
+			BYTE[record_header.size]	record_data
+			LOOP record_header.count_fields
+				FieldHeader	field_header
+			END LOOP
+
+		CASE	operation_type = TruncateTable
+			Int32	-1
+			UUID	table_uuid
+
+		CASE	operation_type = DeleteBlob, DeleteRecord
+			Int32	record_number
+			UUID	table_uuid
+
+		CASE	operation_type = CreateBlob, ModifyBlob
+			Int32	blob_number
+			IF (blob_number == -2)	// blob in separate document
+				Int32	size_path
+				Int16	pathStringUtf16[size_path]
+			END IF
+			UUID	table_uuid
+			Int32	size
+			BYTE[size]	blob_data
+
+		CASE	operation_type = CreateContextWithUserUUID	/* deprecated */
+			UUID	user_uuid
+
+		CASE	operation_type = CreateContextWithExtraData
+			ValueBag	bag
+
+		CASE	operation_type = SaveSeqNum
+			Int64	sequence_number
+			UUID	table_uuid
+
+	END SWITCH
+	Int32	operation_size_check	/* must be equal to operation_size */
+	Int32	'DB4D'
+END LOOP
+
+===============
+/* possible values for operation_type */
+
+CreateRecord = 1,
+ModifyRecord = 2,
+DeleteRecord = 3,
+StartTransaction = 4,
+CommitTransaction = 5,
+RollBackTransaction = 6,
+OpenData = 7,
+CloseData = 8,
+CreateContextWithUserUUID = 15,
+CloseContext = 16,
+CreateBlob = 17,
+ModifyBlob = 18,
+DeleteBlob = 19,
+StartBackup = 20,
+TruncateTable = 21,
+CreateContextWithExtra = 22,
+SaveSeqNum = 23
+
+===============
+
+UUID
+	16 bytes
+
+===============
+
+TimeStamp	time_stamp /* treated as an Int64 when byte swapping */
+	Int16	year
+	Int8	month
+	Int8	day
+	Int32	milliseconds
+
+===============
+
+RecordHeader
+	Int32	'rec1'
+	Int32	size
+	TimeStamp	time_stamp
+	Int32	checksum
+	Int32	record_number
+	Int32	count_fields
+
+===============
+
+FieldHeader
+	Int32	offset	/* offset of field value in record_data */
+	Int32	type	/* field value type, see table below */
+
+1: BOOLEAN	/* Int16 */
+2: BYTE		/* Int16 */
+3: WORD		/* Int16 */
+4: LONG		/* Int32 */
+5: LONG8	/* Int64 */
+6: REAL		/* IEEE 754, 8 bytes */
+7: FLOAT	/* Int32 exponent, Int8 sign, Int32 data_length, BYTE[data_length] */
+8: TIME		/* Int16 year, Int8 month, Int8 day, Int32 milliseconds */
+9: DURATION	/* Int64 milliseconds */
+10,14: STRING	/* Int32 length with negative sign, Int16[length] utf_16_chars */
+11,18: BLOB	/* Int32 size, BYTE[size] */
+12: IMAGE	/* Int32 '4PCT', Int32 streamVersion, Int32 count_formats, Int32 size, BYTE[size] */
+13: UUID	/* 16 bytes */
+15: SUBTABLE		/* Int64 */
+16: SUBTABLE_KEY	/* Int64 */
+
+
+===============
+
+ValueBag	/* binary xml like data */
+	Int32	'VBAG'
+	Int16	major_version (1)
+	Int16	minor_version (0)
+	Byte	flags	(bit0 means there are attributes, bit1 means there are elements)
+	BagAttributes	attributes
+	BagElements		elements
+
+===============
+
+BagAttributes
+	Int32	count_names
+	Int32	size_names
+	BYTE[size_names]	names	/* names are length prefixed UTF-8 */
+	Int32	size_values
+	BYTE[size_values]	values
+
+===============
+
+BagElements
+	Int32	count_names
+	Int32	size_names
+	BYTE[size_names]	names	/* names are length prefixed UTF-8 */
+	LOOP count_names
+		Int32			count_elements
+		Byte			flags	(bit0 means there are attributes, bit1 means there are elements)
+		BagAttributes	attributes
+		BagElements		elements
+	END LOOP
+
+===============
