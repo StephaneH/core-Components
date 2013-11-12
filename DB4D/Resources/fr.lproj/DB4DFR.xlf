@@ -1,0 +1,3047 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Translation file for 4D products.
+  Copyright (C) 2007-2013 4D SAS.
+  This file is distributed under the same license as the 4D product package.
+-->
+
+<!DOCTYPE xliff PUBLIC "-//XLIFF//DTD XLIFF//EN"
+"http://www.oasis-open.org/committees/xliff/documents/xliff.dtd">
+
+<xliff version="1.0">
+  <file datatype="x-STR#" original="undefined" source-language="en-US" target-language="fr" product-version="v14">
+    <header>
+      <note>The character &quot;%&quot; (out of a numerical context) is a meta-character that will be replaced (often by a numeric value) before the string is displayed</note>
+      <note>Text between less than (&lt;) and greater than (&gt;) symbols is a variable&apos;s name and must not be localised</note>
+      <note>\r, \t and \n are meta-characters.</note>
+    </header>
+    <body>
+      <group id="1000" resname="DB4D Errors Text">
+        <trans-unit resname="ERR_dbmg_1001" id="1">
+          <source>No column to import in table {TableName}</source>
+          <target>Pas de colonne à importer dans la table {TableName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1002" id="2">
+          <source>Wrong table to import</source>
+          <target>Table d’import incorrecte</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1003" id="3">
+          <source>No column to export in table {TableName}</source>
+          <target>Pas de colonne à exporter dans la table {TableName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1004" id="4">
+          <source>Wrong table to export</source>
+          <target>Table d’export incorrecte</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1006" id="6">
+          <source>Cannot save structure of database {BaseName}</source>
+          <target>Impossible de sauvegarder la structure de la base {BaseName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1007" id="7">
+          <source>Cannot create data file of database: {BaseName}</source>
+          <target>Impossible de créer le fichier de données de la base : {BaseName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1008" id="8">
+          <source>Wrong data segment in database {BaseName}</source>
+          <target>Segment de données incorrect dans la base {BaseName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1009" id="9">
+          <source>Memory is full</source>
+          <target>La mémoire est pleine</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1010" id="10">
+          <source>Cannot load a table definition of database {BaseName}</source>
+          <target>Impossible de charger la définition des tables de la base {BaseName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1011" id="11">
+          <source>Cannot open data file of database {BaseName}</source>
+          <target>Impossible d'ouvrir le fichier de données de la base {BaseName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1012" id="12">
+          <source>Data segment is full in database: {BaseName}</source>
+          <target>Le segment de données est plein dans la base : {BaseName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1013" id="13">
+          <source>Cannot save data segment in database {BaseName}</source>
+          <target>Impossible de sauvegarder le segment de données dans la base {BaseName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1014" id="14">
+          <source>Cannot read data segment of database {BaseName}</source>
+          <target>Impossible de lire le segment de données de la base {BaseName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1015" id="15">
+          <source>Wrong database header in database {BaseName}</source>
+          <target>En-tête de base de données incorrect dans la base {BaseName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1016" id="16">
+          <source>Cannot create table in database {BaseName}</source>
+          <target>Impossible de créer la table dans la base {BaseName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1017" id="17">
+          <source>Cannot read index list of database {BaseName}</source>
+          <target>Impossible de lire la liste des index de la base {BaseName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1018" id="18">
+          <source>Cannot write index list of database {BaseName}</source>
+          <target>Impossible d’écrire la liste des index de la base {BaseName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1019" id="19">
+          <source>Wrong table reference in database {BaseName}</source>
+          <target>Référence de table incorrecte dans la base {BaseName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1020" id="20">
+          <source>Wrong field reference in database {BaseName}</source>
+          <target>Référence de champ incorrecte dans la base {BaseName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1021" id="21">
+          <source>Invalid index type in database {BaseName}</source>
+          <target>Type d’index invalide dans la base {BaseName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1022" id="22">
+          <source>Invalid field name in table {TableName} of database {BaseName}</source>
+          <target>Nom de champ invalide pour la table {TableName} de la base {BaseName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1023" id="23">
+          <source>Invalid database name</source>
+          <target>Nom de base de données invalide</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1024" id="24">
+          <source>Cannot open structure of database {BaseName}</source>
+          <target>Impossible d’ouvrir la structure de la base {BaseName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1025" id="25">
+          <source>Cannot create structure of database {BaseName}</source>
+          <target>Impossible de créer la structure de la base {BaseName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1026" id="26">
+          <source>Cannot load bit selection of database {BaseName}</source>
+          <target>Impossible de charger la 'bit selection' de la base {BaseName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1027" id="27">
+          <source>Cannot load set of database {BaseName}</source>
+          <target>Impossible de charger l’ensemble de la base {BaseName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1028" id="28">
+          <source>Cannot modify set of database {BaseName}</source>
+          <target>Impossible de modifier l’ensemble de la base {BaseName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1029" id="29">
+          <source>Cannot save set of database {BaseName}</source>
+          <target>Impossible de sauvegarder l’ensemble de la base {BaseName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1030" id="30">
+          <source>Cannot save BLOB {BlobNum} in table {TableName} of database {BaseName}</source>
+          <target>Impossible de sauvegarder le BLOB {BlobNum} dans la table {TableName} de la base {BaseName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1031" id="31">
+          <source>Cannot load BLOB {BlobNum} in table {TableName} of database {BaseName}</source>
+          <target>Impossible de charger le BLOB {BlobNum} dans la table {TableName} de la base {BaseName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1032" id="32">
+          <source>Cannot allocate BLOB {BlobNum} in table {TableName} of database {BaseName}</source>
+          <target>Impossible d’allouer le BLOB {BlobNum} dans la table {TableName} de la base {BaseName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1033" id="33">
+          <source>Cannot load data bit table of database {BaseName}</source>
+          <target>Impossible de charger la table de bits des données de la base {BaseName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1034" id="34">
+          <source>Cannot save data bit table of database {BaseName}</source>
+          <target>Impossible de sauvegarder la table de bits des données de la base {BaseName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1035" id="35">
+          <source>Cannot load table of data bit tables of database {BaseName}</source>
+          <target>Impossible de charger la table de bits des données de la base {BaseName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1036" id="36">
+          <source>Cannot save table of data bit tables in database {BaseName}</source>
+          <target>Impossible de sauvegarder la table de bits des données dans la base {BaseName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1037" id="37">
+          <source>Cannot close data segment of database {BaseName}</source>
+          <target>Impossible de fermer le segment de données de la base {BaseName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1038" id="38">
+          <source>Cannot delete data segment of database {BaseName}</source>
+          <target>Impossible de supprimer le segment de données de la base {BaseName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1039" id="39">
+          <source>Cannot open data segment of database {BaseName}</source>
+          <target>Impossible d’ouvrir le segment de données de la base {BaseName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1040" id="40">
+          <source>Cannot create data segment of database {BaseName}</source>
+          <target>Impossible de créer le segment de données de la base {BaseName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1041" id="41">
+          <source>Cannot allocate space in data segment</source>
+          <target>Impossible d’allouer l’espace dans le segment de données</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1042" id="42">
+          <source>Cannot free space in data segment of database {BaseName}</source>
+          <target>Impossible de libérer l’espace dans le segment de données de la base {BaseName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1043" id="43">
+          <source>File is write protected</source>
+          <target>Le fichier est protégé en écriture</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1044" id="44">
+          <source>Cannot access field in record {RecNum} in table {TableName} of database {BaseName}</source>
+          <target>Impossible d’accéder au champ dans l'enregistrement {RecNum} de la table {TableName} de la base {BaseName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1045" id="45">
+          <source>Field definition code is missing in record {RecNum} in table {TableName} of database {BaseName}</source>
+          <target>Le code de définition du champ est manquant dans l'enregistrement {RecNum} de la table {TableName} de la base {BaseName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1046" id="46">
+          <source>Cannot save record {RecNum} in table {TableName} of database {BaseName}</source>
+          <target>Impossible de sauvegarder l’enregistrement {RecNum} de la table {TableName} de la base {BaseName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1047" id="47">
+          <source>Cannot load record {RecNum} in table {TableName} of database {BaseName}</source>
+          <target>Impossible de charger l’enregistrement {RecNum} de la table {TableName} de la base {BaseName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1048" id="48">
+          <source>Cannot allocate record in table {TableName} of database {BaseName}</source>
+          <target>Impossible d’allouer l’enregistrement de la table {TableName} de la base {BaseName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1049" id="49">
+          <source>Cannot update record {RecNum} in table {TableName} of database {BaseName}</source>
+          <target>Impossible de mettre à jour l’enregistrement {RecNum} de la table {TableName} de la base {BaseName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1050" id="50">
+          <source>Wrong header for record {RecNum} in table {TableName} of database {BaseName}</source>
+          <target>En-tête incorrect pour l'enregistrement {RecNum} de la table {TableName} de la base {BaseName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1051" id="51">
+          <source>Cannot save definition of table {TableName} of database {BaseName}</source>
+          <target>Impossible de sauvegarder la définition de la table {TableName} de la base {BaseName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1052" id="52">
+          <source>Cannot update definition of table {TableName} of database {BaseName}</source>
+          <target>Impossible de mettre à jour la définition de la table {TableName} de la base {BaseName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1053" id="53">
+          <source>Field name already exists</source>
+          <target>Le nom du champ existe déjà</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1055" id="55">
+          <source>Cannot update index values while saving a record in table {TableName} of database {BaseName}</source>
+          <target>Impossible de mettre à jour les valeurs d’index pendant la sauvegarde d'un enregistrement de la table {TableName} de la base {BaseName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1056" id="56">
+          <source>Cannot update BLOBs while saving a record in table {TableName} of database {BaseName}</source>
+          <target>Impossible de mettre à jour les BLOBs pendant la sauvegarde d'un enregistrement de la table {TableName} de la base {BaseName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1057" id="57">
+          <source>Cannot delete BLOBs while saving or deleting a record in table {TableName} of database {BaseName}</source>
+          <target>Impossible de supprimer les BLOBs pendant la sauvegarde ou la suppression d'un enregistrement de la table {TableName} de la base {BaseName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1058" id="58">
+          <source>Cannot add field in table {TableName} of database {BaseName}</source>
+          <target>Impossible d’ajouter le champ dans la table {TableName} de la base {BaseName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1059" id="59">
+          <source>Cannot allocate table in memory</source>
+          <target>Impossible d’allouer la table dans la mémoire</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1061" id="61">
+          <source>Cannot allocate record in memory</source>
+          <target>Impossible d’allouer l’enregistrement dans la mémoire</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1062" id="62">
+          <source>Cannot completely delete table {TableName} of database {BaseName}</source>
+          <target>Impossible de supprimer complètement la table {TableName} de la base {BaseName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1063" id="63">
+          <source>Cannot lock record {RecNum} in table {TableName} of database {BaseName}</source>
+          <target>Impossible de verrouiller l’enregistrement {RecNum} de la table {TableName} de la base {BaseName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1064" id="64">
+          <source>Cannot unlock record {RecNum} in table {TableName} of database {BaseName}</source>
+          <target>Impossible de déverrouiller l’enregistrement {RecNum} de la table {TableName} de la base {BaseName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1065" id="65">
+          <source>Cannot delete record {RecNum} in table {TableName} of database {BaseName}</source>
+          <target>Impossible de supprimer l’enregistrement {RecNum} de la table {TableName} de la base {BaseName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1066" id="66">
+          <source>Record {RecNum} is locked in table {TableName} of database {BaseName}</source>
+          <target>L’enregistrement {RecNum} est verrouillé dans la table {TableName} de la base {BaseName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1067" id="67">
+          <source>Sequential search could not be completed in table {TableName} of database {BaseName}</source>
+          <target>La recherche séquentielle n’a pas pu se terminer dans la table {TableName} de la base {BaseName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1068" id="68">
+          <source>Cannot save header for table {TableName} of database {BaseName}</source>
+          <target>Impossible de sauvegarder l’en-tête de la table {TableName} de la base {BaseName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1069" id="69">
+          <source>Cannot import data in table {TableName} of database {BaseName}</source>
+          <target>Impossible d’importer les données de la table {TableName} de la base {BaseName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1070" id="70">
+          <source>Cannot load index header of database {BaseName}</source>
+          <target>Impossible de charger l’en-tête de l’index de la base {BaseName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1071" id="71">
+          <source>Cannot save header for index {IndexName} of database {BaseName}</source>
+          <target>Impossible de sauvegarder l’en-tête de l’index {IndexName} de la base {BaseName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1072" id="72">
+          <source>Cannot get page address for index {IndexName} of database {BaseName}</source>
+          <target>Impossible de lire l’adresse de la page d’index {IndexName} de la base {BaseName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1073" id="73">
+          <source>Cannot set page address for index {IndexName} of database {BaseName}</source>
+          <target>Impossible d’écrire l’adresse de la page d’index {IndexName} de la base {BaseName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1074" id="74">
+          <source>Cannot drop index {IndexName} of database {BaseName}</source>
+          <target>Impossible de supprimer l’index {IndexName} de la base {BaseName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1075" id="75">
+          <source>Cannot sort index {IndexName} of database {BaseName}</source>
+          <target>Impossible de trier l'index {IndexName} de la base {BaseName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1076" id="76">
+          <source>Cannot load page for index {IndexName} of database {BaseName}</source>
+          <target>Impossible de charger la page d’index {IndexName} de la base {BaseName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1077" id="77">
+          <source>Cannot save page for index {IndexName} of database {BaseName}</source>
+          <target>Impossible de sauvegarder la page d’index {IndexName} de la base {BaseName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1078" id="78">
+          <source>Cannot insert key into index {IndexName} of database {BaseName}</source>
+          <target>Impossible d’insérer la clé dans l’index {IndexName} de la base {BaseName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1079" id="79">
+          <source>Cannot delete key from index {IndexName} of database {BaseName}</source>
+          <target>Impossible de supprimer la clé de l’index {IndexName} de la base {BaseName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1080" id="80">
+          <source>Cannot completely delete index {IndexName} of database {BaseName}</source>
+          <target>Impossible de supprimer complètement l’index {IndexName} de la base {BaseName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1081" id="81">
+          <source>Cannot complete scan on index {IndexName} of database {BaseName}</source>
+          <target>Impossible d’accomplir le balayage de l’index {IndexName} de la base {BaseName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1082" id="82">
+          <source>Cannot complete sort of index {IndexName} of database {BaseName}</source>
+          <target>Impossible d’accomplir le tri de l’index {IndexName} de la base {BaseName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1083" id="83">
+          <source>Cannot insert key into page of index {IndexName} of database {BaseName}</source>
+          <target>Impossible d’insérer la clé dans la page d’index {IndexName} de la base {BaseName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1084" id="84">
+          <source>Cannot delete key from page of index {IndexName} of database {BaseName}</source>
+          <target>Impossible de supprimer la clé dans la page d’index {IndexName} de la base {BaseName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1085" id="85">
+          <source>Cannot load index cluster of database {BaseName}</source>
+          <target>Impossible de charger le cluster d’index de la base {BaseName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1086" id="86">
+          <source>Cannot add to index cluster of database {BaseName}</source>
+          <target>Impossible d’ajouter au cluster d’index de la base {BaseName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1087" id="87">
+          <source>Cannot delete from index cluster of database {BaseName}</source>
+          <target>Impossible de supprimer dans le cluster d’index de la base {BaseName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1088" id="88">
+          <source>Index {IndexName} is invalid</source>
+          <target>L'index {IndexName} est invalide</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1089" id="89">
+          <source>SQL syntax error (Obsolete)</source>
+          <target>Erreur de syntaxe SQL (Obsolète)</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1090" id="90">
+          <source>SQL token not found (Obsolete)</source>
+          <target>Mot-clé SQL non trouvé (Obsolète)</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1091" id="91">
+          <source>Not implemented</source>
+          <target>Non implémenté</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1092" id="92">
+          <source>Cannot register code</source>
+          <target>Impossible d’enregistrer le code</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1093" id="93">
+          <source>Operation in progress cancelled by user</source>
+          <target>Opération en cours annulée par l’utilisateur</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1094" id="94">
+          <source>Transaction conflict</source>
+          <target>Conflit de transaction</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1095" id="95">
+          <source>Invalid table name in database {BaseName}</source>
+          <target>Nom de table invalide dans la base {BaseName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1096" id="96">
+          <source>Table {TableName} is locked in database {BaseName}</source>
+          <target>La table {TableName} est verrouillée dans la base {BaseName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1097" id="97">
+          <source>Database {BaseName} is locked</source>
+          <target>La base {BaseName} est verrouillée</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1098" id="98">
+          <source>Data address is invalid in database {BaseName}</source>
+          <target>L’adresse de données est invalide dans la base {BaseName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1099" id="99">
+          <source>Record is empty </source>
+          <target>L’enregistrement est vide</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1100" id="100">
+          <source>Wrong source field</source>
+          <target>Champ source incorrect</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1101" id="101">
+          <source>Wrong destination field</source>
+          <target>Champ destination incorrect</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1102" id="102">
+          <source>Invalid relation name</source>
+          <target>Nom de lien invalide</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1103" id="103">
+          <source>Field types do not match</source>
+          <target>Types de champ incompatibles</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1104" id="104">
+          <source>Relation is empty</source>
+          <target>Le lien est vide</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1105" id="105">
+          <source>Cannot load relations list from database {BaseName}</source>
+          <target>Impossible de charger la liste des liens à partir de la base {BaseName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1106" id="106">
+          <source>Cannot save relations list into database {BaseName}</source>
+          <target>Impossible de sauvegarder la liste des liens dans la base {BaseName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1107" id="107">
+          <source>Query and lock not completed; at least one record locked somewhere else</source>
+          <target>Requête et verrouillage incomplets, un enregistrement au moins était verrouillé</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1108" id="108">
+          <source>Invalid record</source>
+          <target>Enregistrement invalide</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1109" id="109">
+          <source>Wrong record ID</source>
+          <target>Numéro d’enregistrement incorrect</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1110" id="110">
+          <source>Relation already exists in database {BaseName}</source>
+          <target>Le lien existe déjà dans la base {BaseName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1111" id="111">
+          <source>Index already exists in database {BaseName}</source>
+          <target>L’index existe déjà dans la base {BaseName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1112" id="112">
+          <source>Wrong comparison operator</source>
+          <target>Opérateur de comparaison incorrect</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1113" id="113">
+          <source>End of data buffer</source>
+          <target>Fin du buffer de données</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1114" id="114">
+          <source>Wrong DB4D version number</source>
+          <target>Numéro de version DB4D incorrect</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1115" id="115">
+          <source>Duplicated key</source>
+          <target>Clé dupliquée</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1116" id="116">
+          <source>Mandatory field is Null in record {RecNum} in table {TableName}</source>
+          <target>Le champ obligatoire est Null dans l'enregistrement {RecNum} de la table {TableName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1117" id="117">
+          <source>Cannot set field to mandatory for table {TableName}</source>
+          <target>Impossible d’appliquer l’attribut Obligatoire au champ de la table {TableName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1118" id="118">
+          <source>Cannot get exclusive access to table {TableName}</source>
+          <target>Impossible d’obtenir un accès exclusif à la table {TableName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1119" id="119">
+          <source>Cannot check referential integrity of table {TableName}</source>
+          <target>Impossible de vérifier l’intégrité référentielle de la table {TableName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1120" id="120">
+          <source>Reference integrity: some foreign keys still exist matching primary key on record {RecNum} in table {TableName}</source>
+          <target>Intégrité référentielle : il y a encore des clés externes correspondant à la clé primaire de l'enregistrement {RecNum} de la table {TableName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1121" id="121">
+          <source>Cannot delete all records in selection of table {TableName}</source>
+          <target>Impossible de supprimer tous les enregistrements de la sélection de la table {TableName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1122" id="122">
+          <source>BLOB is Null</source>
+          <target>Le BLOB est Null</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1123" id="123">
+          <source>Invalid database context</source>
+          <target>Contexte de base de données incorrect</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1124" id="124">
+          <source>Invalid relation reference</source>
+          <target>Référence de lien invalide</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1125" id="125">
+          <source>Invalid record name in table {TableName}</source>
+          <target>Nom d’enregistrement incorrect dans la table {TableName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1126" id="126">
+          <source>Wrong field type</source>
+          <target>Type de champ incorrect</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1127" id="127">
+          <source>Cannot load extra properties</source>
+          <target>Impossible de charger les propriétés additionnelles</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1128" id="128">
+          <source>Cannot save extra properties</source>
+          <target>Impossible de sauvegarder les propriétés additionnelles</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1129" id="129">
+          <source>Subrecord ID is out of range</source>
+          <target>Le numéro du sous-enregistrement est en dehors des limites</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1130" id="130">
+          <source>Duplicate name for index {IndexName} in database {BaseName}</source>
+          <target>Nom dupliqué pour l'index {IndexName} dans la base {BaseName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1131" id="131">
+          <source>Invalid name for index {IndexName} in database {BaseName}</source>
+          <target>Nom invalide pour l'index {IndexName} dans la base {BaseName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1132" id="132">
+          <source>Wrong key value on index {IndexName}</source>
+          <target>Valeur de clé invalide pour l'index {IndexName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1133" id="133">
+          <source>Wrong type for index {IndexName}</source>
+          <target>Type incorrect pour l'index {IndexName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1134" id="134">
+          <source>Invalid accessor</source>
+          <target>Accesseur invalide</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1135" id="135">
+          <source>Accessor is read only</source>
+          <target>L’accesseur est en lecture seulement</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1136" id="136">
+          <source>Null value not accepted</source>
+          <target>Valeur Null non acceptée</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1137" id="137">
+          <source>THIS is Null</source>
+          <target>THIS est Null</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1138" id="138">
+          <source>Selection is Null</source>
+          <target>La sélection est Null</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1139" id="139">
+          <source>Database {BaseName} is write protected</source>
+          <target>La base de données {BaseName} est protégée en écriture</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1140" id="140">
+          <source>Database {BaseName} is closing</source>
+          <target>La base de données {BaseName} est en cours de fermeture</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1141" id="141">
+          <source>Invalid transaction</source>
+          <target>Transaction invalide</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1142" id="142">
+          <source>Array limit is exceeded</source>
+          <target>La limite de tableau est dépassée</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1143" id="143">
+          <source>Creator of array values is missing</source>
+          <target>Le créateur des valeurs du tableau est manquant</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1144" id="144">
+          <source>Cannot build selection of table {TableName}</source>
+          <target>Impossible de construire la sélection de la table {TableName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1145" id="145">
+          <source>Busy object</source>
+          <target>Objet actuellement indisponible</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1146" id="146">
+          <source>Data file does not match structure file</source>
+          <target>Le fichier de données ne correspond pas au fichier de structure</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1147" id="147">
+          <source>Cannot start listener</source>
+          <target>Impossible de lancer le serveur d'écoute réseau</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1148" id="148">
+          <source>Cannot start server</source>
+          <target>Impossible de lancer le serveur</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1149" id="149">
+          <source>No listener</source>
+          <target>Pas de serveur d'écoute réseau</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1150" id="150">
+          <source>Task is dying</source>
+          <target>Le process est en train de mourir</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1151" id="151">
+          <source>Invalid request tag</source>
+          <target>Balise de requête invalide</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1152" id="152">
+          <source>Invalid context ID</source>
+          <target>Numéro de contexte invalide</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1153" id="153">
+          <source>Not enough temporary space on disk</source>
+          <target>Espace disque temporaire insuffisant</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1154" id="154">
+          <source>Data set is Null</source>
+          <target>L’ensemble de données est Null</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1155" id="155">
+          <source>No primary key matching the foreign key</source>
+          <target>Aucune clé primaire ne correspond à la clé externe</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1156" id="156">
+          <source>Type of field {FieldName} of table {TableName} does not support being set to Unique</source>
+          <target>Le type du champ {FieldName} de la table {TableName} n’accepte pas l’attribut Unique</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1157" id="157">
+          <source>Type of field {FieldName} of table {TableName} does not support being set to NEVER NULL</source>
+          <target>Le type du champ {FieldName} de la table {TableName} n’accepte pas l’attribut NEVER NULL (jamais Null)</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1158" id="158">
+          <source>Cannot alter primary key definition of table {TableName}</source>
+          <target>Impossible de modifier la définition de la clé primaire de la table {TableName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1159" id="159">
+          <source>Maximum number of records has been reached for table {TableName}</source>
+          <target>Le nombre maximal d’enregistrements a été atteint pour la table {TableName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1160" id="160">
+          <source>Maximum number of BLOBs has been reached for table {TableName}</source>
+          <target>Le nombre maximal de BLOBs a été atteint pour la table {TableName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1161" id="161">
+          <source>Indice is out of range</source>
+          <target>L'indice est en dehors des limites</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1162" id="162">
+          <source>Query is invalid</source>
+          <target>La requête est invalide</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1163" id="163">
+          <source>Record is NULL</source>
+          <target>L'enregistrement est Null</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1164" id="164">
+          <source>Object is NULL</source>
+          <target>L'objet est Null</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1165" id="165">
+          <source>Wrong owner for this object</source>
+          <target>Propriétaire incorrect pour cet objet</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1166" id="166">
+          <source>Object was not locked</source>
+          <target>L'objet n'était pas verrouillé</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1167" id="167">
+          <source>Object is locked by another context</source>
+          <target>L'objet est verrouillé par un autre contexte</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1168" id="168">
+          <source>Internal error on remote connection</source>
+          <target>Erreur interne sur une connexion distante</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1169" id="169">
+          <source>Invalid table number</source>
+          <target>Numéro de table invalide</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1170" id="170">
+          <source>Invalid field number</source>
+          <target>Numéro de champ invalide</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1171" id="171">
+          <source>Invalid Database ID</source>
+          <target>Numéro de base de données invalide</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1172" id="172">
+          <source>Invalid Parameter</source>
+          <target>Paramètre invalide</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1173" id="173">
+          <source>Cache Flushing did not complete</source>
+          <target>L'écriture du cache est incomplète</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1174" id="174">
+          <source>Data Flushing did not complete</source>
+          <target>L'écriture des données est incomplète</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1175" id="175">
+          <source>Structure Flushing did not complete</source>
+          <target>L'écriture de la structure est incomplète</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1176" id="176">
+          <source>Log file is invalid for database {BaseName}</source>
+          <target>Le fichier d'historique est invalide pour la base {BaseName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1177" id="177">
+          <source>Log file cannot be found for database {BaseName}</source>
+          <target>Le fichier d'historique est introuvable pour la base {BaseName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1178" id="178">
+          <source>Last operation in log file does not match the one in database {BaseName}</source>
+          <target>La dernière opération du fichier d'historique ne correspond pas à la base {BaseName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1179" id="179">
+          <source>Log file does not match database {BaseName}</source>
+          <target>Le fichier d'historique ne correspond pas à la base {BaseName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1180" id="180">
+          <source>Data Table has been deleted</source>
+          <target>Les données de la table ont été supprimées</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1181" id="181">
+          <source>Keys are not unique in index {IndexName}</source>
+          <target>Les clés ne sont pas uniques dans l'index {IndexName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1182" id="182">
+          <source>Cannot create log file for database {BaseName}</source>
+          <target>Impossible de créer un fichier d'historique pour la base {BaseName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1183" id="183">
+          <source>Cannot write into log file of database {BaseName}</source>
+          <target>Impossible d'écrire dans le fichier d'historique de la base {BaseName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1184" id="184">
+          <source>Cannot drop table {TableName} in database {BaseName}</source>
+          <target>Impossible de déposer la table {TableName} dans la base {BaseName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1185" id="185">
+          <source>Remote database cannot be opened</source>
+          <target>La base de données distante ne peut pas être ouverte</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1186" id="186">
+          <source>Log file cannot be integrated into database {BaseName}</source>
+          <target>Le fichier d'historique ne peut pas être intégré à la base {BaseName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1187" id="187">
+          <source>Internal Computation on Set cannot be completed</source>
+          <target>L'opération interne sur l'ensemble est incomplète</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1188" id="188">
+          <source>Array cannot be saved</source>
+          <target>Le tableau ne peut pas être sauvegardé</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1189" id="189">
+          <source>Array cannot be loaded</source>
+          <target>Le tableau ne peut pas être chargé</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1190" id="190">
+          <source>Sequence number header cannot be loaded</source>
+          <target>L'en-tête du numéro de séquence ne peut pas être chargé</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1191" id="191">
+          <source>Cannot select record</source>
+          <target>Impossible de sélectionner l'enregistrement</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1192" id="192">
+          <source>Record cannot be created</source>
+          <target>L'enregistrement ne peut pas être créé</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1193" id="193">
+          <source>Cannot complete selection to array in table {TableName} of database {BaseName}</source>
+          <target>Impossible d'accomplir sélection vers tableau de la table {TableName} de la base {BaseName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1194" id="194">
+          <source>Cannot complete array to selection in table {TableName} of database {BaseName}</source>
+          <target>Impossible d'accomplir tableau vers sélection de la table {TableName} de la base {BaseName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1195" id="195">
+          <source>Cannot complete sequential sort</source>
+          <target>Impossible d'accomplir le tri séquentiel</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1196" id="196">
+          <source>Selection cannot be locked</source>
+          <target>La sélection ne peut pas être verrouilée</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1197" id="197">
+          <source>Index key cannot be loaded</source>
+          <target>La clé d'index ne peut pas être chargée</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1198" id="198">
+          <source>Index key cannot be saved</source>
+          <target>La clé d'index ne peut pas être sauvegardée</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1199" id="199">
+          <source>Index key cannot be built</source>
+          <target>La clé d'index ne peut pas être construite</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1200" id="200">
+          <source>Query cannot be completed</source>
+          <target>La requête ne peut pas se terminer</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1201" id="201">
+          <source>Query cannot be analyzed</source>
+          <target>La requête ne peut pas être analysée</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1202" id="202">
+          <source>Formula could not be processed on this column</source>
+          <target>La formule n'a pas pu être effectuée sur cette colonne</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1203" id="203">
+          <source>Query could not be completed</source>
+          <target>La requête n’a pas pu se terminer</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1204" id="204">
+          <source>Query could not be analyzed</source>
+          <target>La requête n’a pas pu être analysée</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1205" id="205">
+          <source>Could not get all distinct values of table {TableName} of database {BaseName}</source>
+          <target>Impossible d'obtenir toutes les valeurs distinctes de la table {TableName} de la base {BaseName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1206" id="206">
+          <source>Cannot build array of values in table {TableName} of database {BaseName}</source>
+          <target>Impossible de construire le tableau de valeurs de la table {TableName} de la base {BaseName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1207" id="207">
+          <source>Selection cannot be loaded</source>
+          <target>La sélection ne peut pas être chargée</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1208" id="208">
+          <source>Cannot send data</source>
+          <target>Impossible d'envoyer les données</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1209" id="209">
+          <source>Cannot receive request reply</source>
+          <target>Impossible de recevoir la réponse de la requête</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1210" id="210">
+          <source>Cannot send request</source>
+          <target>Impossible d'envoyer une requête</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1211" id="211">
+          <source>Cannot create connection</source>
+          <target>Impossible de créer une connexion</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1212" id="212">
+          <source>Index {IndexName} cannot be quickly created in database {BaseName}</source>
+          <target>L'index {IndexName} ne peut pas être créé rapidement dans la base {BaseName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1213" id="213">
+          <source>Cannot build distinct index keys</source>
+          <target>Impossible de construire les clés d'index distinctes</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1214" id="214">
+          <source>Selection cannot be sorted in table {TableName} of database {BaseName}</source>
+          <target>La sélection ne peut pas être triée dans la table {TableName} de la base {BaseName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1215" id="215">
+          <source>Address table cannot loaded</source>
+          <target>La table d'adresse ne peut pas être chargée</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1216" id="216">
+          <source>Address table cannot modified</source>
+          <target>La table d'adresse ne peut pas être modifiée</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1217" id="217">
+          <source>Cannot allocate new entry into address table</source>
+          <target>Impossible d'allouer une nouvelle entrée à la table d'adresse</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1218" id="218">
+          <source>Cannot allocate free entry from address table</source>
+          <target>Impossible d'allouer une entrée vide de la table d'adresse</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1219" id="219">
+          <source>Transaction temporary record cannot be saved</source>
+          <target>L'enregistrement temporaire de transaction ne peut pas être sauvegardé</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1220" id="220">
+          <source>Transaction temporary blob cannot be saved</source>
+          <target>Le blob temporaire de transaction ne peut pas être sauvegardé</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1221" id="221">
+          <source>Transaction temporary record cannot be loaded</source>
+          <target>L'enregistrement temporaire de transaction ne peut pas être chargé</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1222" id="222">
+          <source>Transaction temporary blob cannot be loaded</source>
+          <target>Le blob temporaire de transaction ne peut pas être chargé</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1223" id="223">
+          <source>Transaction cannot be started</source>
+          <target>La transaction ne peut pas être démarrée</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1224" id="224">
+          <source>Transaction cannot be commited</source>
+          <target>La transaction ne peut pas être validée</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1225" id="225">
+          <source>Cannot get extra property</source>
+          <target>Impossible de lire la propriété additionnelle</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1226" id="226">
+          <source>Cannot set extra property</source>
+          <target>Impossible d'écrire la propriété additionnelle</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1227" id="227">
+          <source>Table name is already used</source>
+          <target>Le nom de la table est déjà utilisé</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1228" id="228">
+          <source>Cannot get list of NULL keys from index {IndexName}</source>
+          <target>Impossible de lire la liste des clés NULL de l'index {IndexName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1229" id="229">
+          <source>Cannot modify list of NULL keys of index {IndexName}</source>
+          <target>Impossible de modifier la liste des clés NULL de l'index {IndexName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1230" id="230">
+          <source>Invalid key for index {IndexName}</source>
+          <target>Clé invalide pour l'index {IndexName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1231" id="231">
+          <source>Cannot set log file</source>
+          <target>Impossible d'écrire le fichier d'historique</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1232" id="232">
+          <source>Context is NULL</source>
+          <target>Le contexte est NULL</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1233" id="233">
+          <source>Database {BaseName} cannot be locked</source>
+          <target>La base {BaseName} ne peut pas être verrouillée</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1234" id="234">
+          <source>Wrong field reference in record# {RecNum} of table: {TableName} of database: {BaseName}</source>
+          <target>Référence de champ incorrecte dans l'enregistrement# {RecNum} de la table : {TableName} de la base : {BaseName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1235" id="235">
+          <source>Wrong field reference in table: {TableName} of database: {BaseName}</source>
+          <target>Référence de champ incorrecte dans la table : {TableName} de la base : {BaseName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1236" id="236">
+          <source>Cannot read data from temporary transaction file</source>
+          <target>Impossible de lire les données du fichier de transaction temporaire</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1237" id="237">
+          <source>Cartesian Product failed</source>
+          <target>Le produit cartésien échoué</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1238" id="238">
+          <source>Cannot merge selections</source>
+          <target>Impossible de fusionner sélections</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1239" id="239">
+          <source>The format of the {BaseName} database cannot be upgraded in read only mode</source>
+          <target>Le format de la base {BaseName} ne peut pas être mis à jour en mode lecture seulement</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1240" id="240">
+          <source>Wrong Header</source>
+          <target>En-tête incorrect</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1241" id="241">
+          <source>Wrong CheckSum</source>
+          <target>CheckSum incorrect</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1243" id="243">
+          <source>Cannot load data tables of database: {BaseName}</source>
+          <target>Impossible de charger la table des données de la base : {BaseName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1244" id="244">
+          <source>The list of foreign key constraints is not empty for table: {TableName} of database: {BaseName}</source>
+          <target>La liste de contraintes des clés étrangères n'est pas vide pour la table : {TableName}dans la base : {BaseName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1245" id="245">
+          <source>Address entry is not empty</source>
+          <target>L'entrée d'adresse n'est pas vide</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1246" id="246">
+          <source>Cannot pre-allocate address</source>
+          <target>Impossible de pré-allouer l'adresse</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1247" id="247">
+          <source>Cannot update new record in table {TableName} of database {BaseName}</source>
+          <target>Impossible de mettre à jour le nouvel enregistrement dans la table {TableName} de la base {BaseName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1248" id="248">
+          <source>Cannot save new record in table {TableName} of database {BaseName}</source>
+          <target>Impossible de sauvegarder le nouvel enregistrement dans la table {TableName} de la base {BaseName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1249" id="249">
+          <source>Cannot save subrecord</source>
+          <target>Impossible de sauvegarder le sous-enregistrement</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1250" id="250">
+          <source>Cannot save record</source>
+          <target>Impossible de sauvegarder l'enregistrement</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1251" id="251">
+          <source>Cannot lock structure object definition</source>
+          <target>Impossible de verrouiller la définition de l'objet de structure</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1252" id="252">
+          <source>Cannot unlock structure object definition</source>
+          <target>Impossible de déverrouiller la définition de l'objet de structure</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1253" id="253">
+          <source>Invalid relation number</source>
+          <target>Numéro de lien invalide</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1254" id="254">
+          <source>Circular Reference in records address table of table {TableName} of database {BaseName}</source>
+          <target>Référence circulaire de la table d'adresse des enregistrements de la table {TableName} de la base {BaseName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1255" id="255">
+          <source>Circular Reference in blobs address table of table {TableName} of database {BaseName}</source>
+          <target>Référence circulaire dans la table d'adresse des blobs de la table {TableName} de la base {BaseName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1256" id="256">
+          <source>Duplicated Schema Name in database {BaseName}</source>
+          <target>Nom de schéma dupliqué dans la base {BaseName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1257" id="257">
+          <source>Schema cannot be saved in database {BaseName}</source>
+          <target>Le schéma ne peut être sauvegardé dans la base {BaseName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1258" id="258">
+          <source>Schema cannot be deleted in database {BaseName}</source>
+          <target>Le schéma ne peut être supprimé dans la base {BaseName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1259" id="259">
+          <source>Schema cannot be renamed in database {BaseName}</source>
+          <target>Le schéma ne peut être renommé dans la base {BaseName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1260" id="260">
+          <source>Selected log file is too recent for database {BaseName}</source>
+          <target>Le fichier d'historique est trop récent pour la base {BaseName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1261" id="261">
+          <source>Selected log file is too old for database {BaseName}</source>
+          <target>Le fichier d'historique est trop ancien pour la base {BaseName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1262" id="262">
+          <source>Some DataTables do not have matching table definitions for database {BaseName}</source>
+          <target>Certaines DataTables n'ont pas de définitions de tables correspondantes dans la base de données {BaseName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1263" id="263">
+          <source>Given stamp does not match current one for record# {RecNum} of table {TableName}</source>
+          <target>Le marqueur fourni ne correspond pas à celui de l'enregistrement# {RecNum} de la table {TableName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1264" id="264">
+          <source>A primary key is needed and missing in table {TableName}</source>
+          <target>Une clé primaire est nécessaire et est manquante dans la table {TableName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1265" id="265">
+          <source>Invalid field</source>
+          <target>Champ invalide</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1266" id="266">
+          <source>Unknown field type (this version of 4D is perhaps too old)</source>
+          <target>Type de champ inconnu (cette version de 4D est peut-être trop ancienne)</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1267" id="267">
+          <source>Stack Overflow</source>
+          <target>Dépassement de la capacité de la pile</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1268" id="268">
+          <source>DataTable cannot be regenerated for database {BaseName}</source>
+          <target>La table ne peut pas être régénérée pour la base {BaseName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1269" id="269">
+          <source>DataTable cannot be found</source>
+          <target>La table ne peut pas être trouvée</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1270" id="270">
+          <source>Missing structure could not be rebuild</source>
+          <target>La structure manquante ne peut pas être recréée</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1271" id="271">
+          <source>Invalid REST request handler</source>
+          <target>Gestionnaire de requête REST invalide</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1272" id="272">
+          <source>Some records are still locked in table {tableName} in database {BaseName}</source>
+          <target>Certains enregistrements de la table {tableName} sont encore verrouillés dans la base {BaseName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1273" id="273">
+          <source>Cannot drop table {TableName} in database {BaseName}</source>
+          <target>Impossible de supprimer la table {TableName} dans la base {BaseName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1274" id="274">
+          <source>The current journal file of database {BaseName} is not available. For data security reasons, write operations are stopped. Please contact your administrator as soon as possible.</source>
+          <target>Le fichier d’historique de la base {BaseName} n’est pas disponible. Pour des raisons de sécurité des données, les opérations d’écriture sont interrompues. Veuillez contacter votre administrateur dès que possible.</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1275" id="275">
+          <source>"(" is missing at the beginning of the Javascript statement in this query.</source>
+          <target>"(" est manquante au début de l’expression Javascript dans cette requête.</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1276" id="276">
+          <source>Datastream has an invalid header.</source>
+          <target>Datastream a un en-tête invalide.</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1277" id="277">
+          <source>The database journal integration failed at entry# {p1}.</source>
+          <target>L'intégration du fichier d'historique de la base a échouée à l'entrée# {p1}.</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1278" id="278">
+          <source>Javascript code not allowed in the query.</source>
+          <target>Code Javascript non autorisé dans cette requête.</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1279" id="279">
+          <source>The query placeholder {Param1} is missing or null.</source>
+          <target>The query placeholder {Param1} is missing or null.</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1280" id="280">
+          <source>The query placeholder {Param1} is not a valid type.</source>
+          <target>Le type du placeholder {Param1} de la requête est invalide.</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1281" id="281">
+          <source>Table {TableName} needs a primary key in order to be logged.</source>
+          <target>La table {TableName} a besoin d’une clé primaire pour être journalisée.</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1282" id="282">
+          <source>Cannot find any record with that primary key in table {TableName}.</source>
+          <target>Il n’y a pas d’enregistrement avec cette clé primaire dans la table {TableName}.</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1283" id="283">
+          <source>A primary key definition is missing for table {TableName}.</source>
+          <target>Une définition de la clé primaire est manquante dans la table {TableName}.</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1284" id="284">
+          <source>The given primary key of table {TableName} is malformed.</source>
+          <target>La clé primaire de la table {TableName} est malformée.</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1285" id="285">
+          <source>Non-unique primary key found in table {TableName}.</source>
+          <target>Non unique clé primaire trouvé dans la table {TableName}.</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1286" id="286">
+          <source>Null primary key found in table {TableName}.</source>
+          <target>Clé primaire null trouvée dans la table {TableName}.</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1300" id="300">
+          <source>Invalid Selection Type</source>
+          <target>Type de sélection invalide</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1301" id="301">
+          <source>Array is too big</source>
+          <target>Le tableau est trop grand</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1302" id="302">
+          <source>Array size does not match</source>
+          <target>La taille du tableau ne correspond pas</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1303" id="303">
+          <source>Invalid Selection ID</source>
+          <target>ID de la sélection invalide</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1304" id="304">
+          <source>Invalid Selection Part</source>
+          <target>Partie de la sélection invalide</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1500" id="500">
+          <source>The "{Param1}" attribute cannot be found in The "{EntityModelName}" datastore class</source>
+          <target>The "{Param1}" attribute cannot be found in The "{EntityModelName}" datastore class</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1501" id="501">
+          <source>The "{Param1}" datastore class already exists in the "{BaseName}" database</source>
+          <target>The "{Param1}" datastore class already exists in the "{BaseName}" database</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1502" id="502">
+          <source>The name of the datastore class in the "{BaseName}" database is missing</source>
+          <target>The name of the datastore class in the "{BaseName}" database is missing</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1503" id="503">
+          <source>Invalid datasource for the "{EntityModelName}" datastore class in the "{BaseName}" database</source>
+          <target>Invalid datasource for the "{EntityModelName}" datastore class in the "{BaseName}" database</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1504" id="504">
+          <source>Attribute's name is missing in the "{EntityModelName}" datastore class</source>
+          <target>Attribute's name is missing in the "{EntityModelName}" datastore class</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1505" id="505">
+          <source>Wrong kind for the "{EntityAttributeName}" attribute in the "{EntityModelName}" datastore class</source>
+          <target>Wrong kind for the "{EntityAttributeName}" attribute in the "{EntityModelName}" datastore class</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1506" id="506">
+          <source>Attribute "{EntityAttributeName}" is not well defined in the "{EntityModelName}" datastore class</source>
+          <target>Attribute "{EntityAttributeName}" is not well defined in the "{EntityModelName}" datastore class</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1507" id="507">
+          <source>The "{EntityModelName}" datastore class cannot be extended with "{Param1}"</source>
+          <target>The "{EntityModelName}" datastore class cannot be extended with "{Param1}"</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1508" id="508">
+          <source>Wrong value type passed to the "{EntityAttributeName}" attribute in the "{EntityModelName}" datastore class</source>
+          <target>Wrong value type passed to the "{EntityAttributeName}" attribute in the "{EntityModelName}" datastore class</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1509" id="509">
+          <source>The relationship "{RelationName}" is not well defined in the "{EntityModelName}" datastore class</source>
+          <target>The relationship "{RelationName}" is not well defined in the "{EntityModelName}" datastore class</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1510" id="510">
+          <source>The relationship "{RelationName}" already exists in the "{BaseName}" database</source>
+          <target>The relationship "{RelationName}" already exists in the "{BaseName}" database</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1511" id="511">
+          <source>The relationship "{Param1}" cannot be found for the "{EntityAttributeName}" attribute in the "{EntityModelName}" datastore class</source>
+          <target>The relationship "{Param1}" cannot be found for the "{EntityAttributeName}" attribute in the "{EntityModelName}" datastore class</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1512" id="512">
+          <source>The type "{TypeName}" already exists in the "{BaseName}" database</source>
+          <target>The type "{TypeName}" already exists in the "{BaseName}" database</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1513" id="513">
+          <source>The type "{Param1}" cannot be found for the "{EntityAttributeName}" attribute in the "{EntityModelName}" datastore class</source>
+          <target>The type "{Param1}" cannot be found for the "{EntityAttributeName}" attribute in the "{EntityModelName}" datastore class</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1514" id="514">
+          <source>The enumeration "{EnumerationName}" already exists in the "{BaseName}" database</source>
+          <target>The enumeration "{EnumerationName}" already exists in the "{BaseName}" database</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1515" id="515">
+          <source>The enumeration "{Param1}" cannot be found in the "{BaseName}" database</source>
+          <target>The enumeration "{Param1}" cannot be found in the "{BaseName}" database</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1516" id="516">
+          <source>The value of attribute "{EntityAttributeName}" in the "{EntityModelName}" datastore class cannot be modified</source>
+          <target>The value of attribute "{EntityAttributeName}" in the "{EntityModelName}" datastore class cannot be modified</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1517" id="517">
+          <source>The entity# {EntityNum} in the "{EntityModelName}" datastore class cannot be saved</source>
+          <target>The entity# {EntityNum} in the "{EntityModelName}" datastore class cannot be saved</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1518" id="518">
+          <source>The entity ({PrimKey}) in the "{EntityModelName}" datastore class cannot be deleted</source>
+          <target>The entity ({PrimKey}) in the "{EntityModelName}" datastore class cannot be deleted</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1519" id="519">
+          <source>The "{EnumerationName}" enumeration cannot be loaded from the definition in the "{BaseName}" database</source>
+          <target>The "{EnumerationName}" enumeration cannot be loaded from the definition in the "{BaseName}" database</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1520" id="520">
+          <source>The "{TypeName}" type cannot be loaded from the definition in the "{BaseName}" database</source>
+          <target>The "{TypeName}" type cannot be loaded from the definition in the "{BaseName}" database</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1521" id="521">
+          <source>The "{EntityModelName}" datastore class cannot be loaded from the definition in the "{BaseName}" database</source>
+          <target>The "{EntityModelName}" datastore class cannot be loaded from the definition in the "{BaseName}" database</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1522" id="522">
+          <source>The "{EntityAttributeName}" attribute cannot be loaded from the definition in the "{BaseName}" database</source>
+          <target>The "{EntityAttributeName}" attribute cannot be loaded from the definition in the "{BaseName}" database</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1523" id="523">
+          <source>The "{RelationName}" relationship cannot be loaded from the definition in the "{BaseName}" database</source>
+          <target>The "{RelationName}" relationship cannot be loaded from the definition in the "{BaseName}" database</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1524" id="524">
+          <source>Source is invalid in the "{RelationName}" relationship in the "{BaseName}" database</source>
+          <target>Source is invalid in the "{RelationName}" relationship in the "{BaseName}" database</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1525" id="525">
+          <source>Destination is invalid in the "{RelationName}" relationship in the "{BaseName}" database</source>
+          <target>Destination is invalid in the "{RelationName}" relationship in the "{BaseName}" database</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1526" id="526">
+          <source>Kind is invalid in the "{RelationName}" relationship in the "{BaseName}" database</source>
+          <target>Kind is invalid in the "{RelationName}" relationship in the "{BaseName}" database</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1527" id="527">
+          <source>Relationship is missing for the "{EntityAttributeName}" attribute in the "{EntityModelName}" datastore class</source>
+          <target>Relationship is missing for the "{EntityAttributeName}" attribute in the "{EntityModelName}" datastore class</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1528" id="528">
+          <source>Relationpath is empty for the "{EntityAttributeName}" attribute in the "{EntityModelName}" datastore class</source>
+          <target>Relationpath is empty for the "{EntityAttributeName}" attribute in the "{EntityModelName}" datastore class</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1529" id="529">
+          <source>Field reference is missing for the "{EntityAttributeName}" attribute in the "{EntityModelName}" datastore class</source>
+          <target>Field reference is missing for the "{EntityAttributeName}" attribute in the "{EntityModelName}" datastore class</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1530" id="530">
+          <source>Related datastore class is missing for the "{EntityAttributeName}" attribute in the "{EntityModelName}" datastore class</source>
+          <target>Related datastore class is missing for the "{EntityAttributeName}" attribute in the "{EntityModelName}" datastore class</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1531" id="531">
+          <source>The "{Param1}" related datastore class cannot be found for the "{EntityAttributeName}" attribute in the "{EntityModelName}" datastore class</source>
+          <target>The "{Param1}" related datastore class cannot be found for the "{EntityAttributeName}" attribute in the "{EntityModelName}" datastore class</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1532" id="532">
+          <source>The datastore model cannot be loaded for the "{BaseName}" database</source>
+          <target>The datastore model cannot be loaded for the "{BaseName}" database</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1533" id="533">
+          <source>The "{Param1}" field reference cannot be found for the "{EntityAttributeName}" attribute in the "{EntityModelName}" datastore class</source>
+          <target>The "{Param1}" field reference cannot be found for the "{EntityAttributeName}" attribute in the "{EntityModelName}" datastore class</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1534" id="534">
+          <source>The new entity of the "{EntityModelName}" datastore class cannot be saved</source>
+          <target>The new entity of the "{EntityModelName}" datastore class cannot be saved</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1535" id="535">
+          <source>The relation path is multi-segmented for the "{EntityAttributeName}" attribute in the "{EntityModelName}" datastore class</source>
+          <target>The relation path is multi-segmented for the "{EntityAttributeName}" attribute in the "{EntityModelName}" datastore class</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1536" id="536">
+          <source>The related entity is not of type "{Param1}" for the "{EntityAttributeName}" attribute in the "{EntityModelName}" datastore class</source>
+          <target>The related entity is not of type "{Param1}" for the "{EntityAttributeName}" attribute in the "{EntityModelName}" datastore class</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1537" id="537">
+          <source>Cannot save related entity of the "{Param1}" attribute for the entity of the "{EntityModelName}" datastore class</source>
+          <target>Cannot save related entity of the "{Param1}" attribute for the entity of the "{EntityModelName}" datastore class</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1538" id="538">
+          <source>The "{EntityAttributeName}" attribute in the "{EntityModelName}" datastore class cannot be used as an identifying attribute (wrong type)</source>
+          <target>The "{EntityAttributeName}" attribute in the "{EntityModelName}" datastore class cannot be used as an identifying attribute (wrong type)</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1539" id="539">
+          <source>The "{EntityAttributeName}" attributein the "{EntityModelName}" datastore class cannot be used as a primary key attribute (wrong type)</source>
+          <target>The "{EntityAttributeName}" attribute in the "{EntityModelName}" datastore class cannot be used as a primary key attribute (wrong type)</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1540" id="540">
+          <source>The "{EntityModelName}" datastore class has no primary key</source>
+          <target>The "{EntityModelName}" datastore class has no primary key</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1541" id="541">
+          <source>The given primary key does not match the definition in the "{EntityModelName}" datastore class</source>
+          <target>The given primary key does not match the definition in the "{EntityModelName}" datastore class</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1542" id="542">
+          <source>Cannot find entity with "{Param1}" key in the "{EntityModelName}" datastore class</source>
+          <target>Cannot find entity with "{Param1}" key in the "{EntityModelName}" datastore class</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1543" id="543">
+          <source>Cannot load entity# {Param1} in the "{EntityModelName}" datastore class</source>
+          <target>Cannot load entity# {Param1} in the "{EntityModelName}" datastore class</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1544" id="544">
+          <source>Primary key is NULL for the entity# {EntityNum} in the "{EntityModelName}" datastore class</source>
+          <target>Primary key is NULL for the entity# {EntityNum} in the "{EntityModelName}" datastore class</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1545" id="545">
+          <source>Primary key {Param1} already exists in the "{EntityModelName}" datastore class</source>
+          <target>Primary key {Param1} already exists in the "{EntityModelName}" datastore class</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1546" id="546">
+          <source>Primary key is NULL for the new entity in the "{EntityModelName}" datastore class</source>
+          <target>Primary key is NULL for the new entity in the "{EntityModelName}" datastore class</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1547" id="547">
+          <source>The datastore class has no identifying attributes</source>
+          <target>The datastore class has no identifying attributes</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1548" id="548">
+          <source>Identifying attribute key is invalid</source>
+          <target>Identifying attribute key is invalid</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1549" id="549">
+          <source>Identifying attribute key cannot be found</source>
+          <target>Identifying attribute key cannot be found</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1550" id="550">
+          <source>Script statement is empty</source>
+          <target>Script statement is empty</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1551" id="551">
+          <source>Script kind is missing</source>
+          <target>Script kind is missing</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1552" id="552">
+          <source>Script kind is unknown</source>
+          <target>Script kind is unknown</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1553" id="553">
+          <source>Wrong permission reference</source>
+          <target>Wrong permission reference</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1554" id="554">
+          <source>The "{Param1}" datastore class cannot be found</source>
+          <target>The "{Param1}" datastore class cannot be found</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1555" id="555">
+          <source>Users and Groups directory is missing</source>
+          <target>Users and Groups directory is missing</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1556" id="556">
+          <source>Datastore class permissions cannot be loaded</source>
+          <target>Datastore class permissions cannot be loaded</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1557" id="557">
+          <source>No permission to read for the {EntityModelName} datastore class</source>
+          <target>No permission to read for the {EntityModelName} datastore class</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1558" id="558">
+          <source>No permission to update for the {EntityModelName} datastore class</source>
+          <target>No permission to update for the {EntityModelName} datastore class</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1559" id="559">
+          <source>No permission to create for the {EntityModelName} datastore class</source>
+          <target>No permission to create for the {EntityModelName} datastore class</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1560" id="560">
+          <source>No permission to delete for the {EntityModelName} datastore class</source>
+          <target>No permission to delete for the {EntityModelName} datastore class</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1561" id="561">
+          <source>No permission to execute the {MethodName} method in the {EntityModelName} datastore class</source>
+          <target>No permission to execute the {MethodName} method in the {EntityModelName} datastore class</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1562" id="562">
+          <source>JavaScript execution error</source>
+          <target>JavaScript execution error</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1563" id="563">
+          <source>Method name is missing</source>
+          <target>Method name is missing</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1564" id="564">
+          <source>Method type is invalid</source>
+          <target>Method type is invalid</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1565" id="565">
+          <source>Method definition is invalid</source>
+          <target>Method definition is invalid</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1566" id="566">
+          <source>Method statement is empty</source>
+          <target>Method statement is empty</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1567" id="567">
+          <source>Method parameter name is invalid</source>
+          <target>Method parameter name is invalid</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1568" id="568">
+          <source>Value cannot be less than {Param1}</source>
+          <target>Value cannot be less than {Param1}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1569" id="569">
+          <source>Value cannot be greater than {Param1}</source>
+          <target>Value cannot be greater than {Param1}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1570" id="570">
+          <source>Entity fails validation</source>
+          <target>Entity fails validation</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1571" id="571">
+          <source>Value does not match the "{Param1}" pattern</source>
+          <target>Value does not match the "{Param1}" pattern</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1572" id="572">
+          <source>The "{Param1}" datastore class name already exists</source>
+          <target>The "{Param1}" datastore class name already exists</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1573" id="573">
+          <source>The "{Param1}" method name is unknown</source>
+          <target>The "{Param1}" method name is unknown</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1574" id="574">
+          <source>The {EntityAttributeName} attribute is not the correct type</source>
+          <target>The {EntityAttributeName} attribute is not the correct type</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1575" id="575">
+          <source></source>
+          <target></target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1576" id="576">
+          <source>The relation based on "{Param1}" is not N-to-1</source>
+          <target>Le lien basé sur "{Param1}" n’est pas N vers 1 </target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1577" id="577">
+          <source>The relation based on "{Param1}" is not 1-to-N</source>
+          <target> Le lien basé sur "{Param1}" n’est pas 1 vers N</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1578" id="578">
+          <source>The {Param1} attribute is not a relation attribute</source>
+          <target>L'attribut {Param1} n’est pas un attribut de relation</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1579" id="579">
+          <source>"{Param1}" is not a valid relation</source>
+          <target>"{Param1}" n’est pas un lien valide</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1580" id="580">
+          <source>The relation path is empty</source>
+          <target>Le chemin de la relation est vide</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1581" id="581">
+          <source>Cannot resolve "{Param1}" as a relation path</source>
+          <target>Impossible de résoudre "{Param1}" comme un chemin de relation</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1582" id="582">
+          <source>Event's kind is missing or invalid</source>
+          <target>Le type de l’événement  est manquant ou invalide</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1583" id="583">
+          <source>Event's method is missing or invalid</source>
+          <target>La méthode de l’événement  est manquante ou invalide</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1584" id="584">
+          <source>Alias attributes can only return scalar values</source>
+          <target>Les attributs alias peuvent retourner uniquement des valeurs scalaires</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1585" id="585">
+          <source>An error occurred during JavaScript execution</source>
+          <target>Une erreur  est survenue pendant l’exécution JavaScript</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1586" id="586">
+          <source>Not a valid entity collection</source>
+          <target>Ce n'est pas une collection d'entités valide</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1587" id="587">
+          <source>The entity collections come from incompatible datastore classes</source>
+          <target>Les collections d'entités proviennent de classes de données incompatibles</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1588" id="588">
+          <source>The "{Param1}" attribute is duplicated</source>
+          <target>L’attribut "{Param1}" est dupliqué</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1589" id="589">
+          <source>The "{Param1}" attribute is from another datastore class</source>
+          <target>L’attribut "{Param1}" appartient à une autre classes de données</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1590" id="590">
+          <source>"{Param1}" is recursively used to build a relation path for the "{EntityModelName}" datastore class</source>
+          <target>"{Param1}" is recursively used to build a relation path for the "{EntityModelName}" datastore class</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1591" id="591">
+          <source>String length cannot be less than {Param1}</source>
+          <target>String length cannot be less than {Param1}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1592" id="592">
+          <source>String length cannot be greater than {Param1}</source>
+          <target>String length cannot be greater than {Param1}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1593" id="593">
+          <source>String length must be {Param1}</source>
+          <target>String length must be {Param1}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1600" id="600">
+          <source>This entity does not belong to the {Param1} datastore class</source>
+          <target>This entity does not belong to the {Param1} datastore class</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1601" id="601">
+          <source>This query is not valid for this datastore class</source>
+          <target>This query is not valid for this datastore class</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1602" id="602">
+          <source>Invalid collection returned by restricting query event for the {Param1} datastore class</source>
+          <target>Invalid collection returned by restricting query event for the {Param1} datastore class</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1603" id="603">
+          <source>This entity collection does not belong to the {Param1} datastore class</source>
+          <target>This entity collection does not belong to the {Param1} datastore class</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1604" id="604">
+          <source>SQL connector is missing</source>
+          <target>SQL connector is missing</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1605" id="605">
+          <source>Connection cannot be established with SQL server</source>
+          <target>Connection cannot be established with SQL server</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1606" id="606">
+          <source>The {Param1} datastore class is not a local one</source>
+          <target>The {Param1} datastore class is not a local one</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1607" id="607">
+          <source>No permission to read for the "{EntityAttributeName}" attribute in the "{EntityModelName}" datastore class</source>
+          <target>No permission to read for the "{EntityAttributeName}" attribute in the "{EntityModelName}" datastore class</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1608" id="608">
+          <source>No permission to update for the "{EntityAttributeName}" attribute in the "{EntityModelName}" datastore class</source>
+          <target>No permission to update for the "{EntityAttributeName}" attribute in the "{EntityModelName}" datastore class</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1609" id="609">
+          <source>No permission to describe the {EntityModelName} datastore class</source>
+          <target>No permission to describe the {EntityModelName} datastore class</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1800" id="800">
+          <source>The "{Param1}" datastore class cannot be found</source>
+          <target>The "{Param1}" datastore class cannot be found</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1801" id="801">
+          <source>The "{Param1}" format is not supported</source>
+          <target>The "{Param1}" format is not supported</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1802" id="802">
+          <source>The "{Param1}" entity set cannot be found</source>
+          <target>The "{Param1}" entity set cannot be found</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1803" id="803">
+          <source>The "{Param1}" entity set does not belong to the "{Param2}" datastore class</source>
+          <target>The "{Param1}" entity set does not belong to the "{Param2}" datastore class</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1804" id="804">
+          <source>Cannot completely build a list of attributes with "{Param1}" for the "{Param2}" datastore class</source>
+          <target>Cannot completely build a list of attributes with "{Param1}" for the "{Param2}" datastore class</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1805" id="805">
+          <source>Cannot completely build a list of expanded attributes with "{Param1}" for the "{Param2}" datastore class</source>
+          <target>Cannot completely build a list of expanded attributes with "{Param1}" for the "{Param2}" datastore class</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1806" id="806">
+          <source>URL is not well formed</source>
+          <target>L’URL n’est pas bien formé</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1807" id="807">
+          <source>Received a '&amp;' and was expecting a '?' in the URL</source>
+          <target>Réception de '&amp;' au lieu de '?' dans l’URL</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1808" id="808">
+          <source>Opening single quote does not have a matching closing one in the URL</source>
+          <target>L’apostrophe ouvrant n’a pas de correspondant fermant dans l’URL</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1809" id="809">
+          <source>Opening double quote does not have a matching closing one in the URL</source>
+          <target>Le guillemet ouvrant n’a pas de correspondant fermant dans l’URL</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1810" id="810">
+          <source>Cannot order by "{Param1}" for the "{Param2}" datastore class</source>
+          <target>Cannot order by "{Param1}" for the "{Param2}" datastore class</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1811" id="811">
+          <source>"{Param1}" is an unknown REST keyword</source>
+          <target>"{Param1}" est un mot-clé REST inconnu</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1812" id="812">
+          <source>"{Param1}" is an unknown REST method</source>
+          <target>"{Param1}" est une méthode REST inconnue</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1813" id="813">
+          <source>"{Param1}" REST method is not applicable here</source>
+          <target>La méthode REST "{Param1}" n'est pas applicable ici</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1815" id="815">
+          <source>"$subentityset" cannot be applied to the REST request</source>
+          <target>"$subentityset" ne peut pas être appliqué à la requête REST</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1816" id="816">
+          <source>At least one attribute must be specified</source>
+          <target>Au moins un attribut doit être spécifié</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1817" id="817">
+          <source>"{Param1}" is not a valid compute action</source>
+          <target>"{Param1}" n’est pas une action de calcul valide</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1818" id="818">
+          <source>"{Param1}" is not a valid logical operator</source>
+          <target>"{Param1}" n’est pas un opérateur logique valide</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1819" id="819">
+          <source>Second collection reference is missing</source>
+          <target>La deuxième référence de collection est manquante</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1820" id="820">
+          <source>"{Param1}" is not a valid collection reference</source>
+          <target>"{Param1}" n’est pas une référence de collection valide</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1821" id="821">
+          <source>"{Param1}" is not a valid transaction command</source>
+          <target>"{Param1}" n’est pas une commande de transaction valide</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1822" id="822">
+          <source>REST login failed</source>
+          <target>Echec de la connexion REST</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1823" id="823">
+          <source>Maximum number of sessions has been reached</source>
+          <target>Le nombre maximum de sessions a été atteint</target>
+        </trans-unit>
+      </group>
+      <group id="1001" resname="DB4D DataTools Problems">
+        <trans-unit id="1">
+          <source>Fully wrong</source>
+          <target>Totalement incorrect</target>
+        </trans-unit>
+        <trans-unit id="2">
+          <source>Partially wrong</source>
+          <target>Partialement incorrect</target>
+        </trans-unit>
+        <trans-unit id="3">
+          <source>Invalid checksum</source>
+          <target>Checksum invalide</target>
+        </trans-unit>
+        <trans-unit id="4">
+          <source>Invalid header</source>
+          <target>En-tête invalide</target>
+        </trans-unit>
+        <trans-unit id="5">
+          <source>Invalid header version</source>
+          <target>Version d’en-tête invalide</target>
+        </trans-unit>
+        <trans-unit id="6">
+          <source>Data segment directory header is invalid</source>
+          <target>L’en-tête du répertoire du segment de données est invalide</target>
+        </trans-unit>
+        <trans-unit id="7">
+          <source>Data segment end of file is invalid</source>
+          <target>La fin du fichier du segment de données est invalide</target>
+        </trans-unit>
+        <trans-unit id="8">
+          <source>Address of primary directory of bit table is invalid</source>
+          <target>L’adresse du répertoire primaire de la table des bits est invalide</target>
+        </trans-unit>
+        <trans-unit id="9">
+          <source>Primary directory of bit table is invalid</source>
+          <target>Le répertoire primaire de la table de bits est invalide</target>
+        </trans-unit>
+        <trans-unit id="10">
+          <source>Address of secondary directory of bit table is invalid</source>
+          <target>L’adresse du répertoire secondaire de la table des bits est invalide </target>
+        </trans-unit>
+        <trans-unit id="11">
+          <source>Secondary directory of bit table is invalid</source>
+          <target>Le répertoire secondaire de la table de bits est invalide</target>
+        </trans-unit>
+        <trans-unit id="12">
+          <source>Address of bit table is invalid</source>
+          <target>L’adresse de la table des bits est invalide</target>
+        </trans-unit>
+        <trans-unit id="13">
+          <source>Bit table is invalid</source>
+          <target>La table des bits est invalide</target>
+        </trans-unit>
+        <trans-unit id="14">
+          <source>Cannot open data segment</source>
+          <target>Impossible d’ouvrir le segment de données</target>
+        </trans-unit>
+        <trans-unit id="15">
+          <source>Directory of data tables is invalid</source>
+          <target>Le répertoire des tables des données est invalide</target>
+        </trans-unit>
+        <trans-unit id="16">
+          <source>Number of records is invalid</source>
+          <target>Le nombre d’enregistrements est invalide</target>
+        </trans-unit>
+        <trans-unit id="17">
+          <source>Address of primary directory of record addresses is invalid</source>
+          <target>L’adresse du répertoire primaire des adresses des enregistrements est invalide</target>
+        </trans-unit>
+        <trans-unit id="18">
+          <source>List of deleted records is invalid</source>
+          <target>La liste des enregistrements supprimés est invalide</target>
+        </trans-unit>
+        <trans-unit id="19">
+          <source>Number of BLOBs is invalid</source>
+          <target>Le nombre des BLOBs est invalide</target>
+        </trans-unit>
+        <trans-unit id="20">
+          <source>Address of primary directory of BLOBs addresses is invalid</source>
+          <target>L’adresse du répertoire primaire des adresses des BLOBs est invalide</target>
+        </trans-unit>
+        <trans-unit id="21">
+          <source>List of deleted BLOBs is invalid</source>
+          <target>La liste des BLOBs supprimés est invalide</target>
+        </trans-unit>
+        <trans-unit id="22">
+          <source>Address of record address directory is invalid</source>
+          <target>L’adresse du répertoire des adresses des enregistrements est invalide</target>
+        </trans-unit>
+        <trans-unit id="23">
+          <source>Address of BLOB address directory is invalid</source>
+          <target>L’adresse du répertoire des adresses des BLOBs est invalide</target>
+        </trans-unit>
+        <trans-unit id="24">
+          <source>Tag header of record address directory is invalid</source>
+          <target>L’en-tête du marqueur du répertoire des adresses des enregistrements est invalide</target>
+        </trans-unit>
+        <trans-unit id="25">
+          <source>Tag header of BLOB address directory is invalid</source>
+          <target>L’en-tête du marqueur du répertoire des adresses des BLOBs est invalide</target>
+        </trans-unit>
+        <trans-unit id="26">
+          <source>Cannot read data for record address directory</source>
+          <target>Impossible de lire les données pour le répertoire des adresses des enregistrements</target>
+        </trans-unit>
+        <trans-unit id="27">
+          <source>Cannot read data for BLOB address directory</source>
+          <target>Impossible de lire les données pour le répertoire des adresses des BLOBs</target>
+        </trans-unit>
+        <trans-unit id="28">
+          <source>Checksum of record address directory is invalid</source>
+          <target>Le checksum du répertoire des adresses des enregistrements est invalide</target>
+        </trans-unit>
+        <trans-unit id="29">
+          <source>Checksum of BLOB address directory is invalid</source>
+          <target>Le checksum du répertoire des adresses des BLOBs est invalide</target>
+        </trans-unit>
+        <trans-unit id="30">
+          <source>Length of address directory is invalid</source>
+          <target>La longueur du répertoire des adresses est invalide</target>
+        </trans-unit>
+        <trans-unit id="31">
+          <source>BLOB address is invalid</source>
+          <target>L’adresse du BLOB est invalide</target>
+        </trans-unit>
+        <trans-unit id="32">
+          <source>Cannot read BLOB data</source>
+          <target>Impossible de lire les données du BLOB</target>
+        </trans-unit>
+        <trans-unit id="33">
+          <source>BLOB checksum is invalid</source>
+          <target>Le checksum du BLOB est invalide</target>
+        </trans-unit>
+        <trans-unit id="34">
+          <source>BLOB tag header is invalid</source>
+          <target>L’en-tête du marqueur du BLOB est invalide</target>
+        </trans-unit>
+        <trans-unit id="35">
+          <source>BLOB length is invalid</source>
+          <target>La longueur du BLOB est invalide</target>
+        </trans-unit>
+        <trans-unit id="36">
+          <source>BLOB length does not match the one in the address directory</source>
+          <target>La longueur du BLOB ne correspond pas à celle du répertoire d’adresses</target>
+        </trans-unit>
+        <trans-unit id="37">
+          <source>Record address is invalid</source>
+          <target>L’adresse de l’enregistrement est invalide</target>
+        </trans-unit>
+        <trans-unit id="38">
+          <source>Cannot read record data</source>
+          <target>Impossible de lire les données de l’enregistrement</target>
+        </trans-unit>
+        <trans-unit id="39">
+          <source>Record checksum is invalid</source>
+          <target>Le checksum de l’enregistrement est invalide</target>
+        </trans-unit>
+        <trans-unit id="40">
+          <source>Record length does not match the one in the address directory</source>
+          <target>La longueur de l’enregistrement ne correspond pas à celle du répertoire d’adresses</target>
+        </trans-unit>
+        <trans-unit id="41">
+          <source>Record length is invalid</source>
+          <target>La longueur de l’enregistrement est invalide</target>
+        </trans-unit>
+        <trans-unit id="42">
+          <source>Record tag header is invalid</source>
+          <target>L’en-tête du marqueur de l’enregistrement est invalide</target>
+        </trans-unit>
+        <trans-unit id="43">
+          <source>Number of fields invalid</source>
+          <target>Nombre de champs invalide</target>
+        </trans-unit>
+        <trans-unit id="44">
+          <source>Invalid data field type</source>
+          <target>Type de champ invalide</target>
+        </trans-unit>
+        <trans-unit id="45">
+          <source>Invalid data field offset in record</source>
+          <target>Offset de champ invalide dans l’enregistrement</target>
+        </trans-unit>
+        <trans-unit id="46">
+          <source>Invalid data field length</source>
+          <target>Longueur de champ invalide</target>
+        </trans-unit>
+        <trans-unit id="47">
+          <source>BLOB reference is invalid in this data field</source>
+          <target>La référence de BLOB est invalide dans ce champ</target>
+        </trans-unit>
+        <trans-unit id="48">
+          <source>BLOB is deleted in this data field</source>
+          <target>Le BLOB est supprimé dans ce champ</target>
+        </trans-unit>
+        <trans-unit id="49">
+          <source>BLOB is invalid in this data field</source>
+          <target>Le BLOB est invalide dans ce champ</target>
+        </trans-unit>
+        <trans-unit id="50">
+          <source>BLOB reference of this data field is already used in another record</source>
+          <target>La référence de BLOB pour ce champ est déjà utilisée dans un autre enregistrement</target>
+        </trans-unit>
+        <trans-unit id="51">
+          <source>The chained list of deleted BLOBs is circular</source>
+          <target>La chaîne de suppression des BLOBs est circulaire</target>
+        </trans-unit>
+        <trans-unit id="52">
+          <source>The chained list of deleted BLOBs is invalid</source>
+          <target>La chaîne de suppression des BLOBs est invalide</target>
+        </trans-unit>
+        <trans-unit id="53">
+          <source>The chained list of deleted records is circular</source>
+          <target> La chaîne de suppression des enregistrements est circulaire</target>
+        </trans-unit>
+        <trans-unit id="54">
+          <source>The chained list of deleted records is invalid</source>
+          <target>La chaîne de suppression des enregistrements est invalide</target>
+        </trans-unit>
+        <trans-unit id="55">
+          <source>Some BLOBs are orphans in this data table</source>
+          <target>Certains BLOBs sont orphelins dans cette table</target>
+        </trans-unit>
+        <trans-unit id="56">
+          <source>Address of primary address directory is invalid</source>
+          <target>L’adresse du répertoire des adresses primaires est invalide</target>
+        </trans-unit>
+        <trans-unit id="57">
+          <source>The number of entries is invalid</source>
+          <target>Le nombre d’entrées est invalide</target>
+        </trans-unit>
+        <trans-unit id="58">
+          <source>The chained list of deleted entries is invalid</source>
+          <target> La chaîne de suppression des entrées est invalide</target>
+        </trans-unit>
+        <trans-unit id="59">
+          <source>Address is invalid</source>
+          <target>L’adresse est invalide</target>
+        </trans-unit>
+        <trans-unit id="60">
+          <source>Address of address directory is invalid</source>
+          <target>L’adresse de répertoire des adresses est invalide</target>
+        </trans-unit>
+        <trans-unit id="61">
+          <source>Tag header of address directory is invalid</source>
+          <target>L’en-tête du marqueur du répertoire des adresses est invalide</target>
+        </trans-unit>
+        <trans-unit id="62">
+          <source>Cannot read data for address directory</source>
+          <target>Impossible de lire les données du répertoire des adresses</target>
+        </trans-unit>
+        <trans-unit id="63">
+          <source>Checksum of address directory is invalid</source>
+          <target>Le checksum du répertoire des adresses est invalide</target>
+        </trans-unit>
+        <trans-unit id="64">
+          <source>Length is invalid</source>
+          <target>La longueur est invalide</target>
+        </trans-unit>
+        <trans-unit id="65">
+          <source>Address is invalid</source>
+          <target>L’adresse est invalide</target>
+        </trans-unit>
+        <trans-unit id="66">
+          <source>Checksum is invalid</source>
+          <target>Le checksum est invalide</target>
+        </trans-unit>
+        <trans-unit id="67">
+          <source>Cannot read data</source>
+          <target>Impossible de lire les données</target>
+        </trans-unit>
+        <trans-unit id="68">
+          <source>Tag header is invalid</source>
+          <target>L’en-tête du marqueur est invalide</target>
+        </trans-unit>
+        <trans-unit id="69">
+          <source>Length of table name is invalid</source>
+          <target>La longueur du nom de la table est invalide</target>
+        </trans-unit>
+        <trans-unit id="70">
+          <source>Length of record class name is invalid</source>
+          <target>La longueur du nom de la classe de l’enregistrement est invalide</target>
+        </trans-unit>
+        <trans-unit id="71">
+          <source>Length of field name is invalid</source>
+          <target>La longueur du nom du champ est invalide</target>
+        </trans-unit>
+        <trans-unit id="72">
+          <source>Type of Table is invalid</source>
+          <target>Le type de la table est invalide</target>
+        </trans-unit>
+        <trans-unit id="73">
+          <source>The number of fields is invalid</source>
+          <target>Le nombre de champs est invalide</target>
+        </trans-unit>
+        <trans-unit id="74">
+          <source>The number of Fields does not match the size of the table definition</source>
+          <target>Le nombre des champs ne correspond pas à la taille de la définition de la table</target>
+        </trans-unit>
+        <trans-unit id="75">
+          <source>The UUIDs are the same</source>
+          <target>Les UUIDs sont identiques</target>
+        </trans-unit>
+        <trans-unit id="76">
+          <source>Field type is invalid</source>
+          <target>Le type de champ est invalide</target>
+        </trans-unit>
+        <trans-unit id="77">
+          <source>Length stored in tag header does not match</source>
+          <target>La longueur stockée dans l’en-tête du marqueur ne correspond pas</target>
+        </trans-unit>
+        <trans-unit id="78">
+          <source>Extra properties stream seems to be damaged</source>
+          <target>Le flux des propriétés additionnelles semble être endommagé</target>
+        </trans-unit>
+        <trans-unit id="79">
+          <source>Auto sequence number type is invalid</source>
+          <target>Le type de numéro de séquence automatique est invalide</target>
+        </trans-unit>
+        <trans-unit id="80">
+          <source>Auto sequence number ID is invalid</source>
+          <target>L’identifiant du numéro de séquence automatique est invalide</target>
+        </trans-unit>
+        <trans-unit id="81">
+          <source>Type of relation is invalid</source>
+          <target>Le type de lien est invalide</target>
+        </trans-unit>
+        <trans-unit id="82">
+          <source>The number of relations is invalid</source>
+          <target>Le nombre de liens est invalide</target>
+        </trans-unit>
+        <trans-unit id="83">
+          <source>The relation type does not match</source>
+          <target>Le type de lien ne correspond pas</target>
+        </trans-unit>
+        <trans-unit id="84">
+          <source>The relation source field ID cannot be found</source>
+          <target>L’identifiant du champ source du lien est introuvable</target>
+        </trans-unit>
+        <trans-unit id="85">
+          <source>The relation destination field ID cannot be found</source>
+          <target>L’identifiant du champ destination du lien est introuvable</target>
+        </trans-unit>
+        <trans-unit id="86">
+          <source>The table of relations is damaged</source>
+          <target>La table des liens est endommagée</target>
+        </trans-unit>
+        <trans-unit id="87">
+          <source>The number of fields for the source is not equal to the number of fields for the destination</source>
+          <target>Le nombre de champs pour la source n’est pas égal au nombre de champs pour la destination</target>
+        </trans-unit>
+        <trans-unit id="88">
+          <source>The index definition is damaged</source>
+          <target>La définition d’index est endommagée</target>
+        </trans-unit>
+        <trans-unit id="89">
+          <source>Index type is invalid</source>
+          <target>Le type d’index est invalide</target>
+        </trans-unit>
+        <trans-unit id="90">
+          <source>Field reference is invalid</source>
+          <target>La référence du champ est invalide</target>
+        </trans-unit>
+        <trans-unit id="91">
+          <source>Table reference is invalid</source>
+          <target>La référence de la table est invalide</target>
+        </trans-unit>
+        <trans-unit id="92">
+          <source>Index header type is invalid</source>
+          <target>Le type de l’en-tête de l’index est invalide</target>
+        </trans-unit>
+        <trans-unit id="93">
+          <source>Address of primary directory of index pages is invalid</source>
+          <target>L’adresse du répertoire primaire des pages d’index est invalide</target>
+        </trans-unit>
+        <trans-unit id="94">
+          <source>The number of index pages is invalid</source>
+          <target>Le nombre de pages d’index est invalide</target>
+        </trans-unit>
+        <trans-unit id="95">
+          <source>The chained list of deleted index pages is invalid</source>
+          <target>La chaîne de suppression des pages d’index est invalide</target>
+        </trans-unit>
+        <trans-unit id="96">
+          <source>Primary page number is invalid</source>
+          <target>Le numéro de la page primaire est invalide</target>
+        </trans-unit>
+        <trans-unit id="97">
+          <source>Address of primary directory of index clusters is invalid</source>
+          <target>L’adresse du répertoire primaire des clusters d’index est invalide</target>
+        </trans-unit>
+        <trans-unit id="98">
+          <source>The number of index clusters is invalid</source>
+          <target>Le nombre de clusters d’index est invalide</target>
+        </trans-unit>
+        <trans-unit id="99">
+          <source>The chained list of deleted index clusters is invalid</source>
+          <target>La chaîne de suppression des clusters d’index est invalide</target>
+        </trans-unit>
+        <trans-unit id="100">
+          <source>Extra property length is invalid</source>
+          <target>La longueur des propriétés additionnelles est invalide</target>
+        </trans-unit>
+        <trans-unit id="101">
+          <source>Extra property address is invalid</source>
+          <target>L’adresse des propriétés additionnelles est invalide</target>
+        </trans-unit>
+        <trans-unit id="102">
+          <source>Extra property checksum is invalid</source>
+          <target>Le checksum des propriétés additionnelles est invalide</target>
+        </trans-unit>
+        <trans-unit id="103">
+          <source>Cannot read extra property data</source>
+          <target>Impossible de lire les données des propriétés additionnelles</target>
+        </trans-unit>
+        <trans-unit id="104">
+          <source>Extra property tag header is invalid</source>
+          <target>L’en-tête du marqueur des propriétés additionnelles est invalide</target>
+        </trans-unit>
+        <trans-unit id="105">
+          <source>Extra property length stored in tag header does not match</source>
+          <target>La longueur des propriétés additionnelles stockée dans l’en-tête du marqueur ne correspond pas</target>
+        </trans-unit>
+        <trans-unit id="106">
+          <source>Address of page address directory is invalid</source>
+          <target>L’adresse du répertoire de la page d’adresse est invalide</target>
+        </trans-unit>
+        <trans-unit id="107">
+          <source>Address of cluster address directory is invalid</source>
+          <target>L’adresse du répertoire du cluster d’adresse est invalide</target>
+        </trans-unit>
+        <trans-unit id="108">
+          <source>Tag header of page address directory is invalid</source>
+          <target>L’en-tête du marqueur du répertoire de la page d’adresse est invalide</target>
+        </trans-unit>
+        <trans-unit id="109">
+          <source>Tag header of cluster address directory is invalid</source>
+          <target>L’en-tête du marqueur du répertoire de l’adresse des clusters est invalide</target>
+        </trans-unit>
+        <trans-unit id="110">
+          <source>Cannot read data for page address directory</source>
+          <target>Impossible de lire les données du répertoire d’adresse des pages</target>
+        </trans-unit>
+        <trans-unit id="111">
+          <source>Cannot read data for cluster address directory</source>
+          <target>Impossible de lire les données du répertoire d’adresse des clusters</target>
+        </trans-unit>
+        <trans-unit id="112">
+          <source>Checksum of page address directory is invalid</source>
+          <target>Le checksum du répertoire d’adresse des pages est invalide</target>
+        </trans-unit>
+        <trans-unit id="113">
+          <source>Checksum of cluster address directory is invalid</source>
+          <target>Le checksum du répertoire d’adresse des clusters est invalide</target>
+        </trans-unit>
+        <trans-unit id="114">
+          <source>Cluster type is invalid</source>
+          <target>Le type de cluster est invalide</target>
+        </trans-unit>
+        <trans-unit id="115">
+          <source>The number of records in cluster is invalid</source>
+          <target>Le nombre d’enregistrements dans le cluster est invalide</target>
+        </trans-unit>
+        <trans-unit id="116">
+          <source>Cluster contains invalid record references</source>
+          <target>Le cluster contient des références d’enregistrements invalides</target>
+        </trans-unit>
+        <trans-unit id="117">
+          <source>Cluster contains deleted record references</source>
+          <target>Le cluster contient des références d’enregistrements supprimées</target>
+        </trans-unit>
+        <trans-unit id="118">
+          <source>Cluster bits count is invalid</source>
+          <target>Le compteur de bits du cluster est invalide</target>
+        </trans-unit>
+        <trans-unit id="119">
+          <source>The number of index keys is invalid</source>
+          <target>Le nombre des clés d’index est invalide</target>
+        </trans-unit>
+        <trans-unit id="120">
+          <source>Cluster contains duplicated record references</source>
+          <target>Le cluster contient des références d’enregistrements dupliquées</target>
+        </trans-unit>
+        <trans-unit id="121">
+          <source>Subpage reference is invalid</source>
+          <target>La référence de la sous page est invalide</target>
+        </trans-unit>
+        <trans-unit id="122">
+          <source>Subpage reference is deleted</source>
+          <target>La référence de la sous page est supprimée</target>
+        </trans-unit>
+        <trans-unit id="123">
+          <source>The keys directory is invalid</source>
+          <target>Le répertoire des clés est invalide</target>
+        </trans-unit>
+        <trans-unit id="124">
+          <source>Key references an invalid record number</source>
+          <target>La clé référence un numéro d’enregistrement invalide</target>
+        </trans-unit>
+        <trans-unit id="125">
+          <source>Key references a deleted record number</source>
+          <target>La clé référence un numéro d’enregistrement supprimé</target>
+        </trans-unit>
+        <trans-unit id="126">
+          <source>Key references a duplicated record number</source>
+          <target>La clé référence un numéro d’enregistrement dupliqué</target>
+        </trans-unit>
+        <trans-unit id="127">
+          <source>The keys are not in the right order</source>
+          <target>Les clés ne sont pas dans le bon ordre</target>
+        </trans-unit>
+        <trans-unit id="128">
+          <source>Invalid key</source>
+          <target>Clé invalide</target>
+        </trans-unit>
+        <trans-unit id="129">
+          <source>Some record references are missing</source>
+          <target>Certaines références d’enregistrement sont manquantes</target>
+        </trans-unit>
+        <trans-unit id="130">
+          <source>This index page is used in a circular reference</source>
+          <target>Cette page d’index est utilisé dans une référence circulaire</target>
+        </trans-unit>
+        <trans-unit id="131">
+          <source>Checksum of data table header is invalid</source>
+          <target>Le checksum de l’en-tête de la table est invalide</target>
+        </trans-unit>
+        <trans-unit id="132">
+          <source>Length of data table header is invalid</source>
+          <target>La longueur de l’en-tête de la table est invalide</target>
+        </trans-unit>
+        <trans-unit id="133">
+          <source>Tag header of data table header is invalid</source>
+          <target>L’en-tête du marqueur d’en-tête de la table est invalide</target>
+        </trans-unit>
+        <trans-unit id="134">
+          <source>Cannot read data of data table header</source>
+          <target>Impossible de lire les données de l’en-tête de la table</target>
+        </trans-unit>
+        <trans-unit id="135">
+          <source>Address of data table header is invalid</source>
+          <target>L’adresse de l’en-tête de la table des données est invalide</target>
+        </trans-unit>
+        <trans-unit id="136">
+          <source>Wrong data type number in index</source>
+          <target>Mauvais numéro de type de données dans l’index</target>
+        </trans-unit>
+        <trans-unit id="137">
+          <source>The structure and data file do not match</source>
+          <target>Les fichiers de structure et de données ne sont pas compatibles</target>
+        </trans-unit>
+        <trans-unit id="138">
+          <source>Missing Index file .4DIndx or .4DIndy</source>
+          <target>Fichier d'index manquant .4DIndx ou .4DIndy</target>
+        </trans-unit>
+        <trans-unit id="139">
+          <source>Last database flush did not complete.</source>
+          <target>La dernière écriture du cache de la base est incomplète.</target>
+        </trans-unit>
+        <trans-unit id="140">
+          <source>Address overlaps</source>
+          <target>Chevauchement d’adresses</target>
+        </trans-unit>
+        <trans-unit id="141">
+          <source>Index is flagged to be rebuilt</source>
+          <target>L’index est marqué pour être reconstruit</target>
+        </trans-unit>
+        <trans-unit id="142">
+          <source>External BLOB file is missing</source>
+          <target>Le fichier BLOB externe est manquant</target>
+        </trans-unit>
+      </group>
+
+      <group id="1002" resname="DB4D DataTools Problem Sources">
+        <trans-unit id="1">
+          <source>Problem on the database</source>
+          <target>Problème dans la base de données</target>
+        </trans-unit>
+        <trans-unit id="2">
+          <source>Problem on the data segment # {SegNum}</source>
+          <target>Problème dans le segment des données numéro {SegNum}</target>
+        </trans-unit>
+        <trans-unit id="3">
+          <source>Problem on the secondary directory # {BittableTable} of bit tables in the data segment # {SegNum}</source>
+          <target>Problème dans le répertoire secondaire numéro {BittableTable} de la table des bits dans le segment de données numéro {SegNum}</target>
+        </trans-unit>
+        <trans-unit id="4">
+          <source>Problem on the bit table # {Bittable} in the secondary directory # {BittableTable} of bit tables in the data segment # {SegNum}</source>
+          <target>Problème dans la table des bits numéro {Bittable} dans le répertoire secondaire numéro {BittableTable} des tables des bits dans le segment de données numéro {SegNum}</target>
+        </trans-unit>
+        <trans-unit id="5">
+          <source>Problem on the {TableName} data table</source>
+          <target>Problème dans la table {TableName}</target>
+        </trans-unit>
+        <trans-unit id="6">
+          <source>Problem on record address directory # {RecordAddressTableNum} in the {TableName} data table</source>
+          <target>Problème dans le répertoire d’adresses d’enregistrements numéro {RecordAddressTableNum} de la table {TableName}</target>
+        </trans-unit>
+        <trans-unit id="7">
+          <source>Problem on BLOB address directory # {BlobAddressTableNum} in the {TableName} data table</source>
+          <target>Problème dans le répertoire d’adresses des BLOBs numéro {BlobAddressTableNum} de la table {TableName}</target>
+        </trans-unit>
+        <trans-unit id="8">
+          <source>Problem on BLOB # {BlobNum} in the {TableName} data table</source>
+          <target>Problème avec le BLOB numéro {BlobNum} de la table {TableName}</target>
+        </trans-unit>
+        <trans-unit id="9">
+          <source>Problem on record # {RecordNum} in the {TableName} data table</source>
+          <target>Problème avec l’enregistrement numéro {RecordNum} de la table {TableName}</target>
+        </trans-unit>
+        <trans-unit id="10">
+          <source>Problem on field {FieldName} in record # {RecordNum} in the {TableName} data table</source>
+          <target>Problème avec le champ {FieldName} dans l’enregistrement numéro {RecordNum} de la table {TableName}</target>
+        </trans-unit>
+        <trans-unit id="11">
+          <source>Problem on directory of table definitions</source>
+          <target>Problème dans le répertoire de définition des tables</target>
+        </trans-unit>
+        <trans-unit id="12">
+          <source>Problem on {TableName} table definition</source>
+          <target>Problème dans la définition de la table {TableName}</target>
+        </trans-unit>
+        <trans-unit id="13">
+          <source>Problem on directory of relation definitions</source>
+          <target>Problème dans le répertoire de définition des liens</target>
+        </trans-unit>
+        <trans-unit id="14">
+          <source>Problem on relation definition # {RelationNum}</source>
+          <target>Problème dans la définition de la relation numéro {RelationNum}</target>
+        </trans-unit>
+        <trans-unit id="15">
+          <source>Problem on directory of sequence numbers</source>
+          <target>Problème dans le répertoire des numéros automatiques</target>
+        </trans-unit>
+        <trans-unit id="16">
+          <source>Problem on sequence number # {SeqNum}</source>
+          <target>Problème dans la numérotation automatique {SeqNum}</target>
+        </trans-unit>
+        <trans-unit id="17">
+          <source>Problem on directory of index definitions</source>
+          <target>Problème dans le répertoire de définition des index</target>
+        </trans-unit>
+        <trans-unit id="18">
+          <source>Problem on index definition {IndexName}</source>
+          <target>Problème dans la définition d’index {IndexName}</target>
+        </trans-unit>
+        <trans-unit id="19">
+          <source>Problem on directory of backup index definitions</source>
+          <target>Problème dans le répertoire de définition des index de sauvegarde</target>
+        </trans-unit>
+        <trans-unit id="20">
+          <source>Problem on backup index definition {IndexName}</source>
+          <target>Problème dans la définition des index de sauvegarde {IndexName}</target>
+        </trans-unit>
+        <trans-unit id="21">
+          <source>UUID Conflict between {ObjType1}:{ObjName1} and {ObjType2}:{ObjName2}</source>
+          <target>Conflit d'UUID entre {ObjType1}:{ObjName1} et {ObjType2}:{ObjName2}</target>
+        </trans-unit>
+        <trans-unit id="22">
+          <source>Problem on field definition {FieldName} in {TableName} table</source>
+          <target>Problème dans la définition du champ {FieldName} de la table {TableName}</target>
+        </trans-unit>
+        <trans-unit id="23">
+          <source>Problem on page address directory # {IndexPageAddressTable} in {IndexName} index</source>
+          <target>Problème dans le répertoire d’adresse de pages numéro {IndexPageAddressTable} dans l’index {IndexName}</target>
+        </trans-unit>
+        <trans-unit id="24">
+          <source>Problem on page # {IndexPageNum} in {IndexName} index</source>
+          <target>Problème dans la page numéro {IndexPageNum} dans l’index {IndexName}</target>
+        </trans-unit>
+        <trans-unit id="25">
+          <source>Problem on {IndexName} index</source>
+          <target>Problème dans l’index {IndexName}</target>
+        </trans-unit>
+        <trans-unit id="26">
+          <source>Problem on cluster # {IndexClusterNum} in {IndexName} index</source>
+          <target>Problème dans le cluster numéro {IndexClusterNum} dans l’index {IndexName}</target>
+        </trans-unit>
+        <trans-unit id="27">
+          <source>Problem on cluster address directory # {IndexClusterAddressTable} in {IndexName} index</source>
+          <target>Problème dans le répertoire d’adresse des clusters numéro {IndexClusterAddressTable} dans l’index {IndexName}</target>
+        </trans-unit>
+        <trans-unit id="28">
+          <source>Problem on bit page # {BitPageNum} in cluster # {IndexClusterNum} in {IndexName} index</source>
+          <target>Problème dans la page de bits numéro {BitPageNum} dans le cluster numéro {IndexClusterNum} dans l’index {IndexName}</target>
+        </trans-unit>
+        <trans-unit id="29">
+          <source>Problem on directory of data table headers</source>
+          <target>Problème dans le répertoire des en-têtes de tables</target>
+        </trans-unit>
+        <trans-unit id="30">
+          <source>Problem in NULLS cluster of {IndexName} index</source>
+          <target>Problème dans le cluster NULLS dans l’index {IndexName}</target>
+        </trans-unit>
+        <trans-unit id="31">
+          <source>Problem on bit page # {BitPageNum} in NULLS cluster of {IndexName} index</source>
+          <target>Problème dans la page de bits # {BitPageNum dans le cluster NULLS de l’index {IndexName}</target>
+        </trans-unit>
+        <trans-unit id="32">
+          <source>Overlapping {ObjType} at offset {ObjAddr} with length {ObjLen} in data segment # {SegNum}</source>
+          <target>Chevauchement de {ObjType} à l'offset {ObjAddr} de longueur {ObjLen} dans le segment de données n° {SegNum}</target>
+        </trans-unit>
+        <trans-unit id="33">
+          <source>Overlapping Objects in data segment # {SegNum}</source>
+          <target>Chevauchement d'objets dans le segment de données n° {SegNum}</target>
+        </trans-unit>
+      </group>
+
+      <group id="1003" resname="DB4D DataTools Types of UUIDs">
+        <trans-unit id="1">
+          <source>Table</source>
+          <target>Table</target>
+        </trans-unit>
+        <trans-unit id="2">
+          <source>Field</source>
+          <target>Champ</target>
+        </trans-unit>
+        <trans-unit id="3">
+          <source>Index</source>
+          <target>Index</target>
+        </trans-unit>
+        <trans-unit id="4">
+          <source>Automatic Sequence Number</source>
+          <target>Numéro de séquence automatique</target>
+        </trans-unit>
+        <trans-unit id="5">
+          <source>Relation</source>
+          <target>Lien</target>
+        </trans-unit>
+      </group>
+
+      <group id="1004" resname="DB4D DataTools Progress">
+        <note>
+          **************************************************
+          IMPORTANT INTERNAL COMMENT
+          **************************************************
+          If you change a trans-unit, add one, remove one, you _must_ also change group id "1008",
+          both are the same except for the "Verify" or "Compact" context.
+        </note>
+        <trans-unit id="1">
+          <source>Loading data tables</source>
+          <target>Chargement des tables de données</target>
+        </trans-unit>
+        <trans-unit id="2">
+          <source>Checking data table definitions</source>
+          <target>Vérification des définitions de tables des données</target>
+        </trans-unit>
+        <trans-unit id="3">
+          <source>Checking chained list of deleted table definitions</source>
+          <target>Vérification de la chaîne de définitions de tables supprimées</target>
+        </trans-unit>
+        <trans-unit id="4">
+          <source>Checking index definitions</source>
+          <target>Vérification des définitions d’index</target>
+        </trans-unit>
+        <trans-unit id="5">
+          <source>Checking chained list of deleted index definitions</source>
+          <target>Vérification de la chaîne de définitions d’index supprimés</target>
+        </trans-unit>
+        <trans-unit id="6">
+          <source>Checking backup index definitions</source>
+          <target>Vérification des définitions d’index de sauvegarde</target>
+        </trans-unit>
+        <trans-unit id="7">
+          <source>Checking chained list of deleted backup index definitions</source>
+          <target>Vérification de la chaîne de définition d’index de sauvegarde supprimés</target>
+        </trans-unit>
+        <trans-unit id="8">
+          <source>Checking relation definitions</source>
+          <target>Vérification des définitions de liens</target>
+        </trans-unit>
+        <trans-unit id="9">
+          <source>Checking chained list of deleted relation definitions</source>
+          <target>Vérification des listes de définitions de liens supprimées</target>
+        </trans-unit>
+        <trans-unit id="10">
+          <source>Checking auto sequence number definitions</source>
+          <target>Vérification des définitions de la numérotation automatique</target>
+        </trans-unit>
+        <trans-unit id="11">
+          <source>Checking chained list of deleted auto sequence number definitions</source>
+          <target>Vérification de la chaîne de définition de numérotation automatique supprimée</target>
+        </trans-unit>
+        <trans-unit id="12">
+          <source>Checking data table headers</source>
+          <target>Vérification des entêtes de la table des données</target>
+        </trans-unit>
+        <trans-unit id="13">
+          <source>Checking chained list of deleted data table headers</source>
+          <target>Vérification de la chaîne des entêtes de la table des données supprimées</target>
+        </trans-unit>
+        <trans-unit id="14">
+          <source>Checking BLOBs in table {p1}</source>
+          <target>Vérification des BLOBs dans la table {p1}</target>
+        </trans-unit>
+        <trans-unit id="15">
+          <source>Checking list of deleted BLOBs in table {p1}</source>
+          <target>Vérification de la liste des BLOBs supprimés dans la table {p1}</target>
+        </trans-unit>
+        <trans-unit id="16">
+          <source>Checking records in table {p1}</source>
+          <target>Vérification des enregistrements dans la table {p1}</target>
+        </trans-unit>
+        <trans-unit id="17">
+          <source>Checking list of deleted records in table {p1}</source>
+          <target>Vérification de la liste des enregistrements supprimés dans la table {p1}</target>
+        </trans-unit>
+        <trans-unit id="18">
+          <source>Check bit tables for segment {SegNum}</source>
+          <target>Vérification de la table des bits du segment {SegNum}</target>
+        </trans-unit>
+        <trans-unit id="19">
+          <source>Checking index pages on {p1}</source>
+          <target>Vérification des pages d’index de l'{p1}</target>
+        </trans-unit>
+        <trans-unit id="20">
+          <source>Checking index page addresses on {p1}</source>
+          <target>Vérification des adresses des pages d’index de l'{p1}</target>
+        </trans-unit>
+        <trans-unit id="21">
+          <source>Checking list of deleted index pages on {p1}</source>
+          <target>Vérification de la liste des pages d’index supprimés de l'{p1}</target>
+        </trans-unit>
+        <trans-unit id="22">
+          <source>Checking clusters on {p1}</source>
+          <target>Vérification des clusters de l'{p1}</target>
+        </trans-unit>
+        <trans-unit id="23">
+          <source>Checking list of deleted clusters on {p1}</source>
+          <target>Vérification de la liste des clusters supprimés de l'{p1}</target>
+        </trans-unit>
+        <trans-unit id="24">
+          <source>on</source>
+          <target>sur</target>
+        </trans-unit>
+        <trans-unit id="25">
+          <source>Keywords Index </source>
+          <target>Index de mots-clés </target>
+        </trans-unit>
+        <trans-unit id="26">
+          <source>B-tree Index </source>
+          <target>Index B-tree </target>
+        </trans-unit>
+        <trans-unit id="27">
+          <source>Cluster Index </source>
+          <target>Index cluster </target>
+        </trans-unit>
+        <trans-unit id="28">
+          <source>Index </source>
+          <target>Index </target>
+        </trans-unit>
+        <trans-unit id="29">
+          <source>Composite Index </source>
+          <target>Index composite </target>
+        </trans-unit>
+        <trans-unit id="30">
+          <source>Scanning data</source>
+          <target>Lecture des données</target>
+        </trans-unit>
+        <trans-unit id="31">
+          <source>Recovering records</source>
+          <target>Récupération des enregistrements</target>
+        </trans-unit>
+        <trans-unit id="32">
+          <source>Recovering BLOBs</source>
+          <target>Récupération des BLOBs</target>
+        </trans-unit>
+        <trans-unit id="33">
+          <source> (Table# {p1} out of {p2} tables)</source>
+          <target> (Table# {p1} parmi {p2} tables)</target>
+        </trans-unit>
+        <trans-unit id="34">
+          <source>Checking index {p1}</source>
+          <target>Vérification de l'index sur {p1}</target>
+        </trans-unit>
+      </group>
+
+      <group id="1005" resname="DB4D Progress Session Titles">
+        <trans-unit id="1">
+          <source>Loading data</source>
+          <target>Chargement des données</target>
+        </trans-unit>
+        <trans-unit id="2">
+          <source>Integrating journal: {curValue} of {maxValue} entries</source>
+          <target>Intégration du journal: {curValue} sur {maxValue} entrées</target>
+        </trans-unit>
+        <trans-unit id="3">
+          <source>Sequential sorting on {TableName}: {curValue} of {maxValue} records</source>
+          <target>Tri séquentiel sur {TableName} : {curValue} sur {maxValue} enregistrements</target>
+        </trans-unit>
+        <trans-unit id="4">
+          <source>Sequential searching on {TableName}: {curValue} of {maxValue} records</source>
+          <target>Recherche séquentielle sur {TableName} : {curValue} sur {maxValue} enregistrements</target>
+        </trans-unit>
+        <trans-unit id="5">
+          <source>Exporting a selection of records: {curValue} of {maxValue} records</source>
+          <target>Export d’une sélection d’enregistrements : {curValue} sur {maxValue} enregistrements</target>
+        </trans-unit>
+        <trans-unit id="6">
+          <source>Indexing calculation formulas: {curValue} of {maxValue} pages</source>
+          <target>Formules de calcul indexées: {curValue} sur {maxValue} pages</target>
+        </trans-unit>
+        <trans-unit id="7">
+          <source>Computing distinct indexed values: {curValue} of {maxValue} pages</source>
+          <target>Calcul des valeurs distinctes indexées : {curValue} sur {maxValue} pages</target>
+        </trans-unit>
+        <trans-unit id="8">
+          <source>Indexed sorting: {curValue} of {maxValue} keys</source>
+          <target>Tri indexé: {curValue} sur {maxValue} clefs</target>
+        </trans-unit>
+        <trans-unit id="9">
+          <source>Building of </source>
+          <target>Création de l'</target>
+        </trans-unit>
+        <trans-unit id="10">
+          <source>Building index on one field: {curValue} of {maxValue} records</source>
+          <target>Création d’index pour le champ 1: {curValue} sur {maxValue} enregistrements</target>
+        </trans-unit>
+        <trans-unit id="11">
+          <source>Building full text index on one field: {curValue} of {maxValue} records</source>
+          <target>Création d’index texte mots-clés sur le champ 1: {curValue} sur {maxValue} enregistrements</target>
+        </trans-unit>
+        <trans-unit id="12">
+          <source>Building composite index: {curValue} of {maxValue} records</source>
+          <target>Création d’index composite: {curValue} sur {maxValue} enregistrements</target>
+        </trans-unit>
+        <trans-unit id="13">
+          <source>Merging items</source>
+          <target>Fusion des éléments</target>
+        </trans-unit>
+        <trans-unit id="14">
+          <source>Building selection</source>
+          <target>Création de la sélection</target>
+        </trans-unit>
+        <trans-unit id="15">
+          <source>Generating index pages</source>
+          <target>Génération des pages d’index</target>
+        </trans-unit>
+        <trans-unit id="16">
+          <source>Generating clusters</source>
+          <target>Génération des clusters</target>
+        </trans-unit>
+        <trans-unit id="17">
+          <source>Generating index pages</source>
+          <target>Génération des pages d’index</target>
+        </trans-unit>
+        <trans-unit id="18">
+          <source>Generating index clusters</source>
+          <target>Génération d’index de clusters</target>
+        </trans-unit>
+        <trans-unit id="19">
+          <source>Sequential sorting</source>
+          <target>Tri séquentiel</target>
+        </trans-unit>
+        <trans-unit id="20">
+          <source>Sorting data</source>
+          <target>Tri des données</target>
+        </trans-unit>
+        <trans-unit id="21">
+          <source>Deleting address table: {curValue} of {maxValue} entries</source>
+          <target>Suppression de la table d’adresses: {curValue} sur {maxValue} entrées</target>
+        </trans-unit>
+        <trans-unit id="22">
+          <source>Flushing Data</source>
+          <target>Ecriture des données (flush)</target>
+        </trans-unit>
+        <trans-unit id="23">
+          <source>Deleting records: {curValue} of {maxValue}</source>
+          <target>Suppression des enregistrements : {curValue} parmi {maxValue}</target>
+        </trans-unit>
+        <trans-unit id="24">
+          <source>Analyzing Log file</source>
+          <target>Analyse du fichier d'historique</target>
+        </trans-unit>
+        <trans-unit id="25">
+          <source>Selection to array: {curValue} of {maxValue}</source>
+          <target>Sélection vers tableau : {curValue} sur  {maxValue}</target>
+        </trans-unit>
+        <trans-unit id="26">
+          <source>Array to selection: {curValue} of {maxValue}</source>
+          <target>Tableau vers sélection : {curValue} sur {maxValue}</target>
+        </trans-unit>
+        <trans-unit id="27">
+          <source>Indexing calculation formulas: {curValue} of {maxValue} keys</source>
+          <target>Indexation des formules de calcul: {curValue} sur {maxValue} clés</target>
+        </trans-unit>
+        <trans-unit id="28">
+          <source>Index searching: {curValue} of {maxValue} pages</source>
+          <target>Recherche indexée : {curValue} sur {maxValue} pages</target>
+        </trans-unit>
+        <trans-unit id="29">
+          <source>Index scanning: {curValue} of {maxValue} pages</source>
+          <target>Parcours de l'index : {curValue} sur {maxValue} pages</target>
+        </trans-unit>
+        <trans-unit id="30">
+          <source>Computing statistics: {curValue} of {maxValue} records</source>
+          <target>Calcul de statistiques : {curValue} sur {maxValue} enregistrements</target>
+        </trans-unit>
+        <trans-unit id="31">
+          <source>Exporting {TableName} as SQL: {curValue} of {maxValue} records</source>
+          <target>Export {TableName} comme du SQL : {curValue} sur {maxValue} enregistrements</target>
+        </trans-unit>
+        <trans-unit id="32">
+          <source>Exporting database: {curValue} of {maxValue} tables</source>
+          <target>Export de la base : {curValue} sur {maxValue} tables</target>
+        </trans-unit>
+        <trans-unit id="33">
+          <source>Cleaning destination folder...</source>
+          <target>Suppression du contenu du dossier destination...</target>
+        </trans-unit>
+        <trans-unit id="34">
+          <source>Checking uniqueness</source>
+          <target>Checking uniqueness</target>
+        </trans-unit>
+      </group>
+
+      <group id="1006" resname="DB4D DataTools Object Types">
+        <trans-unit id="1">
+          <source>data segment header</source>
+          <target>en-tête du segment de données</target>
+        </trans-unit>
+        <trans-unit id="2">
+          <source>primary directory of bit table</source>
+          <target>répertoire primaire de la table des bits</target>
+        </trans-unit>
+        <trans-unit id="3">
+          <source>secondary directory # {param2} of bit table</source>
+          <target>répertoire secondaire n° {param2} de la table des bits</target>
+        </trans-unit>
+        <trans-unit id="4">
+          <source>bit table # {param3} of directory # {param2}</source>
+          <target>table des bits n° {param3} du répertoire n° {param2}</target>
+        </trans-unit>
+        <trans-unit id="5">
+          <source>auto sequence header # {param1}</source>
+          <target>en-tête séquence automatique n° {param1}</target>
+        </trans-unit>
+        <trans-unit id="6">
+          <source>data table header # {param1}</source>
+          <target>en-tête table des données n° {param1}</target>
+        </trans-unit>
+        <trans-unit id="7">
+          <source>index header # {param1}</source>
+          <target>en-tête index n° {param1}</target>
+        </trans-unit>
+        <trans-unit id="8">
+          <source>table definition # {param1}</source>
+          <target>définition de table n° {param1}</target>
+        </trans-unit>
+        <trans-unit id="9">
+          <source>relation definition # {param1}</source>
+          <target>définiton du lien n° {param1}</target>
+        </trans-unit>
+        <trans-unit id="10">
+          <source>BLOB # {param1} of {TableName}</source>
+          <target>BLOB n° {param1} de {TableName}</target>
+        </trans-unit>
+        <trans-unit id="11">
+          <source>record # {param1} of {TableName}</source>
+          <target>enregistrement n° {param1} de {TableName}</target>
+        </trans-unit>
+        <trans-unit id="12">
+          <source>address table</source>
+          <target>table d'adresses</target>
+        </trans-unit>
+        <trans-unit id="13">
+          <source>records address table of {TableName}</source>
+          <target>table d'adresses des enregistrements de {TableName}</target>
+        </trans-unit>
+        <trans-unit id="14">
+          <source>BLOBs address table of {TableName}</source>
+          <target>table d'adresses des BLOBs de {TableName}</target>
+        </trans-unit>
+        <trans-unit id="15">
+          <source>index address table of {IndexName}</source>
+          <target>table d'adresses des index de {IndexName}</target>
+        </trans-unit>
+        <trans-unit id="16">
+          <source>clusters address table of {IndexName}</source>
+          <target>table d'adresses des clusters de {IndexName}</target>
+        </trans-unit>
+        <trans-unit id="17">
+          <source>extra property</source>
+          <target>propriété supplémentaire</target>
+        </trans-unit>
+        <trans-unit id="18">
+          <source>index page # {param1} of {IndexName}</source>
+          <target>page d’index n° {param1} de {IndexName}</target>
+        </trans-unit>
+        <trans-unit id="19">
+          <source>index cluster # {param1} of {IndexName}</source>
+          <target>cluster d’index n° {param1} de {IndexName}</target>
+        </trans-unit>
+        <trans-unit id="20">
+          <source>part # {param2} of index cluster # {param1} of {IndexName}</source>
+          <target>partie n° {param2} du cluster d’index n° {param1} de {IndexName}</target>
+        </trans-unit>
+      </group>
+
+      <group id="1007" resname="DB4D Default Structure Names">
+        <trans-unit id="1" resname="default_table_name">
+          <source>Table_{id}</source>
+          <target>Table_{id}</target>
+        </trans-unit>
+        <trans-unit id="2" resname="default_field_name">
+          <source>Field_{id}</source>
+          <target>Champ_{id}</target>
+        </trans-unit>
+        <trans-unit id="3" resname="default_many_to_one_name">
+          <source>Link_{id}</source>
+          <target>Lien_{id}</target>
+        </trans-unit>
+        <trans-unit id="4" resname="default_one_to_many_name">
+          <source>Link_{id}_return</source>
+          <target>Lien_{id}_retour</target>
+        </trans-unit>
+      </group>
+
+      <group id="1008" resname="DB4D DataTools Compact Progress">
+        <note>
+          **************************************************
+          IMPORTANT INTERNAL COMMENT
+          **************************************************
+          If you change a trans-unit, add one, remove one, you _must_ also change group id "1004",
+          both are the same except for the "Verify" or "Compact" context.
+        </note>
+        <trans-unit id="1">
+          <source>Loading data tables</source>
+          <target>Chargement des tables de données</target>
+        </trans-unit>
+        <trans-unit id="2">
+          <source>Compacting data table definitions</source>
+          <target>Compactage des définitions de tables des données</target>
+        </trans-unit>
+        <trans-unit id="3">
+          <source>Compacting chained list of deleted table definitions</source>
+          <target>Compactage de la chaîne de définitions de tables supprimées</target>
+        </trans-unit>
+        <trans-unit id="4">
+          <source>Compacting index definitions</source>
+          <target>Compactage des définitions d’index</target>
+        </trans-unit>
+        <trans-unit id="5">
+          <source>Compacting chained list of deleted index definitions</source>
+          <target>Compactage de la chaîne de définitions d’index supprimés</target>
+        </trans-unit>
+        <trans-unit id="6">
+          <source>Compacting backup index definitions</source>
+          <target>Compactage des définitions d’index de sauvegarde</target>
+        </trans-unit>
+        <trans-unit id="7">
+          <source>Compacting chained list of deleted backup index definitions</source>
+          <target>Compactage de la chaîne de définition d’index de sauvegarde supprimés</target>
+        </trans-unit>
+        <trans-unit id="8">
+          <source>Compacting relation definitions</source>
+          <target>Compactage des définitions de liens</target>
+        </trans-unit>
+        <trans-unit id="9">
+          <source>Compacting chained list of deleted relation definitions</source>
+          <target>Compactage des listes de définitions de liens supprimées</target>
+        </trans-unit>
+        <trans-unit id="10">
+          <source>Compacting auto sequence number definitions</source>
+          <target>Compactage des définitions de la numérotation automatique</target>
+        </trans-unit>
+        <trans-unit id="11">
+          <source>Compacting chained list of deleted auto sequence number definitions</source>
+          <target>Compactage de la chaîne de définition de numérotation automatique supprimée</target>
+        </trans-unit>
+        <trans-unit id="12">
+          <source>Compacting data table headers</source>
+          <target>Compactage des entêtes de la table des données</target>
+        </trans-unit>
+        <trans-unit id="13">
+          <source>Compacting chained list of deleted data table headers</source>
+          <target>Compactage de la chaîne des entêtes de la table des données supprimées</target>
+        </trans-unit>
+        <trans-unit id="14">
+          <source>Compacting BLOBs in table {p1}</source>
+          <target>Compactage des BLOBs dans la table {p1}</target>
+        </trans-unit>
+        <trans-unit id="15">
+          <source>Compacting list of deleted BLOBs in table {p1}</source>
+          <target>Compactage de la liste des BLOBs supprimés dans la table {p1}</target>
+        </trans-unit>
+        <trans-unit id="16">
+          <source>Compacting records in table {p1}</source>
+          <target>Compactage des enregistrements dans la table {p1}</target>
+        </trans-unit>
+        <trans-unit id="17">
+          <source>Compacting list of deleted records in table {p1}</source>
+          <target>Compactage de la liste des enregistrements supprimés dans la table {p1}</target>
+        </trans-unit>
+        <trans-unit id="18">
+          <source>Compact bit tables for segment {SegNum}</source>
+          <target>Compactage de la table des bits du segment {SegNum}</target>
+        </trans-unit>
+        <trans-unit id="19">
+          <source>Compacting index pages on {p1}</source>
+          <target>Compactage des pages d’index de l'{p1}</target>
+        </trans-unit>
+        <trans-unit id="20">
+          <source>Compacting index page addresses on {p1}</source>
+          <target>Compactage des adresses des pages d’index de l'{p1}</target>
+        </trans-unit>
+        <trans-unit id="21">
+          <source>Compacting list of deleted index pages on {p1}</source>
+          <target>Compactage de la liste des pages d’index supprimés de l'{p1}</target>
+        </trans-unit>
+        <trans-unit id="22">
+          <source>Compacting clusters on {p1}</source>
+          <target>Compactage des clusters de l'{p1}</target>
+        </trans-unit>
+        <trans-unit id="23">
+          <source>Compacting list of deleted clusters on {p1}</source>
+          <target>Compactage de la liste des clusters supprimés de l'{p1}</target>
+        </trans-unit>
+        <trans-unit id="24">
+          <source>on</source>
+          <target>sur</target>
+        </trans-unit>
+        <trans-unit id="25">
+          <source>Keywords Index </source>
+          <target>Index de mots-clés </target>
+        </trans-unit>
+        <trans-unit id="26">
+          <source>B-tree Index </source>
+          <target>Index B-tree </target>
+        </trans-unit>
+        <trans-unit id="27">
+          <source>Cluster Index </source>
+          <target>Index cluster </target>
+        </trans-unit>
+        <trans-unit id="28">
+          <source>Index </source>
+          <target>Index </target>
+        </trans-unit>
+        <trans-unit id="29">
+          <source>Composite Index </source>
+          <target>Index composite </target>
+        </trans-unit>
+        <trans-unit id="30">
+          <source>Scanning data</source>
+          <target>Lecture des données</target>
+        </trans-unit>
+        <trans-unit id="31">
+          <source>Recovering records</source>
+          <target>Récupération des enregistrements</target>
+        </trans-unit>
+        <trans-unit id="32">
+          <source>Recovering BLOBs</source>
+          <target>Récupération des BLOBs</target>
+        </trans-unit>
+        <trans-unit id="34">
+          <source>Compacting index {p1}</source>
+          <target>Compactage de l'index sur {p1}</target>
+        </trans-unit>
+      </group>
+
+      <group id="1009" resname="DB4D DataTools Solutions">
+        <trans-unit id="78">
+          <source>Extra properties stream has been repaired</source>
+          <target>Le flux des propriétés additionnelles a été réparé</target>
+        </trans-unit>
+        <trans-unit id="86">
+          <source>The table of relations has been repaired</source>
+          <target>La table des liens a été réparée</target>
+        </trans-unit>
+        <trans-unit id="88">
+          <source>The index definition has been repaired</source>
+          <target>La définition d’index a été réparée</target>
+        </trans-unit>
+      </group>
+
+      <group id="1010" resname="DB4D DataTools Compacting and Altering Records">
+        <trans-unit id="1">
+          <source>Compacting records of table {p1}</source>
+          <target>Compactage des enregistrements de la table {p1}</target>
+        </trans-unit>
+        <trans-unit id="2">
+          <source>Compacting BLOBs of table {p1}</source>
+          <target>Compactage des BLOBs de la table {p1}</target>
+        </trans-unit>
+        <trans-unit id="3">
+          <source>Indexing</source>
+          <target>Indexation</target>
+        </trans-unit>
+      </group>
+
+      <group id="1011" resname="DB4D Journal operations title">
+        <!-- 06 dec 2012 : only use for Wakanda -->
+        <trans-unit id="1">
+          <source>Create record</source>
+          <target>Create record</target>
+        </trans-unit>
+        <trans-unit id="2">
+          <source>Modify record</source>
+          <target>Modify record</target>
+        </trans-unit>
+        <trans-unit id="3">
+          <source>Delete record</source>
+          <target>Delete record</target>
+        </trans-unit>
+        <trans-unit id="4">
+          <source>Start transaction</source>
+          <target>Start transaction</target>
+        </trans-unit>
+        <trans-unit id="5">
+          <source>Commit transaction</source>
+          <target>Commit transaction</target>
+        </trans-unit>
+        <trans-unit id="6">
+          <source>Rollback transaction</source>
+          <target>Rollback transaction</target>
+        </trans-unit>
+        <trans-unit id="7">
+          <source>Open data</source>
+          <target>Open data</target>
+        </trans-unit>
+        <trans-unit id="8">
+          <source>Close data</source>
+          <target>Close data</target>
+        </trans-unit>
+        <trans-unit id="9">
+          <source>Create context with User ID</source>
+          <target>Create context with User ID</target>
+        </trans-unit>
+        <trans-unit id="10">
+          <source>Create context with extra</source>
+          <target>Create context with extra</target>
+        </trans-unit>
+        <trans-unit id="11">
+          <source>Close context</source>
+          <target>Close context</target>
+        </trans-unit>
+        <trans-unit id="12">
+          <source>Create blob</source>
+          <target>Create blob</target>
+        </trans-unit>
+        <trans-unit id="13">
+          <source>Modify blob</source>
+          <target>Modify blob</target>
+        </trans-unit>
+        <trans-unit id="14">
+          <source>Delete blob</source>
+          <target>Delete blob</target>
+        </trans-unit>
+        <trans-unit id="15">
+          <source>Start backup</source>
+          <target>Start backup</target>
+        </trans-unit>
+        <trans-unit id="16">
+          <source>Truncate table</source>
+          <target>Truncate table</target>
+        </trans-unit>
+        <trans-unit id="17">
+          <source>Save seqnum</source>
+          <target>Save seqnum</target>
+        </trans-unit>
+      </group>
+
+      <group id="1012" resname="DB4D Journal tool">
+        <!-- 06 dec 2012 : only use for Wakanda -->
+        <trans-unit id="1">
+          <source>Converting journal operations</source>
+          <target>Converting journal operations</target>
+        </trans-unit>
+      </group>
+
+    </body>
+  </file>
+</xliff>
