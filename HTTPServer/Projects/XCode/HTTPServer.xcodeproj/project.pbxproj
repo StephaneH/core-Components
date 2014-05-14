@@ -1,0 +1,1028 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 46;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		F4910660185F152E003860F1 /* de.lproj in Resources */ = {isa = PBXBuildFile; fileRef = F4FA4A7614559230005067C9 /* de.lproj */; };
+		F4910661185F152E003860F1 /* Default Page in Resources */ = {isa = PBXBuildFile; fileRef = F4FA4A7914559230005067C9 /* Default Page */; };
+		F4910662185F152E003860F1 /* en.lproj in Resources */ = {isa = PBXBuildFile; fileRef = F4FA4A7E14559230005067C9 /* en.lproj */; };
+		F4910663185F152E003860F1 /* Error_Template.html in Resources */ = {isa = PBXBuildFile; fileRef = F4FA4A8114559230005067C9 /* Error_Template.html */; };
+		F4910664185F152E003860F1 /* es.lproj in Resources */ = {isa = PBXBuildFile; fileRef = F4FA4A8214559230005067C9 /* es.lproj */; };
+		F4910665185F152E003860F1 /* fr.lproj in Resources */ = {isa = PBXBuildFile; fileRef = F4FA4A8514559230005067C9 /* fr.lproj */; };
+		F4910666185F152E003860F1 /* ja.lproj in Resources */ = {isa = PBXBuildFile; fileRef = F4FA4A8814559230005067C9 /* ja.lproj */; };
+		F4910667185F152E003860F1 /* MimeTypes.xml in Resources */ = {isa = PBXBuildFile; fileRef = F4FA4A8B14559230005067C9 /* MimeTypes.xml */; };
+		F4910668185F152E003860F1 /* pt-BR.lproj in Resources */ = {isa = PBXBuildFile; fileRef = F4FA4A8C14559230005067C9 /* pt-BR.lproj */; };
+		F491066A185F152E003860F1 /* HTTPNetworking.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E41722B80F2F02A900D13F4F /* HTTPNetworking.cpp */; };
+		F491066B185F152E003860F1 /* HTTPServerCache.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E41722B90F2F02A900D13F4F /* HTTPServerCache.cpp */; };
+		F491066C185F152E003860F1 /* HTTPServerPCH.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E41722BA0F2F02A900D13F4F /* HTTPServerPCH.cpp */; };
+		F491066D185F152E003860F1 /* VHTTPRequest.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E41722BB0F2F02A900D13F4F /* VHTTPRequest.cpp */; };
+		F491066E185F152E003860F1 /* VHTTPServer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E41722BC0F2F02A900D13F4F /* VHTTPServer.cpp */; };
+		F491066F185F152E003860F1 /* HTTPServerTools.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E47549280F3A062900E99405 /* HTTPServerTools.cpp */; };
+		F4910670185F152E003860F1 /* VVirtualHost.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E4FEA3680F3ADBE000C69326 /* VVirtualHost.cpp */; };
+		F4910671185F152E003860F1 /* HTTPProtocol.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E4339B6A0F40A5B300CF0FEA /* HTTPProtocol.cpp */; };
+		F4910672185F152E003860F1 /* VMimeType.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E418763D0F448B0B008310A5 /* VMimeType.cpp */; };
+		F4910673185F152E003860F1 /* VHTTPConnectionHandler.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E438B8B40F582C9D004F7419 /* VHTTPConnectionHandler.cpp */; };
+		F4910674185F152E003860F1 /* VHTTPConnectionListener.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E428CCB70F66CD8700ED45AE /* VHTTPConnectionListener.cpp */; };
+		F4910675185F152E003860F1 /* HTTPServerLog.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E40BEC910F8612EF00D90155 /* HTTPServerLog.cpp */; };
+		F4910676185F152E003860F1 /* HTTPServerSettings.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E4F50D290F98884200588D90 /* HTTPServerSettings.cpp */; };
+		F4910677185F152E003860F1 /* VAuthenticationManager.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E49459A2108316DB00A6C1BB /* VAuthenticationManager.cpp */; };
+		F4910678185F152E003860F1 /* VVirtualFolder.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E494E6C9108CA27800129FAF /* VVirtualFolder.cpp */; };
+		F4910679185F152E003860F1 /* VHTTPResponse.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E4DD4B431117507500DB52CC /* VHTTPResponse.cpp */; };
+		F491067A185F152E003860F1 /* VHTTPServerProject.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E40FA727111B4039001838D2 /* VHTTPServerProject.cpp */; };
+		F491067B185F152E003860F1 /* VStaticPagesHTTPRequestHandler.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E40FA728111B4039001838D2 /* VStaticPagesHTTPRequestHandler.cpp */; };
+		F491067C185F152E003860F1 /* VHTTPConnectionHandlerFactory.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E4C04B291136F3CF00D45567 /* VHTTPConnectionHandlerFactory.cpp */; };
+		F491067D185F152E003860F1 /* VVirtualHostManager.cpp in Sources */ = {isa = PBXBuildFile; fileRef = F413A24E113EAC55007E38A6 /* VVirtualHostManager.cpp */; };
+		F491067E185F152E003860F1 /* VDebugInfosHTTPRequestHandler.cpp in Sources */ = {isa = PBXBuildFile; fileRef = F45A284C113EC30400A0C014 /* VDebugInfosHTTPRequestHandler.cpp */; };
+		F491067F185F152E003860F1 /* VTCPServer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E4AA2F68114E38EC004E1507 /* VTCPServer.cpp */; };
+		F4910680185F152E003860F1 /* VHTTPError.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E4DDA2F2115A856C007E8AEF /* VHTTPError.cpp */; };
+		F4910681185F152E003860F1 /* VAuthenticationReferee.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E4167FA2116E24AB0088C222 /* VAuthenticationReferee.cpp */; };
+		F4910682185F152E003860F1 /* VNonce.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E476F7891180B7870082A1C3 /* VNonce.cpp */; };
+		F4910683185F152E003860F1 /* VHTTPResource.cpp in Sources */ = {isa = PBXBuildFile; fileRef = F483AAB611932A2B000027C5 /* VHTTPResource.cpp */; };
+		F4910684185F152E003860F1 /* VHTTPServerSession.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E4A36DDE11C90E330023C7FC /* VHTTPServerSession.cpp */; };
+		F4910685185F152E003860F1 /* VHTTPServerComponentLibrary.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E4FCCC20125260B30068A6FE /* VHTTPServerComponentLibrary.cpp */; };
+		F4910686185F152E003860F1 /* ComponentStub.cpp in Sources */ = {isa = PBXBuildFile; fileRef = F44E9E8D14692D0B009D4E40 /* ComponentStub.cpp */; };
+		F4910687185F152E003860F1 /* VHTTPWebsocketHandler.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9521E60514ED5A6D002F6205 /* VHTTPWebsocketHandler.cpp */; };
+		F4910689185F152E003860F1 /* System.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E417237D0F2F4DFF00D13F4F /* System.framework */; };
+		F491068E185F152E003860F1 /* CoreFoundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 45A98C5E0F7A56C00073F7C8 /* CoreFoundation.framework */; };
+		F49106BD185F158B003860F1 /* KernelDebug.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F49106A3185F152E003860F1 /* KernelDebug.framework */; };
+		F49106BE185F1591003860F1 /* KernelIPCDebug.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F49106AA185F152E003860F1 /* KernelIPCDebug.framework */; };
+		F49106BF185F1595003860F1 /* ServerNetDebug.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F49106B1185F152E003860F1 /* ServerNetDebug.framework */; };
+		F49106C0185F15A6003860F1 /* XMLDebug.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F49106B4185F152E003860F1 /* XMLDebug.framework */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		E41722EE0F2F06B700D13F4F /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = E41722E80F2F06B700D13F4F /* Kernel.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = 8D07F2C80486CC7A007CD1D0;
+			remoteInfo = Kernel;
+		};
+		E41722F00F2F06B700D13F4F /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = E41722E80F2F06B700D13F4F /* Kernel.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = 0235BC0C071EDC5200BEEE2E;
+			remoteInfo = M_APM;
+		};
+		E41722F20F2F06B700D13F4F /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = E41722E80F2F06B700D13F4F /* Kernel.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = C9BBA8FD09BC8AC500F3DCFC;
+			remoteInfo = KernelLib;
+		};
+		E41722F90F2F06BF00D13F4F /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = E41722F40F2F06BF00D13F4F /* KernelIPC.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = 8D07F2C80486CC7A007CD1D0;
+			remoteInfo = KernelIPC;
+		};
+		E41722FB0F2F06BF00D13F4F /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = E41722F40F2F06BF00D13F4F /* KernelIPC.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = B54AA6920BEA453E005240A2;
+			remoteInfo = KernelIPCLib;
+		};
+		E41723020F2F06CD00D13F4F /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = E41722FD0F2F06CD00D13F4F /* ServerNet.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = 8D07F2C80486CC7A007CD1D0;
+			remoteInfo = ServerNet;
+		};
+		E41723040F2F06CD00D13F4F /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = E41722FD0F2F06CD00D13F4F /* ServerNet.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = B508DD9D0BEA4BF70036C46F;
+			remoteInfo = ServerNetLib;
+		};
+		E4FCCA2A0F5EE2CD0066B678 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = E4FCCA260F5EE2CD0066B678 /* XML.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = 8D07F2C80486CC7A007CD1D0;
+			remoteInfo = XML;
+		};
+		F4643ED8113EA98000639653 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = E41722E80F2F06B700D13F4F /* Kernel.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = F4643159113E7A3E00639653;
+			remoteInfo = "Kernel x64";
+		};
+		F4643EDA113EA98000639653 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = E41722E80F2F06B700D13F4F /* Kernel.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = F46431A2113E7C4800639653;
+			remoteInfo = "M_APM x64";
+		};
+		F4643EDE113EA98000639653 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = E41722F40F2F06BF00D13F4F /* KernelIPC.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = F46431F9113E7CBD00639653;
+			remoteInfo = "KernelIPC x64";
+		};
+		F4643EE2113EA98000639653 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = E41722FD0F2F06CD00D13F4F /* ServerNet.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = F464345E113E8FB200639653;
+			remoteInfo = "ServerNet x64";
+		};
+		F491069E185F152E003860F1 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = E41722E80F2F06B700D13F4F /* Kernel.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = 6D9B6FFC183E4714000691CB;
+			remoteInfo = "KernelLib x64";
+		};
+		F49106A0185F152E003860F1 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = E41722E80F2F06B700D13F4F /* Kernel.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = F4E1C3561859B83C005F1140;
+			remoteInfo = M_APM;
+		};
+		F49106A2185F152E003860F1 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = E41722E80F2F06B700D13F4F /* Kernel.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = F4E1C3291859B823005F1140;
+			remoteInfo = Kernel;
+		};
+		F49106A7185F152E003860F1 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = E41722F40F2F06BF00D13F4F /* KernelIPC.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = 6D9B6F1D183E46BA000691CB;
+			remoteInfo = "KernelIPCLib x64";
+		};
+		F49106A9185F152E003860F1 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = E41722F40F2F06BF00D13F4F /* KernelIPC.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = F42FBAFA185A02CD00EFC5CF;
+			remoteInfo = KernelIPC;
+		};
+		F49106AE185F152E003860F1 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = E41722FD0F2F06CD00D13F4F /* ServerNet.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = 6D9B6EC7183E430A000691CB;
+			remoteInfo = "ServerNetLib x86_64";
+		};
+		F49106B0185F152E003860F1 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = E41722FD0F2F06CD00D13F4F /* ServerNet.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = F4A85B84185A0DAF00D1A6D4;
+			remoteInfo = ServerNet;
+		};
+		F49106B3185F152E003860F1 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = E4FCCA260F5EE2CD0066B678 /* XML.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = F4ED7CCE185A0ADC0002399A;
+			remoteInfo = XML;
+		};
+		F49106B5185F1562003860F1 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = E41722E80F2F06B700D13F4F /* Kernel.xcodeproj */;
+			proxyType = 1;
+			remoteGlobalIDString = F4E1C2481859B823005F1140;
+			remoteInfo = Kernel;
+		};
+		F49106B7185F1567003860F1 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = E41722FD0F2F06CD00D13F4F /* ServerNet.xcodeproj */;
+			proxyType = 1;
+			remoteGlobalIDString = F4A85B3C185A0DAF00D1A6D4;
+			remoteInfo = ServerNet;
+		};
+		F49106B9185F156A003860F1 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = E41722F40F2F06BF00D13F4F /* KernelIPC.xcodeproj */;
+			proxyType = 1;
+			remoteGlobalIDString = F42FBAB4185A02CD00EFC5CF;
+			remoteInfo = KernelIPC;
+		};
+		F49106BB185F1570003860F1 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = E4FCCA260F5EE2CD0066B678 /* XML.xcodeproj */;
+			proxyType = 1;
+			remoteGlobalIDString = F4ED7C91185A0ADC0002399A;
+			remoteInfo = XML;
+		};
+		F4F8C5A01164E1A4005C7BC6 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = E4FCCA260F5EE2CD0066B678 /* XML.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = F4B97CC6116351D800987AC0;
+			remoteInfo = "XML x64";
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		F491068F185F152E003860F1 /* CopyFiles */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "$(SRCROOT)/../../../Components";
+			dstSubfolderSpec = 0;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
+/* Begin PBXFileReference section */
+		457C0A100F822205003E231A /* HTTPPublicTypes.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = HTTPPublicTypes.h; path = ../../Headers/HTTPPublicTypes.h; sourceTree = SOURCE_ROOT; };
+		45A98C5E0F7A56C00073F7C8 /* CoreFoundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreFoundation.framework; path = /System/Library/Frameworks/CoreFoundation.framework; sourceTree = "<absolute>"; };
+		9521E60514ED5A6D002F6205 /* VHTTPWebsocketHandler.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = VHTTPWebsocketHandler.cpp; path = ../../Sources/VHTTPWebsocketHandler.cpp; sourceTree = SOURCE_ROOT; };
+		956572BA14ED5C0B004873F7 /* VHTTPWebsocketHandler.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = VHTTPWebsocketHandler.h; path = ../../Headers/VHTTPWebsocketHandler.h; sourceTree = SOURCE_ROOT; };
+		E40BEC900F8612D100D90155 /* HTTPServerLog.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = HTTPServerLog.h; path = ../../Headers/HTTPServerLog.h; sourceTree = SOURCE_ROOT; };
+		E40BEC910F8612EF00D90155 /* HTTPServerLog.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = HTTPServerLog.cpp; path = ../../Sources/HTTPServerLog.cpp; sourceTree = SOURCE_ROOT; };
+		E40FA724111B4014001838D2 /* VHTTPServerProject.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = VHTTPServerProject.h; path = ../../Headers/VHTTPServerProject.h; sourceTree = SOURCE_ROOT; };
+		E40FA725111B4014001838D2 /* VStaticPagesHTTPRequestHandler.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = VStaticPagesHTTPRequestHandler.h; path = ../../Headers/VStaticPagesHTTPRequestHandler.h; sourceTree = SOURCE_ROOT; };
+		E40FA727111B4039001838D2 /* VHTTPServerProject.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = VHTTPServerProject.cpp; path = ../../Sources/VHTTPServerProject.cpp; sourceTree = SOURCE_ROOT; };
+		E40FA728111B4039001838D2 /* VStaticPagesHTTPRequestHandler.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = VStaticPagesHTTPRequestHandler.cpp; path = ../../Sources/VStaticPagesHTTPRequestHandler.cpp; sourceTree = SOURCE_ROOT; };
+		E4167FA1116E248F0088C222 /* VAuthenticationReferee.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = VAuthenticationReferee.h; path = ../../Headers/VAuthenticationReferee.h; sourceTree = SOURCE_ROOT; };
+		E4167FA2116E24AB0088C222 /* VAuthenticationReferee.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = VAuthenticationReferee.cpp; path = ../../Sources/VAuthenticationReferee.cpp; sourceTree = SOURCE_ROOT; };
+		E41722B70F2F028900D13F4F /* CHTTPServer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CHTTPServer.h; path = ../../Interfaces/CHTTPServer.h; sourceTree = SOURCE_ROOT; };
+		E41722B80F2F02A900D13F4F /* HTTPNetworking.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = HTTPNetworking.cpp; path = ../../Sources/HTTPNetworking.cpp; sourceTree = SOURCE_ROOT; };
+		E41722B90F2F02A900D13F4F /* HTTPServerCache.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = HTTPServerCache.cpp; path = ../../Sources/HTTPServerCache.cpp; sourceTree = SOURCE_ROOT; };
+		E41722BA0F2F02A900D13F4F /* HTTPServerPCH.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = HTTPServerPCH.cpp; path = ../../Sources/HTTPServerPCH.cpp; sourceTree = SOURCE_ROOT; };
+		E41722BB0F2F02A900D13F4F /* VHTTPRequest.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = VHTTPRequest.cpp; path = ../../Sources/VHTTPRequest.cpp; sourceTree = SOURCE_ROOT; };
+		E41722BC0F2F02A900D13F4F /* VHTTPServer.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = VHTTPServer.cpp; path = ../../Sources/VHTTPServer.cpp; sourceTree = SOURCE_ROOT; };
+		E41722C40F2F02D900D13F4F /* HTTPErrors.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = HTTPErrors.h; path = ../../Headers/HTTPErrors.h; sourceTree = SOURCE_ROOT; };
+		E41722C50F2F02D900D13F4F /* HTTPNetworking.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = HTTPNetworking.h; path = ../../Headers/HTTPNetworking.h; sourceTree = SOURCE_ROOT; };
+		E41722C60F2F02D900D13F4F /* HTTPServer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = HTTPServer.h; path = ../../Headers/HTTPServer.h; sourceTree = SOURCE_ROOT; };
+		E41722C70F2F02D900D13F4F /* HTTPServerCache.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = HTTPServerCache.h; path = ../../Headers/HTTPServerCache.h; sourceTree = SOURCE_ROOT; };
+		E41722C80F2F02D900D13F4F /* VHTTPRequest.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = VHTTPRequest.h; path = ../../Headers/VHTTPRequest.h; sourceTree = SOURCE_ROOT; };
+		E41722C90F2F02D900D13F4F /* VHTTPServer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = VHTTPServer.h; path = ../../Headers/VHTTPServer.h; sourceTree = SOURCE_ROOT; };
+		E41722CA0F2F02D900D13F4F /* VMimeType.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = VMimeType.h; path = ../../Headers/VMimeType.h; sourceTree = SOURCE_ROOT; };
+		E41722E80F2F06B700D13F4F /* Kernel.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = Kernel.xcodeproj; path = ../../../../../XToolbox/WAK8/Kernel/Projects/Xcode/Kernel.xcodeproj; sourceTree = SOURCE_ROOT; };
+		E41722F40F2F06BF00D13F4F /* KernelIPC.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = KernelIPC.xcodeproj; path = ../../../../../XToolbox/WAK8/KernelIPC/Projects/Xcode/KernelIPC.xcodeproj; sourceTree = SOURCE_ROOT; };
+		E41722FD0F2F06CD00D13F4F /* ServerNet.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = ServerNet.xcodeproj; path = ../../../../../XToolbox/WAK8/ServerNet/Projects/XCode/ServerNet.xcodeproj; sourceTree = SOURCE_ROOT; };
+		E417237D0F2F4DFF00D13F4F /* System.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = System.framework; path = System/Library/Frameworks/System.framework; sourceTree = SDKROOT; };
+		E418763D0F448B0B008310A5 /* VMimeType.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = VMimeType.cpp; path = ../../Sources/VMimeType.cpp; sourceTree = SOURCE_ROOT; };
+		E428CCB70F66CD8700ED45AE /* VHTTPConnectionListener.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = VHTTPConnectionListener.cpp; path = ../../Sources/VHTTPConnectionListener.cpp; sourceTree = SOURCE_ROOT; };
+		E428CCB90F66CDA000ED45AE /* VHTTPConnectionListener.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = VHTTPConnectionListener.h; path = ../../Headers/VHTTPConnectionListener.h; sourceTree = SOURCE_ROOT; };
+		E4339B630F4021BF00CF0FEA /* HTTPProtocol.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = HTTPProtocol.h; path = ../../Headers/HTTPProtocol.h; sourceTree = SOURCE_ROOT; };
+		E4339B6A0F40A5B300CF0FEA /* HTTPProtocol.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = HTTPProtocol.cpp; path = ../../Sources/HTTPProtocol.cpp; sourceTree = SOURCE_ROOT; };
+		E438B8B30F582C84004F7419 /* VHTTPConnectionHandler.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = VHTTPConnectionHandler.h; path = ../../Headers/VHTTPConnectionHandler.h; sourceTree = SOURCE_ROOT; };
+		E438B8B40F582C9D004F7419 /* VHTTPConnectionHandler.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = VHTTPConnectionHandler.cpp; path = ../../Sources/VHTTPConnectionHandler.cpp; sourceTree = SOURCE_ROOT; };
+		E47549270F3A061900E99405 /* HTTPServerTools.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = HTTPServerTools.h; path = ../../Headers/HTTPServerTools.h; sourceTree = SOURCE_ROOT; };
+		E47549280F3A062900E99405 /* HTTPServerTools.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = HTTPServerTools.cpp; path = ../../Sources/HTTPServerTools.cpp; sourceTree = SOURCE_ROOT; };
+		E476F7881180B7440082A1C3 /* VNonce.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = VNonce.h; path = ../../Headers/VNonce.h; sourceTree = SOURCE_ROOT; };
+		E476F7891180B7870082A1C3 /* VNonce.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = VNonce.cpp; path = ../../Sources/VNonce.cpp; sourceTree = SOURCE_ROOT; };
+		E49459A1108316C100A6C1BB /* VAuthenticationManager.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = VAuthenticationManager.h; path = ../../Headers/VAuthenticationManager.h; sourceTree = SOURCE_ROOT; };
+		E49459A2108316DB00A6C1BB /* VAuthenticationManager.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = VAuthenticationManager.cpp; path = ../../Sources/VAuthenticationManager.cpp; sourceTree = SOURCE_ROOT; };
+		E494E6C8108CA26000129FAF /* VVirtualFolder.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = VVirtualFolder.h; path = ../../Headers/VVirtualFolder.h; sourceTree = SOURCE_ROOT; };
+		E494E6C9108CA27800129FAF /* VVirtualFolder.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = VVirtualFolder.cpp; path = ../../Sources/VVirtualFolder.cpp; sourceTree = SOURCE_ROOT; };
+		E4A36DDD11C90E070023C7FC /* VHTTPServerSession.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = VHTTPServerSession.h; path = ../../Headers/VHTTPServerSession.h; sourceTree = SOURCE_ROOT; };
+		E4A36DDE11C90E330023C7FC /* VHTTPServerSession.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = VHTTPServerSession.cpp; path = ../../Sources/VHTTPServerSession.cpp; sourceTree = SOURCE_ROOT; };
+		E4AA2F62114E38CA004E1507 /* VTCPServer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = VTCPServer.h; path = ../../Headers/VTCPServer.h; sourceTree = SOURCE_ROOT; };
+		E4AA2F68114E38EC004E1507 /* VTCPServer.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = VTCPServer.cpp; path = ../../Sources/VTCPServer.cpp; sourceTree = SOURCE_ROOT; };
+		E4C04B291136F3CF00D45567 /* VHTTPConnectionHandlerFactory.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = VHTTPConnectionHandlerFactory.cpp; path = ../../Sources/VHTTPConnectionHandlerFactory.cpp; sourceTree = SOURCE_ROOT; };
+		E4C04B2D1136F3E400D45567 /* VHTTPConnectionHandlerFactory.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = VHTTPConnectionHandlerFactory.h; path = ../../Headers/VHTTPConnectionHandlerFactory.h; sourceTree = SOURCE_ROOT; };
+		E4DD4B3E1117505A00DB52CC /* VHTTPResponse.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = VHTTPResponse.h; path = ../../Headers/VHTTPResponse.h; sourceTree = SOURCE_ROOT; };
+		E4DD4B431117507500DB52CC /* VHTTPResponse.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = VHTTPResponse.cpp; path = ../../Sources/VHTTPResponse.cpp; sourceTree = SOURCE_ROOT; };
+		E4DDA2F1115A8556007E8AEF /* VHTTPError.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = VHTTPError.h; path = ../../Headers/VHTTPError.h; sourceTree = SOURCE_ROOT; };
+		E4DDA2F2115A856C007E8AEF /* VHTTPError.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = VHTTPError.cpp; path = ../../Sources/VHTTPError.cpp; sourceTree = SOURCE_ROOT; };
+		E4F50D280F98881B00588D90 /* HTTPServerSettings.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = HTTPServerSettings.h; path = ../../Headers/HTTPServerSettings.h; sourceTree = SOURCE_ROOT; };
+		E4F50D290F98884200588D90 /* HTTPServerSettings.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = HTTPServerSettings.cpp; path = ../../Sources/HTTPServerSettings.cpp; sourceTree = SOURCE_ROOT; };
+		E4FCCA260F5EE2CD0066B678 /* XML.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = XML.xcodeproj; path = ../../../../../XToolbox/WAK8/XML/Projects/Xcode/XML.xcodeproj; sourceTree = SOURCE_ROOT; };
+		E4FCCC20125260B30068A6FE /* VHTTPServerComponentLibrary.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = VHTTPServerComponentLibrary.cpp; path = ../../Sources/VHTTPServerComponentLibrary.cpp; sourceTree = SOURCE_ROOT; };
+		E4FCCC23125260D80068A6FE /* VHTTPServerComponentLibrary.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = VHTTPServerComponentLibrary.h; path = ../../Headers/VHTTPServerComponentLibrary.h; sourceTree = SOURCE_ROOT; };
+		E4FEA3680F3ADBE000C69326 /* VVirtualHost.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = VVirtualHost.cpp; path = ../../Sources/VVirtualHost.cpp; sourceTree = SOURCE_ROOT; };
+		E4FEA36A0F3ADBEE00C69326 /* VVirtualHost.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = VVirtualHost.h; path = ../../Headers/VVirtualHost.h; sourceTree = SOURCE_ROOT; };
+		F413A24E113EAC55007E38A6 /* VVirtualHostManager.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = VVirtualHostManager.cpp; path = ../../Sources/VVirtualHostManager.cpp; sourceTree = SOURCE_ROOT; };
+		F413A251113EACA8007E38A6 /* VVirtualHostManager.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = VVirtualHostManager.h; path = ../../Headers/VVirtualHostManager.h; sourceTree = SOURCE_ROOT; };
+		F439E3CE0D51DC9400F55316 /* components.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; name = components.xcconfig; path = ../../../components.xcconfig; sourceTree = SOURCE_ROOT; };
+		F439E3CF0D51DC9400F55316 /* components_base.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; name = components_base.xcconfig; path = ../../../components_base.xcconfig; sourceTree = SOURCE_ROOT; };
+		F439E3D00D51DC9400F55316 /* components_beta.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; name = components_beta.xcconfig; path = ../../../components_beta.xcconfig; sourceTree = SOURCE_ROOT; };
+		F439E3D10D51DC9400F55316 /* components_coverage.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; name = components_coverage.xcconfig; path = ../../../components_coverage.xcconfig; sourceTree = SOURCE_ROOT; };
+		F439E3D20D51DC9400F55316 /* components_debug.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; name = components_debug.xcconfig; path = ../../../components_debug.xcconfig; sourceTree = SOURCE_ROOT; };
+		F439E3D30D51DC9400F55316 /* components_performance.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; name = components_performance.xcconfig; path = ../../../components_performance.xcconfig; sourceTree = SOURCE_ROOT; };
+		F439E3D40D51DC9400F55316 /* components_release.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; name = components_release.xcconfig; path = ../../../components_release.xcconfig; sourceTree = SOURCE_ROOT; };
+		F44E9E8D14692D0B009D4E40 /* ComponentStub.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ComponentStub.cpp; path = ../../Sources/ComponentStub.cpp; sourceTree = SOURCE_ROOT; };
+		F45A284C113EC30400A0C014 /* VDebugInfosHTTPRequestHandler.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = VDebugInfosHTTPRequestHandler.cpp; path = ../../Sources/VDebugInfosHTTPRequestHandler.cpp; sourceTree = SOURCE_ROOT; };
+		F45A284F113EC31100A0C014 /* VDebugInfosHTTPRequestHandler.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = VDebugInfosHTTPRequestHandler.h; path = ../../Headers/VDebugInfosHTTPRequestHandler.h; sourceTree = SOURCE_ROOT; };
+		F4643EE9113EAA0E00639653 /* components_x64.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; name = components_x64.xcconfig; path = ../../../components_x64.xcconfig; sourceTree = SOURCE_ROOT; };
+		F483AAB511932A0D000027C5 /* VHTTPResource.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = VHTTPResource.h; path = ../../Headers/VHTTPResource.h; sourceTree = SOURCE_ROOT; };
+		F483AAB611932A2B000027C5 /* VHTTPResource.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = VHTTPResource.cpp; path = ../../Sources/VHTTPResource.cpp; sourceTree = SOURCE_ROOT; };
+		F4910696185F152E003860F1 /* HTTPServerDebug.bundle */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = HTTPServerDebug.bundle; sourceTree = BUILT_PRODUCTS_DIR; };
+		F4FA4A7614559230005067C9 /* de.lproj */ = {isa = PBXFileReference; lastKnownFileType = folder; name = de.lproj; path = ../../Resources/de.lproj; sourceTree = SOURCE_ROOT; };
+		F4FA4A7914559230005067C9 /* Default Page */ = {isa = PBXFileReference; lastKnownFileType = folder; name = "Default Page"; path = "../../Resources/Default Page"; sourceTree = SOURCE_ROOT; };
+		F4FA4A7E14559230005067C9 /* en.lproj */ = {isa = PBXFileReference; lastKnownFileType = folder; name = en.lproj; path = ../../Resources/en.lproj; sourceTree = SOURCE_ROOT; };
+		F4FA4A8114559230005067C9 /* Error_Template.html */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.html; name = Error_Template.html; path = ../../Resources/Error_Template.html; sourceTree = SOURCE_ROOT; };
+		F4FA4A8214559230005067C9 /* es.lproj */ = {isa = PBXFileReference; lastKnownFileType = folder; name = es.lproj; path = ../../Resources/es.lproj; sourceTree = SOURCE_ROOT; };
+		F4FA4A8514559230005067C9 /* fr.lproj */ = {isa = PBXFileReference; lastKnownFileType = folder; name = fr.lproj; path = ../../Resources/fr.lproj; sourceTree = SOURCE_ROOT; };
+		F4FA4A8814559230005067C9 /* ja.lproj */ = {isa = PBXFileReference; lastKnownFileType = folder; name = ja.lproj; path = ../../Resources/ja.lproj; sourceTree = SOURCE_ROOT; };
+		F4FA4A8B14559230005067C9 /* MimeTypes.xml */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xml; name = MimeTypes.xml; path = ../../Resources/MimeTypes.xml; sourceTree = SOURCE_ROOT; };
+		F4FA4A8C14559230005067C9 /* pt-BR.lproj */ = {isa = PBXFileReference; lastKnownFileType = folder; name = "pt-BR.lproj"; path = "../../Resources/pt-BR.lproj"; sourceTree = SOURCE_ROOT; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		F4910688185F152E003860F1 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				F49106C0185F15A6003860F1 /* XMLDebug.framework in Frameworks */,
+				F49106BF185F1595003860F1 /* ServerNetDebug.framework in Frameworks */,
+				F49106BE185F1591003860F1 /* KernelIPCDebug.framework in Frameworks */,
+				F49106BD185F158B003860F1 /* KernelDebug.framework in Frameworks */,
+				F4910689185F152E003860F1 /* System.framework in Frameworks */,
+				F491068E185F152E003860F1 /* CoreFoundation.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		E41722B60F2F026700D13F4F /* Interfaces */ = {
+			isa = PBXGroup;
+			children = (
+				E41722B70F2F028900D13F4F /* CHTTPServer.h */,
+			);
+			name = Interfaces;
+			sourceTree = "<group>";
+		};
+		E41722C30F2F02BA00D13F4F /* Headers */ = {
+			isa = PBXGroup;
+			children = (
+				956572BA14ED5C0B004873F7 /* VHTTPWebsocketHandler.h */,
+				E41722C40F2F02D900D13F4F /* HTTPErrors.h */,
+				E41722C50F2F02D900D13F4F /* HTTPNetworking.h */,
+				E4339B630F4021BF00CF0FEA /* HTTPProtocol.h */,
+				457C0A100F822205003E231A /* HTTPPublicTypes.h */,
+				E41722C60F2F02D900D13F4F /* HTTPServer.h */,
+				E41722C70F2F02D900D13F4F /* HTTPServerCache.h */,
+				E40BEC900F8612D100D90155 /* HTTPServerLog.h */,
+				E4F50D280F98881B00588D90 /* HTTPServerSettings.h */,
+				E47549270F3A061900E99405 /* HTTPServerTools.h */,
+				E49459A1108316C100A6C1BB /* VAuthenticationManager.h */,
+				E4167FA1116E248F0088C222 /* VAuthenticationReferee.h */,
+				F45A284F113EC31100A0C014 /* VDebugInfosHTTPRequestHandler.h */,
+				E438B8B30F582C84004F7419 /* VHTTPConnectionHandler.h */,
+				E4C04B2D1136F3E400D45567 /* VHTTPConnectionHandlerFactory.h */,
+				E428CCB90F66CDA000ED45AE /* VHTTPConnectionListener.h */,
+				E4DDA2F1115A8556007E8AEF /* VHTTPError.h */,
+				E41722C80F2F02D900D13F4F /* VHTTPRequest.h */,
+				F483AAB511932A0D000027C5 /* VHTTPResource.h */,
+				E4DD4B3E1117505A00DB52CC /* VHTTPResponse.h */,
+				E41722C90F2F02D900D13F4F /* VHTTPServer.h */,
+				E4FCCC23125260D80068A6FE /* VHTTPServerComponentLibrary.h */,
+				E40FA724111B4014001838D2 /* VHTTPServerProject.h */,
+				E4A36DDD11C90E070023C7FC /* VHTTPServerSession.h */,
+				E41722CA0F2F02D900D13F4F /* VMimeType.h */,
+				E476F7881180B7440082A1C3 /* VNonce.h */,
+				E40FA725111B4014001838D2 /* VStaticPagesHTTPRequestHandler.h */,
+				E4AA2F62114E38CA004E1507 /* VTCPServer.h */,
+				E494E6C8108CA26000129FAF /* VVirtualFolder.h */,
+				E4FEA36A0F3ADBEE00C69326 /* VVirtualHost.h */,
+				F413A251113EACA8007E38A6 /* VVirtualHostManager.h */,
+			);
+			name = Headers;
+			sourceTree = "<group>";
+		};
+		E41722E90F2F06B700D13F4F /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				E41722F30F2F06B700D13F4F /* libKernelDebug.a */,
+				E41722F10F2F06B700D13F4F /* libM_APMDebug.a */,
+				E41722EF0F2F06B700D13F4F /* KernelDebug.framework */,
+				F4643EDB113EA98000639653 /* libM_APMDebug.a */,
+				F4643ED9113EA98000639653 /* KernelDebug.framework */,
+				F491069F185F152E003860F1 /* libKernelDebug.a */,
+				F49106A1185F152E003860F1 /* libM_APMDebug.a */,
+				F49106A3185F152E003860F1 /* KernelDebug.framework */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		E41722F50F2F06BF00D13F4F /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				E41722FA0F2F06BF00D13F4F /* KernelIPCDebug.framework */,
+				E41722FC0F2F06BF00D13F4F /* libKernelIPCDebug.a */,
+				F4643EDF113EA98000639653 /* KernelIPCDebug.framework */,
+				F49106A8185F152E003860F1 /* libKernelIPCDebug.a */,
+				F49106AA185F152E003860F1 /* KernelIPCDebug.framework */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		E41722FE0F2F06CD00D13F4F /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				E41723030F2F06CD00D13F4F /* ServerNetDebug.framework */,
+				E41723050F2F06CD00D13F4F /* libServerNetDebug.a */,
+				F4643EE3113EA98000639653 /* ServerNetDebug.framework */,
+				F49106AF185F152E003860F1 /* libServerNetDebug.a */,
+				F49106B1185F152E003860F1 /* ServerNetDebug.framework */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		E4FCCA270F5EE2CD0066B678 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				E4FCCA2B0F5EE2CD0066B678 /* XMLDebug.framework */,
+				F4F8C5A11164E1A4005C7BC6 /* XMLDebug.framework */,
+				F49106B4185F152E003860F1 /* XMLDebug.framework */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		F439E3B70D51DC2700F55316 = {
+			isa = PBXGroup;
+			children = (
+				E41722C30F2F02BA00D13F4F /* Headers */,
+				E41722B60F2F026700D13F4F /* Interfaces */,
+				F439E3D50D51DCB000F55316 /* config */,
+				F47C3D760E66A7B0007448A6 /* Resources */,
+				F439E3F50D51DECE00F55316 /* Dependencies */,
+				F439E3D60D51DCC200F55316 /* Sources */,
+				F439E4260D51DF7300F55316 /* Frameworks */,
+				F47C3D350E669416007448A6 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		F439E3D50D51DCB000F55316 /* config */ = {
+			isa = PBXGroup;
+			children = (
+				F4643EE9113EAA0E00639653 /* components_x64.xcconfig */,
+				F439E3CE0D51DC9400F55316 /* components.xcconfig */,
+				F439E3CF0D51DC9400F55316 /* components_base.xcconfig */,
+				F439E3D00D51DC9400F55316 /* components_beta.xcconfig */,
+				F439E3D10D51DC9400F55316 /* components_coverage.xcconfig */,
+				F439E3D20D51DC9400F55316 /* components_debug.xcconfig */,
+				F439E3D30D51DC9400F55316 /* components_performance.xcconfig */,
+				F439E3D40D51DC9400F55316 /* components_release.xcconfig */,
+			);
+			name = config;
+			sourceTree = "<group>";
+		};
+		F439E3D60D51DCC200F55316 /* Sources */ = {
+			isa = PBXGroup;
+			children = (
+				9521E60514ED5A6D002F6205 /* VHTTPWebsocketHandler.cpp */,
+				F44E9E8D14692D0B009D4E40 /* ComponentStub.cpp */,
+				E41722B80F2F02A900D13F4F /* HTTPNetworking.cpp */,
+				E4339B6A0F40A5B300CF0FEA /* HTTPProtocol.cpp */,
+				E41722B90F2F02A900D13F4F /* HTTPServerCache.cpp */,
+				E41722BA0F2F02A900D13F4F /* HTTPServerPCH.cpp */,
+				E40BEC910F8612EF00D90155 /* HTTPServerLog.cpp */,
+				E4F50D290F98884200588D90 /* HTTPServerSettings.cpp */,
+				E47549280F3A062900E99405 /* HTTPServerTools.cpp */,
+				E49459A2108316DB00A6C1BB /* VAuthenticationManager.cpp */,
+				E4167FA2116E24AB0088C222 /* VAuthenticationReferee.cpp */,
+				F45A284C113EC30400A0C014 /* VDebugInfosHTTPRequestHandler.cpp */,
+				E438B8B40F582C9D004F7419 /* VHTTPConnectionHandler.cpp */,
+				E4C04B291136F3CF00D45567 /* VHTTPConnectionHandlerFactory.cpp */,
+				E428CCB70F66CD8700ED45AE /* VHTTPConnectionListener.cpp */,
+				E4DDA2F2115A856C007E8AEF /* VHTTPError.cpp */,
+				E41722BB0F2F02A900D13F4F /* VHTTPRequest.cpp */,
+				F483AAB611932A2B000027C5 /* VHTTPResource.cpp */,
+				E4DD4B431117507500DB52CC /* VHTTPResponse.cpp */,
+				E41722BC0F2F02A900D13F4F /* VHTTPServer.cpp */,
+				E4FCCC20125260B30068A6FE /* VHTTPServerComponentLibrary.cpp */,
+				E40FA727111B4039001838D2 /* VHTTPServerProject.cpp */,
+				E4A36DDE11C90E330023C7FC /* VHTTPServerSession.cpp */,
+				E418763D0F448B0B008310A5 /* VMimeType.cpp */,
+				E476F7891180B7870082A1C3 /* VNonce.cpp */,
+				E40FA728111B4039001838D2 /* VStaticPagesHTTPRequestHandler.cpp */,
+				E4AA2F68114E38EC004E1507 /* VTCPServer.cpp */,
+				E494E6C9108CA27800129FAF /* VVirtualFolder.cpp */,
+				E4FEA3680F3ADBE000C69326 /* VVirtualHost.cpp */,
+				F413A24E113EAC55007E38A6 /* VVirtualHostManager.cpp */,
+			);
+			name = Sources;
+			sourceTree = "<group>";
+		};
+		F439E3F50D51DECE00F55316 /* Dependencies */ = {
+			isa = PBXGroup;
+			children = (
+				E4FCCA260F5EE2CD0066B678 /* XML.xcodeproj */,
+				E41722E80F2F06B700D13F4F /* Kernel.xcodeproj */,
+				E41722F40F2F06BF00D13F4F /* KernelIPC.xcodeproj */,
+				E41722FD0F2F06CD00D13F4F /* ServerNet.xcodeproj */,
+			);
+			name = Dependencies;
+			sourceTree = "<group>";
+		};
+		F439E4260D51DF7300F55316 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				45A98C5E0F7A56C00073F7C8 /* CoreFoundation.framework */,
+				E417237D0F2F4DFF00D13F4F /* System.framework */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		F47C3D350E669416007448A6 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				F4910696185F152E003860F1 /* HTTPServerDebug.bundle */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		F47C3D760E66A7B0007448A6 /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				F4FA4A7614559230005067C9 /* de.lproj */,
+				F4FA4A7914559230005067C9 /* Default Page */,
+				F4FA4A7E14559230005067C9 /* en.lproj */,
+				F4FA4A8114559230005067C9 /* Error_Template.html */,
+				F4FA4A8214559230005067C9 /* es.lproj */,
+				F4FA4A8514559230005067C9 /* fr.lproj */,
+				F4FA4A8814559230005067C9 /* ja.lproj */,
+				F4FA4A8B14559230005067C9 /* MimeTypes.xml */,
+				F4FA4A8C14559230005067C9 /* pt-BR.lproj */,
+			);
+			name = Resources;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		F4910656185F152E003860F1 /* HTTPServer */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = F4910690185F152E003860F1 /* Build configuration list for PBXNativeTarget "HTTPServer" */;
+			buildPhases = (
+				F491065F185F152E003860F1 /* Resources */,
+				F4910669185F152E003860F1 /* Sources */,
+				F4910688185F152E003860F1 /* Frameworks */,
+				F491068F185F152E003860F1 /* CopyFiles */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				F49106B6185F1562003860F1 /* PBXTargetDependency */,
+				F49106B8185F1567003860F1 /* PBXTargetDependency */,
+				F49106BA185F156A003860F1 /* PBXTargetDependency */,
+				F49106BC185F1570003860F1 /* PBXTargetDependency */,
+			);
+			name = HTTPServer;
+			productName = CodeEditor;
+			productReference = F4910696185F152E003860F1 /* HTTPServerDebug.bundle */;
+			productType = "com.apple.product-type.bundle";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		F439E3B90D51DC2700F55316 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				LastUpgradeCheck = 0420;
+			};
+			buildConfigurationList = F439E3BC0D51DC2700F55316 /* Build configuration list for PBXProject "HTTPServer" */;
+			compatibilityVersion = "Xcode 3.2";
+			developmentRegion = English;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				English,
+				Japanese,
+				French,
+				German,
+			);
+			mainGroup = F439E3B70D51DC2700F55316;
+			productRefGroup = F47C3D350E669416007448A6 /* Products */;
+			projectDirPath = "";
+			projectReferences = (
+				{
+					ProductGroup = E41722E90F2F06B700D13F4F /* Products */;
+					ProjectRef = E41722E80F2F06B700D13F4F /* Kernel.xcodeproj */;
+				},
+				{
+					ProductGroup = E41722F50F2F06BF00D13F4F /* Products */;
+					ProjectRef = E41722F40F2F06BF00D13F4F /* KernelIPC.xcodeproj */;
+				},
+				{
+					ProductGroup = E41722FE0F2F06CD00D13F4F /* Products */;
+					ProjectRef = E41722FD0F2F06CD00D13F4F /* ServerNet.xcodeproj */;
+				},
+				{
+					ProductGroup = E4FCCA270F5EE2CD0066B678 /* Products */;
+					ProjectRef = E4FCCA260F5EE2CD0066B678 /* XML.xcodeproj */;
+				},
+			);
+			projectRoot = ../..;
+			targets = (
+				F4910656185F152E003860F1 /* HTTPServer */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXReferenceProxy section */
+		E41722EF0F2F06B700D13F4F /* KernelDebug.framework */ = {
+			isa = PBXReferenceProxy;
+			fileType = wrapper.framework;
+			path = KernelDebug.framework;
+			remoteRef = E41722EE0F2F06B700D13F4F /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		E41722F10F2F06B700D13F4F /* libM_APMDebug.a */ = {
+			isa = PBXReferenceProxy;
+			fileType = archive.ar;
+			path = libM_APMDebug.a;
+			remoteRef = E41722F00F2F06B700D13F4F /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		E41722F30F2F06B700D13F4F /* libKernelDebug.a */ = {
+			isa = PBXReferenceProxy;
+			fileType = archive.ar;
+			path = libKernelDebug.a;
+			remoteRef = E41722F20F2F06B700D13F4F /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		E41722FA0F2F06BF00D13F4F /* KernelIPCDebug.framework */ = {
+			isa = PBXReferenceProxy;
+			fileType = wrapper.framework;
+			path = KernelIPCDebug.framework;
+			remoteRef = E41722F90F2F06BF00D13F4F /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		E41722FC0F2F06BF00D13F4F /* libKernelIPCDebug.a */ = {
+			isa = PBXReferenceProxy;
+			fileType = archive.ar;
+			path = libKernelIPCDebug.a;
+			remoteRef = E41722FB0F2F06BF00D13F4F /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		E41723030F2F06CD00D13F4F /* ServerNetDebug.framework */ = {
+			isa = PBXReferenceProxy;
+			fileType = wrapper.framework;
+			path = ServerNetDebug.framework;
+			remoteRef = E41723020F2F06CD00D13F4F /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		E41723050F2F06CD00D13F4F /* libServerNetDebug.a */ = {
+			isa = PBXReferenceProxy;
+			fileType = archive.ar;
+			path = libServerNetDebug.a;
+			remoteRef = E41723040F2F06CD00D13F4F /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		E4FCCA2B0F5EE2CD0066B678 /* XMLDebug.framework */ = {
+			isa = PBXReferenceProxy;
+			fileType = wrapper.framework;
+			path = XMLDebug.framework;
+			remoteRef = E4FCCA2A0F5EE2CD0066B678 /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		F4643ED9113EA98000639653 /* KernelDebug.framework */ = {
+			isa = PBXReferenceProxy;
+			fileType = wrapper.framework;
+			path = KernelDebug.framework;
+			remoteRef = F4643ED8113EA98000639653 /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		F4643EDB113EA98000639653 /* libM_APMDebug.a */ = {
+			isa = PBXReferenceProxy;
+			fileType = archive.ar;
+			path = libM_APMDebug.a;
+			remoteRef = F4643EDA113EA98000639653 /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		F4643EDF113EA98000639653 /* KernelIPCDebug.framework */ = {
+			isa = PBXReferenceProxy;
+			fileType = wrapper.framework;
+			path = KernelIPCDebug.framework;
+			remoteRef = F4643EDE113EA98000639653 /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		F4643EE3113EA98000639653 /* ServerNetDebug.framework */ = {
+			isa = PBXReferenceProxy;
+			fileType = wrapper.framework;
+			path = ServerNetDebug.framework;
+			remoteRef = F4643EE2113EA98000639653 /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		F491069F185F152E003860F1 /* libKernelDebug.a */ = {
+			isa = PBXReferenceProxy;
+			fileType = archive.ar;
+			path = libKernelDebug.a;
+			remoteRef = F491069E185F152E003860F1 /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		F49106A1185F152E003860F1 /* libM_APMDebug.a */ = {
+			isa = PBXReferenceProxy;
+			fileType = archive.ar;
+			path = libM_APMDebug.a;
+			remoteRef = F49106A0185F152E003860F1 /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		F49106A3185F152E003860F1 /* KernelDebug.framework */ = {
+			isa = PBXReferenceProxy;
+			fileType = wrapper.framework;
+			path = KernelDebug.framework;
+			remoteRef = F49106A2185F152E003860F1 /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		F49106A8185F152E003860F1 /* libKernelIPCDebug.a */ = {
+			isa = PBXReferenceProxy;
+			fileType = archive.ar;
+			path = libKernelIPCDebug.a;
+			remoteRef = F49106A7185F152E003860F1 /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		F49106AA185F152E003860F1 /* KernelIPCDebug.framework */ = {
+			isa = PBXReferenceProxy;
+			fileType = wrapper.framework;
+			path = KernelIPCDebug.framework;
+			remoteRef = F49106A9185F152E003860F1 /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		F49106AF185F152E003860F1 /* libServerNetDebug.a */ = {
+			isa = PBXReferenceProxy;
+			fileType = archive.ar;
+			path = libServerNetDebug.a;
+			remoteRef = F49106AE185F152E003860F1 /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		F49106B1185F152E003860F1 /* ServerNetDebug.framework */ = {
+			isa = PBXReferenceProxy;
+			fileType = wrapper.framework;
+			path = ServerNetDebug.framework;
+			remoteRef = F49106B0185F152E003860F1 /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		F49106B4185F152E003860F1 /* XMLDebug.framework */ = {
+			isa = PBXReferenceProxy;
+			fileType = wrapper.framework;
+			path = XMLDebug.framework;
+			remoteRef = F49106B3185F152E003860F1 /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		F4F8C5A11164E1A4005C7BC6 /* XMLDebug.framework */ = {
+			isa = PBXReferenceProxy;
+			fileType = wrapper.framework;
+			path = XMLDebug.framework;
+			remoteRef = F4F8C5A01164E1A4005C7BC6 /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+/* End PBXReferenceProxy section */
+
+/* Begin PBXResourcesBuildPhase section */
+		F491065F185F152E003860F1 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				F4910660185F152E003860F1 /* de.lproj in Resources */,
+				F4910661185F152E003860F1 /* Default Page in Resources */,
+				F4910662185F152E003860F1 /* en.lproj in Resources */,
+				F4910663185F152E003860F1 /* Error_Template.html in Resources */,
+				F4910664185F152E003860F1 /* es.lproj in Resources */,
+				F4910665185F152E003860F1 /* fr.lproj in Resources */,
+				F4910666185F152E003860F1 /* ja.lproj in Resources */,
+				F4910667185F152E003860F1 /* MimeTypes.xml in Resources */,
+				F4910668185F152E003860F1 /* pt-BR.lproj in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		F4910669185F152E003860F1 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				F491066A185F152E003860F1 /* HTTPNetworking.cpp in Sources */,
+				F491066B185F152E003860F1 /* HTTPServerCache.cpp in Sources */,
+				F491066C185F152E003860F1 /* HTTPServerPCH.cpp in Sources */,
+				F491066D185F152E003860F1 /* VHTTPRequest.cpp in Sources */,
+				F491066E185F152E003860F1 /* VHTTPServer.cpp in Sources */,
+				F491066F185F152E003860F1 /* HTTPServerTools.cpp in Sources */,
+				F4910670185F152E003860F1 /* VVirtualHost.cpp in Sources */,
+				F4910671185F152E003860F1 /* HTTPProtocol.cpp in Sources */,
+				F4910672185F152E003860F1 /* VMimeType.cpp in Sources */,
+				F4910673185F152E003860F1 /* VHTTPConnectionHandler.cpp in Sources */,
+				F4910674185F152E003860F1 /* VHTTPConnectionListener.cpp in Sources */,
+				F4910675185F152E003860F1 /* HTTPServerLog.cpp in Sources */,
+				F4910676185F152E003860F1 /* HTTPServerSettings.cpp in Sources */,
+				F4910677185F152E003860F1 /* VAuthenticationManager.cpp in Sources */,
+				F4910678185F152E003860F1 /* VVirtualFolder.cpp in Sources */,
+				F4910679185F152E003860F1 /* VHTTPResponse.cpp in Sources */,
+				F491067A185F152E003860F1 /* VHTTPServerProject.cpp in Sources */,
+				F491067B185F152E003860F1 /* VStaticPagesHTTPRequestHandler.cpp in Sources */,
+				F491067C185F152E003860F1 /* VHTTPConnectionHandlerFactory.cpp in Sources */,
+				F491067D185F152E003860F1 /* VVirtualHostManager.cpp in Sources */,
+				F491067E185F152E003860F1 /* VDebugInfosHTTPRequestHandler.cpp in Sources */,
+				F491067F185F152E003860F1 /* VTCPServer.cpp in Sources */,
+				F4910680185F152E003860F1 /* VHTTPError.cpp in Sources */,
+				F4910681185F152E003860F1 /* VAuthenticationReferee.cpp in Sources */,
+				F4910682185F152E003860F1 /* VNonce.cpp in Sources */,
+				F4910683185F152E003860F1 /* VHTTPResource.cpp in Sources */,
+				F4910684185F152E003860F1 /* VHTTPServerSession.cpp in Sources */,
+				F4910685185F152E003860F1 /* VHTTPServerComponentLibrary.cpp in Sources */,
+				F4910686185F152E003860F1 /* ComponentStub.cpp in Sources */,
+				F4910687185F152E003860F1 /* VHTTPWebsocketHandler.cpp in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		F49106B6185F1562003860F1 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			name = Kernel;
+			targetProxy = F49106B5185F1562003860F1 /* PBXContainerItemProxy */;
+		};
+		F49106B8185F1567003860F1 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			name = ServerNet;
+			targetProxy = F49106B7185F1567003860F1 /* PBXContainerItemProxy */;
+		};
+		F49106BA185F156A003860F1 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			name = KernelIPC;
+			targetProxy = F49106B9185F156A003860F1 /* PBXContainerItemProxy */;
+		};
+		F49106BC185F1570003860F1 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			name = XML;
+			targetProxy = F49106BB185F1570003860F1 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		F41C68620E66FD9E00B4D3D0 /* Coverage */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = F439E3D10D51DC9400F55316 /* components_coverage.xcconfig */;
+			buildSettings = {
+				COPY_PHASE_STRIP = NO;
+				GCC_GENERATE_TEST_COVERAGE_FILES = YES;
+				GCC_MODEL_TUNING = G5;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PFE_FILE_C_DIALECTS = "c objective-c c++ objective-c++";
+				GCC_PREFIX_HEADER = "../../Sources/$(PROJECT_NAME)PCH.cpp";
+				GCC_PREPROCESSOR_DEFINITIONS = "VERSIONDEBUG=1";
+				GCC_WARN_ABOUT_RETURN_TYPE = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				SEPARATE_STRIP = YES;
+				SKIP_INSTALL = YES;
+			};
+			name = Coverage;
+		};
+		F41C68640E66FDAD00B4D3D0 /* Beta */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = F439E3D00D51DC9400F55316 /* components_beta.xcconfig */;
+			buildSettings = {
+				COPY_PHASE_STRIP = NO;
+				GCC_MODEL_TUNING = G5;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PFE_FILE_C_DIALECTS = "c objective-c c++ objective-c++";
+				GCC_PREFIX_HEADER = "../../Sources/$(PROJECT_NAME)PCH.cpp";
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"VERSIONDEBUG=0",
+					"WITH_DEBUGMSG=1",
+					"WITH_ASSERT=1",
+				);
+				GCC_WARN_ABOUT_RETURN_TYPE = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				SEPARATE_STRIP = YES;
+				SKIP_INSTALL = YES;
+			};
+			name = Beta;
+		};
+		F41C68660E66FDB400B4D3D0 /* Performance */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = F439E3D30D51DC9400F55316 /* components_performance.xcconfig */;
+			buildSettings = {
+				COPY_PHASE_STRIP = NO;
+				GCC_MODEL_TUNING = G5;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREFIX_HEADER = "../../Sources/$(PROJECT_NAME)PCH.cpp";
+				GCC_PREPROCESSOR_DEFINITIONS = "VERSIONDEBUG=0";
+				GCC_WARN_ABOUT_RETURN_TYPE = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				SEPARATE_STRIP = YES;
+				SKIP_INSTALL = YES;
+			};
+			name = Performance;
+		};
+		F439E3BA0D51DC2700F55316 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = F439E3D20D51DC9400F55316 /* components_debug.xcconfig */;
+			buildSettings = {
+				COPY_PHASE_STRIP = NO;
+				GCC_MODEL_TUNING = G5;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PFE_FILE_C_DIALECTS = "objective-c c c++ objective-c++";
+				GCC_PREFIX_HEADER = "../../Sources/$(PROJECT_NAME)PCH.cpp";
+				GCC_PREPROCESSOR_DEFINITIONS = "VERSIONDEBUG=1";
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				SEPARATE_STRIP = YES;
+				SKIP_INSTALL = YES;
+			};
+			name = Debug;
+		};
+		F439E3BB0D51DC2700F55316 /* Release */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = F439E3D40D51DC9400F55316 /* components_release.xcconfig */;
+			buildSettings = {
+				COPY_PHASE_STRIP = NO;
+				GCC_GENERATE_DEBUGGING_SYMBOLS = NO;
+				GCC_MODEL_TUNING = G5;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREFIX_HEADER = "../../Sources/$(PROJECT_NAME)PCH.cpp";
+				GCC_PREPROCESSOR_DEFINITIONS = "VERSIONDEBUG=0";
+				GCC_WARN_ABOUT_RETURN_TYPE = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				SEPARATE_STRIP = YES;
+				SKIP_INSTALL = YES;
+			};
+			name = Release;
+		};
+		F4910691185F152E003860F1 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				GCC_PRECOMPILE_PREFIX_HEADER = YES;
+				GCC_PREFIX_HEADER = "";
+			};
+			name = Debug;
+		};
+		F4910692185F152E003860F1 /* Coverage */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				GCC_PRECOMPILE_PREFIX_HEADER = YES;
+				GCC_PREFIX_HEADER = "";
+			};
+			name = Coverage;
+		};
+		F4910693185F152E003860F1 /* Beta */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				GCC_PRECOMPILE_PREFIX_HEADER = YES;
+				GCC_PREFIX_HEADER = "";
+			};
+			name = Beta;
+		};
+		F4910694185F152E003860F1 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				GCC_GENERATE_DEBUGGING_SYMBOLS = NO;
+				GCC_PRECOMPILE_PREFIX_HEADER = YES;
+				GCC_PREFIX_HEADER = "";
+				GCC_PREPROCESSOR_DEFINITIONS = "VERSIONDEBUG=0";
+				GCC_WARN_ABOUT_RETURN_TYPE = YES;
+			};
+			name = Release;
+		};
+		F4910695185F152E003860F1 /* Performance */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				DEPLOYMENT_POSTPROCESSING = NO;
+				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
+				GCC_PRECOMPILE_PREFIX_HEADER = YES;
+				GCC_PREFIX_HEADER = "";
+				GCC_PREPROCESSOR_DEFINITIONS = "VERSIONDEBUG=0";
+				GCC_WARN_ABOUT_RETURN_TYPE = YES;
+				STRIP_STYLE = debugging;
+			};
+			name = Performance;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		F439E3BC0D51DC2700F55316 /* Build configuration list for PBXProject "HTTPServer" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				F439E3BA0D51DC2700F55316 /* Debug */,
+				F41C68620E66FD9E00B4D3D0 /* Coverage */,
+				F41C68640E66FDAD00B4D3D0 /* Beta */,
+				F439E3BB0D51DC2700F55316 /* Release */,
+				F41C68660E66FDB400B4D3D0 /* Performance */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		F4910690185F152E003860F1 /* Build configuration list for PBXNativeTarget "HTTPServer" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				F4910691185F152E003860F1 /* Debug */,
+				F4910692185F152E003860F1 /* Coverage */,
+				F4910693185F152E003860F1 /* Beta */,
+				F4910694185F152E003860F1 /* Release */,
+				F4910695185F152E003860F1 /* Performance */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = F439E3B90D51DC2700F55316 /* Project object */;
+}
