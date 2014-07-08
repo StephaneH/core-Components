@@ -1,5 +1,0 @@
-//
-// Prefix header for all source files of the 'DB4D' target in the 'DB4D' project.
-//
-
-#include "4DDBHeaders.h"

@@ -1,4 +1,0 @@
-#include "components_base.xcconfig"
-#include "../../XToolbox/Main/weak_icu_debug.xcconfig"
-PRODUCT_NAME = $(PROJECT_NAME)Debug
-OTHER_LDFLAGS = -weak_framework icuDebug
