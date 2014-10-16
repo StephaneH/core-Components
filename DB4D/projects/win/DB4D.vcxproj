@@ -1,0 +1,433 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="12.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Beta|Win32">
+      <Configuration>Beta</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Beta|x64">
+      <Configuration>Beta</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectName>Component - DB4D</ProjectName>
+    <ProjectGuid>{C5B99565-524C-4D34-B6EA-4FEE9BD64266}</ProjectGuid>
+    <RootNamespace>Component - DB4D</RootNamespace>
+    <SccProjectName>"//depot/Components/WAK9/DB4D"</SccProjectName>
+    <SccLocalPath>..\..</SccLocalPath>
+    <SccProvider>MSSCCI:Perforce SCM</SccProvider>
+    <Keyword>Win32Proj</Keyword>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Beta|Win32'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <PlatformToolset>v120</PlatformToolset>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <PlatformToolset>v120</PlatformToolset>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <PlatformToolset>v120</PlatformToolset>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Beta|x64'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <PlatformToolset>v120</PlatformToolset>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <PlatformToolset>v120</PlatformToolset>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <PlatformToolset>v120</PlatformToolset>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Beta|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="$(VCTargetsPath)Microsoft.CPP.UpgradeFromVC70.props" />
+    <Import Project="..\..\..\Component_Win32_Beta.props" />
+    <Import Project="$(SolutionDir)\Xerces_Settings.props" />
+    <Import Project="$(SolutionDir)\WebKit_Settings.props" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="$(VCTargetsPath)Microsoft.CPP.UpgradeFromVC70.props" />
+    <Import Project="..\..\..\Component_Win32_Release.props" />
+    <Import Project="$(SolutionDir)\Xerces_Settings.props" />
+    <Import Project="$(SolutionDir)\WebKit_Settings.props" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="$(VCTargetsPath)Microsoft.CPP.UpgradeFromVC70.props" />
+    <Import Project="..\..\..\Component_Win32_Debug.props" />
+    <Import Project="$(SolutionDir)\Xerces_Settings.props" />
+    <Import Project="$(SolutionDir)\WebKit_Settings.props" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Beta|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="$(VCTargetsPath)Microsoft.CPP.UpgradeFromVC70.props" />
+    <Import Project="..\..\..\Component_Win64_Beta.props" />
+    <Import Project="$(SolutionDir)\Xerces_Settings.props" />
+    <Import Project="$(SolutionDir)\WebKit_Settings.props" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="$(VCTargetsPath)Microsoft.CPP.UpgradeFromVC70.props" />
+    <Import Project="..\..\..\Component_Win64_Release.props" />
+    <Import Project="$(SolutionDir)\Xerces_Settings.props" />
+    <Import Project="$(SolutionDir)\WebKit_Settings.props" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="$(VCTargetsPath)Microsoft.CPP.UpgradeFromVC70.props" />
+    <Import Project="..\..\..\Component_Win64_Debug.props" />
+    <Import Project="$(SolutionDir)\Xerces_Settings.props" />
+    <Import Project="$(SolutionDir)\WebKit_Settings.props" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup>
+    <_ProjectFileVersion>11.0.50727.1</_ProjectFileVersion>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <TargetName>DB4DDebug</TargetName>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <TargetName>DB4DDebug</TargetName>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Beta|Win32'">
+    <TargetName>DB4DBeta</TargetName>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Beta|x64'">
+    <TargetName>DB4DBeta</TargetName>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <TargetName>DB4D</TargetName>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <TargetName>DB4D</TargetName>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <PreBuildEvent>
+      <Command />
+    </PreBuildEvent>
+    <ClCompile>
+      <PreprocessorDefinitions>DB4D_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PrecompiledHeaderFile>4DDBheaders.h</PrecompiledHeaderFile>
+    </ClCompile>
+    <Link>
+      <AdditionalDependencies>ws2_32.lib;WinMM.Lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <RandomizedBaseAddress>false</RandomizedBaseAddress>
+      <DataExecutionPrevention />
+    </Link>
+    <PostBuildEvent />
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <PreBuildEvent>
+      <Command />
+    </PreBuildEvent>
+    <Midl>
+      <TargetEnvironment>X64</TargetEnvironment>
+    </Midl>
+    <ClCompile>
+      <PreprocessorDefinitions>DB4D_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PrecompiledHeaderFile>4DDBheaders.h</PrecompiledHeaderFile>
+    </ClCompile>
+    <Link>
+      <AdditionalDependencies>ws2_32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <RandomizedBaseAddress>false</RandomizedBaseAddress>
+      <DataExecutionPrevention />
+    </Link>
+    <PostBuildEvent>
+      <Message>Copy resources directory</Message>
+    </PostBuildEvent>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <PreBuildEvent>
+      <Command />
+    </PreBuildEvent>
+    <ClCompile>
+      <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
+      <OmitFramePointers>true</OmitFramePointers>
+      <PreprocessorDefinitions>DB4D_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <StringPooling>true</StringPooling>
+      <PrecompiledHeaderFile>4DDBheaders.h</PrecompiledHeaderFile>
+    </ClCompile>
+    <Link>
+      <AdditionalDependencies>ws2_32.lib;WinMM.Lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <OptimizeReferences>true</OptimizeReferences>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <RandomizedBaseAddress>false</RandomizedBaseAddress>
+      <DataExecutionPrevention />
+    </Link>
+    <PostBuildEvent>
+      <Message>Copy resources directory</Message>
+    </PostBuildEvent>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <PreBuildEvent>
+      <Command />
+    </PreBuildEvent>
+    <Midl>
+      <TargetEnvironment>X64</TargetEnvironment>
+    </Midl>
+    <ClCompile>
+      <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
+      <OmitFramePointers>true</OmitFramePointers>
+      <PreprocessorDefinitions>DB4D_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <StringPooling>true</StringPooling>
+      <PrecompiledHeaderFile>4DDBheaders.h</PrecompiledHeaderFile>
+    </ClCompile>
+    <Link>
+      <AdditionalDependencies>ws2_32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <OptimizeReferences>true</OptimizeReferences>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <RandomizedBaseAddress>false</RandomizedBaseAddress>
+      <DataExecutionPrevention />
+    </Link>
+    <PostBuildEvent>
+      <Message>Copy resources directory</Message>
+    </PostBuildEvent>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Beta|Win32'">
+    <PreBuildEvent>
+      <Command />
+    </PreBuildEvent>
+    <ClCompile>
+      <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
+      <OmitFramePointers>true</OmitFramePointers>
+      <PreprocessorDefinitions>DB4D_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <StringPooling>true</StringPooling>
+      <PrecompiledHeaderFile>4DDBheaders.h</PrecompiledHeaderFile>
+    </ClCompile>
+    <Link>
+      <AdditionalDependencies>ws2_32.lib;WinMM.Lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <OptimizeReferences>true</OptimizeReferences>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <RandomizedBaseAddress>false</RandomizedBaseAddress>
+      <DataExecutionPrevention />
+    </Link>
+    <PostBuildEvent>
+      <Message>Copy resources directory</Message>
+    </PostBuildEvent>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Beta|x64'">
+    <PreBuildEvent>
+      <Command />
+    </PreBuildEvent>
+    <Midl>
+      <TargetEnvironment>X64</TargetEnvironment>
+    </Midl>
+    <ClCompile>
+      <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
+      <OmitFramePointers>true</OmitFramePointers>
+      <PreprocessorDefinitions>DB4D_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <StringPooling>true</StringPooling>
+      <PrecompiledHeaderFile>4DDBheaders.h</PrecompiledHeaderFile>
+    </ClCompile>
+    <Link>
+      <AdditionalDependencies>ws2_32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <OptimizeReferences>true</OptimizeReferences>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <RandomizedBaseAddress>false</RandomizedBaseAddress>
+      <DataExecutionPrevention />
+    </Link>
+    <PostBuildEvent>
+      <Message>Copy resources directory</Message>
+    </PostBuildEvent>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\Sources\4DDBHeaders.h" />
+    <ClInclude Include="..\..\Sources\Backup.h" />
+    <ClInclude Include="..\..\Sources\Base4D.h" />
+    <ClInclude Include="..\..\Sources\BitTable.h" />
+    <ClInclude Include="..\..\Sources\Blob4D.h" />
+    <ClInclude Include="..\..\Sources\Cache.h" />
+    <ClInclude Include="..\..\Sources\CheckAndRepair.h" />
+    <ClInclude Include="..\..\Sources\CodeReg.h" />
+    <ClInclude Include="..\..\Sources\Cron.h" />
+    <ClInclude Include="..\..\Sources\DataSeg.h" />
+    <ClInclude Include="..\..\Sources\datasource.h" />
+    <ClInclude Include="..\..\Sources\DB4DComponent.h" />
+    <ClInclude Include="..\..\Sources\DB4DInfoCollectors.h" />
+    <ClInclude Include="..\..\Sources\DB4DMgr.h" />
+    <ClInclude Include="..\..\Sources\Enterprise\Metrology.h" />
+    <ClInclude Include="..\..\Sources\EntityModel.h" />
+    <ClInclude Include="..\..\Sources\Err4D.h" />
+    <ClInclude Include="..\..\Sources\Export.h" />
+    <ClInclude Include="..\..\Sources\Fiche.h" />
+    <ClInclude Include="..\..\Sources\Fichier.h" />
+    <ClInclude Include="..\..\Sources\Flush.h" />
+    <ClInclude Include="..\..\Sources\ImpExp.h" />
+    <ClInclude Include="..\..\Sources\IndClust.h" />
+    <ClInclude Include="..\..\Sources\index4D.h" />
+    <ClInclude Include="..\..\Sources\IndexTemplate.h" />
+    <ClInclude Include="..\..\Sources\IndexTemplatePart2.h" />
+    <ClInclude Include="..\..\Sources\InfoTask.h" />
+    <ClInclude Include="..\..\Sources\javascript_db4d.h" />
+    <ClInclude Include="..\..\Sources\journal_parser.h" />
+    <ClInclude Include="..\..\Sources\journaling.h" />
+    <ClInclude Include="..\..\Sources\LocalModel.h" />
+    <ClInclude Include="..\..\Sources\ObjAttribute.h" />
+    <ClInclude Include="..\..\Sources\Rech4D.h" />
+    <ClInclude Include="..\..\Sources\RechComplex.h" />
+    <ClInclude Include="..\..\Sources\Relation.h" />
+    <ClInclude Include="..\..\Sources\Rest.h" />
+    <ClInclude Include="..\..\Sources\restypes.h" />
+    <ClInclude Include="..\..\Sources\Scan.h" />
+    <ClInclude Include="..\..\Sources\ScanConst.h" />
+    <ClInclude Include="..\..\Sources\Sels.h" />
+    <ClInclude Include="..\..\Sources\Server.h" />
+    <ClInclude Include="..\..\Sources\Sort4D.h" />
+    <ClInclude Include="..\..\Sources\TabAddr.h" />
+    <ClInclude Include="..\..\Sources\Transac.h" />
+    <ClInclude Include="..\..\Sources\util4D.h" />
+    <ClInclude Include="..\..\Sources\VCacheLog.h" />
+    <ClInclude Include="..\..\Sources\VTools.h" />
+    <ClInclude Include="..\..\Sources\Web.h" />
+    <ClInclude Include="..\..\Sources\Enterprise\Mirror.h" />
+    <ClInclude Include="..\..\Headers\DB4D.h" />
+    <ClInclude Include="..\..\Headers\DB4DBagKeys.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\Sources\4DDBHeadersPCH.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Beta|Win32'">Create</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Beta|x64'">Create</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
+      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">4DDBheaders.h</PrecompiledHeaderFile>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
+      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">4DDBheaders.h</PrecompiledHeaderFile>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="..\..\Sources\Backup.cpp" />
+    <ClCompile Include="..\..\Sources\Base4D.cpp" />
+    <ClCompile Include="..\..\Sources\BitTable.cpp" />
+    <ClCompile Include="..\..\Sources\Blob4D.cpp" />
+    <ClCompile Include="..\..\Sources\Cache.cpp" />
+    <ClCompile Include="..\..\Sources\CheckAndRepair.cpp" />
+    <ClCompile Include="..\..\Sources\CodeReg.cpp" />
+    <ClCompile Include="..\..\Sources\ComponentStub.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Beta|Win32'">
+      </PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Beta|x64'">
+      </PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+      </PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+      </PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+      </PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+      </PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="..\..\Sources\Cron.cpp" />
+    <ClCompile Include="..\..\Sources\DataSeg.cpp" />
+    <ClCompile Include="..\..\Sources\DataSource.cpp" />
+    <ClCompile Include="..\..\Sources\DB4DComponent.cpp" />
+    <ClCompile Include="..\..\Sources\DB4DInfoCollectors.cpp" />
+    <ClCompile Include="..\..\Sources\DB4DMgr.cpp" />
+    <ClCompile Include="..\..\Sources\Enterprise\Metrology.cpp" />
+    <ClCompile Include="..\..\Sources\EntityModel.cpp" />
+    <ClCompile Include="..\..\Sources\Export.cpp" />
+    <ClCompile Include="..\..\Sources\Fiche.cpp" />
+    <ClCompile Include="..\..\Sources\Fichier.cpp" />
+    <ClCompile Include="..\..\Sources\Flush.cpp" />
+    <ClCompile Include="..\..\Sources\ImpExp.cpp" />
+    <ClCompile Include="..\..\Sources\IndClust.cpp" />
+    <ClCompile Include="..\..\Sources\Index4D.cpp" />
+    <ClCompile Include="..\..\Sources\IndexTemplate.cpp" />
+    <ClCompile Include="..\..\Sources\InfoTask.cpp" />
+    <ClCompile Include="..\..\Sources\javascript_db4d.cpp" />
+    <ClCompile Include="..\..\Sources\journal_parser.cpp" />
+    <ClCompile Include="..\..\Sources\Journaling.cpp" />
+    <ClCompile Include="..\..\Sources\LocalModel.cpp" />
+    <ClCompile Include="..\..\Sources\ObjAttribute.cpp" />
+    <ClCompile Include="..\..\Sources\Rech4D.cpp" />
+    <ClCompile Include="..\..\Sources\RechComplex.cpp" />
+    <ClCompile Include="..\..\Sources\Relation.cpp" />
+    <ClCompile Include="..\..\Sources\Rest.cpp" />
+    <ClCompile Include="..\..\Sources\Scan.cpp" />
+    <ClCompile Include="..\..\Sources\Sels.cpp" />
+    <ClCompile Include="..\..\Sources\Server.cpp" />
+    <ClCompile Include="..\..\Sources\Sort4D.cpp" />
+    <ClCompile Include="..\..\Sources\TabAddr.cpp" />
+    <ClCompile Include="..\..\Sources\Transac.cpp" />
+    <ClCompile Include="..\..\Sources\util4d.cpp" />
+    <ClCompile Include="..\..\Sources\VCacheLog.cpp" />
+    <ClCompile Include="..\..\Sources\VTools.cpp" />
+    <ClCompile Include="..\..\Sources\Web.cpp" />
+    <ClCompile Include="..\..\Sources\Enterprise\Mirror.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\..\Resources\en.lproj\DB4DEN.xlf" />
+    <None Include="..\..\Resources\directoryRest.js" />
+    <None Include="..\..\Resources\ImpExpRest.js" />
+    <None Include="..\..\Resources\methodCall.js" />
+    <None Include="..\..\Resources\ModelLoadTime.js" />
+    <None Include="..\..\Resources\ModelPrepare.js" />
+    <None Include="..\..\Resources\RemoteMethodCall.js" />
+    <None Include="..\..\Resources\reporting.js" />
+  </ItemGroup>
+  <ItemGroup>
+    <Xml Include="..\..\Sources\Errors.xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\..\..\XToolbox\WAK9\Graphics\Projects\Visual\Graphics.vcxproj">
+      <Project>{b0378f32-5d26-4221-a3b5-d6f1adca06d4}</Project>
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+    </ProjectReference>
+    <ProjectReference Include="..\..\..\..\..\XToolbox\WAK9\JavaScript\Projects\Visual\JavaScript.vcxproj">
+      <Project>{6e9f29c6-2757-45fb-b9a4-aa30f5e852f4}</Project>
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+    </ProjectReference>
+    <ProjectReference Include="..\..\..\..\..\XToolbox\WAK9\KernelIPC\Projects\Visual\KernelIPC.vcxproj">
+      <Project>{3b6f655c-f3eb-4330-9fea-657af963969e}</Project>
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+    </ProjectReference>
+    <ProjectReference Include="..\..\..\..\..\XToolbox\WAK9\Kernel\Projects\Visual\Kernel.vcxproj">
+      <Project>{7b41a191-cd46-43cf-b33e-90211fc865ad}</Project>
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+    </ProjectReference>
+    <ProjectReference Include="..\..\..\..\..\XToolbox\WAK9\ServerNet\Projects\Visual\ServerNet.vcxproj">
+      <Project>{745b73eb-6200-44c0-8552-ac602a9b0eed}</Project>
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+    </ProjectReference>
+    <ProjectReference Include="..\..\..\..\..\XToolbox\WAK9\TextCore\Projects\Visual\TextCore.vcxproj">
+      <Project>{1ca9c1cd-9a44-46ee-9d73-a6d504370a46}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\..\..\..\..\XToolbox\WAK9\XML\Projects\Visual\XML.vcxproj">
+      <Project>{86c7e508-5e7c-4ad5-bdd4-893d9c95876d}</Project>
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+    </ProjectReference>
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

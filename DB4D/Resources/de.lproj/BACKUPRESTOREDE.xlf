@@ -1,0 +1,108 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Translation file for 4D products.
+  Copyright (C) 2013-2014 4D SAS.
+  This file is distributed under the same license as the 4D product package.
+-->
+
+<!DOCTYPE xliff PUBLIC "-//XLIFF//DTD XLIFF//EN"
+"http://www.oasis-open.org/committees/xliff/documents/xliff.dtd">
+
+<xliff version="1.0">
+  <file datatype="x-STR#" original="undefined" source-language="en-US" target-language="de" product-version="v14">
+    <header>
+      <note>The character &quot;%&quot; (out of a numerical context) is a meta-character that will be replaced (often by a numeric value) before the string is displayed</note>
+      <note>Text between less than (&lt;) and greater than (&gt;) symbols is a variable&apos;s name and must not be localised</note>
+      <note>\r, \t and \n are meta-characters.</note>
+    </header>
+    <body>
+      <group id="1000" resname="backup And Restore Errors Text">
+        <trans-unit resname="ERR_bkrs_100" id="100">
+          <source>Incompatible data store format (waExtra file found)</source>
+          <target>Inkompatibles Datenformat (waExtra Datei gefunden)</target>
+        </trans-unit>
+        <trans-unit resname="ERR_bkrs_200" id="200">
+          <source>Failed to retrieve journaling info</source>
+          <target>Fehler beim Lesen der Journaling-Informationen</target>
+        </trans-unit>
+		<trans-unit resname="ERR_bkrs_201" id="201">
+          <source>Journal file not found: {path}</source>
+          <target>Journal Datei nicht gefunden: {path}</target>
+        </trans-unit>
+			<trans-unit resname="ERR_bkrs_202" id="202">
+          <source>Failed to perform backup</source>
+          <target>Fehler beim Ausführen des Backups</target>
+        </trans-unit>
+		<trans-unit resname="ERR_bkrs_203" id="203">
+          <source>Failed to create backup folder: {path}</source>
+          <target>Fehler beim Erstellen des Backup-Ordners: {path}</target>
+        </trans-unit>
+		<trans-unit resname="ERR_bkrs_204" id="204">
+          <source>Failed to backup journal</source>
+          <target>Fehler beim Sichern des Journals</target>
+        </trans-unit>
+		<trans-unit resname="ERR_bkrs_205" id="205">
+          <source>Invalid journal path: {path}</source>
+          <target>Ungültiger Pfad zum Journal: {path}</target>
+        </trans-unit>
+		<trans-unit resname="ERR_bkrs_206" id="206">
+          <source>Invalid backup folder: {path}</source>
+          <target>Ungültiger Backup-Ordner: {path}</target>
+        </trans-unit>
+		<trans-unit resname="ERR_bkrs_207" id="207">
+          <source>Failed to backup data folder</source>
+          <target>Fehler beim Sichern des Datenordners</target>
+        </trans-unit>
+		<trans-unit resname="ERR_bkrs_208" id="208">
+          <source>Next active journal path is invalid</source>
+          <target>Neuer Pfad zum aktiven Journal ist ungültig</target>
+        </trans-unit>
+		<trans-unit resname="ERR_bkrs_209" id="209">
+          <source>Invalid backup settings</source>
+          <target>Ungültige Backup-Einstellungen</target>
+        </trans-unit>
+		<trans-unit resname="ERR_bkrs_210" id="210">
+          <source>Failed to store backup manifest</source>
+          <target>Fehler beim Sichern des Backup-Manifest</target>
+        </trans-unit>
+        
+		<trans-unit resname="ERR_bkrs_211" id="211">
+          <source>backup configuration property '{p1}' not found</source>
+          <target>Backup Konfigurations-Eigenschaft '{p1}' nicht gefunden</target>
+        </trans-unit>
+		<trans-unit resname="ERR_bkrs_212" id="212">
+          <source>Invalid type for backup configuration property '{p1}', Folder expected</source>
+          <target>Ungültiger Typ für Backup Konfigurations-Eigenschaft '{p1}', Ordner erwartet</target>
+        </trans-unit>
+		<trans-unit resname="ERR_bkrs_213" id="213">
+          <source>Invalid type for backup configuration property '{p1}', String expected</source>
+          <target>Ungültiger Typ für Backup Konfigurations-Eigenschaft '{p1}', Text erwartet</target>
+        </trans-unit>
+		<trans-unit resname="ERR_bkrs_214" id="214">
+          <source>Invalid type for backup configuration property '{p1}', bool expected</source>
+          <target>Ungültiger Typ für Backup Konfigurations-Eigenschaft '{p1}', Boolean erwartet</target>
+        </trans-unit>
+		<trans-unit resname="ERR_bkrs_215" id="215">
+          <source>Invalid type for backup configuration property '{p1}', number or string expected</source>
+          <target>Ungültiger Typ für Backup Konfigurations-Eigenschaft '{p1}', Zahl oder Text erwartet</target>
+        </trans-unit>
+		<trans-unit resname="ERR_bkrs_216" id="216">
+          <source>Invalid value for backup configuration property '{p1}'</source>
+          <target>Ungültiger Wert für Backup Konfigurations-Eigenschaft '{p1}'</target>
+        </trans-unit>
+		<trans-unit resname="ERR_bkrs_217" id="217">
+          <source>Backup folder {path} is not empty</source>
+          <target>Backup Ordner {path} ist nicht leer</target>
+        </trans-unit>
+		<trans-unit resname="ERR_bkrs_218" id="218">
+          <source>Failed to open backup registry {path}</source>
+          <target>Failed to open backup registry {path}</target>
+        </trans-unit>        
+		<trans-unit resname="ERR_bkrs_218" id="218">
+          <source>Failed to open backup registry {path}</source>
+          <target>Backup Verzeichnis {path} konnte nicht geöffnet werden</target>
+        </trans-unit>        
+      </group>
+    </body>
+  </file>
+</xliff>

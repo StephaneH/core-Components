@@ -1,0 +1,3 @@
+#include "components_base.xcconfig"
+
+PRODUCT_NAME = $(PROJECT_NAME)Perf 
