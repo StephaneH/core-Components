@@ -1,0 +1,1224 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+  Translation file for 4D products.
+  Copyright (C) 2008-2012 4D SAS.
+  This file is distributed under the same license as the 4D product package.
+-->
+
+<!DOCTYPE xliff PUBLIC "-//XLIFF//DTD XLIFF//EN" "http://www.oasis-open.org/committees/xliff/documents/xliff.dtd">
+
+<xliff version="1.0">
+  <file datatype="x-STR#" original="undefined" source-language="en-US" target-language="pt-BR" product-version="v13">
+    <header>
+      <note>The character &quot;%&quot; (out of a numerical context) is a meta-character that will be replaced (often by a numeric value) before the string is displayed</note>
+      <note>Text between less than (&lt;) and greater than (&gt;) symbols is a variable&apos;s name and must not be localised</note>
+      <note>\r, \t and \n are meta-characters.</note>
+    </header>
+    <body>
+      <group resname="CSSTips">
+	<trans-unit id ="1" resname="CSSTips%%azimuth">
+	  <source>{\rtf1\ansi{\fonttbl\f0\fswiss Helvetica;}\f0\pard This is some {\b bold} text.\par}</source>
+	  <target>{\rtf1\ansi{\fonttbl\f0\fswiss Helvetica;}\f0\pard This is some {\b bold} text.\par}</target>
+	</trans-unit>
+
+	<trans-unit id ="2" resname="CSSTips%%background">
+	  <source>{\rtf1\ansi{\fonttbl\f0\fswiss Helvetica;}\f0\pard This is some {\b bold} text.\par}</source>
+	  <target>{\rtf1\ansi{\fonttbl\f0\fswiss Helvetica;}\f0\pard This is some {\b bold} text.\par}</target>
+	</trans-unit>
+
+	<trans-unit id ="3" resname="CSSTips%%background-attachment">
+	  <source>{\rtf1\ansi{\fonttbl\f0\fswiss Helvetica;}\f0\pard This is some {\b bold} text.\par}</source>
+	  <target>{\rtf1\ansi{\fonttbl\f0\fswiss Helvetica;}\f0\pard This is some {\b bold} text.\par}</target>
+	</trans-unit>
+
+	<trans-unit id ="4" resname="CSSTips%%background-color">
+	  <source>{\rtf1\ansi{\fonttbl\f0\fswiss Helvetica;}\f0\pard This is some {\b bold} text.\par}</source>
+	  <target>{\rtf1\ansi{\fonttbl\f0\fswiss Helvetica;}\f0\pard This is some {\b bold} text.\par}</target>
+	</trans-unit>
+
+	<trans-unit id ="5" resname="CSSTips%%background-position">
+	  <source>{\rtf1\ansi{\fonttbl\f0\fswiss Helvetica;}\f0\pard This is some {\b bold} text.\par}</source>
+	  <target>{\rtf1\ansi{\fonttbl\f0\fswiss Helvetica;}\f0\pard This is some {\b bold} text.\par}</target>
+	</trans-unit>
+
+	<trans-unit id ="6" resname="CSSTips%%background-repeat">
+	  <source>{\rtf1\ansi{\fonttbl\f0\fswiss Helvetica;}\f0\pard This is some {\b bold} text.\par}</source>
+	  <target>{\rtf1\ansi{\fonttbl\f0\fswiss Helvetica;}\f0\pard This is some {\b bold} text.\par}</target>
+	</trans-unit>
+
+	<trans-unit id ="7" resname="CSSTips%%border">
+	  <source>{\rtf1\ansi{\fonttbl\f0\fswiss Helvetica;}\f0\pard This is some {\b bold} text.\par}</source>
+	  <target>{\rtf1\ansi{\fonttbl\f0\fswiss Helvetica;}\f0\pard This is some {\b bold} text.\par}</target>
+	</trans-unit>
+
+	<trans-unit id ="8" resname="CSSTips%%border-bottom">
+	  <source>{\rtf1\ansi{\fonttbl\f0\fswiss Helvetica;}\f0\pard This is some {\b bold} text.\par}</source>
+	  <target>{\rtf1\ansi{\fonttbl\f0\fswiss Helvetica;}\f0\pard This is some {\b bold} text.\par}</target>
+	</trans-unit>
+
+	<trans-unit id ="9" resname="CSSTips%%border-bottom-color">
+	  <source>{\rtf1\ansi{\fonttbl\f0\fswiss Helvetica;}\f0\pard This is some {\b bold} text.\par}</source>
+	  <target>{\rtf1\ansi{\fonttbl\f0\fswiss Helvetica;}\f0\pard This is some {\b bold} text.\par}</target>
+	</trans-unit>
+
+	<trans-unit id ="10" resname="CSSTips%%border-bottom-style">
+	  <source>{\rtf1\ansi{\fonttbl\f0\fswiss Helvetica;}\f0\pard This is some {\b bold} text.\par}</source>
+	  <target>{\rtf1\ansi{\fonttbl\f0\fswiss Helvetica;}\f0\pard This is some {\b bold} text.\par}</target>
+	</trans-unit>
+
+	<trans-unit id ="11" resname="CSSTips%%border-bottom-width">
+	  <source>{\rtf1\ansi{\fonttbl\f0\fswiss Helvetica;}\f0\pard This is some {\b bold} text.\par}</source>
+	  <target>{\rtf1\ansi{\fonttbl\f0\fswiss Helvetica;}\f0\pard This is some {\b bold} text.\par}</target>
+	</trans-unit>
+
+	<trans-unit id ="12" resname="CSSTips%%border-collapse">
+	  <source>{\rtf1\ansi{\fonttbl\f0\fswiss Helvetica;}\f0\pard This is some {\b bold} text.\par}</source>
+	  <target>{\rtf1\ansi{\fonttbl\f0\fswiss Helvetica;}\f0\pard This is some {\b bold} text.\par}</target>
+	</trans-unit>
+
+	<trans-unit id ="13" resname="CSSTips%%border-color">
+	  <source>{\rtf1\ansi{\fonttbl\f0\fswiss Helvetica;}\f0\pard This is some {\b bold} text.\par}</source>
+	  <target>{\rtf1\ansi{\fonttbl\f0\fswiss Helvetica;}\f0\pard This is some {\b bold} text.\par}</target>
+	</trans-unit>
+
+	<trans-unit id ="14" resname="CSSTips%%border-left">
+	  <source>{\rtf1\ansi{\fonttbl\f0\fswiss Helvetica;}\f0\pard This is some {\b bold} text.\par}</source>
+	  <target>{\rtf1\ansi{\fonttbl\f0\fswiss Helvetica;}\f0\pard This is some {\b bold} text.\par}</target>
+	</trans-unit>
+
+	<trans-unit id ="15" resname="CSSTips%%border-left-color">
+	  <source>{\rtf1\ansi{\fonttbl\f0\fswiss Helvetica;}\f0\pard This is some {\b bold} text.\par}</source>
+	  <target>{\rtf1\ansi{\fonttbl\f0\fswiss Helvetica;}\f0\pard This is some {\b bold} text.\par}</target>
+	</trans-unit>
+
+	<trans-unit id ="16" resname="CSSTips%%border-left-style">
+	  <source>{\rtf1\ansi{\fonttbl\f0\fswiss Helvetica;}\f0\pard This is some {\b bold} text.\par}</source>
+	  <target>{\rtf1\ansi{\fonttbl\f0\fswiss Helvetica;}\f0\pard This is some {\b bold} text.\par}</target>
+	</trans-unit>
+
+	<trans-unit id ="17" resname="CSSTips%%border-left-width">
+	  <source>{\rtf1\ansi{\fonttbl\f0\fswiss Helvetica;}\f0\pard This is some {\b bold} text.\par}</source>
+	  <target>{\rtf1\ansi{\fonttbl\f0\fswiss Helvetica;}\f0\pard This is some {\b bold} text.\par}</target>
+	</trans-unit>
+
+	<trans-unit id ="18" resname="CSSTips%%border-right">
+	  <source>{\rtf1\ansi{\fonttbl\f0\fswiss Helvetica;}\f0\pard This is some {\b bold} text.\par}</source>
+	  <target>{\rtf1\ansi{\fonttbl\f0\fswiss Helvetica;}\f0\pard This is some {\b bold} text.\par}</target>
+	</trans-unit>
+
+	<trans-unit id ="19" resname="CSSTips%%border-right-color">
+	  <source>{\rtf1\ansi{\fonttbl\f0\fswiss Helvetica;}\f0\pard This is some {\b bold} text.\par}</source>
+	  <target>{\rtf1\ansi{\fonttbl\f0\fswiss Helvetica;}\f0\pard This is some {\b bold} text.\par}</target>
+	</trans-unit>
+
+	<trans-unit id ="20" resname="CSSTips%%border-right-style">
+	  <source>{\rtf1\ansi{\fonttbl\f0\fswiss Helvetica;}\f0\pard This is some {\b bold} text.\par}</source>
+	  <target>{\rtf1\ansi{\fonttbl\f0\fswiss Helvetica;}\f0\pard This is some {\b bold} text.\par}</target>
+	</trans-unit>
+
+	<trans-unit id ="21" resname="CSSTips%%border-right-width">
+	  <source>{\rtf1\ansi{\fonttbl\f0\fswiss Helvetica;}\f0\pard This is some {\b bold} text.\par}</source>
+	  <target>{\rtf1\ansi{\fonttbl\f0\fswiss Helvetica;}\f0\pard This is some {\b bold} text.\par}</target>
+	</trans-unit>
+
+	<trans-unit id ="22" resname="CSSTips%%border-spacing">
+	  <source>{\rtf1\ansi{\fonttbl\f0\fswiss Helvetica;}\f0\pard This is some {\b bold} text.\par}</source>
+	  <target>{\rtf1\ansi{\fonttbl\f0\fswiss Helvetica;}\f0\pard This is some {\b bold} text.\par}</target>
+	</trans-unit>
+
+	<trans-unit id ="23" resname="CSSTips%%border-style">
+	  <source>{\rtf1\ansi{\fonttbl\f0\fswiss Helvetica;}\f0\pard This is some {\b bold} text.\par}</source>
+	  <target>{\rtf1\ansi{\fonttbl\f0\fswiss Helvetica;}\f0\pard This is some {\b bold} text.\par}</target>
+	</trans-unit>
+
+	<trans-unit id ="24" resname="CSSTips%%border-top">
+	  <source>{\rtf1\ansi{\fonttbl\f0\fswiss Helvetica;}\f0\pard This is some {\b bold} text.\par}</source>
+	  <target>{\rtf1\ansi{\fonttbl\f0\fswiss Helvetica;}\f0\pard This is some {\b bold} text.\par}</target>
+	</trans-unit>
+
+	<trans-unit id ="25" resname="CSSTips%%border-top-color">
+	  <source>{\rtf1\ansi{\fonttbl\f0\fswiss Helvetica;}\f0\pard This is some {\b bold} text.\par}</source>
+	  <target>{\rtf1\ansi{\fonttbl\f0\fswiss Helvetica;}\f0\pard This is some {\b bold} text.\par}</target>
+	</trans-unit>
+
+	<trans-unit id ="26" resname="CSSTips%%border-top-style">
+	  <source>{\rtf1\ansi{\fonttbl\f0\fswiss Helvetica;}\f0\pard This is some {\b bold} text.\par}</source>
+	  <target>{\rtf1\ansi{\fonttbl\f0\fswiss Helvetica;}\f0\pard This is some {\b bold} text.\par}</target>
+	</trans-unit>
+
+	<trans-unit id ="27" resname="CSSTips%%border-top-width">
+	  <source>{\rtf1\ansi{\fonttbl\f0\fswiss Helvetica;}\f0\pard This is some {\b bold} text.\par}</source>
+	  <target>{\rtf1\ansi{\fonttbl\f0\fswiss Helvetica;}\f0\pard This is some {\b bold} text.\par}</target>
+	</trans-unit>
+
+	<trans-unit id ="28" resname="CSSTips%%border-width">
+	  <source>{\rtf1\ansi{\fonttbl\f0\fswiss Helvetica;}\f0\pard This is some {\b bold} text.\par}</source>
+	  <target>{\rtf1\ansi{\fonttbl\f0\fswiss Helvetica;}\f0\pard This is some {\b bold} text.\par}</target>
+	</trans-unit>
+
+	<trans-unit id ="29" resname="CSSTips%%caption-side">
+	  <source>{\rtf1\ansi{\fonttbl\f0\fswiss Helvetica;}\f0\pard This is some {\b bold} text.\par}</source>
+	  <target>{\rtf1\ansi{\fonttbl\f0\fswiss Helvetica;}\f0\pard This is some {\b bold} text.\par}</target>
+	</trans-unit>
+
+	<trans-unit id ="30" resname="CSSTips%%clear">
+	  <source>{\rtf1\ansi{\fonttbl\f0\fswiss Helvetica;}\f0\pard This is some {\b bold} text.\par}</source>
+	  <target>{\rtf1\ansi{\fonttbl\f0\fswiss Helvetica;}\f0\pard This is some {\b bold} text.\par}</target>
+	</trans-unit>
+
+	<trans-unit id ="31" resname="CSSTips%%clip">
+	  <source>{\rtf1\ansi{\fonttbl\f0\fswiss Helvetica;}\f0\pard This is some {\b bold} text.\par}</source>
+	  <target>{\rtf1\ansi{\fonttbl\f0\fswiss Helvetica;}\f0\pard This is some {\b bold} text.\par}</target>
+	</trans-unit>
+
+	<trans-unit id ="32" resname="CSSTips%%color">
+	  <source>{\rtf1\ansi{\fonttbl\f0\fswiss Helvetica;}\f0\pard This is some {\b bold} text.\par}</source>
+	  <target>{\rtf1\ansi{\fonttbl\f0\fswiss Helvetica;}\f0\pard This is some {\b bold} text.\par}</target>
+	</trans-unit>
+
+	<trans-unit id ="33" resname="CSSTips%%content">
+	  <source>{\rtf1\ansi{\fonttbl\f0\fswiss Helvetica;}\f0\pard This is some {\b bold} text.\par}</source>
+	  <target>{\rtf1\ansi{\fonttbl\f0\fswiss Helvetica;}\f0\pard This is some {\b bold} text.\par}</target>
+	</trans-unit>
+
+	<trans-unit id ="34" resname="CSSTips%%counter-increment">
+	  <source>{\rtf1\ansi{\fonttbl\f0\fswiss Helvetica;}\f0\pard This is some {\b bold} text.\par}</source>
+	  <target>{\rtf1\ansi{\fonttbl\f0\fswiss Helvetica;}\f0\pard This is some {\b bold} text.\par}</target>
+	</trans-unit>
+
+	<trans-unit id ="35" resname="CSSTips%%counter-reset">
+	  <source>{\rtf1\ansi{\fonttbl\f0\fswiss Helvetica;}\f0\pard This is some {\b bold} text.\par}</source>
+	  <target>{\rtf1\ansi{\fonttbl\f0\fswiss Helvetica;}\f0\pard This is some {\b bold} text.\par}</target>
+	</trans-unit>
+
+	<trans-unit id ="36" resname="CSSTips%%cue">
+	  <source>{\rtf1\ansi{\fonttbl\f0\fswiss Helvetica;}\f0\pard This is some {\b bold} text.\par}</source>
+	  <target>{\rtf1\ansi{\fonttbl\f0\fswiss Helvetica;}\f0\pard This is some {\b bold} text.\par}</target>
+	</trans-unit>
+
+	<trans-unit id ="37" resname="CSSTips%%cue-after">
+	  <source>{\rtf1\ansi{\fonttbl\f0\fswiss Helvetica;}\f0\pard This is some {\b bold} text.\par}</source>
+	  <target>{\rtf1\ansi{\fonttbl\f0\fswiss Helvetica;}\f0\pard This is some {\b bold} text.\par}</target>
+	</trans-unit>
+
+	<trans-unit id ="38" resname="CSSTips%%cue-before">
+	  <source>{\rtf1\ansi{\fonttbl\f0\fswiss Helvetica;}\f0\pard This is some {\b bold} text.\par}</source>
+	  <target>{\rtf1\ansi{\fonttbl\f0\fswiss Helvetica;}\f0\pard This is some {\b bold} text.\par}</target>
+	</trans-unit>
+
+	<trans-unit id ="39" resname="CSSTips%%cursor">
+	  <source>{\rtf1\ansi{\fonttbl\f0\fswiss Helvetica;}\f0\pard This is some {\b bold} text.\par}</source>
+	  <target>{\rtf1\ansi{\fonttbl\f0\fswiss Helvetica;}\f0\pard This is some {\b bold} text.\par}</target>
+	</trans-unit>
+
+	<trans-unit id ="40" resname="CSSTips%%direction">
+	  <source>{\rtf1\ansi{\fonttbl\f0\fswiss Helvetica;}\f0\pard This is some {\b bold} text.\par}</source>
+	  <target>{\rtf1\ansi{\fonttbl\f0\fswiss Helvetica;}\f0\pard This is some {\b bold} text.\par}</target>
+	</trans-unit>
+
+	<trans-unit id ="41" resname="CSSTips%%display">
+	  <source>{\rtf1\ansi{\fonttbl\f0\fswiss Helvetica;}\f0\pard This is some {\b bold} text.\par}</source>
+	  <target>{\rtf1\ansi{\fonttbl\f0\fswiss Helvetica;}\f0\pard This is some {\b bold} text.\par}</target>
+	</trans-unit>
+
+	<trans-unit id ="42" resname="CSSTips%%elevation">
+	  <source>{\rtf1\ansi{\fonttbl\f0\fswiss Helvetica;}\f0\pard This is some {\b bold} text.\par}</source>
+	  <target>{\rtf1\ansi{\fonttbl\f0\fswiss Helvetica;}\f0\pard This is some {\b bold} text.\par}</target>
+	</trans-unit>
+
+	<trans-unit id ="43" resname="CSSTips%%empty-cells">
+	  <source>{\rtf1\ansi{\fonttbl\f0\fswiss Helvetica;}\f0\pard This is some {\b bold} text.\par}</source>
+	  <target>{\rtf1\ansi{\fonttbl\f0\fswiss Helvetica;}\f0\pard This is some {\b bold} text.\par}</target>
+	</trans-unit>
+
+	<trans-unit id ="44" resname="CSSTips%%float">
+	  <source>{\rtf1\ansi{\fonttbl\f0\fswiss Helvetica;}\f0\pard This is some {\b bold} text.\par}</source>
+	  <target>{\rtf1\ansi{\fonttbl\f0\fswiss Helvetica;}\f0\pard This is some {\b bold} text.\par}</target>
+	</trans-unit>
+
+	<trans-unit id ="45" resname="CSSTips%%font">
+	  <source>{\rtf1\ansi{\fonttbl\f0\fswiss Helvetica;}\f0\pard This is some {\b bold} text.\par}</source>
+	  <target>{\rtf1\ansi{\fonttbl\f0\fswiss Helvetica;}\f0\pard This is some {\b bold} text.\par}</target>
+	</trans-unit>
+
+	<trans-unit id ="46" resname="CSSTips%%font-family">
+	  <source>{\rtf1\ansi{\fonttbl\f0\fswiss Helvetica;}\f0\pard This is some {\b bold} text.\par}</source>
+	  <target>{\rtf1\ansi{\fonttbl\f0\fswiss Helvetica;}\f0\pard This is some {\b bold} text.\par}</target>
+	</trans-unit>
+
+	<trans-unit id ="47" resname="CSSTips%%font-size">
+	  <source>{\rtf1\ansi{\fonttbl\f0\fswiss Helvetica;}\f0\pard This is some {\b bold} text.\par}</source>
+	  <target>{\rtf1\ansi{\fonttbl\f0\fswiss Helvetica;}\f0\pard This is some {\b bold} text.\par}</target>
+	</trans-unit>
+
+	<trans-unit id ="48" resname="CSSTips%%font-size-adjust">
+	  <source>{\rtf1\ansi{\fonttbl\f0\fswiss Helvetica;}\f0\pard This is some {\b bold} text.\par}</source>
+	  <target>{\rtf1\ansi{\fonttbl\f0\fswiss Helvetica;}\f0\pard This is some {\b bold} text.\par}</target>
+	</trans-unit>
+
+	<trans-unit id ="49" resname="CSSTips%%font-stretch">
+	  <source>{\rtf1\ansi{\fonttbl\f0\fswiss Helvetica;}\f0\pard This is some {\b bold} text.\par}</source>
+	  <target>{\rtf1\ansi{\fonttbl\f0\fswiss Helvetica;}\f0\pard This is some {\b bold} text.\par}</target>
+	</trans-unit>
+
+	<trans-unit id ="50" resname="CSSTips%%font-style">
+	  <source>{\rtf1\ansi{\fonttbl\f0\fswiss Helvetica;}\f0\pard This is some {\b bold} text.\par}</source>
+	  <target>{\rtf1\ansi{\fonttbl\f0\fswiss Helvetica;}\f0\pard This is some {\b bold} text.\par}</target>
+	</trans-unit>
+
+	<trans-unit id ="51" resname="CSSTips%%font-variant">
+	  <source>{\rtf1\ansi{\fonttbl\f0\fswiss Helvetica;}\f0\pard This is some {\b bold} text.\par}</source>
+	  <target>{\rtf1\ansi{\fonttbl\f0\fswiss Helvetica;}\f0\pard This is some {\b bold} text.\par}</target>
+	</trans-unit>
+
+	<trans-unit id ="52" resname="CSSTips%%font-weight">
+	  <source>{\rtf1\ansi{\fonttbl\f0\fswiss Helvetica;}\f0\pard This is some {\b bold} text.\par}</source>
+	  <target>{\rtf1\ansi{\fonttbl\f0\fswiss Helvetica;}\f0\pard This is some {\b bold} text.\par}</target>
+	</trans-unit>
+
+	<trans-unit id ="53" resname="CSSTips%%height">
+	  <source>{\rtf1\ansi{\fonttbl\f0\fswiss Helvetica;}\f0\pard This is some {\b bold} text.\par}</source>
+	  <target>{\rtf1\ansi{\fonttbl\f0\fswiss Helvetica;}\f0\pard This is some {\b bold} text.\par}</target>
+	</trans-unit>
+
+	<trans-unit id ="54" resname="CSSTips%%left">
+	  <source>{\rtf1\ansi{\fonttbl\f0\fswiss Helvetica;}\f0\pard This is some {\b bold} text.\par}</source>
+	  <target>{\rtf1\ansi{\fonttbl\f0\fswiss Helvetica;}\f0\pard This is some {\b bold} text.\par}</target>
+	</trans-unit>
+
+	<trans-unit id ="55" resname="CSSTips%%letter-spacing">
+	  <source>{\rtf1\ansi{\fonttbl\f0\fswiss Helvetica;}\f0\pard This is some {\b bold} text.\par}</source>
+	  <target>{\rtf1\ansi{\fonttbl\f0\fswiss Helvetica;}\f0\pard This is some {\b bold} text.\par}</target>
+	</trans-unit>
+
+	<trans-unit id ="56" resname="CSSTips%%line-height">
+	  <source>{\rtf1\ansi{\fonttbl\f0\fswiss Helvetica;}\f0\pard This is some {\b bold} text.\par}</source>
+	  <target>{\rtf1\ansi{\fonttbl\f0\fswiss Helvetica;}\f0\pard This is some {\b bold} text.\par}</target>
+	</trans-unit>
+
+	<trans-unit id ="57" resname="CSSTips%%list-style">
+	  <source>{\rtf1\ansi{\fonttbl\f0\fswiss Helvetica;}\f0\pard This is some {\b bold} text.\par}</source>
+	  <target>{\rtf1\ansi{\fonttbl\f0\fswiss Helvetica;}\f0\pard This is some {\b bold} text.\par}</target>
+	</trans-unit>
+
+	<trans-unit id ="58" resname="CSSTips%%list-style-image">
+	  <source>{\rtf1\ansi{\fonttbl\f0\fswiss Helvetica;}\f0\pard This is some {\b bold} text.\par}</source>
+	  <target>{\rtf1\ansi{\fonttbl\f0\fswiss Helvetica;}\f0\pard This is some {\b bold} text.\par}</target>
+	</trans-unit>
+
+	<trans-unit id ="59" resname="CSSTips%%list-style-position">
+	  <source>{\rtf1\ansi{\fonttbl\f0\fswiss Helvetica;}\f0\pard This is some {\b bold} text.\par}</source>
+	  <target>{\rtf1\ansi{\fonttbl\f0\fswiss Helvetica;}\f0\pard This is some {\b bold} text.\par}</target>
+	</trans-unit>
+
+	<trans-unit id ="60" resname="CSSTips%%list-style-type">
+	  <source>{\rtf1\ansi{\fonttbl\f0\fswiss Helvetica;}\f0\pard This is some {\b bold} text.\par}</source>
+	  <target>{\rtf1\ansi{\fonttbl\f0\fswiss Helvetica;}\f0\pard This is some {\b bold} text.\par}</target>
+	</trans-unit>
+
+	<trans-unit id ="61" resname="CSSTips%%margin">
+	  <source>{\rtf1\ansi{\fonttbl\f0\fswiss Helvetica;}\f0\pard This is some {\b bold} text.\par}</source>
+	  <target>{\rtf1\ansi{\fonttbl\f0\fswiss Helvetica;}\f0\pard This is some {\b bold} text.\par}</target>
+	</trans-unit>
+
+	<trans-unit id ="62" resname="CSSTips%%margin-bottom">
+	  <source>{\rtf1\ansi{\fonttbl\f0\fswiss Helvetica;}\f0\pard This is some {\b bold} text.\par}</source>
+	  <target>{\rtf1\ansi{\fonttbl\f0\fswiss Helvetica;}\f0\pard This is some {\b bold} text.\par}</target>
+	</trans-unit>
+
+	<trans-unit id ="63" resname="CSSTips%%margin-left">
+	  <source>{\rtf1\ansi{\fonttbl\f0\fswiss Helvetica;}\f0\pard This is some {\b bold} text.\par}</source>
+	  <target>{\rtf1\ansi{\fonttbl\f0\fswiss Helvetica;}\f0\pard This is some {\b bold} text.\par}</target>
+	</trans-unit>
+
+	<trans-unit id ="64" resname="CSSTips%%margin-right">
+	  <source>{\rtf1\ansi{\fonttbl\f0\fswiss Helvetica;}\f0\pard This is some {\b bold} text.\par}</source>
+	  <target>{\rtf1\ansi{\fonttbl\f0\fswiss Helvetica;}\f0\pard This is some {\b bold} text.\par}</target>
+	</trans-unit>
+
+	<trans-unit id ="65" resname="CSSTips%%margin-top">
+	  <source>{\rtf1\ansi{\fonttbl\f0\fswiss Helvetica;}\f0\pard This is some {\b bold} text.\par}</source>
+	  <target>{\rtf1\ansi{\fonttbl\f0\fswiss Helvetica;}\f0\pard This is some {\b bold} text.\par}</target>
+	</trans-unit>
+
+	<trans-unit id ="66" resname="CSSTips%%marker-offset">
+	  <source>{\rtf1\ansi{\fonttbl\f0\fswiss Helvetica;}\f0\pard This is some {\b bold} text.\par}</source>
+	  <target>{\rtf1\ansi{\fonttbl\f0\fswiss Helvetica;}\f0\pard This is some {\b bold} text.\par}</target>
+	</trans-unit>
+
+	<trans-unit id ="67" resname="CSSTips%%marks">
+	  <source>{\rtf1\ansi{\fonttbl\f0\fswiss Helvetica;}\f0\pard This is some {\b bold} text.\par}</source>
+	  <target>{\rtf1\ansi{\fonttbl\f0\fswiss Helvetica;}\f0\pard This is some {\b bold} text.\par}</target>
+	</trans-unit>
+
+	<trans-unit id ="68" resname="CSSTips%%max-height">
+	  <source>{\rtf1\ansi{\fonttbl\f0\fswiss Helvetica;}\f0\pard This is some {\b bold} text.\par}</source>
+	  <target>{\rtf1\ansi{\fonttbl\f0\fswiss Helvetica;}\f0\pard This is some {\b bold} text.\par}</target>
+	</trans-unit>
+
+	<trans-unit id ="69" resname="CSSTips%%max-width">
+	  <source>{\rtf1\ansi{\fonttbl\f0\fswiss Helvetica;}\f0\pard This is some {\b bold} text.\par}</source>
+	  <target>{\rtf1\ansi{\fonttbl\f0\fswiss Helvetica;}\f0\pard This is some {\b bold} text.\par}</target>
+	</trans-unit>
+
+	<trans-unit id ="70" resname="CSSTips%%min-height">
+	  <source>{\rtf1\ansi{\fonttbl\f0\fswiss Helvetica;}\f0\pard This is some {\b bold} text.\par}</source>
+	  <target>{\rtf1\ansi{\fonttbl\f0\fswiss Helvetica;}\f0\pard This is some {\b bold} text.\par}</target>
+	</trans-unit>
+
+	<trans-unit id ="71" resname="CSSTips%%min-width">
+	  <source>{\rtf1\ansi{\fonttbl\f0\fswiss Helvetica;}\f0\pard This is some {\b bold} text.\par}</source>
+	  <target>{\rtf1\ansi{\fonttbl\f0\fswiss Helvetica;}\f0\pard This is some {\b bold} text.\par}</target>
+	</trans-unit>
+
+	<trans-unit id ="72" resname="CSSTips%%orphans">
+	  <source>{\rtf1\ansi{\fonttbl\f0\fswiss Helvetica;}\f0\pard This is some {\b bold} text.\par}</source>
+	  <target>{\rtf1\ansi{\fonttbl\f0\fswiss Helvetica;}\f0\pard This is some {\b bold} text.\par}</target>
+	</trans-unit>
+
+	<trans-unit id ="73" resname="CSSTips%%outline">
+	  <source>{\rtf1\ansi{\fonttbl\f0\fswiss Helvetica;}\f0\pard This is some {\b bold} text.\par}</source>
+	  <target>{\rtf1\ansi{\fonttbl\f0\fswiss Helvetica;}\f0\pard This is some {\b bold} text.\par}</target>
+	</trans-unit>
+
+	<trans-unit id ="74" resname="CSSTips%%outline-color">
+	  <source>{\rtf1\ansi{\fonttbl\f0\fswiss Helvetica;}\f0\pard This is some {\b bold} text.\par}</source>
+	  <target>{\rtf1\ansi{\fonttbl\f0\fswiss Helvetica;}\f0\pard This is some {\b bold} text.\par}</target>
+	</trans-unit>
+
+	<trans-unit id ="75" resname="CSSTips%%outline-style">
+	  <source>{\rtf1\ansi{\fonttbl\f0\fswiss Helvetica;}\f0\pard This is some {\b bold} text.\par}</source>
+	  <target>{\rtf1\ansi{\fonttbl\f0\fswiss Helvetica;}\f0\pard This is some {\b bold} text.\par}</target>
+	</trans-unit>
+
+	<trans-unit id ="76" resname="CSSTips%%outline-width">
+	  <source>{\rtf1\ansi{\fonttbl\f0\fswiss Helvetica;}\f0\pard This is some {\b bold} text.\par}</source>
+	  <target>{\rtf1\ansi{\fonttbl\f0\fswiss Helvetica;}\f0\pard This is some {\b bold} text.\par}</target>
+	</trans-unit>
+
+	<trans-unit id ="77" resname="CSSTips%%overflow">
+	  <source>{\rtf1\ansi{\fonttbl\f0\fswiss Helvetica;}\f0\pard This is some {\b bold} text.\par}</source>
+	  <target>{\rtf1\ansi{\fonttbl\f0\fswiss Helvetica;}\f0\pard This is some {\b bold} text.\par}</target>
+	</trans-unit>
+
+	<trans-unit id ="78" resname="CSSTips%%padding">
+	  <source>{\rtf1\ansi{\fonttbl\f0\fswiss Helvetica;}\f0\pard This is some {\b bold} text.\par}</source>
+	  <target>{\rtf1\ansi{\fonttbl\f0\fswiss Helvetica;}\f0\pard This is some {\b bold} text.\par}</target>
+	</trans-unit>
+
+	<trans-unit id ="79" resname="CSSTips%%padding-bottom">
+	  <source>{\rtf1\ansi{\fonttbl\f0\fswiss Helvetica;}\f0\pard This is some {\b bold} text.\par}</source>
+	  <target>{\rtf1\ansi{\fonttbl\f0\fswiss Helvetica;}\f0\pard This is some {\b bold} text.\par}</target>
+	</trans-unit>
+
+	<trans-unit id ="80" resname="CSSTips%%padding-left">
+	  <source>{\rtf1\ansi{\fonttbl\f0\fswiss Helvetica;}\f0\pard This is some {\b bold} text.\par}</source>
+	  <target>{\rtf1\ansi{\fonttbl\f0\fswiss Helvetica;}\f0\pard This is some {\b bold} text.\par}</target>
+	</trans-unit>
+
+	<trans-unit id ="81" resname="CSSTips%%padding-right">
+	  <source>{\rtf1\ansi{\fonttbl\f0\fswiss Helvetica;}\f0\pard This is some {\b bold} text.\par}</source>
+	  <target>{\rtf1\ansi{\fonttbl\f0\fswiss Helvetica;}\f0\pard This is some {\b bold} text.\par}</target>
+	</trans-unit>
+
+	<trans-unit id ="82" resname="CSSTips%%padding-top">
+	  <source>{\rtf1\ansi{\fonttbl\f0\fswiss Helvetica;}\f0\pard This is some {\b bold} text.\par}</source>
+	  <target>{\rtf1\ansi{\fonttbl\f0\fswiss Helvetica;}\f0\pard This is some {\b bold} text.\par}</target>
+	</trans-unit>
+
+	<trans-unit id ="83" resname="CSSTips%%page">
+	  <source>{\rtf1\ansi{\fonttbl\f0\fswiss Helvetica;}\f0\pard This is some {\b bold} text.\par}</source>
+	  <target>{\rtf1\ansi{\fonttbl\f0\fswiss Helvetica;}\f0\pard This is some {\b bold} text.\par}</target>
+	</trans-unit>
+
+	<trans-unit id ="84" resname="CSSTips%%page-break-after">
+	  <source>{\rtf1\ansi{\fonttbl\f0\fswiss Helvetica;}\f0\pard This is some {\b bold} text.\par}</source>
+	  <target>{\rtf1\ansi{\fonttbl\f0\fswiss Helvetica;}\f0\pard This is some {\b bold} text.\par}</target>
+	</trans-unit>
+
+	<trans-unit id ="85" resname="CSSTips%%page-break-before">
+	  <source>{\rtf1\ansi{\fonttbl\f0\fswiss Helvetica;}\f0\pard This is some {\b bold} text.\par}</source>
+	  <target>{\rtf1\ansi{\fonttbl\f0\fswiss Helvetica;}\f0\pard This is some {\b bold} text.\par}</target>
+	</trans-unit>
+
+	<trans-unit id ="86" resname="CSSTips%%page-break-inside">
+	  <source>{\rtf1\ansi{\fonttbl\f0\fswiss Helvetica;}\f0\pard This is some {\b bold} text.\par}</source>
+	  <target>{\rtf1\ansi{\fonttbl\f0\fswiss Helvetica;}\f0\pard This is some {\b bold} text.\par}</target>
+	</trans-unit>
+
+	<trans-unit id ="87" resname="CSSTips%%pause">
+	  <source>{\rtf1\ansi{\fonttbl\f0\fswiss Helvetica;}\f0\pard This is some {\b bold} text.\par}</source>
+	  <target>{\rtf1\ansi{\fonttbl\f0\fswiss Helvetica;}\f0\pard This is some {\b bold} text.\par}</target>
+	</trans-unit>
+
+	<trans-unit id ="88" resname="CSSTips%%pause-after">
+	  <source>{\rtf1\ansi{\fonttbl\f0\fswiss Helvetica;}\f0\pard This is some {\b bold} text.\par}</source>
+	  <target>{\rtf1\ansi{\fonttbl\f0\fswiss Helvetica;}\f0\pard This is some {\b bold} text.\par}</target>
+	</trans-unit>
+
+	<trans-unit id ="89" resname="CSSTips%%pause-before">
+	  <source>{\rtf1\ansi{\fonttbl\f0\fswiss Helvetica;}\f0\pard This is some {\b bold} text.\par}</source>
+	  <target>{\rtf1\ansi{\fonttbl\f0\fswiss Helvetica;}\f0\pard This is some {\b bold} text.\par}</target>
+	</trans-unit>
+
+	<trans-unit id ="90" resname="CSSTips%%pitch">
+	  <source>{\rtf1\ansi{\fonttbl\f0\fswiss Helvetica;}\f0\pard This is some {\b bold} text.\par}</source>
+	  <target>{\rtf1\ansi{\fonttbl\f0\fswiss Helvetica;}\f0\pard This is some {\b bold} text.\par}</target>
+	</trans-unit>
+
+	<trans-unit id ="91" resname="CSSTips%%pitch-range">
+	  <source>{\rtf1\ansi{\fonttbl\f0\fswiss Helvetica;}\f0\pard This is some {\b bold} text.\par}</source>
+	  <target>{\rtf1\ansi{\fonttbl\f0\fswiss Helvetica;}\f0\pard This is some {\b bold} text.\par}</target>
+	</trans-unit>
+
+	<trans-unit id ="92" resname="CSSTips%%play-during">
+	  <source>{\rtf1\ansi{\fonttbl\f0\fswiss Helvetica;}\f0\pard This is some {\b bold} text.\par}</source>
+	  <target>{\rtf1\ansi{\fonttbl\f0\fswiss Helvetica;}\f0\pard This is some {\b bold} text.\par}</target>
+	</trans-unit>
+
+	<trans-unit id ="93" resname="CSSTips%%position">
+	  <source>{\rtf1\ansi{\fonttbl\f0\fswiss Helvetica;}\f0\pard This is some {\b bold} text.\par}</source>
+	  <target>{\rtf1\ansi{\fonttbl\f0\fswiss Helvetica;}\f0\pard This is some {\b bold} text.\par}</target>
+	</trans-unit>
+
+	<trans-unit id ="94" resname="CSSTips%%quotes">
+	  <source>{\rtf1\ansi{\fonttbl\f0\fswiss Helvetica;}\f0\pard This is some {\b bold} text.\par}</source>
+	  <target>{\rtf1\ansi{\fonttbl\f0\fswiss Helvetica;}\f0\pard This is some {\b bold} text.\par}</target>
+	</trans-unit>
+
+	<trans-unit id ="95" resname="CSSTips%%richness">
+	  <source>{\rtf1\ansi{\fonttbl\f0\fswiss Helvetica;}\f0\pard This is some {\b bold} text.\par}</source>
+	  <target>{\rtf1\ansi{\fonttbl\f0\fswiss Helvetica;}\f0\pard This is some {\b bold} text.\par}</target>
+	</trans-unit>
+
+	<trans-unit id ="96" resname="CSSTips%%right">
+	  <source>{\rtf1\ansi{\fonttbl\f0\fswiss Helvetica;}\f0\pard This is some {\b bold} text.\par}</source>
+	  <target>{\rtf1\ansi{\fonttbl\f0\fswiss Helvetica;}\f0\pard This is some {\b bold} text.\par}</target>
+	</trans-unit>
+
+	<trans-unit id ="97" resname="CSSTips%%size">
+	  <source>{\rtf1\ansi{\fonttbl\f0\fswiss Helvetica;}\f0\pard This is some {\b bold} text.\par}</source>
+	  <target>{\rtf1\ansi{\fonttbl\f0\fswiss Helvetica;}\f0\pard This is some {\b bold} text.\par}</target>
+	</trans-unit>
+
+	<trans-unit id ="98" resname="CSSTips%%speak">
+	  <source>{\rtf1\ansi{\fonttbl\f0\fswiss Helvetica;}\f0\pard This is some {\b bold} text.\par}</source>
+	  <target>{\rtf1\ansi{\fonttbl\f0\fswiss Helvetica;}\f0\pard This is some {\b bold} text.\par}</target>
+	</trans-unit>
+
+	<trans-unit id ="99" resname="CSSTips%%speak-header">
+	  <source>{\rtf1\ansi{\fonttbl\f0\fswiss Helvetica;}\f0\pard This is some {\b bold} text.\par}</source>
+	  <target>{\rtf1\ansi{\fonttbl\f0\fswiss Helvetica;}\f0\pard This is some {\b bold} text.\par}</target>
+	</trans-unit>
+
+	<trans-unit id ="100" resname="CSSTips%%speak-numeral">
+	  <source>{\rtf1\ansi{\fonttbl\f0\fswiss Helvetica;}\f0\pard This is some {\b bold} text.\par}</source>
+	  <target>{\rtf1\ansi{\fonttbl\f0\fswiss Helvetica;}\f0\pard This is some {\b bold} text.\par}</target>
+	</trans-unit>
+
+	<trans-unit id ="101" resname="CSSTips%%speak-punctuation">
+	  <source>{\rtf1\ansi{\fonttbl\f0\fswiss Helvetica;}\f0\pard This is some {\b bold} text.\par}</source>
+	  <target>{\rtf1\ansi{\fonttbl\f0\fswiss Helvetica;}\f0\pard This is some {\b bold} text.\par}</target>
+	</trans-unit>
+
+	<trans-unit id ="102" resname="CSSTips%%speech-rate">
+	  <source>{\rtf1\ansi{\fonttbl\f0\fswiss Helvetica;}\f0\pard This is some {\b bold} text.\par}</source>
+	  <target>{\rtf1\ansi{\fonttbl\f0\fswiss Helvetica;}\f0\pard This is some {\b bold} text.\par}</target>
+	</trans-unit>
+
+	<trans-unit id ="103" resname="CSSTips%%stress">
+	  <source>{\rtf1\ansi{\fonttbl\f0\fswiss Helvetica;}\f0\pard This is some {\b bold} text.\par}</source>
+	  <target>{\rtf1\ansi{\fonttbl\f0\fswiss Helvetica;}\f0\pard This is some {\b bold} text.\par}</target>
+	</trans-unit>
+
+	<trans-unit id ="104" resname="CSSTips%%table-layout">
+	  <source>{\rtf1\ansi{\fonttbl\f0\fswiss Helvetica;}\f0\pard This is some {\b bold} text.\par}</source>
+	  <target>{\rtf1\ansi{\fonttbl\f0\fswiss Helvetica;}\f0\pard This is some {\b bold} text.\par}</target>
+	</trans-unit>
+
+	<trans-unit id ="105" resname="CSSTips%%text-align">
+	  <source>{\rtf1\ansi{\fonttbl\f0\fswiss Helvetica;}\f0\pard This is some {\b bold} text.\par}</source>
+	  <target>{\rtf1\ansi{\fonttbl\f0\fswiss Helvetica;}\f0\pard This is some {\b bold} text.\par}</target>
+	</trans-unit>
+
+	<trans-unit id ="106" resname="CSSTips%%text-decoration">
+	  <source>{\rtf1\ansi{\fonttbl\f0\fswiss Helvetica;}\f0\pard This is some {\b bold} text.\par}</source>
+	  <target>{\rtf1\ansi{\fonttbl\f0\fswiss Helvetica;}\f0\pard This is some {\b bold} text.\par}</target>
+	</trans-unit>
+
+	<trans-unit id ="107" resname="CSSTips%%text-indent">
+	  <source>{\rtf1\ansi{\fonttbl\f0\fswiss Helvetica;}\f0\pard This is some {\b bold} text.\par}</source>
+	  <target>{\rtf1\ansi{\fonttbl\f0\fswiss Helvetica;}\f0\pard This is some {\b bold} text.\par}</target>
+	</trans-unit>
+
+	<trans-unit id ="108" resname="CSSTips%%text-shadow">
+	  <source>{\rtf1\ansi{\fonttbl\f0\fswiss Helvetica;}\f0\pard This is some {\b bold} text.\par}</source>
+	  <target>{\rtf1\ansi{\fonttbl\f0\fswiss Helvetica;}\f0\pard This is some {\b bold} text.\par}</target>
+	</trans-unit>
+
+	<trans-unit id ="109" resname="CSSTips%%text-transform">
+	  <source>{\rtf1\ansi{\fonttbl\f0\fswiss Helvetica;}\f0\pard This is some {\b bold} text.\par}</source>
+	  <target>{\rtf1\ansi{\fonttbl\f0\fswiss Helvetica;}\f0\pard This is some {\b bold} text.\par}</target>
+	</trans-unit>
+
+	<trans-unit id ="110" resname="CSSTips%%top">
+	  <source>{\rtf1\ansi{\fonttbl\f0\fswiss Helvetica;}\f0\pard This is some {\b bold} text.\par}</source>
+	  <target>{\rtf1\ansi{\fonttbl\f0\fswiss Helvetica;}\f0\pard This is some {\b bold} text.\par}</target>
+	</trans-unit>
+
+	<trans-unit id ="111" resname="CSSTips%%unicode-bidi">
+	  <source>{\rtf1\ansi{\fonttbl\f0\fswiss Helvetica;}\f0\pard This is some {\b bold} text.\par}</source>
+	  <target>{\rtf1\ansi{\fonttbl\f0\fswiss Helvetica;}\f0\pard This is some {\b bold} text.\par}</target>
+	</trans-unit>
+
+	<trans-unit id ="112" resname="CSSTips%%vertical-align">
+	  <source>{\rtf1\ansi{\fonttbl\f0\fswiss Helvetica;}\f0\pard This is some {\b bold} text.\par}</source>
+	  <target>{\rtf1\ansi{\fonttbl\f0\fswiss Helvetica;}\f0\pard This is some {\b bold} text.\par}</target>
+	</trans-unit>
+
+	<trans-unit id ="113" resname="CSSTips%%visiabiltiy">
+	  <source>{\rtf1\ansi{\fonttbl\f0\fswiss Helvetica;}\f0\pard This is some {\b bold} text.\par}</source>
+	  <target>{\rtf1\ansi{\fonttbl\f0\fswiss Helvetica;}\f0\pard This is some {\b bold} text.\par}</target>
+	</trans-unit>
+
+	<trans-unit id ="114" resname="CSSTips%%voice-family">
+	  <source>{\rtf1\ansi{\fonttbl\f0\fswiss Helvetica;}\f0\pard This is some {\b bold} text.\par}</source>
+	  <target>{\rtf1\ansi{\fonttbl\f0\fswiss Helvetica;}\f0\pard This is some {\b bold} text.\par}</target>
+	</trans-unit>
+
+	<trans-unit id ="115" resname="CSSTips%%volume">
+	  <source>{\rtf1\ansi{\fonttbl\f0\fswiss Helvetica;}\f0\pard This is some {\b bold} text.\par}</source>
+	  <target>{\rtf1\ansi{\fonttbl\f0\fswiss Helvetica;}\f0\pard This is some {\b bold} text.\par}</target>
+	</trans-unit>
+
+	<trans-unit id ="116" resname="CSSTips%%white-space">
+	  <source>{\rtf1\ansi{\fonttbl\f0\fswiss Helvetica;}\f0\pard This is some {\b bold} text.\par}</source>
+	  <target>{\rtf1\ansi{\fonttbl\f0\fswiss Helvetica;}\f0\pard This is some {\b bold} text.\par}</target>
+	</trans-unit>
+
+	<trans-unit id ="117" resname="CSSTips%%widows">
+	  <source>{\rtf1\ansi{\fonttbl\f0\fswiss Helvetica;}\f0\pard This is some {\b bold} text.\par}</source>
+	  <target>{\rtf1\ansi{\fonttbl\f0\fswiss Helvetica;}\f0\pard This is some {\b bold} text.\par}</target>
+	</trans-unit>
+
+	<trans-unit id ="118" resname="CSSTips%%width">
+	  <source>{\rtf1\ansi{\fonttbl\f0\fswiss Helvetica;}\f0\pard This is some {\b bold} text.\par}</source>
+	  <target>{\rtf1\ansi{\fonttbl\f0\fswiss Helvetica;}\f0\pard This is some {\b bold} text.\par}</target>
+	</trans-unit>
+
+	<trans-unit id ="119" resname="CSSTips%%word-spacing">
+	  <source>{\rtf1\ansi{\fonttbl\f0\fswiss Helvetica;}\f0\pard This is some {\b bold} text.\par}</source>
+	  <target>{\rtf1\ansi{\fonttbl\f0\fswiss Helvetica;}\f0\pard This is some {\b bold} text.\par}</target>
+	</trans-unit>
+
+        <trans-unit id ="120" resname="CSSTips%%z-index">
+          <source>{\rtf1\ansi{\fonttbl\f0\fswiss Helvetica;}\f0\pard This is some {\b bold} text.\par}</source>
+          <target>{\rtf1\ansi{\fonttbl\f0\fswiss Helvetica;}\f0\pard This is some {\b bold} text.\par}</target>
+        </trans-unit>
+      </group>	<!-- End of the group for CSSTips -->
+      
+      <group resname="CSSStatusMessages">
+	<trans-unit id ="1" resname="CSSStatusMessages%%azimuth">
+	  <source>This is some status text</source>
+	  <target>This is some status text</target>
+	</trans-unit>
+
+	<trans-unit id ="2" resname="CSSStatusMessages%%background">
+	  <source>This is some status text</source>
+	  <target>This is some status text</target>
+	</trans-unit>
+
+	<trans-unit id ="3" resname="CSSStatusMessages%%background-attachment">
+	  <source>This is some status text</source>
+	  <target>This is some status text</target>
+	</trans-unit>
+
+	<trans-unit id ="4" resname="CSSStatusMessages%%background-color">
+	  <source>This is some status text</source>
+	  <target>This is some status text</target>
+	</trans-unit>
+
+	<trans-unit id ="5" resname="CSSStatusMessages%%background-position">
+	  <source>This is some status text</source>
+	  <target>This is some status text</target>
+	</trans-unit>
+
+	<trans-unit id ="6" resname="CSSStatusMessages%%background-repeat">
+	  <source>This is some status text</source>
+	  <target>This is some status text</target>
+	</trans-unit>
+
+	<trans-unit id ="7" resname="CSSStatusMessages%%border">
+	  <source>This is some status text</source>
+	  <target>This is some status text</target>
+	</trans-unit>
+
+	<trans-unit id ="8" resname="CSSStatusMessages%%border-bottom">
+	  <source>This is some status text</source>
+	  <target>This is some status text</target>
+	</trans-unit>
+
+	<trans-unit id ="9" resname="CSSStatusMessages%%border-bottom-color">
+	  <source>This is some status text</source>
+	  <target>This is some status text</target>
+	</trans-unit>
+
+	<trans-unit id ="10" resname="CSSStatusMessages%%border-bottom-style">
+	  <source>This is some status text</source>
+	  <target>This is some status text</target>
+	</trans-unit>
+
+	<trans-unit id ="11" resname="CSSStatusMessages%%border-bottom-width">
+	  <source>This is some status text</source>
+	  <target>This is some status text</target>
+	</trans-unit>
+
+	<trans-unit id ="12" resname="CSSStatusMessages%%border-collapse">
+	  <source>This is some status text</source>
+	  <target>This is some status text</target>
+	</trans-unit>
+
+	<trans-unit id ="13" resname="CSSStatusMessages%%border-color">
+	  <source>This is some status text</source>
+	  <target>This is some status text</target>
+	</trans-unit>
+
+	<trans-unit id ="14" resname="CSSStatusMessages%%border-left">
+	  <source>This is some status text</source>
+	  <target>This is some status text</target>
+	</trans-unit>
+
+	<trans-unit id ="15" resname="CSSStatusMessages%%border-left-color">
+	  <source>This is some status text</source>
+	  <target>This is some status text</target>
+	</trans-unit>
+
+	<trans-unit id ="16" resname="CSSStatusMessages%%border-left-style">
+	  <source>This is some status text</source>
+	  <target>This is some status text</target>
+	</trans-unit>
+
+	<trans-unit id ="17" resname="CSSStatusMessages%%border-left-width">
+	  <source>This is some status text</source>
+	  <target>This is some status text</target>
+	</trans-unit>
+
+	<trans-unit id ="18" resname="CSSStatusMessages%%border-right">
+	  <source>This is some status text</source>
+	  <target>This is some status text</target>
+	</trans-unit>
+
+	<trans-unit id ="19" resname="CSSStatusMessages%%border-right-color">
+	  <source>This is some status text</source>
+	  <target>This is some status text</target>
+	</trans-unit>
+
+	<trans-unit id ="20" resname="CSSStatusMessages%%border-right-style">
+	  <source>This is some status text</source>
+	  <target>This is some status text</target>
+	</trans-unit>
+
+	<trans-unit id ="21" resname="CSSStatusMessages%%border-right-width">
+	  <source>This is some status text</source>
+	  <target>This is some status text</target>
+	</trans-unit>
+
+	<trans-unit id ="22" resname="CSSStatusMessages%%border-spacing">
+	  <source>This is some status text</source>
+	  <target>This is some status text</target>
+	</trans-unit>
+
+	<trans-unit id ="23" resname="CSSStatusMessages%%border-style">
+	  <source>This is some status text</source>
+	  <target>This is some status text</target>
+	</trans-unit>
+
+	<trans-unit id ="24" resname="CSSStatusMessages%%border-top">
+	  <source>This is some status text</source>
+	  <target>This is some status text</target>
+	</trans-unit>
+
+	<trans-unit id ="25" resname="CSSStatusMessages%%border-top-color">
+	  <source>This is some status text</source>
+	  <target>This is some status text</target>
+	</trans-unit>
+
+	<trans-unit id ="26" resname="CSSStatusMessages%%border-top-style">
+	  <source>This is some status text</source>
+	  <target>This is some status text</target>
+	</trans-unit>
+
+	<trans-unit id ="27" resname="CSSStatusMessages%%border-top-width">
+	  <source>This is some status text</source>
+	  <target>This is some status text</target>
+	</trans-unit>
+
+	<trans-unit id ="28" resname="CSSStatusMessages%%border-width">
+	  <source>This is some status text</source>
+	  <target>This is some status text</target>
+	</trans-unit>
+
+	<trans-unit id ="29" resname="CSSStatusMessages%%caption-side">
+	  <source>This is some status text</source>
+	  <target>This is some status text</target>
+	</trans-unit>
+
+	<trans-unit id ="30" resname="CSSStatusMessages%%clear">
+	  <source>This is some status text</source>
+	  <target>This is some status text</target>
+	</trans-unit>
+
+	<trans-unit id ="31" resname="CSSStatusMessages%%clip">
+	  <source>This is some status text</source>
+	  <target>This is some status text</target>
+	</trans-unit>
+
+	<trans-unit id ="32" resname="CSSStatusMessages%%color">
+	  <source>This is some status text</source>
+	  <target>This is some status text</target>
+	</trans-unit>
+
+	<trans-unit id ="33" resname="CSSStatusMessages%%content">
+	  <source>This is some status text</source>
+	  <target>This is some status text</target>
+	</trans-unit>
+
+	<trans-unit id ="34" resname="CSSStatusMessages%%counter-increment">
+	  <source>This is some status text</source>
+	  <target>This is some status text</target>
+	</trans-unit>
+
+	<trans-unit id ="35" resname="CSSStatusMessages%%counter-reset">
+	  <source>This is some status text</source>
+	  <target>This is some status text</target>
+	</trans-unit>
+
+	<trans-unit id ="36" resname="CSSStatusMessages%%cue">
+	  <source>This is some status text</source>
+	  <target>This is some status text</target>
+	</trans-unit>
+
+	<trans-unit id ="37" resname="CSSStatusMessages%%cue-after">
+	  <source>This is some status text</source>
+	  <target>This is some status text</target>
+	</trans-unit>
+
+	<trans-unit id ="38" resname="CSSStatusMessages%%cue-before">
+	  <source>This is some status text</source>
+	  <target>This is some status text</target>
+	</trans-unit>
+
+	<trans-unit id ="39" resname="CSSStatusMessages%%cursor">
+	  <source>This is some status text</source>
+	  <target>This is some status text</target>
+	</trans-unit>
+
+	<trans-unit id ="40" resname="CSSStatusMessages%%direction">
+	  <source>This is some status text</source>
+	  <target>This is some status text</target>
+	</trans-unit>
+
+	<trans-unit id ="41" resname="CSSStatusMessages%%display">
+	  <source>This is some status text</source>
+	  <target>This is some status text</target>
+	</trans-unit>
+
+	<trans-unit id ="42" resname="CSSStatusMessages%%elevation">
+	  <source>This is some status text</source>
+	  <target>This is some status text</target>
+	</trans-unit>
+
+	<trans-unit id ="43" resname="CSSStatusMessages%%empty-cells">
+	  <source>This is some status text</source>
+	  <target>This is some status text</target>
+	</trans-unit>
+
+	<trans-unit id ="44" resname="CSSStatusMessages%%float">
+	  <source>This is some status text</source>
+	  <target>This is some status text</target>
+	</trans-unit>
+
+	<trans-unit id ="45" resname="CSSStatusMessages%%font">
+	  <source>This is some status text</source>
+	  <target>This is some status text</target>
+	</trans-unit>
+
+	<trans-unit id ="46" resname="CSSStatusMessages%%font-family">
+	  <source>This is some status text</source>
+	  <target>This is some status text</target>
+	</trans-unit>
+
+	<trans-unit id ="47" resname="CSSStatusMessages%%font-size">
+	  <source>This is some status text</source>
+	  <target>This is some status text</target>
+	</trans-unit>
+
+	<trans-unit id ="48" resname="CSSStatusMessages%%font-size-adjust">
+	  <source>This is some status text</source>
+	  <target>This is some status text</target>
+	</trans-unit>
+
+	<trans-unit id ="49" resname="CSSStatusMessages%%font-stretch">
+	  <source>This is some status text</source>
+	  <target>This is some status text</target>
+	</trans-unit>
+
+	<trans-unit id ="50" resname="CSSStatusMessages%%font-style">
+	  <source>This is some status text</source>
+	  <target>This is some status text</target>
+	</trans-unit>
+
+	<trans-unit id ="51" resname="CSSStatusMessages%%font-variant">
+	  <source>This is some status text</source>
+	  <target>This is some status text</target>
+	</trans-unit>
+
+	<trans-unit id ="52" resname="CSSStatusMessages%%font-weight">
+	  <source>This is some status text</source>
+	  <target>This is some status text</target>
+	</trans-unit>
+
+	<trans-unit id ="53" resname="CSSStatusMessages%%height">
+	  <source>This is some status text</source>
+	  <target>This is some status text</target>
+	</trans-unit>
+
+	<trans-unit id ="54" resname="CSSStatusMessages%%left">
+	  <source>This is some status text</source>
+	  <target>This is some status text</target>
+	</trans-unit>
+
+	<trans-unit id ="55" resname="CSSStatusMessages%%letter-spacing">
+	  <source>This is some status text</source>
+	  <target>This is some status text</target>
+	</trans-unit>
+
+	<trans-unit id ="56" resname="CSSStatusMessages%%line-height">
+	  <source>This is some status text</source>
+	  <target>This is some status text</target>
+	</trans-unit>
+
+	<trans-unit id ="57" resname="CSSStatusMessages%%list-style">
+	  <source>This is some status text</source>
+	  <target>This is some status text</target>
+	</trans-unit>
+
+	<trans-unit id ="58" resname="CSSStatusMessages%%list-style-image">
+	  <source>This is some status text</source>
+	  <target>This is some status text</target>
+	</trans-unit>
+
+	<trans-unit id ="59" resname="CSSStatusMessages%%list-style-position">
+	  <source>This is some status text</source>
+	  <target>This is some status text</target>
+	</trans-unit>
+
+	<trans-unit id ="60" resname="CSSStatusMessages%%list-style-type">
+	  <source>This is some status text</source>
+	  <target>This is some status text</target>
+	</trans-unit>
+
+	<trans-unit id ="61" resname="CSSStatusMessages%%margin">
+	  <source>This is some status text</source>
+	  <target>This is some status text</target>
+	</trans-unit>
+
+	<trans-unit id ="62" resname="CSSStatusMessages%%margin-bottom">
+	  <source>This is some status text</source>
+	  <target>This is some status text</target>
+	</trans-unit>
+
+	<trans-unit id ="63" resname="CSSStatusMessages%%margin-left">
+	  <source>This is some status text</source>
+	  <target>This is some status text</target>
+	</trans-unit>
+
+	<trans-unit id ="64" resname="CSSStatusMessages%%margin-right">
+	  <source>This is some status text</source>
+	  <target>This is some status text</target>
+	</trans-unit>
+
+	<trans-unit id ="65" resname="CSSStatusMessages%%margin-top">
+	  <source>This is some status text</source>
+	  <target>This is some status text</target>
+	</trans-unit>
+
+	<trans-unit id ="66" resname="CSSStatusMessages%%marker-offset">
+	  <source>This is some status text</source>
+	  <target>This is some status text</target>
+	</trans-unit>
+
+	<trans-unit id ="67" resname="CSSStatusMessages%%marks">
+	  <source>This is some status text</source>
+	  <target>This is some status text</target>
+	</trans-unit>
+
+	<trans-unit id ="68" resname="CSSStatusMessages%%max-height">
+	  <source>This is some status text</source>
+	  <target>This is some status text</target>
+	</trans-unit>
+
+	<trans-unit id ="69" resname="CSSStatusMessages%%max-width">
+	  <source>This is some status text</source>
+	  <target>This is some status text</target>
+	</trans-unit>
+
+	<trans-unit id ="70" resname="CSSStatusMessages%%min-height">
+	  <source>This is some status text</source>
+	  <target>This is some status text</target>
+	</trans-unit>
+
+	<trans-unit id ="71" resname="CSSStatusMessages%%min-width">
+	  <source>This is some status text</source>
+	  <target>This is some status text</target>
+	</trans-unit>
+
+	<trans-unit id ="72" resname="CSSStatusMessages%%orphans">
+	  <source>This is some status text</source>
+	  <target>This is some status text</target>
+	</trans-unit>
+
+	<trans-unit id ="73" resname="CSSStatusMessages%%outline">
+	  <source>This is some status text</source>
+	  <target>This is some status text</target>
+	</trans-unit>
+
+	<trans-unit id ="74" resname="CSSStatusMessages%%outline-color">
+	  <source>This is some status text</source>
+	  <target>This is some status text</target>
+	</trans-unit>
+
+	<trans-unit id ="75" resname="CSSStatusMessages%%outline-style">
+	  <source>This is some status text</source>
+	  <target>This is some status text</target>
+	</trans-unit>
+
+	<trans-unit id ="76" resname="CSSStatusMessages%%outline-width">
+	  <source>This is some status text</source>
+	  <target>This is some status text</target>
+	</trans-unit>
+
+	<trans-unit id ="77" resname="CSSStatusMessages%%overflow">
+	  <source>This is some status text</source>
+	  <target>This is some status text</target>
+	</trans-unit>
+
+	<trans-unit id ="78" resname="CSSStatusMessages%%padding">
+	  <source>This is some status text</source>
+	  <target>This is some status text</target>
+	</trans-unit>
+
+	<trans-unit id ="79" resname="CSSStatusMessages%%padding-bottom">
+	  <source>This is some status text</source>
+	  <target>This is some status text</target>
+	</trans-unit>
+
+	<trans-unit id ="80" resname="CSSStatusMessages%%padding-left">
+	  <source>This is some status text</source>
+	  <target>This is some status text</target>
+	</trans-unit>
+
+	<trans-unit id ="81" resname="CSSStatusMessages%%padding-right">
+	  <source>This is some status text</source>
+	  <target>This is some status text</target>
+	</trans-unit>
+
+	<trans-unit id ="82" resname="CSSStatusMessages%%padding-top">
+	  <source>This is some status text</source>
+	  <target>This is some status text</target>
+	</trans-unit>
+
+	<trans-unit id ="83" resname="CSSStatusMessages%%page">
+	  <source>This is some status text</source>
+	  <target>This is some status text</target>
+	</trans-unit>
+
+	<trans-unit id ="84" resname="CSSStatusMessages%%page-break-after">
+	  <source>This is some status text</source>
+	  <target>This is some status text</target>
+	</trans-unit>
+
+	<trans-unit id ="85" resname="CSSStatusMessages%%page-break-before">
+	  <source>This is some status text</source>
+	  <target>This is some status text</target>
+	</trans-unit>
+
+	<trans-unit id ="86" resname="CSSStatusMessages%%page-break-inside">
+	  <source>This is some status text</source>
+	  <target>This is some status text</target>
+	</trans-unit>
+
+	<trans-unit id ="87" resname="CSSStatusMessages%%pause">
+	  <source>This is some status text</source>
+	  <target>This is some status text</target>
+	</trans-unit>
+
+	<trans-unit id ="88" resname="CSSStatusMessages%%pause-after">
+	  <source>This is some status text</source>
+	  <target>This is some status text</target>
+	</trans-unit>
+
+	<trans-unit id ="89" resname="CSSStatusMessages%%pause-before">
+	  <source>This is some status text</source>
+	  <target>This is some status text</target>
+	</trans-unit>
+
+	<trans-unit id ="90" resname="CSSStatusMessages%%pitch">
+	  <source>This is some status text</source>
+	  <target>This is some status text</target>
+	</trans-unit>
+
+	<trans-unit id ="91" resname="CSSStatusMessages%%pitch-range">
+	  <source>This is some status text</source>
+	  <target>This is some status text</target>
+	</trans-unit>
+
+	<trans-unit id ="92" resname="CSSStatusMessages%%play-during">
+	  <source>This is some status text</source>
+	  <target>This is some status text</target>
+	</trans-unit>
+
+	<trans-unit id ="93" resname="CSSStatusMessages%%position">
+	  <source>This is some status text</source>
+	  <target>This is some status text</target>
+	</trans-unit>
+
+	<trans-unit id ="94" resname="CSSStatusMessages%%quotes">
+	  <source>This is some status text</source>
+	  <target>This is some status text</target>
+	</trans-unit>
+
+	<trans-unit id ="95" resname="CSSStatusMessages%%richness">
+	  <source>This is some status text</source>
+	  <target>This is some status text</target>
+	</trans-unit>
+
+	<trans-unit id ="96" resname="CSSStatusMessages%%right">
+	  <source>This is some status text</source>
+	  <target>This is some status text</target>
+	</trans-unit>
+
+	<trans-unit id ="97" resname="CSSStatusMessages%%size">
+	  <source>This is some status text</source>
+	  <target>This is some status text</target>
+	</trans-unit>
+
+	<trans-unit id ="98" resname="CSSStatusMessages%%speak">
+	  <source>This is some status text</source>
+	  <target>This is some status text</target>
+	</trans-unit>
+
+	<trans-unit id ="99" resname="CSSStatusMessages%%speak-header">
+	  <source>This is some status text</source>
+	  <target>This is some status text</target>
+	</trans-unit>
+
+	<trans-unit id ="100" resname="CSSStatusMessages%%speak-numeral">
+	  <source>This is some status text</source>
+	  <target>This is some status text</target>
+	</trans-unit>
+
+	<trans-unit id ="101" resname="CSSStatusMessages%%speak-punctuation">
+	  <source>This is some status text</source>
+	  <target>This is some status text</target>
+	</trans-unit>
+
+	<trans-unit id ="102" resname="CSSStatusMessages%%speech-rate">
+	  <source>This is some status text</source>
+	  <target>This is some status text</target>
+	</trans-unit>
+
+	<trans-unit id ="103" resname="CSSStatusMessages%%stress">
+	  <source>This is some status text</source>
+	  <target>This is some status text</target>
+	</trans-unit>
+
+	<trans-unit id ="104" resname="CSSStatusMessages%%table-layout">
+	  <source>This is some status text</source>
+	  <target>This is some status text</target>
+	</trans-unit>
+
+	<trans-unit id ="105" resname="CSSStatusMessages%%text-align">
+	  <source>This is some status text</source>
+	  <target>This is some status text</target>
+	</trans-unit>
+
+	<trans-unit id ="106" resname="CSSStatusMessages%%text-decoration">
+	  <source>This is some status text</source>
+	  <target>This is some status text</target>
+	</trans-unit>
+
+	<trans-unit id ="107" resname="CSSStatusMessages%%text-indent">
+	  <source>This is some status text</source>
+	  <target>This is some status text</target>
+	</trans-unit>
+
+	<trans-unit id ="108" resname="CSSStatusMessages%%text-shadow">
+	  <source>This is some status text</source>
+	  <target>This is some status text</target>
+	</trans-unit>
+
+	<trans-unit id ="109" resname="CSSStatusMessages%%text-transform">
+	  <source>This is some status text</source>
+	  <target>This is some status text</target>
+	</trans-unit>
+
+	<trans-unit id ="110" resname="CSSStatusMessages%%top">
+	  <source>This is some status text</source>
+	  <target>This is some status text</target>
+	</trans-unit>
+
+	<trans-unit id ="111" resname="CSSStatusMessages%%unicode-bidi">
+	  <source>This is some status text</source>
+	  <target>This is some status text</target>
+	</trans-unit>
+
+	<trans-unit id ="112" resname="CSSStatusMessages%%vertical-align">
+	  <source>This is some status text</source>
+	  <target>This is some status text</target>
+	</trans-unit>
+
+	<trans-unit id ="113" resname="CSSStatusMessages%%visiabiltiy">
+	  <source>This is some status text</source>
+	  <target>This is some status text</target>
+	</trans-unit>
+
+	<trans-unit id ="114" resname="CSSStatusMessages%%voice-family">
+	  <source>This is some status text</source>
+	  <target>This is some status text</target>
+	</trans-unit>
+
+	<trans-unit id ="115" resname="CSSStatusMessages%%volume">
+	  <source>This is some status text</source>
+	  <target>This is some status text</target>
+	</trans-unit>
+
+	<trans-unit id ="116" resname="CSSStatusMessages%%white-space">
+	  <source>This is some status text</source>
+	  <target>This is some status text</target>
+	</trans-unit>
+
+	<trans-unit id ="117" resname="CSSStatusMessages%%widows">
+	  <source>This is some status text</source>
+	  <target>This is some status text</target>
+	</trans-unit>
+
+	<trans-unit id ="118" resname="CSSStatusMessages%%width">
+	  <source>This is some status text</source>
+	  <target>This is some status text</target>
+	</trans-unit>
+
+	<trans-unit id ="119" resname="CSSStatusMessages%%word-spacing">
+	  <source>This is some status text</source>
+	  <target>This is some status text</target>
+	</trans-unit>
+
+        <trans-unit id ="120" resname="CSSStatusMessages%%z-index">
+          <source>This is some status text</source>
+          <target>This is some status text</target>
+        </trans-unit>
+      </group>	<!-- End of the group for CSSStatusMessages -->
+    </body>
+  </file>
+</xliff>

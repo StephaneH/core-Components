@@ -1,0 +1,3109 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Translation file for 4D products.
+  Copyright (C) 2007-2014 4D SAS.
+  This file is distributed under the same license as the 4D product package.
+-->
+
+<!DOCTYPE xliff PUBLIC "-//XLIFF//DTD XLIFF//EN"
+"http://www.oasis-open.org/committees/xliff/documents/xliff.dtd">
+
+<xliff version="1.0">
+  <file datatype="x-STR#" original="undefined" source-language="en-US" target-language="cs" product-version="v14">
+    <header>
+      <note>The character &quot;%&quot; (out of a numerical context) is a meta-character that will be replaced (often by a numeric value) before the string is displayed</note>
+      <note>Text between less than (&lt;) and greater than (&gt;) symbols is a variable&apos;s name and must not be localised</note>
+      <note>\r, \t and \n are meta-characters.</note>
+    </header>
+    <body>
+      <group id="1000" resname="DB4D Errors Text">
+        <trans-unit resname="ERR_dbmg_1001" id="1">
+          <source>No column to import in table {TableName}</source>
+          <target>Žádný sloupec k importu do tabulky {TableName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1002" id="2">
+          <source>Wrong table to import</source>
+          <target>Špatná tabulka k importu</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1003" id="3">
+          <source>No column to export in table {TableName}</source>
+          <target>Žádný sloupec k importu do tabulky {TableName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1004" id="4">
+          <source>Wrong table to export</source>
+          <target>Špatná tabulka k exportu</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1006" id="6">
+          <source>Cannot save structure of database {BaseName}</source>
+          <target>Nelze uložit strukturu databáze {BaseName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1007" id="7">
+          <source>Cannot create data file of database: {BaseName}</source>
+          <target>Nelze vytvořit soubor dat databáze: {BaseName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1008" id="8">
+          <source>Wrong data segment in database {BaseName}</source>
+          <target>Špatný datový segment v databázi {BaseName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1009" id="9">
+          <source>Memory is full</source>
+          <target>Paměť je zaplněna</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1010" id="10">
+          <source>Cannot load a table definition of database {BaseName}</source>
+          <target>Nelze zavést definice tabulek databáze {BaseName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1011" id="11">
+          <source>Cannot open data file of database {BaseName}</source>
+          <target>Nelze otevřít soubor dat databáze {BaseName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1012" id="12">
+          <source>Data segment is full in database: {BaseName}</source>
+          <target>Byl zaplněn segment dat databáze: {BaseName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1013" id="13">
+          <source>Cannot save data segment in database {BaseName}</source>
+          <target>Nelze uložit segment dat databáze {BaseName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1014" id="14">
+          <source>Cannot read data segment of database {BaseName}</source>
+          <target>Nelze číst segment dat databáze {BaseName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1015" id="15">
+          <source>Wrong database header in database {BaseName}</source>
+          <target>Špatná hlavička databáze v databázi {BaseName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1016" id="16">
+          <source>Cannot create table in database {BaseName}</source>
+          <target>Nelze vytvořit tabulku v databázi {BaseName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1017" id="17">
+          <source>Cannot read index list of database {BaseName}</source>
+          <target>Nelze přečíst seznam indexů databáze {BaseName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1018" id="18">
+          <source>Cannot write index list of database {BaseName}</source>
+          <target>Nelze zapsat seznam indexů databáze {BaseName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1019" id="19">
+          <source>Wrong table reference in database {BaseName}</source>
+          <target>Špatný odkaz na tabulku v databázi {BaseName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1020" id="20">
+          <source>Wrong field reference in database {BaseName}</source>
+          <target>Špatný odkaz na pole v databázi {BaseName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1021" id="21">
+          <source>Invalid index type in database {BaseName}</source>
+          <target>Neplatný typ indexu v databázi {BaseName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1022" id="22">
+          <source>Invalid field name in table {TableName} of database {BaseName}</source>
+          <target>Nesprávný název pole v tabulce {TableName} databáze {BaseName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1023" id="23">
+          <source>Invalid database name</source>
+          <target>Neplatný název databáze</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1024" id="24">
+          <source>Cannot open structure of database {BaseName}</source>
+          <target>Nelze otevřít soubor struktury databáze {BaseName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1025" id="25">
+          <source>Cannot create structure of database {BaseName}</source>
+          <target>Nelze vytvořit strukturu databáze {BaseName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1026" id="26">
+          <source>Cannot load bit selection of database {BaseName}</source>
+          <target>Nelze zavést bitový výběr databáze {BaseName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1027" id="27">
+          <source>Cannot load set of database {BaseName}</source>
+          <target>Nelze zavést sadu databáze {BaseName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1028" id="28">
+          <source>Cannot modify set of database {BaseName}</source>
+          <target>Nelze upravit sadu databáze {BaseName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1029" id="29">
+          <source>Cannot save set of database {BaseName}</source>
+          <target>Nelze uložit sadu databáze {BaseName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1030" id="30">
+          <source>Cannot save BLOB {BlobNum} in table {TableName} of database {BaseName}</source>
+          <target>Nelze uložit BLOB {BlobNum} tabulky {TableName} databáze {BaseName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1031" id="31">
+          <source>Cannot load BLOB {BlobNum} in table {TableName} of database {BaseName}</source>
+          <target>Nelze zavést BLOB {BlobNum} tabulky {TableName} databáze {BaseName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1032" id="32">
+          <source>Cannot allocate BLOB {BlobNum} in table {TableName} of database {BaseName}</source>
+          <target>Nelze alokovat BLOB {BlobNum} tabulky {TableName} databáze {BaseName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1033" id="33">
+          <source>Cannot load data bit table of database {BaseName}</source>
+          <target>Nelze zavést bitovou tabulku dat databáze {BaseName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1034" id="34">
+          <source>Cannot save data bit table of database {BaseName}</source>
+          <target>Nelze uložit bitovou tabulku dat databáze {BaseName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1035" id="35">
+          <source>Cannot load table of data bit tables of database {BaseName}</source>
+          <target>Nelze zavést tabulku bitových tabulek dat databáze {BaseName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1036" id="36">
+          <source>Cannot save table of data bit tables in database {BaseName}</source>
+          <target>Nelze uložit tabulku bitových tabulek dat databáze {BaseName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1037" id="37">
+          <source>Cannot close data segment of database {BaseName}</source>
+          <target>Nelze uzavřít segment dat databáze {BaseName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1038" id="38">
+          <source>Cannot delete data segment of database {BaseName}</source>
+          <target>Nelze vymazat segment dat databáze {BaseName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1039" id="39">
+          <source>Cannot open data segment of database {BaseName}</source>
+          <target>Nelze otevřít segment dat databáze {BaseName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1040" id="40">
+          <source>Cannot create data segment of database {BaseName}</source>
+          <target>Nelze vytvořit segment dat databáze {BaseName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1041" id="41">
+          <source>Cannot allocate space in data segment</source>
+          <target>Nelze alokovat místo v segmentu dat</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1042" id="42">
+          <source>Cannot free space in data segment of database {BaseName}</source>
+          <target>Nelze uvolnit místo v segmentu dat databáze {BaseName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1043" id="43">
+          <source>File is write protected</source>
+          <target>Soubor chráněn proti zápisu</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1044" id="44">
+          <source>Cannot access field in record {RecNum} in table {TableName} of database {BaseName}</source>
+          <target>Nlze zpřístupnit pole v záznamu {RecNum} tabulky {TableName} databáze {BaseName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1045" id="45">
+          <source>Field definition code is missing in record {RecNum} in table {TableName} of database {BaseName}</source>
+          <target>Kód definice pole chybí v záznamu {RecNum} tabulky {TableName} databáze {BaseName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1046" id="46">
+          <source>Cannot save record {RecNum} in table {TableName} of database {BaseName}</source>
+          <target>Nelze uložit záznam {RecNum} tabulky {TableName} databáze {BaseName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1047" id="47">
+          <source>Cannot load record {RecNum} in table {TableName} of database {BaseName}</source>
+          <target>Nelze zavést záznam {RecNum} tabulky {TableName} databáze {BaseName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1048" id="48">
+          <source>Cannot allocate record in table {TableName} of database {BaseName}</source>
+          <target>Nlze alokovat záznam tabulky {TableName} databáze {BaseName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1049" id="49">
+          <source>Cannot update record {RecNum} in table {TableName} of database {BaseName}</source>
+          <target>Nelze aktualizovat záznam {RecNum} tabulky {TableName} databáze {BaseName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1050" id="50">
+          <source>Wrong header for record {RecNum} in table {TableName} of database {BaseName}</source>
+          <target>Špatná hlavička záznamu {RecNum} tabulky {TableName} databáze {BaseName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1051" id="51">
+          <source>Cannot save definition of table {TableName} of database {BaseName}</source>
+          <target>Nelze uložit definici tabulky {TableName} databáze {BaseName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1052" id="52">
+          <source>Cannot update definition of table {TableName} of database {BaseName}</source>
+          <target>Nelze aktualizovat definici {TableName} databáze {BaseName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1053" id="53">
+          <source>Field name already exists</source>
+          <target>Název pole již existuje</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1055" id="55">
+          <source>Cannot update index values while saving a record in table {TableName} of database {BaseName}</source>
+          <target>Nelze aktualizovat hodnoty indexů při ukládání záznamu tabulky {TableName} databáze {BaseName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1056" id="56">
+          <source>Cannot update BLOBs while saving a record in table {TableName} of database {BaseName}</source>
+          <target>Nelze aktualizovat BLOBs při ukládání záznamu tabulky {TableName} databáze {BaseName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1057" id="57">
+          <source>Cannot delete BLOBs while saving or deleting a record in table {TableName} of database {BaseName}</source>
+          <target>Nelze mazat BLOBs při ukládání nebo mazání záznamu tabulky {TableName} databáze {BaseName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1058" id="58">
+          <source>Cannot add field in table {TableName} of database {BaseName}</source>
+          <target>Nelze přidat pole tabulky {TableName} databáze {BaseName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1059" id="59">
+          <source>Cannot allocate table in memory</source>
+          <target>Nelze alokovat tabulku v paměti</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1061" id="61">
+          <source>Cannot allocate record in memory</source>
+          <target>Nelze alokovat záznam v paměti</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1062" id="62">
+          <source>Cannot completely delete table {TableName} of database {BaseName}</source>
+          <target>Nelze trvale vymazat tabulku {TableName} databáze {BaseName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1063" id="63">
+          <source>Cannot lock record {RecNum} in table {TableName} of database {BaseName}</source>
+          <target>Nelze uzamknout záznam {RecNum} tabulky {TableName} databáze {BaseName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1064" id="64">
+          <source>Cannot unlock record {RecNum} in table {TableName} of database {BaseName}</source>
+          <target>Nelze odemknout záznam {RecNum} tabulky {TableName} databáze {BaseName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1065" id="65">
+          <source>Cannot delete record {RecNum} in table {TableName} of database {BaseName}</source>
+          <target>Nelze vymazat záznam {RecNum} tabulky {TableName} databáze {BaseName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1066" id="66">
+          <source>Record {RecNum} is locked in table {TableName} of database {BaseName}</source>
+          <target>Uzamčený záznam {RecNum} tabulky {TableName} databáze {BaseName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1067" id="67">
+          <source>Sequential search could not be completed in table {TableName} of database {BaseName}</source>
+          <target>Nelze dokončit sekvenční hlednání v tabulce {TableName} databáze {BaseName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1068" id="68">
+          <source>Cannot save header for table {TableName} of database {BaseName}</source>
+          <target>Nelze uložit hlavičku tabulky {TableName} databáze {BaseName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1069" id="69">
+          <source>Cannot import data in table {TableName} of database {BaseName}</source>
+          <target>Nelze importovat data tabulky {TableName} databáze {BaseName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1070" id="70">
+          <source>Cannot load index header of database {BaseName}</source>
+          <target>Nelze zavést hlavičku indexu databáze {BaseName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1071" id="71">
+          <source>Cannot save header for index {IndexName} of database {BaseName}</source>
+          <target>Nelze uložit hlavičku pro index {IndexName} databáze {BaseName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1072" id="72">
+          <source>Cannot get page address for index {IndexName} of database {BaseName}</source>
+          <target>Nelze získat adresu stránky pro index {IndexName} databáze {BaseName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1073" id="73">
+          <source>Cannot set page address for index {IndexName} of database {BaseName}</source>
+          <target>Nelze nastavit adresu stránky pro index {IndexName} databáze {BaseName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1074" id="74">
+          <source>Cannot drop index {IndexName} of database {BaseName}</source>
+          <target>Nelze pustit index {IndexName} databáze {BaseName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1075" id="75">
+          <source>Cannot sort index {IndexName} of database {BaseName}</source>
+          <target>Nelze třídit index {IndexName} databáze {BaseName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1076" id="76">
+          <source>Cannot load page for index {IndexName} of database {BaseName}</source>
+          <target>Nelze zavést stránku pro index {IndexName} databáze {BaseName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1077" id="77">
+          <source>Cannot save page for index {IndexName} of database {BaseName}</source>
+          <target>Nelze uložit stránku pro index {IndexName} databáze {BaseName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1078" id="78">
+          <source>Cannot insert key into index {IndexName} of database {BaseName}</source>
+          <target>Nelze vložit klíč do indexu {IndexName} databáze {BaseName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1079" id="79">
+          <source>Cannot delete key from index {IndexName} of database {BaseName}</source>
+          <target>Nelze vymazat klíč z indexu {IndexName} databáze {BaseName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1080" id="80">
+          <source>Cannot completely delete index {IndexName} of database {BaseName}</source>
+          <target>Nelze kompletně vymazat index {IndexName} of database {BaseName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1081" id="81">
+          <source>Cannot complete scan on index {IndexName} of database {BaseName}</source>
+          <target>Nelze dokončit sken indexu {IndexName} databáze {BaseName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1082" id="82">
+          <source>Cannot complete sort of index {IndexName} of database {BaseName}</source>
+          <target>Nelze dokončit třídění indexu {IndexName} databáze {BaseName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1083" id="83">
+          <source>Cannot insert key into page of index {IndexName} of database {BaseName}</source>
+          <target>Nelze vložit klíč do stránky indexu {IndexName} databáze {BaseName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1084" id="84">
+          <source>Cannot delete key from page of index {IndexName} of database {BaseName}</source>
+          <target>Nelze vymazat klíč ze stránky indexu {IndexName} databáze {BaseName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1085" id="85">
+          <source>Cannot load index cluster of database {BaseName}</source>
+          <target>Nelze zavést indexový klastr databáze {BaseName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1086" id="86">
+          <source>Cannot add to index cluster of database {BaseName}</source>
+          <target>Nelze přidat do indexového klastru databáze {BaseName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1087" id="87">
+          <source>Cannot delete from index cluster of database {BaseName}</source>
+          <target>Nelze mazat z indexového kastru databáze {BaseName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1088" id="88">
+          <source>Index {IndexName} is invalid or missing</source>
+          <target>Index {IndexName} je neplatný nebo chybí</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1089" id="89">
+          <source>SQL syntax error (Obsolete)</source>
+          <target>Chyba syntaxe SQL (opuštěno)</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1090" id="90">
+          <source>SQL token not found (Obsolete)</source>
+          <target>Token SQL nenalezen (opuštěno)</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1091" id="91">
+          <source>Not implemented</source>
+          <target>Neimplementováno</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1092" id="92">
+          <source>Cannot register code</source>
+          <target>Nelze registrovat kód</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1093" id="93">
+          <source>Operation in progress cancelled by user</source>
+          <target>Běžící operace stornována uživatelem</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1094" id="94">
+          <source>Transaction conflict</source>
+          <target>Konflikt tansakce</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1095" id="95">
+          <source>Invalid table name in database {BaseName}</source>
+          <target>Neplatný název tabulky databáze {BaseName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1096" id="96">
+          <source>Table {TableName} is locked in database {BaseName}</source>
+          <target>Uzamčená tabulka {TableName} databáze {BaseName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1097" id="97">
+          <source>Database {BaseName} is locked</source>
+          <target>Databáze {BaseName} je uzamčena</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1098" id="98">
+          <source>Data address is invalid in database {BaseName}</source>
+          <target>Neplatná adresa dat v databázi {BaseName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1099" id="99">
+          <source>Record is empty </source>
+          <target>Záznam je prázdný</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1100" id="100">
+          <source>Wrong source field</source>
+          <target>Špatné zdrojové pole (sloupec)</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1101" id="101">
+          <source>Wrong destination field</source>
+          <target>Špatné cílové pole (sloupec)</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1102" id="102">
+          <source>Invalid relation name</source>
+          <target>Neplatný název vztahu</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1103" id="103">
+          <source>Field types do not match</source>
+          <target>Typy polí si neodpovídají</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1104" id="104">
+          <source>Relation is empty</source>
+          <target>Vztah je prázdný</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1105" id="105">
+          <source>Cannot load relations list from database {BaseName}</source>
+          <target>Nelze zavést seznam vztahů databáze {BaseName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1106" id="106">
+          <source>Cannot save relations list into database {BaseName}</source>
+          <target>Nelze uložit seznam vztahů databáze {BaseName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1107" id="107">
+          <source>Query and lock not completed; at least one record locked somewhere else</source>
+          <target>Query and lock (Dotaz a uzamknout) nedokončeny; nejméně jeden záznam uzamčen někde jinde</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1108" id="108">
+          <source>Invalid record</source>
+          <target>Neplatný záznam</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1109" id="109">
+          <source>Wrong record ID</source>
+          <target>Špatné ID záznamu</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1110" id="110">
+          <source>Relation already exists in database {BaseName}</source>
+          <target>Již existující vztah  v databázi {BaseName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1111" id="111">
+          <source>Index already exists in database {BaseName}</source>
+          <target>Již existující index v databázi {BaseName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1112" id="112">
+          <source>Wrong comparison operator</source>
+          <target>Špatný operátor porovnáví</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1113" id="113">
+          <source>End of data buffer</source>
+          <target>Konec bufferu dat</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1114" id="114">
+          <source>Wrong DB4D version number</source>
+          <target>Špatné číslo verze DB4D</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1115" id="115">
+          <source>Duplicated key</source>
+          <target>Zdvojený klíč</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1116" id="116">
+          <source>Mandatory field is Null in record {RecNum} in table {TableName}</source>
+          <target>Prázdné povinné pole v záznamu {RecNum} tabulky {TableName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1117" id="117">
+          <source>Cannot set field to mandatory for table {TableName}</source>
+          <target>Pole nelze nastavit jako povinné pro tabulku {TableName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1118" id="118">
+          <source>Cannot get exclusive access to table {TableName}</source>
+          <target>Nelze získat výhradní přístup k tabulce {TableName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1119" id="119">
+          <source>Cannot check referential integrity of table {TableName}</source>
+          <target>Nelze zkontrolovat referenční integritu tabulky {TableName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1120" id="120">
+          <source>Reference integrity: some foreign keys still exist matching primary key on record {RecNum} in table {TableName}</source>
+          <target>Referenční integrita: stále existují nějaké cizí klíče  odpovídající primárnímu klíči v záznamu {RecNum} tabulky {TableName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1121" id="121">
+          <source>Cannot delete all records in selection of table {TableName}</source>
+          <target>Nelze vymazat všechny záznamy výběru z tabulky {TableName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1122" id="122">
+          <source>BLOB is Null</source>
+          <target>BLOB je prázdný</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1123" id="123">
+          <source>Invalid database context</source>
+          <target>Noplatný kontext databáze</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1124" id="124">
+          <source>Invalid relation reference</source>
+          <target>Neplatný odkaz vztahu</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1125" id="125">
+          <source>Invalid record name in table {TableName}</source>
+          <target>Neplatný název záznamu v tabulce {TableName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1126" id="126">
+          <source>Wrong field type</source>
+          <target>Špatný typ pole</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1127" id="127">
+          <source>Cannot load extra properties</source>
+          <target>Nelze zavést extra vlastnosti</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1128" id="128">
+          <source>Cannot save extra properties</source>
+          <target>Nelze uložit extra vlastnosti</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1129" id="129">
+          <source>Subrecord ID is out of range</source>
+          <target>ID podzáznamu je mimo rozsah</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1130" id="130">
+          <source>Duplicate name for index {IndexName} in database {BaseName}</source>
+          <target>Zdvojený název pro index {IndexName} v databázi {BaseName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1131" id="131">
+          <source>Invalid name for index {IndexName} in database {BaseName}</source>
+          <target>Neplatný název pro index {IndexName} v databázi {BaseName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1132" id="132">
+          <source>Wrong key value on index {IndexName}</source>
+          <target>Špatná hodnota klíče v indexu {IndexName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1133" id="133">
+          <source>Wrong type for index {IndexName}</source>
+          <target>Špatný typ pro klíč {IndexName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1134" id="134">
+          <source>Invalid accessor</source>
+          <target>Neplatný accessor (přistupovač)</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1135" id="135">
+          <source>Accessor is read only</source>
+          <target>Accessor (přistupovač) je pouze pro čtení</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1136" id="136">
+          <source>Null value not accepted</source>
+          <target>Prázdná hodnota je nepřijetelná</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1137" id="137">
+          <source>THIS is Null</source>
+          <target>TOTO je Null (prázdné)</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1138" id="138">
+          <source>Selection is Null</source>
+          <target>Výběr je prázdný</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1139" id="139">
+          <source>Database {BaseName} is write protected</source>
+          <target>Databáze {BaseName} je chráněna proti zápisu</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1140" id="140">
+          <source>Database {BaseName} is closing</source>
+          <target>Databáze {BaseName} se uzavírá</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1141" id="141">
+          <source>Invalid transaction</source>
+          <target>Neplatná transakce</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1142" id="142">
+          <source>Array limit is exceeded</source>
+          <target>Limit array byl překročen</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1143" id="143">
+          <source>Creator of array values is missing</source>
+          <target>Chybí creator hodnot pole (kdo,co)</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1144" id="144">
+          <source>Cannot build selection of table {TableName}</source>
+          <target>Nelze vytvořit výběr z tabulky {TableName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1145" id="145">
+          <source>Busy object</source>
+          <target>Zaneprázdněný objekt</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1146" id="146">
+          <source>Data file does not match structure file</source>
+          <target>Soubor dat neodpovídá souboru struktury</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1147" id="147">
+          <source>Cannot start listener</source>
+          <target>Nelze nastartovat Listener</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1148" id="148">
+          <source>Cannot start server</source>
+          <target>Nelze nastartovat server</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1149" id="149">
+          <source>No listener</source>
+          <target>Žádný Listener</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1150" id="150">
+          <source>Task is dying</source>
+          <target>Úloha kolabuje</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1151" id="151">
+          <source>Invalid request tag</source>
+          <target>Neplatný tag požadavku</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1152" id="152">
+          <source>Invalid context ID</source>
+          <target>Neplatné ID kontextu</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1153" id="153">
+          <source>Not enough temporary space on disk</source>
+          <target>Není dost dočasného prostoru na disku</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1154" id="154">
+          <source>Data set is Null</source>
+          <target>Sada dat je prázdná</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1155" id="155">
+          <source>No primary key matching the foreign key</source>
+          <target>Žádný primární klíč odpovídající cizímu klíči</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1156" id="156">
+          <source>Type of field {FieldName} of table {TableName} does not support being set to Unique</source>
+          <target>Typ pole {FieldName} tabulky {TableName} nepodporuje nastavení na Jedinečné</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1157" id="157">
+          <source>Type of field {FieldName} of table {TableName} does not support being set to NEVER NULL</source>
+          <target>Typ pole {FieldName} tabulky {TableName} nepodporuje nastavení na Nikdy prázdné (NEVER NULL)</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1158" id="158">
+          <source>Cannot alter primary key definition of table {TableName}</source>
+          <target>Nelze změnit definici primárního klíče tabulky {TableName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1159" id="159">
+          <source>Maximum number of records has been reached for table {TableName}</source>
+          <target>Byl dosažen maximální počet záznamů tabulky {TableName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1160" id="160">
+          <source>Maximum number of BLOBs has been reached for table {TableName}</source>
+          <target>Byl dosažen maximální počet BLOBů v tabulce {TableName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1161" id="161">
+          <source>Indice is out of range</source>
+          <target>Ukazatel je mimo rámec</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1162" id="162">
+          <source>Query is invalid</source>
+          <target>Neplatný dotaz</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1163" id="163">
+          <source>Record is NULL</source>
+          <target>Záznam je prázdný</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1164" id="164">
+          <source>Object is NULL</source>
+          <target>Objekt je prázdný</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1165" id="165">
+          <source>Wrong owner for this object</source>
+          <target>Špatný vlastník tohoto objektu</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1166" id="166">
+          <source>Object was not locked</source>
+          <target>Objekt nebyl uzamčen</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1167" id="167">
+          <source>Object is locked by another context</source>
+          <target>Objekt je uzamčen z jiného kontextu</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1168" id="168">
+          <source>Internal error on remote connection</source>
+          <target>Vnitřní chyba na vzdáleném připojení</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1169" id="169">
+          <source>Invalid table number</source>
+          <target>Neplatné číslo tabulky</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1170" id="170">
+          <source>Invalid field number</source>
+          <target>Neplatné číslo záznamu</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1171" id="171">
+          <source>Invalid Database ID</source>
+          <target>Neplatné ID databáze</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1172" id="172">
+          <source>Invalid Parameter</source>
+          <target>Neplatný parametr</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1173" id="173">
+          <source>Cache Flushing did not complete</source>
+          <target>Uvolňování vyrovnávací paměti nebylo dokončeno</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1174" id="174">
+          <source>Data Flushing did not complete</source>
+          <target>Uvolňování dat nebylo dokončeno</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1175" id="175">
+          <source>Structure Flushing did not complete</source>
+          <target>Uvolňování struktury nebylo dokončeno</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1176" id="176">
+          <source>Log file is invalid for database {BaseName}</source>
+          <target>Neplatný Log soubor pro databázi {BaseName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1177" id="177">
+          <source>Log file cannot be found for database {BaseName}</source>
+          <target>Nelze nalézt log soubor pro databázi {BaseName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1178" id="178">
+          <source>Last operation in log file does not match the one in database {BaseName}</source>
+          <target>Poslední operace v log souboru neodpovídá té v databázi {BaseName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1179" id="179">
+          <source>Log file does not match database {BaseName}</source>
+          <target>Log soubor neodpovídá databázi {BaseName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1180" id="180">
+          <source>Data Table has been deleted</source>
+          <target>Tabulka dat byla vymazána</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1181" id="181">
+          <source>Keys are not unique in index {IndexName}</source>
+          <target>Nejedinečné klíče v indexu {IndexName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1182" id="182">
+          <source>Cannot create log file for database {BaseName}</source>
+          <target>Nelze vytvořit log soubor pro databázi {BaseName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1183" id="183">
+          <source>Cannot write into log file of database {BaseName}</source>
+          <target>Nelze zapsat do log souboru databáze {BaseName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1184" id="184">
+          <source>Cannot drop table {TableName} in database {BaseName}</source>
+          <target>Nelze pustit tabulku {TableName} v databázi {BaseName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1185" id="185">
+          <source>Remote database cannot be opened</source>
+          <target>Vzdálená databáze nemůže být otevřena</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1186" id="186">
+          <source>Log file cannot be integrated into database {BaseName}</source>
+          <target>Log sooubor nemůže být integrován do databáze {BaseName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1187" id="187">
+          <source>Internal Computation on Set cannot be completed</source>
+          <target>Vnitřní výpočet pro sadu nelze dokončit</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1188" id="188">
+          <source>Array cannot be saved</source>
+          <target>Array nelze uložit</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1189" id="189">
+          <source>Array cannot be loaded</source>
+          <target>Array nelze zavést</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1190" id="190">
+          <source>Sequence number header cannot be loaded</source>
+          <target>Hlavičku sekvenčního čísla nelze zavést</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1191" id="191">
+          <source>Cannot select record</source>
+          <target>Záznam nemůže být vybrán</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1192" id="192">
+          <source>Record cannot be created</source>
+          <target>Záznam nemůže být vytvořen</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1193" id="193">
+          <source>Cannot complete selection to array in table {TableName} of database {BaseName}</source>
+          <target>Nelze dokončit selectioin to array v tabulce {TableName} databáze {BaseName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1194" id="194">
+          <source>Cannot complete array to selection in table {TableName} of database {BaseName}</source>
+          <target>Nelze dokončit array to selection v tabulce {TableName} databáze {BaseName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1195" id="195">
+          <source>Cannot complete sequential sort</source>
+          <target>Nelze dokončit sekvenční třídění</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1196" id="196">
+          <source>Selection cannot be locked</source>
+          <target>Výběr nemůže být uzamčen</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1197" id="197">
+          <source>Index key cannot be loaded</source>
+          <target>Indexový klíč nemůže být zaveden</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1198" id="198">
+          <source>Index key cannot be saved</source>
+          <target>Indexový klíč nemůže být uložen</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1199" id="199">
+          <source>Index key cannot be built</source>
+          <target>Indexový klíč nemůže být vytvořen</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1200" id="200">
+          <source>Query cannot be completed</source>
+          <target>Dotaz nemůže být dokončen</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1201" id="201">
+          <source>Query cannot be analyzed</source>
+          <target>Dotaz nemůže být anylyzován</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1202" id="202">
+          <source>Formula could not be processed on this column</source>
+          <target>Výraz nemůže být nad tímto sloupcem zpracován</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1203" id="203">
+          <source>Query could not be completed</source>
+          <target>Dotaz nemůže být dokončen</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1204" id="204">
+          <source>Query could not be analyzed</source>
+          <target>Dotaz nemůže být analyzován</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1205" id="205">
+          <source>Could not get all distinct values of table {TableName} of database {BaseName}</source>
+          <target>Nelze dostat všechny rozdílné hodnoty tabulky {TableName} databáze {BaseName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1206" id="206">
+          <source>Cannot build array of values in table {TableName} of database {BaseName}</source>
+          <target>Nelze sestavit array hodnot tabulky {TableName} databáze {BaseName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1207" id="207">
+          <source>Selection cannot be loaded</source>
+          <target>Výběr nenůže být zaveden</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1208" id="208">
+          <source>Cannot send data</source>
+          <target>Nelze odeslat data</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1209" id="209">
+          <source>Cannot receive request reply</source>
+          <target>Nelze přijmout odpověď na dotaz</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1210" id="210">
+          <source>Cannot send request</source>
+          <target>Nelze odeslat požadavek</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1211" id="211">
+          <source>Cannot create connection</source>
+          <target>Nelze vytvořit spojení</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1212" id="212">
+          <source>Index {IndexName} cannot be quickly created in database {BaseName}</source>
+          <target>Index {IndexName} nemůže být rychle vytvořen v databázi {BaseName} </target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1213" id="213">
+          <source>Cannot build distinct index keys</source>
+          <target>Nelze vytvořit rozdílné indexové klíče</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1214" id="214">
+          <source>Selection cannot be sorted in table {TableName} of database {BaseName}</source>
+          <target>Výběr nemůže být tříděn v tabulce {TableName} databáze {BaseName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1215" id="215">
+          <source>Address table cannot loaded</source>
+          <target>Tabulka adres nemůže být zavedena</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1216" id="216">
+          <source>Address table cannot modified</source>
+          <target>Tabulka adres nemůže být upravena</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1217" id="217">
+          <source>Cannot allocate new entry into address table</source>
+          <target>Nelze umístit nový vstup do tabulky adres</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1218" id="218">
+          <source>Cannot allocate free entry from address table</source>
+          <target>Nelze umístit volný vstup z tabulky adres</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1219" id="219">
+          <source>Transaction temporary record cannot be saved</source>
+          <target>Dočasný záznam z transakce nemůže být uložen</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1220" id="220">
+          <source>Transaction temporary blob cannot be saved</source>
+          <target>Dočasný blob z transakce nemůže být uložen</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1221" id="221">
+          <source>Transaction temporary record cannot be loaded</source>
+          <target>Dočasný záznam z transakce nemůže být zaveden</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1222" id="222">
+          <source>Transaction temporary blob cannot be loaded</source>
+          <target>Dočasný blob z transakce nemůže být zaveden</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1223" id="223">
+          <source>Transaction cannot be started</source>
+          <target>Transakce nemůže být spuštěna</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1224" id="224">
+          <source>Transaction cannot be commited</source>
+          <target>Transaction nemůže správně pokračovat</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1225" id="225">
+          <source>Cannot get extra property</source>
+          <target>Nelze získat extra vlastnosti</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1226" id="226">
+          <source>Cannot set extra property</source>
+          <target>Nelze nastavit extra vlastnosti</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1227" id="227">
+          <source>Table name is already used</source>
+          <target>Název tabulky je již použit</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1228" id="228">
+          <source>Cannot get list of NULL keys from index {IndexName}</source>
+          <target>Nelze získat seznam prázdných NULL klíčů z indexu {IndexName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1229" id="229">
+          <source>Cannot modify list of NULL keys of index {IndexName}</source>
+          <target>Nelze upravit seznam prázdných NULL klíčů z indexu {IndexName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1230" id="230">
+          <source>Invalid key for index {IndexName}</source>
+          <target>Nesprávný klíč pro index {IndexName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1231" id="231">
+          <source>Cannot set log file</source>
+          <target>Nelze nastavit log soubor</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1232" id="232">
+          <source>Context is NULL</source>
+          <target>Kontext je prázdný - NULL</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1233" id="233">
+          <source>Database {BaseName} cannot be locked</source>
+          <target>Databáze {BaseName} nemůže být ukončena</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1234" id="234">
+          <source>Wrong field reference in record# {RecNum} of table: {TableName} of database: {BaseName}</source>
+          <target>Špatný odkaz pole v záznamu# {RecNum} tabulky: {TableName} databáze: {BaseName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1235" id="235">
+          <source>Wrong field reference in table: {TableName} of database: {BaseName}</source>
+          <target>Špatný odkaz v tabulce: {TableName} databáze: {BaseName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1236" id="236">
+          <source>Cannot read data from temporary transaction file</source>
+          <target>Nelze číst data z dočasného souboru transakce</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1237" id="237">
+          <source>Cartesian Product failed</source>
+          <target>Operace s množinami (sadami) selhala</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1238" id="238">
+          <source>Cannot merge selections</source>
+          <target>Nelze sloučit výběry</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1239" id="239">
+          <source>The format of the {BaseName} database cannot be upgraded in read only mode</source>
+          <target>Formát databáze {BaseName} nelze aktualizovat v režimu pouze pro čtení</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1240" id="240">
+          <source>Wrong Header</source>
+          <target>Špatná hlavička</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1241" id="241">
+          <source>Wrong CheckSum</source>
+          <target>Špatný kontrolní součet -CheckSum</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1243" id="243">
+          <source>Cannot load data tables of database: {BaseName}</source>
+          <target>Nelze zavést tabulky dat databáze: {BaseName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1244" id="244">
+          <source>The list of foreign key constraints is not empty for table: {TableName} of database: {BaseName}</source>
+          <target>Sznam omezení cizího klíče není prázdný pro tabulku: {TableName} databáze: {BaseName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1245" id="245">
+          <source>Address entry is not empty</source>
+          <target>Vstup adresy není prázdný</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1246" id="246">
+          <source>Cannot pre-allocate address</source>
+          <target>Nelze předumístit adresu</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1247" id="247">
+          <source>Cannot update new record in table {TableName} of database {BaseName}</source>
+          <target>Nelze aktualizovat nový záznam tabulky {TableName} databáze {BaseName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1248" id="248">
+          <source>Cannot save new record in table {TableName} of database {BaseName}</source>
+          <target>Nelze uložit nový záznam tabulky {TableName} databáze {BaseName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1249" id="249">
+          <source>Cannot save subrecord</source>
+          <target>Nelze uložit podzáznam</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1250" id="250">
+          <source>Cannot save record</source>
+          <target>Nelze uložit záznam</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1251" id="251">
+          <source>Cannot lock structure object definition</source>
+          <target>Nelze uzamknout definici objektu struktury</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1252" id="252">
+          <source>Cannot unlock structure object definition</source>
+          <target>Nelze odemknout definici objektu struktury</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1253" id="253">
+          <source>Invalid relation number</source>
+          <target>Neplatné číslo relace</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1254" id="254">
+          <source>Circular Reference in records address table of table {TableName} of database {BaseName}</source>
+          <target>Cirkulární reference v tabulce adres záznamů tabulky {TableName} z databáze {BaseName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1255" id="255">
+          <source>Circular Reference in blobs address table of table {TableName} of database {BaseName}</source>
+          <target>Cirkulární reference v tabulce adres blobů tabulky {TableName} z {BaseName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1256" id="256">
+          <source>Duplicated Schema Name in database {BaseName}</source>
+          <target>Zdvojený název schéma v databázi {BaseName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1257" id="257">
+          <source>Schema cannot be saved in database {BaseName}</source>
+          <target>Schéma nemůže být uloženo v databázi {BaseName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1258" id="258">
+          <source>Schema cannot be deleted in database {BaseName}</source>
+          <target>Schéma nemůže být v databázi vymazáno {BaseName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1259" id="259">
+          <source>Schema cannot be renamed in database {BaseName}</source>
+          <target>Schéma nemůže být v databázi přejmenováno {BaseName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1260" id="260">
+          <source>Selected log file is too recent for database {BaseName}</source>
+          <target>Vybraný log soubor je pro tuto databázi {BaseName} příliš nový</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1261" id="261">
+          <source>Selected log file is too old for database {BaseName}</source>
+          <target>Vybraný log soubor je pro tuto databázi {BaseName} příliš starý</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1262" id="262">
+          <source>Some DataTables do not have matching table definitions for database {BaseName}</source>
+          <target>Některé tabulky dat neodpovídají definici tabulek v databázi {BaseName}</target>
+       </trans-unit>
+        <trans-unit resname="ERR_dbmg_1263" id="263">
+          <source>Given stamp does not match current one for record# {RecNum} of table {TableName}</source>
+          <target>Dotčený stamp neodpovídá tomu pro záznam# {RecNum} tabulky {TableName}</target>
+       </trans-unit>
+        <trans-unit resname="ERR_dbmg_1264" id="264">
+          <source>A primary key is needed and missing in table {TableName}</source>
+          <target>V tabulce {TableName} je potřeba primární klíč a tato jej neobsahuje</target>
+       </trans-unit>
+        <trans-unit resname="ERR_dbmg_1265" id="265">
+          <source>Invalid field</source>
+          <target>Neplatné pole</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1266" id="266">
+          <source>Unknown field type (this version of 4D is perhaps too old)</source>
+          <target>Neznámý typ pole (tato verze 4D je asi příliš stará)</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1267" id="267">
+          <source>Stack Overflow</source>
+          <target>Přetečení stack paměti</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1268" id="268">
+          <source>DataTable cannot be regenerated for database {BaseName}</source>
+          <target>Tabulka dat nemůže být pro databázi {BaseName} regenerována</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1269" id="269">
+          <source>DataTable cannot be found</source>
+          <target>Tabulku dat nelze najít</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1270" id="270">
+          <source>Missing structure could not be rebuild</source>
+          <target>Chybějící struktura nemůže být přestavěna</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1271" id="271">
+          <source>Invalid REST request handler</source>
+          <target>Neplatný REST request handler</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1272" id="272">
+          <source>Some records are still locked in table {tableName} in database {BaseName}</source>
+          <target>V tabulce {tableName} jsou stále některé záznamy uzamčeny - v databázi {BaseName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1273" id="273">
+          <source>Cannot drop table {TableName} in database {BaseName}</source>
+          <target>Nelze zahodit (drop) tabulku {TableName} v databázi {BaseName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1274" id="274">
+          <source>The current journal file of database {BaseName} is not available. For data security reasons, write operations are stopped. Please contact your administrator as soon as possible.</source>
+          <target>Není dostupný platný soubor žurnálu databáze {BaseName}. Z důvodů bezpečnosti dat byly zastaveny operace zápisu. Kontaktujte prosím co nejdříve svého administrátora.</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1275" id="275">
+          <source>"(" is missing at the beginning of the Javascript statement in this query.</source>
+          <target>"(" chybí na počátku Javascript věty v tomto dotazu.</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1276" id="276">
+          <source>Datastream has an invalid header.</source>
+          <target>Datastream má neplatnou hlavičku.</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1277" id="277">
+          <source>The database journal integration failed at entry# {Param1} (operation id {Param2}).</source>
+          <target>Integrace žurnálu databáze selhala na vstupu# {Param1} (id operace {Param2}).</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1278" id="278">
+          <source>Javascript code not allowed in the query.</source>
+          <target>Javascript kód není v dotazu dovolen.</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1279" id="279">
+          <source>The query placeholder {Param1} is missing or null.</source>
+          <target>Zástupný znak dotazu {Param1} je prázdný nebo chybí.</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1280" id="280">
+          <source>The query placeholder {Param1} is not a valid type.</source>
+          <target>Zástupný znak dotazu {Param1} není platného typu.</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1281" id="281">
+          <source>Table {TableName} needs a primary key in order to be logged.</source>
+          <target>Tabulka {TableName} potřebuje k zaznamenávání logu primární klíč.</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1282" id="282">
+          <source>Cannot find any record with that primary key in table {TableName}.</source>
+          <target>Nelze nalézt žádný záznam s tímto primárním klíčem v tabulce {TableName}.</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1283" id="283">
+          <source>A primary key definition is missing for table {TableName}.</source>
+          <target>Definice primárního klíče pro tabulku {TableName} chybí.</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1284" id="284">
+          <source>The given primary key of table {TableName} is malformed.</source>
+          <target>Daný primární klíč tabulky {TableName} je zdeformuvaný.</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1285" id="285">
+          <source>Non-unique primary key found in table {TableName}.</source>
+          <target>V tabulce {TableName} byl nalezen nejedinečný primární klíč.</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1286" id="286">
+          <source>Null primary key found in table {TableName}.</source>
+          <target>Primární klíč hodnoty Null byl nalezen v tabulce {TableName}.</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1287" id="287">
+          <source>Log file was created with an older version of the database {BaseName}</source>
+          <target>Log soubor byl vytvořen starší verzí databáze {BaseName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1288" id="288">
+          <source>Constraints on database {BaseName} cannot be disabled while journaling is active.</source>
+          <target>Omezení databáze {BaseName} nemohou být vypnuta dokud běží zaznamenávání do žurnálu logu.</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1289" id="289">
+          <source>A destination folder was not chosen to record the database journal for {BaseName}.</source>
+          <target>Pro nahrávání žurnálu databáze {BaseName} nebyla vybrána cílová složka.</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1290" id="290">
+          <source>Cannot open the database journal for {BaseName}.</source>
+          <target>Nelze otevřít žurnál databáze pro {BaseName}.</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1300" id="300">
+          <source>Invalid Selection Type</source>
+          <target>Neplatný typ výběru</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1301" id="301">
+          <source>Array is too big</source>
+          <target>Array je příliš veliké</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1302" id="302">
+          <source>Array size does not match</source>
+          <target>Velikosti array si neopovídají</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1303" id="303">
+          <source>Invalid Selection ID</source>
+          <target>Nepaltné ID váběru</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1304" id="304">
+          <source>Invalid Selection Part</source>
+          <target>Neplatná část výběru</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1500" id="500">
+          <source>The "{Param1}" attribute cannot be found in The "{EntityModelName}" datastore class</source>
+          <target>Vlastnost "{Param1}" nemůže být nalezena v třídě úložiště dat "{EntityModelName}"</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1501" id="501">
+          <source>The "{Param1}" datastore class already exists in the "{BaseName}" database</source>
+          <target>Třída úložiště dat "{Param1}" již v databázi "{BaseName}" existuje</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1502" id="502">
+          <source>The name of the datastore class in the "{BaseName}" database is missing</source>
+          <target>Název třídy úložiště dat v databázi "{BaseName}" chybí</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1503" id="503">
+          <source>Invalid datasource for the "{EntityModelName}" datastore class in the "{BaseName}" database</source>
+          <target>Neplatný zdroj dat pro třídu úložiště dat "{EntityModelName}" v databázi "{BaseName}"</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1504" id="504">
+          <source>Attribute's name is missing in the "{EntityModelName}" datastore class</source>
+          <target>Název vlastnosti v třídě úložiště dat "{EntityModelName}" chybí</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1505" id="505">
+          <source>Wrong kind for the "{EntityAttributeName}" attribute in the "{EntityModelName}" datastore class</source>
+          <target>Špatný typ pro vlastnost "{EntityAttributeName}" v třídě úložiště dat "{EntityModelName}"</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1506" id="506">
+          <source>Attribute "{EntityAttributeName}" is not well defined in the "{EntityModelName}" datastore class</source>
+          <target>Vlastnost "{EntityAttributeName}" není dobře definována v třídě úložiště dat "{EntityModelName}"</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1507" id="507">
+          <source>The "{EntityModelName}" datastore class cannot be extended with "{Param1}"</source>
+          <target>Třída úložiště dat "{EntityModelName}" nemůže být rozšířena o "{Param1}"</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1508" id="508">
+          <source>Wrong value type passed to the "{EntityAttributeName}" attribute in the "{EntityModelName}" datastore class</source>
+          <target>Śpatný typ hodnoty předávaný vlastnosti "{EntityAttributeName}" v třídě úložiště dat "{EntityModelName}"</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1509" id="509">
+          <source>The relationship "{RelationName}" is not well defined in the "{EntityModelName}" datastore class</source>
+          <target>Vztah "{RelationName}" není v třídě úložiště dat "{EntityModelName}" dobře definován</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1510" id="510">
+          <source>The relationship "{RelationName}" already exists in the "{BaseName}" database</source>
+          <target>Vztah "{RelationName}" již v databázi "{BaseName}" existuje</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1511" id="511">
+          <source>The relationship "{Param1}" cannot be found for the "{EntityAttributeName}" attribute in the "{EntityModelName}" datastore class</source>
+          <target>Vztah "{Param1}" nemůže být pro vlastnost "{EntityAttributeName}"  nalezen v třídě úložiště dat "{EntityModelName}"</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1512" id="512">
+          <source>The type "{TypeName}" already exists in the "{BaseName}" database</source>
+          <target>Typ "{TypeName}" již v databázi "{BaseName}" existuje</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1513" id="513">
+          <source>The type "{Param1}" cannot be found for the "{EntityAttributeName}" attribute in the "{EntityModelName}" datastore class</source>
+          <target>Typ "{Param1}" pro vlastnost "{EntityAttributeName}" nemůže být nalezen v třídě úložiště dat "{EntityModelName}"</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1514" id="514">
+          <source>The enumeration "{EnumerationName}" already exists in the "{BaseName}" database</source>
+          <target>Enumerace "{EnumerationName}" již v databázi "{BaseName}" existuje</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1515" id="515">
+          <source>The enumeration "{Param1}" cannot be found in the "{BaseName}" database</source>
+          <target>Enumerace "{Param1}" nemůže být v databázi "{BaseName}" nalezena</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1516" id="516">
+          <source>The value of attribute "{EntityAttributeName}" in the "{EntityModelName}" datastore class cannot be modified</source>
+          <target>Hodnota vlastnosti "{EntityAttributeName}" v třídě úložiště dat "{EntityModelName}" nemůže být modifikována</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1517" id="517">
+          <source>The entity# {EntityNum} in the "{EntityModelName}" datastore class cannot be saved</source>
+          <target>Entita# {EntityNum} otřídy úložiště dat "{EntityModelName}" nemůže být uložena</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1518" id="518">
+          <source>The entity ({PrimKey}) in the "{EntityModelName}" datastore class cannot be deleted</source>
+          <target>Entita ({PrimKey}) v třídě úložište dat "{EntityModelName}" nemůže být vymazána</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1519" id="519">
+          <source>The "{EnumerationName}" enumeration cannot be loaded from the definition in the "{BaseName}" database</source>
+          <target>Enumerace "{EnumerationName}" nemůže být zavedena z definic databáze "{BaseName}"</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1520" id="520">
+          <source>The "{TypeName}" type cannot be loaded from the definition in the "{BaseName}" database</source>
+          <target>Typ "{TypeName}" nemůže být zaveden z definic databáze "{BaseName}"</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1521" id="521">
+          <source>The "{EntityModelName}" datastore class cannot be loaded from the definition in the "{BaseName}" database</source>
+          <target>Třída ůložiště dat "{EntityModelName}" nemůže být zaveden z definic databáze "{BaseName}"</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1522" id="522">
+          <source>The "{EntityAttributeName}" attribute cannot be loaded from the definition in the "{BaseName}" database</source>
+          <target>Vlastnost "{EntityAttributeName}" nemůže být zavedena z definic databáze "{BaseName}"</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1523" id="523">
+          <source>The "{RelationName}" relationship cannot be loaded from the definition in the "{BaseName}" database</source>
+          <target>Vztah "{RelationName}" nemůže být zaveden z definic databáze "{BaseName}"</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1524" id="524">
+          <source>Source is invalid in the "{RelationName}" relationship in the "{BaseName}" database</source>
+          <target>Zdroj ve vztahu "{RelationName}" v databázi "{BaseName}" je neplatný</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1525" id="525">
+          <source>Destination is invalid in the "{RelationName}" relationship in the "{BaseName}" database</source>
+          <target>Cíl ve vztahu "{RelationName}" v databázi "{BaseName}" je neplatný</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1526" id="526">
+          <source>Kind is invalid in the "{RelationName}" relationship in the "{BaseName}" database</source>
+          <target>Druh je neplatný ve vztahu "{RelationName}" databáze "{BaseName}"</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1527" id="527">
+          <source>Relationship is missing for the "{EntityAttributeName}" attribute in the "{EntityModelName}" datastore class</source>
+          <target>Vztah pro vlastnost "{EntityAttributeName}" ve třídě úložiště dat "{EntityModelName}" chybí</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1528" id="528">
+          <source>Relationpath is empty for the "{EntityAttributeName}" attribute in the "{EntityModelName}" datastore class</source>
+          <target>Vztah pro vlastnost "{EntityAttributeName}" ve třídě úložiště dat "{EntityModelName}" je prázdný</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1529" id="529">
+          <source>Field reference is missing for the "{EntityAttributeName}" attribute in the "{EntityModelName}" datastore class</source>
+          <target>Odkaz na pole pro vlastnost "{EntityAttributeName}" ve třídě úložiště dat "{EntityModelName}" chybí</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1530" id="530">
+          <source>Related datastore class is missing for the "{EntityAttributeName}" attribute in the "{EntityModelName}" datastore class</source>
+          <target>Vztažená třída ůložiště dat chybí pro vlastnost "{EntityAttributeName}" ve třídě úložiště dat "{EntityModelName}"</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1531" id="531">
+          <source>The "{Param1}" related datastore class cannot be found for the "{EntityAttributeName}" attribute in the "{EntityModelName}" datastore class</source>
+          <target>Vztažená třída ůložiště dat "{Param1}" nemůže být pro vlastnost "{EntityAttributeName}" ve třídě úložiště dat "{EntityModelName}" nalezena</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1532" id="532">
+          <source>The datastore model cannot be loaded for the "{BaseName}" database</source>
+          <target>Model úložiště dat nemůže být pro databázi "{BaseName}" načten</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1533" id="533">
+          <source>The "{Param1}" field reference cannot be found for the "{EntityAttributeName}" attribute in the "{EntityModelName}" datastore class</source>
+          <target>Odkaz na pole "{Param1}" nemůže bý pro vlastnost "{EntityAttributeName}" ve třídě úložiště dat "{EntityModelName}" nalezen</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1534" id="534">
+          <source>The new entity of the "{EntityModelName}" datastore class cannot be saved</source>
+          <target>Nová entita pro třídu úložiště dat "{EntityModelName}" nemůže být uložena</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1535" id="535">
+          <source>The relation path is multi-segmented for the "{EntityAttributeName}" attribute in the "{EntityModelName}" datastore class</source>
+          <target>Cesta vztahu je multi segmentová pro vlastnost "{EntityAttributeName}" ve třídě úložiště dat "{EntityModelName}"</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1536" id="536">
+          <source>The related entity is not of type "{Param1}" for the "{EntityAttributeName}" attribute in the "{EntityModelName}" datastore class</source>
+          <target>Vztažená entita není typu "{Param1}" - pro vlastnost "{EntityAttributeName}" ve třídě úložiště dat "{EntityModelName}"</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1537" id="537">
+          <source>Cannot save related entity of the "{Param1}" attribute for the entity of the "{EntityModelName}" datastore class</source>
+          <target>Nelze uložit vztaženou entitu pro vlastnost "{Param1}" pro entitu třídy úložiště dat "{EntityModelName}"</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1538" id="538">
+          <source>The "{EntityAttributeName}" attribute in the "{EntityModelName}" datastore class cannot be used as an identifying attribute (wrong type)</source>
+          <target>Vlastnost "{EntityAttributeName}" třídy úložiště dat "{EntityModelName}" nemůže být použita k identifikaci vlastnosti (špatný typ)</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1539" id="539">
+          <source>The "{EntityAttributeName}" attributein the "{EntityModelName}" datastore class cannot be used as a primary key attribute (wrong type)</source>
+          <target>Vlastnost "{EntityAttributeName}" of the datastore class "{EntityModelName}" nemůže být použita jako vlastnost primárního klíče (špatný typ)</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1540" id="540">
+          <source>The "{EntityModelName}" datastore class has no primary key</source>
+          <target>Třída ůložiště dat "{EntityModelName}" nemá primární klíč</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1541" id="541">
+          <source>The given primary key does not match the definition in the "{EntityModelName}" datastore class</source>
+          <target>Daný primární klíč neodpovídá definici ve třídě úložiště dat "{EntityModelName}"</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1542" id="542">
+          <source>Cannot find entity with "{Param1}" key in the "{EntityModelName}" datastore class</source>
+          <target>Nelze nalézt entitu s klíčem "{Param1}" ve třídě úložiště dat "{EntityModelName}"</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1543" id="543">
+          <source>Cannot load entity# {Param1} in the "{EntityModelName}" datastore class</source>
+          <target>Nelze zavést entitu# {Param1} ve třídě úložiště dat "{EntityModelName}"</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1544" id="544">
+          <source>Primary key is NULL for the entity# {EntityNum} in the "{EntityModelName}" datastore class</source>
+          <target>Primární klíč je NULL pro entitu# {EntityNum} ve třídě úložiště dat "{EntityModelName}"</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1545" id="545">
+          <source>Primary key {Param1} already exists in the "{EntityModelName}" datastore class</source>
+          <target>Primární klíč {Param1} již ve třídě úložiště dat "{EntityModelName}" existuje</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1546" id="546">
+          <source>Primary key is NULL for the new entity in the "{EntityModelName}" datastore class</source>
+          <target>Primární klíč je NULL pro novou entitu ve třídě úložiště dat "{EntityModelName}"</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1547" id="547">
+          <source>The datastore class has no identifying attributes</source>
+          <target>Třída úložiště dat nemá identifikační vlastnosti</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1548" id="548">
+          <source>Identifying attribute key is invalid</source>
+          <target>Identifikační vlastnosti klíče jsou neplatné</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1549" id="549">
+          <source>Identifying attribute key cannot be found</source>
+          <target>Identifikační vlastnosti klíče nemohou být nalezeny</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1550" id="550">
+          <source>Script statement is empty</source>
+          <target>Skript statement je prázdný</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1551" id="551">
+          <source>Script kind is missing</source>
+          <target>Typ skriptu chybí</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1552" id="552">
+          <source>Script kind is unknown</source>
+          <target>Typ skriptu je neznámý</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1553" id="553">
+          <source>Wrong permission reference</source>
+          <target>Špatný odkaz oprávnění</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1554" id="554">
+          <source>The "{Param1}" datastore class cannot be found</source>
+          <target>Typ úložiště dat "{Param1}" nemůže být nalezen</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1555" id="555">
+          <source>Users and Groups directory is missing</source>
+          <target>Složka uživatelé a skupiny chybí</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1556" id="556">
+          <source>Datastore class permissions cannot be loaded</source>
+          <target>Oprávnění pro třídy úložiště dat nelze zavést</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1557" id="557">
+          <source>No permission to read for the {EntityModelName} datastore class</source>
+          <target>Žádné oprávnění pro čtení pro třídu úložiště dat {EntityModelName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1558" id="558">
+          <source>No permission to update for the {EntityModelName} datastore class</source>
+          <target>Žádné oprávnění pro zápis pro třídu úložiště dat {EntityModelName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1559" id="559">
+          <source>No permission to create for the {EntityModelName} datastore class</source>
+          <target>Žádné oprávnění pro vytvoření třídy úložiště dat {EntityModelName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1560" id="560">
+          <source>No permission to delete for the {EntityModelName} datastore class</source>
+          <target>Žádné oprávnění pro mazání třídy dat {EntityModelName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1561" id="561">
+          <source>No permission to execute the {MethodName} method in the {EntityModelName} datastore class</source>
+          <target>Žádné oprávnění pro spuštění metody {MethodName} v třídě úložiště dat {EntityModelName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1562" id="562">
+          <source>JavaScript execution error</source>
+          <target>Chyba provádění Javascript</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1563" id="563">
+          <source>Method name is missing</source>
+          <target>Název metody chybí</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1564" id="564">
+          <source>Method type is invalid</source>
+          <target>Typ metody je neplatný</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1565" id="565">
+          <source>Method definition is invalid</source>
+          <target>Definice metody je neplatná</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1566" id="566">
+          <source>Method statement is empty</source>
+          <target>Instrukce metody jsou prázdné</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1567" id="567">
+          <source>Method parameter name is invalid</source>
+          <target>Název paramentru metody je neplatný</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1568" id="568">
+          <source>Value cannot be less than {Param1}</source>
+          <target>Hodnota nemůže být menší než {Param1}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1569" id="569">
+          <source>Value cannot be greater than {Param1}</source>
+          <target>Hodnota nemůže být větší než {Param1}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1570" id="570">
+          <source>Entity fails validation</source>
+          <target>Prověření entity selhalo</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1571" id="571">
+          <source>Value does not match the "{Param1}" pattern</source>
+          <target>Hodnota neodpovídá vzoru "{Param1}"</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1572" id="572">
+          <source>The "{Param1}" datastore class name already exists</source>
+          <target>Název úložiště dat "{Param1}" již existuje</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1573" id="573">
+          <source>The "{Param1}" method name is unknown</source>
+          <target>Název metody "{Param1}" je neznámý</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1574" id="574">
+          <source>The {EntityAttributeName} attribute is not the correct type</source>
+          <target>Vlastnost {Param1} není správného typu</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1575" id="575">
+          <source></source>
+          <target></target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1576" id="576">
+          <source>The relation based on "{Param1}" is not N-to-1</source>
+          <target>Vztah založený na "{Param1}" je N-to-1 (skupina k jedinci)</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1577" id="577">
+          <source>The relation based on "{Param1}" is not 1-to-N</source>
+          <target>Vztah založený na "{Param1}" je not 1-to-N (jedinec k skupině)</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1578" id="578">
+          <source>The {Param1} attribute is not a relation attribute</source>
+          <target>Vlastnost {Param1} není vlastnost vztahu</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1579" id="579">
+          <source>"{Param1}" is not a valid relation</source>
+          <target>"{Param1}" není platný vztah</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1580" id="580">
+          <source>The relation path is empty</source>
+          <target>Cesta vztahu je prázdná</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1581" id="581">
+          <source>Cannot resolve "{Param1}" as a relation path</source>
+          <target>Nelze vyhodnotit "{Param1}" jako cestu vztahu</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1582" id="582">
+          <source>Event's kind is missing or invalid</source>
+          <target>Druh události chybí nebo je neplatný</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1583" id="583">
+          <source>Event's method is missing or invalid</source>
+          <target>Metoda události chybí nebo je neplatná</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1584" id="584">
+          <source>Alias attributes can only return scalar values</source>
+          <target>Vlastnost Alias může navrátit pouze skalární hodnoty</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1585" id="585">
+          <source>An error occurred during JavaScript execution</source>
+          <target>Během provádění Javascript se vyskytla chyba</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1586" id="586">
+          <source>Not a valid entity collection</source>
+          <target>Neplatná kolekce entity</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1587" id="587">
+          <source>The entity collections come from incompatible datastore classes</source>
+          <target>Entity kolekce pocházejí od nekompatibilních typů úložiště dat</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1588" id="588">
+          <source>The "{Param1}" attribute is duplicated</source>
+          <target>Vlastnost entity "{Param1}" je duplicitní</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1589" id="589">
+          <source>The "{Param1}" attribute is from another datastore class</source>
+          <target>Vlastnost "{Param1}" je z jiné třídy úložiště databáze</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1590" id="590">
+          <source>"{Param1}" is recursively used to build a relation path for the "{EntityModelName}" datastore class</source>
+          <target>"{Param1}" je rekurzivně použit k sestavení cesty vztahu pro třídu úložiště databáze "{EntityModelName}"</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1591" id="591">
+          <source>String length cannot be less than {Param1}</source>
+          <target>Délka řetězce nemůže být menší než {Param1}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1592" id="592">
+          <source>String length cannot be greater than {Param1}</source>
+          <target>Délka řetězce nemůže být větší než {Param1}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1593" id="593">
+          <source>String length must be {Param1}</source>
+          <target>Délka řetězce musí být {Param1}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1594" id="594">
+          <source>The "{Param1}" attribute in the "{EntityModelName}" datastore class cannot be used for sorting</source>
+          <target>Vlastnost "{Param1}" v třídě úložište dat "{EntityModelName}" nemůže být použita pro třídění</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1595" id="595">
+          <source>The "{Param1}" remote datastore class cannot be created locally</source>
+          <target>Vzdálená třída úložiště dat "{Param1}" nemůže být vytvořena lokálně</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1596" id="596">
+          <source>The command "addRemoteStore" or "openRemoteStore" cannot be used in that context</source>
+          <target>Příkaz "addRemoteStore" nebo "openRemoteStore" nemůže být použit v tomto kontextu</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1597" id="597">
+          <source>The remote catalog log file is missing.</source>
+          <target>Soubor chybí.</target>
+        </trans-unit>
+
+        <trans-unit resname="ERR_dbmg_1600" id="600">
+          <source>This entity does not belong to the {Param1} datastore class</source>
+          <target>Tato entita nepatří do třídy úložiště dat {Param1}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1601" id="601">
+          <source>This query is not valid for this datastore class</source>
+          <target>Tento dotaz není pro tuto třídu úložiště dat platný</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1602" id="602">
+          <source>Invalid collection returned by restricting query event for the {Param1} datastore class</source>
+          <target>Neplatná sada navrácená omezující událostí dotazu pro třídu úložiště dat {Param1}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1603" id="603">
+          <source>This entity collection does not belong to the {Param1} datastore class</source>
+          <target>Tato sada entit nepatří do třídy úložiště dat {Param1}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1604" id="604">
+          <source>SQL connector is missing</source>
+          <target>SQL connector chybí</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1605" id="605">
+          <source>Connection cannot be established with SQL server</source>
+          <target>Nelze navázat spojení s SQL serverem</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1606" id="606">
+          <source>The {Param1} datastore class is not a local one</source>
+          <target>Třída úložiště databáze {Param1} není lokální</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1607" id="607">
+          <source>No permission to read for the "{EntityAttributeName}" attribute in the "{EntityModelName}" datastore class</source>
+          <target>Žádné oprávnění číst vlastnost "{EntityAttributeName}" třídy úložiště dat "{EntityModelName}"</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1608" id="608">
+          <source>No permission to update for the "{EntityAttributeName}" attribute in the "{EntityModelName}" datastore class</source>
+          <target>Žádné oprávnění aktualizovat vlastnost "{EntityAttributeName}" třídy úložiště dat "{EntityModelName}"</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1609" id="609">
+          <source>No permission to describe the {EntityModelName} datastore class</source>
+          <target>Žádné oprávnění pro vlastnost describe tříd úložiště dat {EntityModelName}</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1610" id="610">
+          <source>A remote request to host: "{Param1}" has failed</source>
+          <target>Vzdálený požadavek k host: "{Param1}" selhal</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1611" id="611">
+          <source>You must log into the Admin group to obtain information regarding your project.</source>
+          <target>K získání informací o vašem projektu se musíte přihlásit do skupiny Admin.</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1612" id="612">
+          <source>Remote entity catalog is invalid or missin at host: "{Param1}".</source>
+          <target>Katalog vzdálené entity je na host: "{Param1}" neplatný nebo chybí.</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1800" id="800">
+          <source>The "{Param1}" datastore class cannot be found</source>
+          <target>Třída úložiště dat "{Param1}" nemůže být nalezena</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1801" id="801">
+          <source>The "{Param1}" format is not supported</source>
+          <target>Formát "{Param1}" není podporován</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1802" id="802">
+          <source>The "{Param1}" entity set cannot be found</source>
+          <target>Sadu entit "{Param1}" nelze nalázt</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1803" id="803">
+          <source>The "{Param1}" entity set does not belong to the "{Param2}" datastore class</source>
+          <target>Sada entit "{Param1}" nepatří do třídy úložiště dat "{Param2}"</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1804" id="804">
+          <source>Cannot completely build a list of attributes with "{Param1}" for the "{Param2}" datastore class</source>
+          <target>Nelze kompletně sestavit seznam vlastnosti s "{Param1}" pro třídu úložiště dat "{Param2}"</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1805" id="805">
+          <source>Cannot completely build a list of expanded attributes with "{Param1}" for the "{Param2}" datastore class</source>
+          <target>Nelze kompletně sestavit seznam rozšířených vlastnosti s "{Param1}" pro třídu úložiště dat "{Param2}"</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1806" id="806">
+          <source>URL is not well formed</source>
+          <target>URL nemá správný formát</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1807" id="807">
+          <source>Received a '&amp;' and was expecting a '?' in the URL</source>
+          <target>Bylo obdrženo '&amp;' ale očekáváno '?' v URL</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1808" id="808">
+          <source>Opening single quote does not have a matching closing one in the URL</source>
+          <target>Otevírající jednoduché uvozovky v URL nemají odpovídající uzavření</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1809" id="809">
+          <source>Opening double quote does not have a matching closing one in the URL</source>
+          <target>Otevírající dvojité uvozovky v URL nemají odpovídající uzavření</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1810" id="810">
+          <source>Cannot order by "{Param1}" for the "{Param2}" datastore class</source>
+          <target>Nelze třídit "{Param1}" pro třídu úložiště dat "{Param2}"</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1811" id="811">
+          <source>"{Param1}" is an unknown REST keyword</source>
+          <target>"{Param1}" je neznámé klíčové slovo REST</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1812" id="812">
+          <source>"{Param1}" is an unknown REST method</source>
+          <target>"{Param1}" je neznámá metoda REST</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1813" id="813">
+          <source>"{Param1}" REST method is not applicable here</source>
+          <target>"{Param1}" REST metoda zde není použitelná</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1815" id="815">
+          <source>"$subentityset" cannot be applied to the REST request</source>
+          <target>"$subentityset" nemůže být aplikován na REST request</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1816" id="816">
+          <source>At least one attribute must be specified</source>
+          <target>Musí být specifikována, alespoň jedna vlastnost</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1817" id="817">
+          <source>"{Param1}" is not a valid compute action</source>
+          <target>"{Param1}" není platná výpočetní akce</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1818" id="818">
+          <source>"{Param1}" is not a valid logical operator</source>
+          <target>"{Param1}" není platný logický operátor</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1819" id="819">
+          <source>Second collection reference is missing</source>
+          <target>Second collection reference is missing</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1820" id="820">
+          <source>"{Param1}" is not a valid collection reference</source>
+          <target>"{Param1}" není platná reference kolekce</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1821" id="821">
+          <source>"{Param1}" is not a valid transaction command</source>
+          <target>"{Param1}" není platný příkaz transakce</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1822" id="822">
+          <source>REST login failed</source>
+          <target>REST login selhal</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_1823" id="823">
+          <source>Maximum number of sessions has been reached</source>
+          <target>Maximání počet sessions byl dosažen</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_3000" id="2000">
+          <source>The replication database is not valid</source>
+          <target>Replikovaná databáze není platná</target>
+        </trans-unit>
+        <trans-unit resname="ERR_dbmg_3001" id="2001">
+          <source>The replication database is missing a table and is not valid</source>
+          <target>Replikovaná databáze chybí tabulka a není platná</target>
+        </trans-unit>
+      </group>
+
+      <group id="1001" resname="DB4D DataTools Problems">
+        <trans-unit id="1">
+          <source>Fully wrong</source>
+          <target>Zcela špatně</target>
+        </trans-unit>
+        <trans-unit id="2">
+          <source>Partially wrong</source>
+          <target>Částečně špatně</target>
+        </trans-unit>
+        <trans-unit id="3">
+          <source>Invalid checksum</source>
+          <target>Neplatný kontr.součet checksum</target>
+        </trans-unit>
+        <trans-unit id="4">
+          <source>Invalid header</source>
+          <target>Neplatná hlavička</target>
+        </trans-unit>
+        <trans-unit id="5">
+          <source>Invalid header version</source>
+          <target>Nepaltná verze hlavičky</target>
+        </trans-unit>
+        <trans-unit id="6">
+          <source>Data segment directory header is invalid</source>
+          <target>Neplatná hlavička složky segmentu dat</target>
+        </trans-unit>
+        <trans-unit id="7">
+          <source>Data segment end of file is invalid</source>
+          <target>Neplatný konec souboru segmentu dat</target>
+        </trans-unit>
+        <trans-unit id="8">
+          <source>Address of primary directory of bit table is invalid</source>
+          <target>Neplatná adresa primární složky bitové tabulky</target>
+        </trans-unit>
+        <trans-unit id="9">
+          <source>Primary directory of bit table is invalid</source>
+          <target>Neplatný primární adresář bitové tabulky</target>
+        </trans-unit>
+        <trans-unit id="10">
+          <source>Address of secondary directory of bit table is invalid</source>
+          <target>Neplatná adresa sekundárního adresáře bitové tabulky</target>
+        </trans-unit>
+        <trans-unit id="11">
+          <source>Secondary directory of bit table is invalid</source>
+          <target>Neplatný sekundární adresář bitové tabulky</target>
+        </trans-unit>
+        <trans-unit id="12">
+          <source>Address of bit table is invalid</source>
+          <target>Neplatná adresa bitové tabulky</target>
+        </trans-unit>
+        <trans-unit id="13">
+          <source>Bit table is invalid</source>
+          <target>Neplatná bitová tabulka</target>
+        </trans-unit>
+        <trans-unit id="14">
+          <source>Cannot open data segment</source>
+          <target>Nelze otevřít segment dat</target>
+        </trans-unit>
+        <trans-unit id="15">
+          <source>Directory of data tables is invalid</source>
+          <target>Neplatný adresář tabulek dat</target>
+        </trans-unit>
+        <trans-unit id="16">
+          <source>Number of records is invalid</source>
+          <target>Neplatný počet záznamů</target>
+        </trans-unit>
+        <trans-unit id="17">
+          <source>Address of primary directory of record addresses is invalid</source>
+          <target>Neplatná adresa primárního adresáře adres záznamů</target>
+        </trans-unit>
+        <trans-unit id="18">
+          <source>List of deleted records is invalid</source>
+          <target>Neplatný seznam vymazaných záznamů</target>
+        </trans-unit>
+        <trans-unit id="19">
+          <source>Number of BLOBs is invalid</source>
+          <target>Neplatný počet BLOBů</target>
+        </trans-unit>
+        <trans-unit id="20">
+          <source>Address of primary directory of BLOBs addresses is invalid</source>
+          <target>Neplatná adresa primárního adresáře BLOB addres</target>
+        </trans-unit>
+        <trans-unit id="21">
+          <source>List of deleted BLOBs is invalid</source>
+          <target>Neplatný seznam vymazaných BLOBů</target>
+        </trans-unit>
+        <trans-unit id="22">
+          <source>Address of record address directory is invalid</source>
+          <target>Neplatná adresa adresáře adres záznamů</target>
+        </trans-unit>
+        <trans-unit id="23">
+          <source>Address of BLOB address directory is invalid</source>
+          <target>Neplatná adresa adresáře adres BLOBů</target>
+        </trans-unit>
+        <trans-unit id="24">
+          <source>Tag header of record address directory is invalid</source>
+          <target>Neplatná hlavička tagu adresáře adres záznamů</target>
+        </trans-unit>
+        <trans-unit id="25">
+          <source>Tag header of BLOB address directory is invalid</source>
+          <target>Neplatná hlavička tagu adresáře adres BLOBů</target>
+        </trans-unit>
+        <trans-unit id="26">
+          <source>Cannot read data for record address directory</source>
+          <target>Nelze číst data pro adresář adres záznamů</target>
+        </trans-unit>
+        <trans-unit id="27">
+          <source>Cannot read data for BLOB address directory</source>
+          <target>Nelze číst data pro adresář adres BLOBů</target>
+        </trans-unit>
+        <trans-unit id="28">
+          <source>Checksum of record address directory is invalid</source>
+          <target>Neplatný kontrolní součet adresáře adres záznamů</target>
+        </trans-unit>
+        <trans-unit id="29">
+          <source>Checksum of BLOB address directory is invalid</source>
+          <target>Neplatný kontrolní součet adresáře adres BLOBů</target>
+        </trans-unit>
+        <trans-unit id="30">
+          <source>Length of address directory is invalid</source>
+          <target>Neplatná délka adresáře adres</target>
+        </trans-unit>
+        <trans-unit id="31">
+          <source>BLOB address is invalid</source>
+          <target>Neplatná adresa BLOB</target>
+        </trans-unit>
+        <trans-unit id="32">
+          <source>Cannot read BLOB data</source>
+          <target>Nelze číst BLOB data</target>
+        </trans-unit>
+        <trans-unit id="33">
+          <source>BLOB checksum is invalid</source>
+          <target>Neplatný konntrolní součet BLOB</target>
+        </trans-unit>
+        <trans-unit id="34">
+          <source>BLOB tag header is invalid</source>
+          <target>Neplatná hlavička BLOB tag</target>
+        </trans-unit>
+        <trans-unit id="35">
+          <source>BLOB length is invalid</source>
+          <target>Neplatná délka BLOB</target>
+        </trans-unit>
+        <trans-unit id="36">
+          <source>BLOB length does not match the one in the address directory</source>
+          <target>Délka BLOB neodpovídá té v adresáři adres</target>
+        </trans-unit>
+        <trans-unit id="37">
+          <source>Record address is invalid</source>
+          <target>Neplatná adresa záznamu</target>
+        </trans-unit>
+        <trans-unit id="38">
+          <source>Cannot read record data</source>
+          <target>Nelze číst data záznamu</target>
+        </trans-unit>
+        <trans-unit id="39">
+          <source>Record checksum is invalid</source>
+          <target>Neplatný kontrolní součet záznamu</target>
+        </trans-unit>
+        <trans-unit id="40">
+          <source>Record length does not match the one in the address directory</source>
+          <target>Délka záznamu neodpovídá té v adresáři adres</target>
+        </trans-unit>
+        <trans-unit id="41">
+          <source>Record length is invalid</source>
+          <target>Neplatná délka záznamu</target>
+        </trans-unit>
+        <trans-unit id="42">
+          <source>Record tag header is invalid</source>
+          <target>Neplatná hlavička tagu záznamu</target>
+        </trans-unit>
+        <trans-unit id="43">
+          <source>Number of fields invalid</source>
+          <target> Neplatný počet polí </target>
+        </trans-unit>
+        <trans-unit id="44">
+          <source>Invalid data field type</source>
+          <target>Neplatný typ datového pole</target>
+        </trans-unit>
+        <trans-unit id="45">
+          <source>Invalid data field offset in record</source>
+          <target>Neplatný offset datového pole v záznamu</target>
+        </trans-unit>
+        <trans-unit id="46">
+          <source>Invalid data field length</source>
+          <target>Neplatná délka datového pole</target>
+        </trans-unit>
+        <trans-unit id="47">
+          <source>BLOB reference is invalid in this data field</source>
+          <target>V tomto datovém poli je neplatný odkaz na BLOB</target>
+        </trans-unit>
+        <trans-unit id="48">
+          <source>BLOB is deleted in this data field</source>
+          <target>V tomto datovém poli je BLOB vymazán</target>
+        </trans-unit>
+        <trans-unit id="49">
+          <source>BLOB is invalid in this data field</source>
+          <target>V tomto datovém poli je BLOB neplatný</target>
+        </trans-unit>
+        <trans-unit id="50">
+          <source>BLOB reference of this data field is already used in another record</source>
+          <target>Odkaz na BLOB v tomto datovém poli je již použit v jiném záznamu</target>
+        </trans-unit>
+        <trans-unit id="51">
+          <source>The chained list of deleted BLOBs is circular</source>
+          <target>Řetězený seznam vymazaných BLOBů je do kruhu</target>
+        </trans-unit>
+        <trans-unit id="52">
+          <source>The chained list of deleted BLOBs is invalid</source>
+          <target>Řetězený seznam vymazaných BLOBů je neplatný</target>
+        </trans-unit>
+        <trans-unit id="53">
+          <source>The chained list of deleted records is circular</source>
+          <target>Řetězený seznam vymazaných záznamů je do kruhu</target>
+        </trans-unit>
+        <trans-unit id="54">
+          <source>The chained list of deleted records is invalid</source>
+          <target>Řetězený seznam vymazaných záznamů je neplatný</target>
+        </trans-unit>
+        <trans-unit id="55">
+          <source>Some BLOBs are orphans in this data table</source>
+          <target>Některé BLOBy v tomto datovém souboru jsou osiřelé</target>
+        </trans-unit>
+        <trans-unit id="56">
+          <source>Address of primary address directory is invalid</source>
+          <target>Adresa adresáře primárních adres je neplatná</target>
+        </trans-unit>
+        <trans-unit id="57">
+          <source>The number of entries is invalid</source>
+          <target>Počet vstupů je neplatný</target>
+        </trans-unit>
+        <trans-unit id="58">
+          <source>The chained list of deleted entries is invalid</source>
+          <target>Řetězený seznam vymazaných vstupů je neplatný</target>
+        </trans-unit>
+        <trans-unit id="59">
+          <source>Address is invalid</source>
+          <target>Addresa je neplatná</target>
+        </trans-unit>
+        <trans-unit id="60">
+          <source>Address of address directory is invalid</source>
+          <target>Adresa adresáře adres je neplatná</target>
+        </trans-unit>
+        <trans-unit id="61">
+          <source>Tag header of address directory is invalid</source>
+          <target>Hlavička tagu adresáře adres není platná</target>
+        </trans-unit>
+        <trans-unit id="62">
+          <source>Cannot read data for address directory</source>
+          <target>Nelze číst data pro adresář adres</target>
+        </trans-unit>
+        <trans-unit id="63">
+          <source>Checksum of address directory is invalid</source>
+          <target>Neplatný kontrolní součet adresáře adres</target>
+        </trans-unit>
+        <trans-unit id="64">
+          <source>Length is invalid</source>
+          <target>Neplatná délka</target>
+        </trans-unit>
+        <trans-unit id="65">
+          <source>Address is invalid</source>
+          <target>Neplatná adresa</target>
+        </trans-unit>
+        <trans-unit id="66">
+          <source>Checksum is invalid</source>
+          <target>Neplatný kontrolní součet</target>
+        </trans-unit>
+        <trans-unit id="67">
+          <source>Cannot read data</source>
+          <target>Nelze číst data</target>
+        </trans-unit>
+        <trans-unit id="68">
+          <source>Tag header is invalid</source>
+          <target>Hlavička tagu je neplatná</target>
+        </trans-unit>
+        <trans-unit id="69">
+          <source>Length of table name is invalid</source>
+          <target>Neplatná délka názvu tabulky</target>
+        </trans-unit>
+        <trans-unit id="70">
+          <source>Length of record class name is invalid</source>
+          <target>Neplatný název třídy záznamu</target>
+        </trans-unit>
+        <trans-unit id="71">
+          <source>Length of field name is invalid</source>
+          <target>Neplatný název pole</target>
+        </trans-unit>
+        <trans-unit id="72">
+          <source>Type of Table is invalid</source>
+          <target>Neplatný typ tabulky</target>
+        </trans-unit>
+        <trans-unit id="73">
+          <source>The number of fields is invalid</source>
+          <target>Neplatný počet polí</target>
+        </trans-unit>
+        <trans-unit id="74">
+          <source>The number of Fields does not match the size of the table definition</source>
+          <target>Počet polí neodpovídá velikosti definice tabulky</target>
+        </trans-unit>
+        <trans-unit id="75">
+          <source>The UUIDs are the same</source>
+          <target> UUIDy jsou tytéž (Universal Unique Identifiers)</target>
+        </trans-unit>
+        <trans-unit id="76">
+          <source>Field type is invalid</source>
+          <target>Typy polí nejsou platné</target>
+        </trans-unit>
+        <trans-unit id="77">
+          <source>Length stored in tag header does not match</source>
+          <target>Délka uložená v hlavičce tagu neodpovídá</target>
+        </trans-unit>
+        <trans-unit id="78">
+          <source>Extra properties stream seems to be damaged</source>
+          <target>Tok extra vlastností vypadá poškozen</target>
+        </trans-unit>
+        <trans-unit id="79">
+          <source>Auto sequence number type is invalid</source>
+          <target>Typ auto sekvenčního čísla je neplatný</target>
+        </trans-unit>
+        <trans-unit id="80">
+          <source>Auto sequence number ID is invalid</source>
+          <target>ID auto sekvenčního čísla je neplatný</target>
+        </trans-unit>
+        <trans-unit id="81">
+          <source>Type of relation is invalid</source>
+          <target>Typ vztahu je neplatný</target>
+        </trans-unit>
+        <trans-unit id="82">
+          <source>The number of relations is invalid</source>
+          <target>Neplatný počet vztahů</target>
+        </trans-unit>
+        <trans-unit id="83">
+          <source>The relation type does not match</source>
+          <target>Typ vztahu neodpovídá</target>
+        </trans-unit>
+        <trans-unit id="84">
+          <source>The relation source field ID cannot be found</source>
+          <target>ID zdrojového pole vztahu nemůže být nalezeno</target>
+        </trans-unit>
+        <trans-unit id="85">
+          <source>The relation destination field ID cannot be found</source>
+          <target>ID cílového pole vztahu nemůže být nalezeno</target>
+        </trans-unit>
+        <trans-unit id="86">
+          <source>The table of relations is damaged</source>
+          <target>Tabulka vztahů je poškozena</target>
+        </trans-unit>
+        <trans-unit id="87">
+          <source>The number of fields for the source is not equal to the number of fields for the destination</source>
+          <target>Počet polí pro zdroj není totožný s počtem polí pro cíl</target>
+        </trans-unit>
+        <trans-unit id="88">
+          <source>The index definition is damaged</source>
+          <target>Definice indexu je poškozena</target>
+        </trans-unit>
+        <trans-unit id="89">
+          <source>Index type is invalid</source>
+          <target>Neplatný typ indexu</target>
+        </trans-unit>
+        <trans-unit id="90">
+          <source>Field reference is invalid</source>
+          <target>Odkaz pole je neplatný</target>
+        </trans-unit>
+        <trans-unit id="91">
+          <source>Table reference is invalid</source>
+          <target>Odkaz tabulky je neplatný</target>
+        </trans-unit>
+        <trans-unit id="92">
+          <source>Index header type is invalid</source>
+          <target>Neplatný typ hlavičky indexu</target>
+        </trans-unit>
+        <trans-unit id="93">
+          <source>Address of primary directory of index pages is invalid</source>
+          <target>Neplatná adresa primárního adresáře indexových stránek</target>
+        </trans-unit>
+        <trans-unit id="94">
+          <source>The number of index pages is invalid</source>
+          <target>Počet indexových stránek je neplatný</target>
+        </trans-unit>
+        <trans-unit id="95">
+          <source>The chained list of deleted index pages is invalid</source>
+          <target>Řetězený seznam vymazaných indexových stránek je neplatný</target>
+        </trans-unit>
+        <trans-unit id="96">
+          <source>Primary page number is invalid</source>
+          <target>Primární číslo stránky je neplatné</target>
+        </trans-unit>
+        <trans-unit id="97">
+          <source>Address of primary directory of index clusters is invalid</source>
+          <target>Addresa primárního adresáře klastrů indexů je neplatná</target>
+        </trans-unit>
+        <trans-unit id="98">
+          <source>The number of index clusters is invalid</source>
+          <target>Počet klastrů indexů je neplatný</target>
+        </trans-unit>
+        <trans-unit id="99">
+          <source>The chained list of deleted index clusters is invalid</source>
+          <target>Řetězený seznam vymazaných klastrů indexů je neplatný</target>
+        </trans-unit>
+        <trans-unit id="100">
+          <source>Extra property length is invalid</source>
+          <target>Dlélka extra vlastností je neplatná</target>
+        </trans-unit>
+        <trans-unit id="101">
+          <source>Extra property address is invalid</source>
+          <target>Adresa extra vlastností je neplatná</target>
+        </trans-unit>
+        <trans-unit id="102">
+          <source>Extra property checksum is invalid</source>
+          <target>Neplatný kontrolní součet extra vlastností</target>
+        </trans-unit>
+        <trans-unit id="103">
+          <source>Cannot read extra property data</source>
+          <target>Nelze číst data extra vlastností</target>
+        </trans-unit>
+        <trans-unit id="104">
+          <source>Extra property tag header is invalid</source>
+          <target>Neplatná hlavička tagu extra vlastností</target>
+        </trans-unit>
+        <trans-unit id="105">
+          <source>Extra property length stored in tag header does not match</source>
+          <target>Délka extra vlastnosti uložená v hlavičce tagu neodpovídá</target>
+        </trans-unit>
+        <trans-unit id="106">
+          <source>Address of page address directory is invalid</source>
+          <target>Adresa adresáře adres stránek je neplatná</target>
+        </trans-unit>
+        <trans-unit id="107">
+          <source>Address of cluster address directory is invalid</source>
+          <target>Addresa adresáře adres klastrů je neplatná</target>
+        </trans-unit>
+        <trans-unit id="108">
+          <source>Tag header of page address directory is invalid</source>
+          <target>Hlavička tagu adresáře adres stránek je neplatná</target>
+        </trans-unit>
+        <trans-unit id="109">
+          <source>Tag header of cluster address directory is invalid</source>
+          <target>Hlavička tagu adresáře adres klastrů je neplatná</target>
+        </trans-unit>
+        <trans-unit id="110">
+          <source>Cannot read data for page address directory</source>
+          <target>Nelze číst data pro adresář adres stránek</target>
+        </trans-unit>
+        <trans-unit id="111">
+          <source>Cannot read data for cluster address directory</source>
+          <target>Nelze číst data pro adresář adres klastrů</target>
+        </trans-unit>
+        <trans-unit id="112">
+          <source>Checksum of page address directory is invalid</source>
+          <target>Kontrolní součet adresáře adres stránek je neplatný</target>
+        </trans-unit>
+        <trans-unit id="113">
+          <source>Checksum of cluster address directory is invalid</source>
+          <target>Kontrolní součet adresáře adres klastrů je neplatn</target>
+        </trans-unit>
+        <trans-unit id="114">
+          <source>Cluster type is invalid</source>
+          <target>Typ klastru je neplatný</target>
+        </trans-unit>
+        <trans-unit id="115">
+          <source>The number of records in cluster is invalid</source>
+          <target>Počet záznamů v klastru je neplatný</target>
+        </trans-unit>
+        <trans-unit id="116">
+          <source>Cluster contains invalid record references</source>
+          <target>Klastr obsahuje neplatný odkaz na zázanam</target>
+        </trans-unit>
+        <trans-unit id="117">
+          <source>Cluster contains deleted record references</source>
+          <target>Klastr obsahuje odkaz na vymazaný zázanam</target>
+        </trans-unit>
+        <trans-unit id="118">
+          <source>Cluster bits count is invalid</source>
+          <target>Neplatný počet bitů klastru</target>
+        </trans-unit>
+        <trans-unit id="119">
+          <source>The number of index keys is invalid</source>
+          <target>Neplatný počet indexových klíčů</target>
+        </trans-unit>
+        <trans-unit id="120">
+          <source>Cluster contains duplicated record references</source>
+          <target>Klastr obsahuje odkazy na zdvojené záznamy</target>
+        </trans-unit>
+        <trans-unit id="121">
+          <source>Subpage reference is invalid</source>
+          <target>Odkaz na podstránku je neplatný</target>
+        </trans-unit>
+        <trans-unit id="122">
+          <source>Subpage reference is deleted</source>
+          <target>Odkaz na podstránku je vymazán</target>
+        </trans-unit>
+        <trans-unit id="123">
+          <source>The keys directory is invalid</source>
+          <target>Adresář klíčů je neplatný</target>
+        </trans-unit>
+        <trans-unit id="124">
+          <source>Key references an invalid record number</source>
+          <target>Klíč odkazuje na číslo neplatného záznamu</target>
+        </trans-unit>
+        <trans-unit id="125">
+          <source>Key references a deleted record number</source>
+          <target>Klíč odkazuje na číslo vymazaného záznamu</target>
+        </trans-unit>
+        <trans-unit id="126">
+          <source>Key references a duplicated record number</source>
+          <target>Klíč odkazuje na číslo zdvojeného záznamu</target>
+        </trans-unit>
+        <trans-unit id="127">
+          <source>The keys are not in the right order</source>
+          <target>Klíče nejsou ve správném pořadí</target>
+        </trans-unit>
+        <trans-unit id="128">
+          <source>Invalid key</source>
+          <target>Neplatný klíč</target>
+        </trans-unit>
+        <trans-unit id="129">
+          <source>Some record references are missing</source>
+          <target>Některé odkazy na záznamy chybí</target>
+        </trans-unit>
+        <trans-unit id="130">
+          <source>This index page is used in a circular reference</source>
+          <target>Tato stránka indexů je užita v kruhovém odrazu</target>
+        </trans-unit>
+        <trans-unit id="131">
+          <source>Checksum of data table header is invalid</source>
+          <target>Neplatný kontrolní součet hlavičky tabulky dat</target>
+        </trans-unit>
+        <trans-unit id="132">
+          <source>Length of data table header is invalid</source>
+          <target>Neplatná délka hlavičky tabulky dat</target>
+        </trans-unit>
+        <trans-unit id="133">
+          <source>Tag header of data table header is invalid</source>
+          <target>Neplatná hlavička tagu hlavičky tabulky dat</target>
+        </trans-unit>
+        <trans-unit id="134">
+          <source>Cannot read data of data table header</source>
+          <target>Nelze číst data hlavičky tabulky dat</target>
+        </trans-unit>
+        <trans-unit id="135">
+          <source>Address of data table header is invalid</source>
+          <target>Neplatná adresa hlavičky tabulky dat</target>
+        </trans-unit>
+        <trans-unit id="136">
+          <source>Wrong data type number in index</source>
+          <target>Špatný počet typů dat v indexu</target>
+        </trans-unit>
+        <trans-unit id="137">
+          <source>The structure and data file do not match</source>
+          <target>SOubor struktury a dat si neodpovídají</target>
+        </trans-unit>
+        <trans-unit id="138">
+          <source>Missing Index file .4DIndx or .4DIndy</source>
+          <target>Chybí soubor indexů .4DIndx nebo .4DIndy</target>
+        </trans-unit>
+        <trans-unit id="139">
+          <source>Last database flush did not complete.</source>
+          <target>Poslední uvolnění dat do databáze nebylo dokončeno..</target>
+        </trans-unit>
+        <trans-unit id="140">
+          <source>Address overlaps</source>
+          <target>Přetečení adresy</target>
+        </trans-unit>
+        <trans-unit id="141">
+          <source>Index is flagged to be rebuilt</source>
+          <target>Index je označen k přestavění</target>
+        </trans-unit>
+        <trans-unit id="142">
+          <source>External BLOB file is missing</source>
+          <target>Externí BLOB soubor chybí</target>
+        </trans-unit>
+      </group>
+
+      <group id="1002" resname="DB4D DataTools Problem Sources">
+        <trans-unit id="1">
+          <source>Problem on the database</source>
+          <target>Problém v databázi</target>
+        </trans-unit>
+        <trans-unit id="2">
+          <source>Problem on the data segment # {SegNum}</source>
+          <target>Problém v segmentu dat# {SegNum}</target>
+        </trans-unit>
+        <trans-unit id="3">
+          <source>Problem on the secondary directory # {BittableTable} of bit tables in the data segment # {SegNum}</source>
+          <target>Problém v sekundárním adresáři # {BittableTable} bitových tabulek v segmentu dat # {SegNum}</target>
+        </trans-unit>
+        <trans-unit id="4">
+          <source>Problem on the bit table # {Bittable} in the secondary directory # {BittableTable} of bit tables in the data segment # {SegNum}</source>
+          <target> Problém v bitových tabulkách # {Bittable} v sekundárním adresáři # {BittableTable} bitových tabulek v segmentu dat # {SegNum}</target>
+        </trans-unit>
+        <trans-unit id="5">
+          <source>Problem on the {TableName} data table</source>
+          <target>Problém v datové tabulce {TableName}</target>
+        </trans-unit>
+        <trans-unit id="6">
+          <source>Problem on record address directory # {RecordAddressTableNum} in the {TableName} data table</source>
+          <target>Problém v adresáři adres záznamů # {RecordAddressTableNum} v tabulce dat {TableName}</target>
+        </trans-unit>
+        <trans-unit id="7">
+          <source>Problem on BLOB address directory # {BlobAddressTableNum} in the {TableName} data table</source>
+          <target>Problém v adresáři adres BLOB # {BlobAddressTableNum} v tabulce dat {TableName}</target>
+        </trans-unit>
+        <trans-unit id="8">
+          <source>Problem on BLOB # {BlobNum} in the {TableName} data table</source>
+          <target>Problém v BLOB # {BlobNum} v tabulce dat {TableName}</target>
+        </trans-unit>
+        <trans-unit id="9">
+          <source>Problem on record # {RecordNum} in the {TableName} data table</source>
+          <target>Problém v záznamu # {RecordNum v tabulce dat {TableName}</target>
+        </trans-unit>
+        <trans-unit id="10">
+          <source>Problem on field {FieldName} in record # {RecordNum} in the {TableName} data table</source>
+          <target>Problém v poli {FieldName} v záznamu # {RecordNum} v tabulce dat {TableName}</target>
+        </trans-unit>
+        <trans-unit id="11">
+          <source>Problem on directory of table definitions</source>
+          <target>Problém v adresáři dafinic tabulek</target>
+        </trans-unit>
+        <trans-unit id="12">
+          <source>Problem on {TableName} table definition</source>
+          <target>Problém v definici tabulky {TableName}</target>
+        </trans-unit>
+        <trans-unit id="13">
+          <source>Problem on directory of relation definitions</source>
+          <target>Problém v adresáři definic vztahů</target>
+        </trans-unit>
+        <trans-unit id="14">
+          <source>Problem on relation definition # {RelationNum}</source>
+          <target>Problém v definici vztahu # {RelationNum}</target>
+        </trans-unit>
+        <trans-unit id="15">
+          <source>Problem on directory of sequence numbers</source>
+          <target>Problém v adresáři sekvenčních čísel</target>
+        </trans-unit>
+        <trans-unit id="16">
+          <source>Problem on sequence number # {SeqNum}</source>
+          <target>Problém v sekvenčním čísle # {SeqNum}</target>
+        </trans-unit>
+        <trans-unit id="17">
+          <source>Problem on directory of index definitions</source>
+          <target>Problém v adresáři definic indexů</target>
+        </trans-unit>
+        <trans-unit id="18">
+          <source>Problem on index definition {IndexName}</source>
+          <target>Problém v definici indexu {IndexName}</target>
+        </trans-unit>
+        <trans-unit id="19">
+          <source>Problem on directory of backup index definitions</source>
+          <target>Problém v adresáři definicích záložního indexu</target>
+        </trans-unit>
+        <trans-unit id="20">
+          <source>Problem on backup index definition {IndexName}</source>
+          <target>Problém v definici záložního indexu {IndexName}</target>
+        </trans-unit>
+        <trans-unit id="21">
+          <source>UUID Conflict between {ObjType1}:{ObjName1} and {ObjType2}:{ObjName2}</source>
+          <target>UUID konflikt mezi {ObjType1}:{ObjName1} a{ObjType2}:{ObjName2}</target>
+        </trans-unit>
+        <trans-unit id="22">
+          <source>Problem on field definition {FieldName} in {TableName} table</source>
+          <target>Problém v definici pole {FieldName} v tabulce {TableName}</target>
+        </trans-unit>
+        <trans-unit id="23">
+          <source>Problem on page address directory # {IndexPageAddressTable} in {IndexName} index</source>
+          <target>Problém v adresáři adres indexových stránek # {IndexPageAddressTable} v indexu {IndexName}</target>
+        </trans-unit>
+        <trans-unit id="24">
+          <source>Problem on page # {IndexPageNum} in {IndexName} index</source>
+          <target>Problém na stránce # {IndexPageNum} v indexu {IndexName}</target>
+        </trans-unit>
+        <trans-unit id="25">
+          <source>Problem on {IndexName} index</source>
+          <target>Problém v indexu {IndexName} </target>
+        </trans-unit>
+        <trans-unit id="26">
+          <source>Problem on cluster # {IndexClusterNum} in {IndexName} index</source>
+          <target>Problém v klastru # {IndexClusterNum} v indexu {IndexName} </target>
+        </trans-unit>
+        <trans-unit id="27">
+          <source>Problem on cluster address directory # {IndexClusterAddressTable} in {IndexName} index</source>
+          <target>Problém v adresáři adres klastrů # {IndexClusterAddressTable} v indexu {IndexName}</target>
+        </trans-unit>
+        <trans-unit id="28">
+          <source>Problem on bit page # {BitPageNum} in cluster # {IndexClusterNum} in {IndexName} index</source>
+          <target>Problém na bitové stránce # {BitPageNum} klastru # {IndexClusterNum} v indexu {IndexName} </target>
+        </trans-unit>
+        <trans-unit id="29">
+          <source>Problem on directory of data table headers</source>
+          <target>Problém v adresáři hlaviček tabulek dat</target>
+        </trans-unit>
+        <trans-unit id="30">
+          <source>Problem in NULLS cluster of {IndexName} index</source>
+          <target>Problém v klastru NULLS (prázdných) - indexu {IndexName}</target>
+        </trans-unit>
+        <trans-unit id="31">
+          <source>Problem on bit page # {BitPageNum} in NULLS cluster of {IndexName} index</source>
+          <target>Problém na bitové stránce # {BitPageNum} v klastru prázdných - NULLS -v indexu {IndexName}</target>
+        </trans-unit>
+        <trans-unit id="32">
+          <source>Overlapping {ObjType} at offset {ObjAddr} with length {ObjLen} in data segment # {SegNum}</source>
+          <target>Přetečení {ObjType} na ofsetu {ObjAddr} s délkou {ObjLen} v segmentu dat # {SegNum}</target>
+        </trans-unit>
+        <trans-unit id="33">
+          <source>Overlapping Objects in data segment # {SegNum}</source>
+          <target>Přetečení objektů v datovém segmentu # {SegNum}</target>
+        </trans-unit>
+      </group>
+
+      <group id="1003" resname="DB4D DataTools Types of UUIDs">
+        <trans-unit id="1">
+          <source>Table</source>
+          <target>Tabulka</target>
+        </trans-unit>
+        <trans-unit id="2">
+          <source>Field</source>
+          <target>Pole</target>
+        </trans-unit>
+        <trans-unit id="3">
+          <source>Index</source>
+          <target>Index</target>
+        </trans-unit>
+        <trans-unit id="4">
+          <source>Automatic Sequence Number</source>
+          <target>Automatické sekvenční číslo</target>
+        </trans-unit>
+        <trans-unit id="5">
+          <source>Relation</source>
+          <target>Vztah</target>
+        </trans-unit>
+      </group>
+
+      <group id="1004" resname="DB4D DataTools Progress">
+        <note>
+          **************************************************
+          IMPORTANT INTERNAL COMMENT
+          **************************************************
+          If you change a trans-unit, add one, remove one, you _must_ also change group id "1008",
+          both are the same except for the "Verify" or "Compact" context.
+        </note>
+        <trans-unit id="1">
+          <source>Loading data tables</source>
+          <target>Zavádí se tabulky dat</target>
+        </trans-unit>
+        <trans-unit id="2">
+          <source>Checking data table definitions</source>
+          <target>Kontrolují se definice tabulek dat</target>
+        </trans-unit>
+        <trans-unit id="3">
+          <source>Checking chained list of deleted table definitions</source>
+          <target>Kontroluje se řetězený seznam vymazaných definic tabulek</target>
+        </trans-unit>
+        <trans-unit id="4">
+          <source>Checking index definitions</source>
+          <target>Kontrola definic indexů</target>
+        </trans-unit>
+        <trans-unit id="5">
+          <source>Checking chained list of deleted index definitions</source>
+          <target>Kontroluje se řetězený seznam vymazaných definic indexů</target>
+        </trans-unit>
+        <trans-unit id="6">
+          <source>Checking backup index definitions</source>
+          <target>Kontrola definic záložních indexů</target>
+        </trans-unit>
+        <trans-unit id="7">
+          <source>Checking chained list of deleted backup index definitions</source>
+          <target>Kontroluje se řetězený seznam vymazaných definic záložních indexů</target>
+        </trans-unit>
+        <trans-unit id="8">
+          <source>Checking relation definitions</source>
+          <target>Kontrola definic vztahů</target>
+        </trans-unit>
+        <trans-unit id="9">
+          <source>Checking chained list of deleted relation definitions</source>
+          <target>Kontroluje se řetězený seznam vymazaných definic vztahů</target>
+        </trans-unit>
+        <trans-unit id="10">
+          <source>Checking auto sequence number definitions</source>
+          <target>Kontrola definic auto sekvenčních čísel</target>
+        </trans-unit>
+        <trans-unit id="11">
+          <source>Checking chained list of deleted auto sequence number definitions</source>
+          <target>Kontroluje se řetězený seznam vymazaných definic auto sekvenčních čísel</target>
+        </trans-unit>
+        <trans-unit id="12">
+          <source>Checking data table headers</source>
+          <target>Kontrola hlaviček tabulek dat</target>
+        </trans-unit>
+        <trans-unit id="13">
+          <source>Checking chained list of deleted data table headers</source>
+          <target>Kontroluje se řetězený seznam vymazaných hlaviček tabulek dat</target>
+        </trans-unit>
+        <trans-unit id="14">
+          <source>Checking BLOBs in table {p1}</source>
+          <target>Kontrola BLOBů tabulky {p1}</target>
+        </trans-unit>
+        <trans-unit id="15">
+          <source>Checking list of deleted BLOBs in table {p1}</source>
+          <target>Kontrola seznamu vymazaných BLOBů tabulky {p1}</target>
+        </trans-unit>
+        <trans-unit id="16">
+          <source>Checking records in table {p1}</source>
+          <target>Kontrola záznamů tabulky {p1}</target>
+        </trans-unit>
+        <trans-unit id="17">
+          <source>Checking list of deleted records in table {p1}</source>
+          <target>Kontrola seznamu vymazaných záznamů tabulky {p1}</target>
+        </trans-unit>
+        <trans-unit id="18">
+          <source>Check bit tables for segment {SegNum}</source>
+          <target>Kontrola bitových tabulek pro segment {SegNum}</target>
+        </trans-unit>
+        <trans-unit id="19">
+          <source>Checking index pages on {p1}</source>
+          <target>Kontrola stránek indexů v {p1}</target>
+        </trans-unit>
+        <trans-unit id="20">
+          <source>Checking index page addresses on {p1}</source>
+          <target>Kontrola adres stránek indexů v {p1}</target>
+        </trans-unit>
+        <trans-unit id="21">
+          <source>Checking list of deleted index pages on {p1}</source>
+          <target>Kontrola seznamu vymazaných stránek indexů v {p1}</target>
+        </trans-unit>
+        <trans-unit id="22">
+          <source>Checking clusters on {p1}</source>
+          <target>Kontrola klastrů v {p1}</target>
+        </trans-unit>
+        <trans-unit id="23">
+          <source>Checking list of deleted clusters on {p1}</source>
+          <target>Kontrola seznamu vymazaných klastrů v {p1}</target>
+        </trans-unit>
+        <trans-unit id="24">
+          <source>on</source>
+          <target>v</target>
+        </trans-unit>
+        <trans-unit id="25">
+          <source>Keywords Index </source>
+          <target>Index klíčová slova </target>
+        </trans-unit>
+        <trans-unit id="26">
+          <source>B-tree Index </source>
+          <target>B-strom Index </target>
+        </trans-unit>
+        <trans-unit id="27">
+          <source>Cluster Index </source>
+          <target>Klastr Index </target>
+        </trans-unit>
+        <trans-unit id="28">
+          <source>Index </source>
+          <target>Index </target>
+        </trans-unit>
+        <trans-unit id="29">
+          <source>Composite Index </source>
+          <target>Složený (composite) Index </target>
+        </trans-unit>
+        <trans-unit id="30">
+          <source>Scanning data</source>
+          <target>Skenování dat</target>
+        </trans-unit>
+        <trans-unit id="31">
+          <source>Recovering records</source>
+          <target>Obnova záznamů</target>
+        </trans-unit>
+        <trans-unit id="32">
+          <source>Recovering BLOBs</source>
+          <target>Obnova BLOBs</target>
+        </trans-unit>
+        <trans-unit id="33">
+          <source> (Table# {p1} out of {p2} tables)</source>
+          <target> (Tabulka# {p1} mimo {p2} tabulek)</target>
+        </trans-unit>
+        <trans-unit id="34">
+          <source>Checking index {p1}</source>
+          <target>Kontrola indexu {p1}</target>
+        </trans-unit>
+        <trans-unit id="35">
+          <source>Object Index </source>
+          <target>Index objektu </target>
+        </trans-unit>
+      </group>
+
+      <group id="1005" resname="DB4D Progress Session Titles">
+        <trans-unit id="1">
+          <source>Loading data</source>
+          <target>Zavádí se data</target>
+        </trans-unit>
+        <trans-unit id="2">
+          <source>Integrating journal: {curValue} of {maxValue} entries</source>
+          <target>Integrace žurnálu: {curValue} z {maxValue} vstupů</target>
+        </trans-unit>
+        <trans-unit id="3">
+          <source>Sequential sorting on {TableName}: {curValue} of {maxValue} records</source>
+          <target>Sekvenční třídění v tabulce {TableName}: {curValue} z {maxValue} záznamů</target>
+        </trans-unit>
+        <trans-unit id="4">
+          <source>Sequential searching on {TableName}: {curValue} of {maxValue} records</source>
+          <target>Sekvenční hledání v tabulce {TableName}: {curValue} z {maxValue} záznamů</target>
+        </trans-unit>
+        <trans-unit id="5">
+          <source>Exporting a selection of records: {curValue} of {maxValue} records</source>
+          <target>Exportuje se výběr záznamů: {curValue} z {maxValue} záznamů</target>
+        </trans-unit>
+        <trans-unit id="6">
+          <source>Indexing calculation formulas: {curValue} of {maxValue} pages</source>
+          <target>Indexují se výpočtové výrazy: {curValue} z {maxValue} stránek</target>
+        </trans-unit>
+        <trans-unit id="7">
+          <source>Computing distinct indexed values: {curValue} of {maxValue} pages</source>
+          <target>Počítají se rozdílné indexové hodnoty: {curValue} z {maxValue} stránek</target>
+        </trans-unit>
+        <trans-unit id="8">
+          <source>Indexed sorting: {curValue} of {maxValue} keys</source>
+          <target>Indexové třídění: {curValue} z {maxValue} klíčů</target>
+        </trans-unit>
+        <trans-unit id="9">
+          <source>Building of </source>
+          <target>Budování </target>
+        </trans-unit>
+        <trans-unit id="10">
+          <source>Building index on one field: {curValue} of {maxValue} records</source>
+          <target>Buduje se index jednoho pole: {curValue} z {maxValue} záznamů</target>
+        </trans-unit>
+        <trans-unit id="11">
+          <source>Building full text index on one field: {curValue} of {maxValue} records</source>
+          <target>Buduje se plnotextový index jednoho pole: {curValue} z {maxValue} záznamů</target>
+        </trans-unit>
+        <trans-unit id="12">
+          <source>Building composite index: {curValue} of {maxValue} records</source>
+          <target>Buduje se složený index: {curValue} z {maxValue} záznamů</target>
+        </trans-unit>
+        <trans-unit id="13">
+          <source>Merging items</source>
+          <target>Slučování položek</target>
+        </trans-unit>
+        <trans-unit id="14">
+          <source>Building selection</source>
+          <target>Buduje se výběr</target>
+        </trans-unit>
+        <trans-unit id="15">
+          <source>Generating index pages</source>
+          <target>Generují se stránky indexů</target>
+        </trans-unit>
+        <trans-unit id="16">
+          <source>Generating clusters</source>
+          <target>Generují se klastry</target>
+        </trans-unit>
+        <trans-unit id="17">
+          <source>Generating clusters</source>
+          <target>Generují se klastry</target>
+        </trans-unit>
+        <trans-unit id="18">
+          <source>Generating index clusters</source>
+          <target>Generují se klastry indexů</target>
+        </trans-unit>
+        <trans-unit id="19">
+          <source>Sequential sorting</source>
+          <target>Sekvenční třídění</target>
+        </trans-unit>
+        <trans-unit id="20">
+          <source>Sorting data</source>
+          <target>Třídění dat</target>
+        </trans-unit>
+        <trans-unit id="21">
+          <source>Deleting address table: {curValue} of {maxValue} entries</source>
+          <target>Mazání tabulek adres: {curValue} z {maxValue} vstupů</target>
+        </trans-unit>
+        <trans-unit id="22">
+          <source>Flushing Data</source>
+          <target>Uvolňují se data</target>
+        </trans-unit>
+        <trans-unit id="23">
+          <source>Deleting records: {curValue} of {maxValue}</source>
+          <target>Mazání záznamů: {curValue} z {maxValue}</target>
+        </trans-unit>
+        <trans-unit id="24">
+          <source>Analyzing Log file</source>
+          <target>Analyzování log souboru</target>
+        </trans-unit>
+        <trans-unit id="25">
+          <source>Selection to array: {curValue} of {maxValue}</source>
+          <target>Výběr do array: {curValue} z {maxValue}</target>
+        </trans-unit>
+        <trans-unit id="26">
+          <source>Array to selection: {curValue} of {maxValue}</source>
+          <target>Array do výběru: {curValue} z {maxValue}</target>
+        </trans-unit>
+        <trans-unit id="27">
+          <source>Indexing calculation formulas: {curValue} of {maxValue} keys</source>
+          <target>Indexování výpočtových vzorců: {curValue} z {maxValue} klíčů</target>
+        </trans-unit>
+        <trans-unit id="28">
+          <source>Index searching: {curValue} of {maxValue} pages</source>
+          <target>Indexové hledání: {curValue} z {maxValue} stránek</target>
+        </trans-unit>
+        <trans-unit id="29">
+          <source>Index scanning: {curValue} of {maxValue} pages</source>
+          <target>Prohledávání indexů: {curValue} z {maxValue} stránek</target>
+        </trans-unit>
+        <trans-unit id="30">
+          <source>Computing statistics: {curValue} of {maxValue} records</source>
+          <target>Operační statistika: {curValue} z {maxValue} záznamů</target>
+        </trans-unit>
+        <trans-unit id="31">
+          <source>Exporting {TableName} as SQL: {curValue} of {maxValue} records</source>
+          <target>Export {TableName} jako SQLL: {curValue} z {maxValue} záznamů</target>
+        </trans-unit>
+        <trans-unit id="32">
+          <source>Exporting database: {curValue} of {maxValue} tables</source>
+          <target>Export databáze: {curValue} z {maxValue} tabulek</target>
+        </trans-unit>
+        <trans-unit id="33">
+          <source>Cleaning destination folder…</source>
+          <target>Čištění cílové složky…</target>
+        </trans-unit>
+        <trans-unit id="34">
+          <source>Checking uniqueness</source>
+          <target>CKontrola jedinečností</target>
+        </trans-unit>
+        <trans-unit id="35">
+          <source>Checking primary keys for {TableName}: {curValue} of {maxValue} records</source>
+          <target>Kontrola primárních klíčů pro tabulku {TableName}: {curValue} z {maxValue} záznamů</target>
+        </trans-unit>
+      </group>
+
+      <group id="1006" resname="DB4D DataTools Object Types">
+        <trans-unit id="1">
+          <source>data segment header</source>
+          <target>záhlaví datového segmentu</target>
+        </trans-unit>
+        <trans-unit id="2">
+          <source>primary directory of bit table</source>
+          <target>primární adresář bitové tabulky</target>
+        </trans-unit>
+        <trans-unit id="3">
+          <source>secondary directory # {param2} of bit table</source>
+          <target>sekundární adresář # {param2} bitové tabulky</target>
+        </trans-unit>
+        <trans-unit id="4">
+          <source>bit table # {param3} of directory # {param2}</source>
+          <target>bitová tabulka # {param3} adresáře # {param2}</target>
+        </trans-unit>
+        <trans-unit id="5">
+          <source>auto sequence header # {param1}</source>
+          <target>záhlaví auto sequence # {param1}</target>
+        </trans-unit>
+        <trans-unit id="6">
+          <source>data table header # {param1}</source>
+          <target>záhlaví tabulky dat # {param1}</target>
+        </trans-unit>
+        <trans-unit id="7">
+          <source>index header # {param1}</source>
+          <target>záhlaví indexu # {param1}</target>
+        </trans-unit>
+        <trans-unit id="8">
+          <source>table definition # {param1}</source>
+          <target>definice tabulky # {param1}</target>
+        </trans-unit>
+        <trans-unit id="9">
+          <source>relation definition # {param1}</source>
+          <target>definice relace # {param1}</target>
+        </trans-unit>
+        <trans-unit id="10">
+          <source>BLOB # {param1} of {TableName}</source>
+          <target>BLOB # {param1} z {TableName}</target>
+        </trans-unit>
+        <trans-unit id="11">
+          <source>record # {param1} of {TableName}</source>
+          <target>záznam # {param1} z {TableName}</target>
+        </trans-unit>
+        <trans-unit id="12">
+          <source>address table</source>
+          <target>tabulka adres</target>
+        </trans-unit>
+        <trans-unit id="13">
+          <source>records address table of {TableName}</source>
+          <target>tabulka adres záznamů z {TableName}</target>
+        </trans-unit>
+        <trans-unit id="14">
+          <source>BLOBs address table of {TableName}</source>
+          <target>tabulka adres BLOBů z {TableName}</target>
+        </trans-unit>
+        <trans-unit id="15">
+          <source>index address table of {IndexName}</source>
+          <target>tabulka adres indexů z {IndexName}</target>
+        </trans-unit>
+        <trans-unit id="16">
+          <source>clusters address table of {IndexName}</source>
+          <target>tabulka adres klastrů {IndexName}</target>
+        </trans-unit>
+        <trans-unit id="17">
+          <source>extra property</source>
+          <target>extra vlastnost</target>
+        </trans-unit>
+        <trans-unit id="18">
+          <source>index page # {param1} of {IndexName}</source>
+          <target>stránka indexů # {param1} z {IndexName}</target>
+        </trans-unit>
+        <trans-unit id="19">
+          <source>index cluster # {param1} of {IndexName}</source>
+          <target>klastr indexů # {param1} z {IndexName}</target>
+        </trans-unit>
+        <trans-unit id="20">
+          <source>part # {param2} of index cluster # {param1} of {IndexName}</source>
+          <target>část # {param2} klastru indexů # {param1} z {IndexName}</target>
+        </trans-unit>
+      </group>
+
+      <group id="1007" resname="DB4D Default Structure Names">
+        <trans-unit id="1" resname="default_table_name">
+          <source>Table_{id}</source>
+          <target>Tabulka_{id}</target>
+        </trans-unit>
+        <trans-unit id="2" resname="default_field_name">
+          <source>Field_{id}</source>
+          <target>Sloupec_{id}</target>
+        </trans-unit>
+        <trans-unit id="3" resname="default_many_to_one_name">
+          <source>Link_{id}</source>
+          <target>Vztah1_{id}</target>
+        </trans-unit>
+        <trans-unit id="4" resname="default_one_to_many_name">
+          <source>Link_{id}_return</source>
+          <target>VztahN_{id}_return</target>
+        </trans-unit>
+      </group>
+
+      <group id="1008" resname="DB4D DataTools Compact Progress">
+        <note>
+          **************************************************
+          IMPORTANT INTERNAL COMMENT
+          **************************************************
+          If you change a trans-unit, add one, remove one, you _must_ also change group id "1004",
+          both are the same except for the "Verify" or "Compact" context.
+        </note>
+        <trans-unit id="1">
+          <source>Loading data tables</source>
+          <target>Zavádí se tabulky dat</target>
+        </trans-unit>
+        <trans-unit id="2">
+          <source>Compacting data table definitions</source>
+          <target>Kompaktují se definice tabulek dat</target>
+        </trans-unit>
+        <trans-unit id="3">
+          <source>Compacting chained list of deleted table definitions</source>
+          <target>Kompaktují se řetězený seznam vymazaných definic tabulek</target>
+        </trans-unit>
+        <trans-unit id="4">
+          <source>Compacting index definitions</source>
+          <target>Kompaktace definic indexů</target>
+        </trans-unit>
+        <trans-unit id="5">
+          <source>Compacting chained list of deleted index definitions</source>
+          <target>Kontroluje se řetězený seznam vymazaných definic indexů</target>
+        </trans-unit>
+        <trans-unit id="6">
+          <source>Compacting backup index definitions</source>
+          <target>Kompaktace definic záložních indexů</target>
+        </trans-unit>
+        <trans-unit id="7">
+          <source>Compacting chained list of deleted backup index definitions</source>
+          <target>Kompaktuje se řetězený seznam vymazaných definic záložních indexů</target>
+        </trans-unit>
+        <trans-unit id="8">
+          <source>Compacting relation definitions</source>
+          <target>Kompaktace definic vztahů</target>
+        </trans-unit>
+        <trans-unit id="9">
+          <source>Compacting chained list of deleted relation definitions</source>
+          <target>Kompaktuje se řetězený seznam vymazaných definic vztahů</target>
+        </trans-unit>
+        <trans-unit id="10">
+          <source>Compacting auto sequence number definitions</source>
+          <target>Kompakrace definic auto sekvenčních čísel</target>
+        </trans-unit>
+        <trans-unit id="11">
+          <source>Compacting chained list of deleted auto sequence number definitions</source>
+          <target>Kompaktuje se řetězený seznam vymazaných definic auto sekvenčních čísel</target>
+        </trans-unit>
+        <trans-unit id="12">
+          <source>Compacting data table headers</source>
+          <target>Kompaktace hlaviček tabulek dat</target>
+        </trans-unit>
+        <trans-unit id="13">
+          <source>Compacting chained list of deleted data table headers</source>
+          <target>Kompaktuje se řetězený seznam vymazaných hlaviček tabulek dat</target>
+        </trans-unit>
+        <trans-unit id="14">
+          <source>Compacting BLOBs in table {p1}</source>
+          <target>Kompaktace BLOBů tabulky {p1}</target>
+        </trans-unit>
+        <trans-unit id="15">
+          <source>Compacting list of deleted BLOBs in table {p1}</source>
+          <target>Kompaktace seznamu vymazaných BLOBů tabulky {p1}</target>
+        </trans-unit>
+        <trans-unit id="16">
+          <source>Compacting records in table {p1}</source>
+          <target>Kompaktace záznamů tabulky {p1}</target>
+        </trans-unit>
+        <trans-unit id="17">
+          <source>Compacting list of deleted records in table {p1}</source>
+          <target>Kompaktace seznamu vymazaných záznamů tabulky {p1}</target>
+        </trans-unit>
+        <trans-unit id="18">
+          <source>Compact bit tables for segment {SegNum}</source>
+          <target>Kompaktace bitových tabulek pro segment {SegNum}</target>
+        </trans-unit>
+        <trans-unit id="19">
+          <source>Compacting index pages on {p1}</source>
+          <target>Kompaktace stránek indexů v {p1}</target>
+        </trans-unit>
+        <trans-unit id="20">
+          <source>Compacting index page addresses on {p1}</source>
+          <target>Kompaktace adres stránek indexů v {p1}</target>
+        </trans-unit>
+        <trans-unit id="21">
+          <source>Compacting list of deleted index pages on {p1}</source>
+          <target>Kompaktace seznamu vymazaných stránek indexů v {p1}</target>
+        </trans-unit>
+        <trans-unit id="22">
+          <source>Compacting clusters on {p1}</source>
+          <target>Kompaktace klastrů v {p1}</target>
+        </trans-unit>
+        <trans-unit id="23">
+          <source>Compacting list of deleted clusters on {p1}</source>
+          <target>Kompaktace seznamu vymazaných klastrů v {p1}</target>
+        </trans-unit>
+        <trans-unit id="24">
+          <source>on</source>
+          <target>v</target>
+        </trans-unit>
+        <trans-unit id="25">
+          <source>Keywords Index </source>
+          <target>Index klíčová slova </target>
+        </trans-unit>
+        <trans-unit id="26">
+          <source>B-tree Index </source>
+          <target>B-strom Index </target>
+        </trans-unit>
+        <trans-unit id="27">
+          <source>Cluster Index </source>
+          <target>Klastr Index </target>
+        </trans-unit>
+        <trans-unit id="28">
+          <source>Index </source>
+          <target>Index </target>
+        </trans-unit>
+        <trans-unit id="29">
+          <source>Composite Index </source>
+          <target>Složený (composite) Index </target>
+        </trans-unit>
+        <trans-unit id="30">
+          <source>Scanning data</source>
+          <target>Skenování dat</target>
+        </trans-unit>
+        <trans-unit id="31">
+          <source>Recovering records</source>
+          <target>Obnova záznamů</target>
+        </trans-unit>
+        <trans-unit id="32">
+          <source>Recovering BLOBs</source>
+          <target>Obnova BLOBů</target>
+        </trans-unit>
+        <trans-unit id="34">
+          <source>Compacting index {p1}</source>
+          <target>Kompaktace indexu {p1}</target>
+        </trans-unit>
+      </group>
+      
+      <group id="1009" resname="DB4D DataTools Solutions">
+        <trans-unit id="78">
+          <source>Extra properties stream has been repaired</source>
+          <target>Tok extra vlastností byl opraven</target>
+        </trans-unit>
+        <trans-unit id="86">
+          <source>The table of relations has been repaired</source>
+          <target>Tabulka vztahů byla opravena</target>
+        </trans-unit>
+        <trans-unit id="88">
+          <source>The index definition has been repaired</source>
+          <target>Definice indexu byla opravena</target>
+        </trans-unit>
+      </group>
+      <group id="1010" resname="DB4D DataTools Compacting and Altering Records">
+        <trans-unit id="1">
+          <source>Compacting records of table {p1}</source>
+          <target>Kompaktace záznamů tabulky {p1}</target>
+        </trans-unit>
+        <trans-unit id="2">
+          <source>Compacting BLOBs of table {p1}</source>
+          <target>Kompaktace BLOBů tabulky {p1}</target>
+        </trans-unit>
+        <trans-unit id="3">
+          <source>Indexing</source>
+          <target>Indexování</target>
+        </trans-unit>
+      </group>
+
+
+      <group id="1011" resname="DB4D Journal operations title">
+        <!-- 06 dec 2012 : only use for Wakanda -->
+        <trans-unit id="1">
+          <source>Create record</source>
+          <target>Vytvořit záznam</target>
+        </trans-unit>
+        <trans-unit id="2">
+          <source>Modify record</source>
+          <target>Upravit záznam</target>
+        </trans-unit>
+        <trans-unit id="3">
+          <source>Delete record</source>
+          <target>Vymazat záznam</target>
+        </trans-unit>
+        <trans-unit id="4">
+          <source>Start transaction</source>
+          <target>Start transakce</target>
+        </trans-unit>
+        <trans-unit id="5">
+          <source>Commit transaction</source>
+          <target>Uložit transakci</target>
+        </trans-unit>
+        <trans-unit id="6">
+          <source>Rollback transaction</source>
+          <target>Storno transakce</target>
+        </trans-unit>
+        <trans-unit id="7">
+          <source>Open data</source>
+          <target>Otevřít data</target>
+        </trans-unit>
+        <trans-unit id="8">
+          <source>Close data</source>
+          <target>Uzavřít data</target>
+        </trans-unit>
+        <trans-unit id="9">
+          <source>Create context with User ID</source>
+          <target>Vytvořit kontext s ID uživatele</target>
+        </trans-unit>
+        <trans-unit id="10">
+          <source>Create context with extra</source>
+          <target>Vytvořit kontext s extra</target>
+        </trans-unit>
+        <trans-unit id="11">
+          <source>Close context</source>
+          <target>Uzavřít kontext</target>
+        </trans-unit>
+        <trans-unit id="12">
+          <source>Create blob</source>
+          <target>Vytvořit blob</target>
+        </trans-unit>
+        <trans-unit id="13">
+          <source>Modify blob</source>
+          <target>Upravit blob</target>
+        </trans-unit>
+        <trans-unit id="14">
+          <source>Delete blob</source>
+          <target>Vymazat blob</target>
+        </trans-unit>
+        <trans-unit id="15">
+          <source>Start backup</source>
+          <target>Start zálohy</target>
+        </trans-unit>
+        <trans-unit id="16">
+          <source>Truncate table</source>
+          <target>Oříznout tabulku</target>
+        </trans-unit>
+        <trans-unit id="17">
+          <source>Save seqnum</source>
+          <target>Uůožit seqnum</target>
+        </trans-unit>
+      </group>
+
+      <group id="1012" resname="DB4D Journal tool">
+        <!-- 06 dec 2012 : only use for Wakanda -->
+        <trans-unit id="1">
+          <source>Converting journal operations</source>
+          <target>Konvertování operací žurnálu</target>
+        </trans-unit>
+      </group>
+
+    </body>
+  </file>
+</xliff>

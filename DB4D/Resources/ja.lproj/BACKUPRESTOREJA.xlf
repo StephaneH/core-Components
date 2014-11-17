@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Translation file for 4D products.
+  Copyright (C) 2014 4D SAS.
+  This file is distributed under the same license as the 4D product package.
+-->
+
+<!DOCTYPE xliff PUBLIC "-//XLIFF//DTD XLIFF//EN"
+"http://www.oasis-open.org/committees/xliff/documents/xliff.dtd">
+
+<xliff version="1.0">
+  <file datatype="x-STR#" original="undefined" source-language="en-US" target-language="ja" product-version="v14">
+    <header>
+      <note>The character &quot;%&quot; (out of a numerical context) is a meta-character that will be replaced (often by a numeric value) before the string is displayed</note>
+      <note>Text between less than (&lt;) and greater than (&gt;) symbols is a variable&apos;s name and must not be localised</note>
+      <note>\r, \t and \n are meta-characters.</note>
+    </header>
+    <body>
+      <group id="1000" resname="Backup And Restore Errors Text">
+        <trans-unit resname="ERR_bkrs_100" id="100">
+          <source>Incompatible data store format (waExtra file found)</source>
+          <target>互換性のないデータストア形式です。（waExtraファイル）</target>
+        </trans-unit>
+        <trans-unit resname="ERR_bkrs_200" id="200">
+          <source>Failed to retrieve journaling info</source>
+          <target>ジャーナル情報の取得に失敗しました。</target>
+        </trans-unit>
+		<trans-unit resname="ERR_bkrs_201" id="201">
+          <source>Journal file not found: {path}</source>
+          <target>ジャーナルファイルがみつかりません: {path}</target>
+        </trans-unit>
+		<trans-unit resname="ERR_bkrs_202" id="202">
+          <source>Failed to perform backup</source>
+          <target>バックアップが実行できませんでした。</target>
+        </trans-unit>
+		<trans-unit resname="ERR_bkrs_203" id="203">
+          <source>Failed to create backup folder: {path}</source>
+          <target>バックアップフォルダーが作成できませんでした: {path}</target>
+        </trans-unit>
+		<trans-unit resname="ERR_bkrs_204" id="204">
+          <source>Failed to backup journal</source>
+          <target>ジャーナルのバックアップができませんでした。</target>
+        </trans-unit>
+		<trans-unit resname="ERR_bkrs_205" id="205">
+          <source>Invalid journal path: {path}</source>
+          <target>無効なジャーナルファイルパス: {path}</target>
+        </trans-unit>
+		<trans-unit resname="ERR_bkrs_206" id="206">
+          <source>Invalid backup folder: {path}</source>
+          <target>無効なバックアップフォルダー: {path}</target>
+        </trans-unit>
+		<trans-unit resname="ERR_bkrs_207" id="207">
+          <source>Failed to backup data folder</source>
+          <target>データフォルダーのバックアップができませんでした。</target>
+        </trans-unit>
+		<trans-unit resname="ERR_bkrs_208" id="208">
+          <source>Next active journal path is invalid</source>
+          <target>次回バックアップのファイルパスが無効です。</target>
+        </trans-unit>
+		<trans-unit resname="ERR_bkrs_209" id="209">
+          <source>Invalid backup settings</source>
+          <target>バックアップ設定が無効です。</target>
+        </trans-unit>
+		<trans-unit resname="ERR_bkrs_210" id="210">
+          <source>Failed to store backup manifest</source>
+          <target>バックアップマニフェストが保存できませんでした。</target>
+        </trans-unit>
+        <trans-unit resname="ERR_bkrs_211" id="211">
+            <source>backup configuration property '{p1}' not found</source>
+            <target>backup configuration property '{p1}' not found</target>
+        </trans-unit>
+		<trans-unit resname="ERR_bkrs_212" id="212">
+            <source>Invalid type for backup configuration property '{p1}', Folder expected</source>
+            <target>バックアップ設定プロパティ '{p1}' の値が無効です。フォルダーを指定してください。</target>
+        </trans-unit>
+		<trans-unit resname="ERR_bkrs_213" id="213">
+            <source>Invalid type for backup configuration property '{p1}', String expected</source>
+            <target>バックアップ設定プロパティ '{p1}' の値が無効です。文字列を指定してください。</target>
+        </trans-unit>
+		<trans-unit resname="ERR_bkrs_214" id="214">
+            <source>Invalid type for backup configuration property '{p1}', bool expected</source>
+            <target>バックアップ設定プロパティ '{p1}' の値が無効です。真偽値を指定してください。</target>
+        </trans-unit>
+		<trans-unit resname="ERR_bkrs_215" id="215">
+            <source>Invalid type for backup configuration property '{p1}', number or string expected</source>
+            <target>バックアップ設定プロパティ '{p1}' の値が無効です。数値または文字列を指定してください。</target>
+        </trans-unit>
+		<trans-unit resname="ERR_bkrs_216" id="216">
+            <source>Invalid value for backup configuration property '{p1}'</source>
+            <target>バックアップ設定プロパティ '{p1}' の値が無効です。</target>
+        </trans-unit>
+		<trans-unit resname="ERR_bkrs_217" id="217">
+            <source>Backup folder {path} is not empty</source>
+            <target>バックアップフォルダー {path} が空ではありません。</target>
+        </trans-unit>
+		<trans-unit resname="ERR_bkrs_218" id="218">
+          <source>Failed to open backup registry {path}</source>
+          <target>バックアップレジストリ {path} を開くことができません。</target>
+        </trans-unit>
+		<trans-unit resname="ERR_bkrs_400" id="400">
+          <source>Cannot restore journal from {pathsrc} to {pathdst}</source>
+          <target>{pathsrc}のジャーナルを{pathdst}に復元することができません。</target>
+        </trans-unit>
+		<trans-unit resname="ERR_bkrs_401" id="401">
+          <source>Cannot restore data folder from {pathsrc} to {pathdst}</source>
+          <target>{path1}のデータフォルダーを{path2}に復元することができません。</target>
+        </trans-unit>
+		<trans-unit resname="ERR_bkrs_402" id="402">
+          <source>Cannot create safety copy for data folder {pathsrc} to {pathdst}</source>
+          <target>{pathsrc}のデータフォルダー保険コピーを{pathdst}に作成することができません。</target>
+        </trans-unit>
+		<trans-unit resname="ERR_bkrs_403" id="403">
+          <source>Cannot create journal safety copy from {pathsrc} to {pathdst}</source>
+          <target>{pathsrc}のジャーナル保険コピーを{pathdst}に作成することができません。</target>
+        </trans-unit>        
+      </group>
+    </body>
+  </file>
+</xliff>
